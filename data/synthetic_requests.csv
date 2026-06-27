@@ -1,1 +1,41 @@
 request_id,text,timestamp,submission_type
+FS001,"I understand the derivative rules separately, but I keep mixing up product rule and chain rule on practice final problems.",2026-05-06T09:05:00,anonymous
+FS002,"Can someone explain when to use integration by parts versus substitution? The final review sheet has both and I am confused.",2026-05-06T09:12:00,anonymous
+FS003,"I missed the lecture on recursion and now the sample final has two recursion tracing questions. Can I get a quick explanation?",2026-05-06T09:20:00,identified
+FS004,"For the final, do we need to memorize all sorting algorithm runtimes or will there be a reference table?",2026-05-06T09:34:00,anonymous
+FS005,"I keep getting off-by-one errors in binary search problems. Is there a simple way to check my loop boundaries?",2026-05-06T09:48:00,identified
+FS006,"What topics are definitely not on the final exam? I want to prioritize my studying tonight.",2026-05-06T10:01:00,anonymous
+FS007,"Is the final cumulative or only the material after midterm two?",2026-05-06T10:09:00,anonymous
+FS008,"Where is the final exam room posted? Canvas still shows the regular classroom.",2026-05-06T10:18:00,identified
+FS009,"What time does the final start, and is there a grace period if the campus shuttle is late?",2026-05-06T10:31:00,anonymous
+FS010,"Can I bring one handwritten notes page to the final or is it closed book?",2026-05-06T10:43:00,anonymous
+FS011,"My exam conflicts with another final at the same time. What is the process for arranging a makeup?",2026-05-06T11:02:00,identified
+FS012,"I have a documented accommodation for extra time. Who confirms that it is applied to the final?",2026-05-06T11:15:00,identified
+FS013,"I was sick during the last project deadline and my grade is a zero. Can I still submit medical documentation?",2026-05-06T11:26:00,identified
+FS014,"I need to request a retake because my exam slot overlaps with a religious observance. Who should I email?",2026-05-06T11:41:00,identified
+FS015,"I think my project score is missing points for tests that passed in Gradescope. Can someone recheck it before finals?",2026-05-06T12:03:00,identified
+FS016,"My quiz grade says late penalty, but I submitted before midnight. Can this be reviewed?",2026-05-06T12:14:00,identified
+FS017,"The rubric says partial credit for explaining the approach, but my answer got zero. Can I appeal?",2026-05-06T12:28:00,identified
+FS018,"I am really overwhelmed and have not slept because I am scared I will fail the class. I need help making a plan.",2026-05-06T12:45:00,anonymous
+FS019,"I am panicking about the final and cannot focus. Is there any emergency office hour today?",2026-05-06T13:02:00,anonymous
+FS020,"I have three finals in two days and I feel completely stuck. Could I meet one-on-one about what to study?",2026-05-06T13:16:00,identified
+FS021,"My laptop broke and my final project demo is tomorrow. What should I do if I cannot record the demo?",2026-05-06T13:31:00,identified
+FS022,"The autograder times out only on the hidden tests. Can office hours help debug performance issues before the deadline?",2026-05-06T13:49:00,anonymous
+FS023,"For the final project report, do screenshots count toward the page limit?",2026-05-06T14:02:00,anonymous
+FS024,"Do we need to cite ChatGPT if we used it to brainstorm tests for the final project?",2026-05-06T14:18:00,anonymous
+FS025,"I do not understand dynamic programming tables. The practice final asks for the recurrence and table fill order.",2026-05-06T14:35:00,identified
+FS026,"Can we review how to prove an algorithm is O(n log n)? I can solve the code but not the explanation.",2026-05-06T14:48:00,anonymous
+FS027,"What is the difference between BFS and DFS for shortest path questions on the exam?",2026-05-06T15:01:00,anonymous
+FS028,"I need help understanding SQL joins for the final. Inner join versus left join keeps confusing me.",2026-05-06T15:18:00,identified
+FS029,"Will there be a group review session for graph algorithms? A lot of us are confused by Dijkstra.",2026-05-06T15:37:00,anonymous
+FS030,"Could you post solutions for the practice final? I cannot tell if my answers are correct.",2026-05-06T15:52:00,anonymous
+FS031,"I missed the deadline to choose a final presentation slot. Is there still a way to sign up?",2026-05-06T16:08:00,identified
+FS032,"Is attendance required for the optional review session, or will it be recorded?",2026-05-06T16:23:00,anonymous
+FS033,"Can office hours be extended this week? The current slots filled before I could register.",2026-05-06T16:39:00,identified
+FS034,"I got a warning about academic integrity on my project similarity report and I am very worried. What should I do next?",2026-05-06T16:55:00,identified
+FS035,"How should I study cache and memory hierarchy questions? The slides feel too detailed for the final.",2026-05-06T17:10:00,anonymous
+FS036,"Will the final include coding by hand, multiple choice, or both?",2026-05-06T17:25:00,anonymous
+FS037,"I submitted the wrong file for the final project. Can it be replaced before grading starts?",2026-05-06T17:42:00,identified
+FS038,"My team member stopped responding and our project presentation is tomorrow. How do we report contribution issues?",2026-05-06T17:58:00,identified
+FS039,"Can I get feedback on my study plan? I have only six hours left and want to focus on high-value topics.",2026-05-06T18:14:00,anonymous
+FS040,"I still do not understand confidence intervals and hypothesis tests. Could we do a mini review?",2026-05-06T18:33:00,anonymous

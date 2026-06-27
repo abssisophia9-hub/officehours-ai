@@ -12,6 +12,13 @@
 - `scikit-learn` for clustering and baseline classifiers
 - Optional: LLM API call for harder classification cases or generating FAQ-style responses
 
+## Data Fixtures
+- `data/synthetic_requests.csv` contains raw synthetic finals-week student requests for local demos.
+- `data/labeled_requests.csv` mirrors those request IDs with `category` and `urgency` labels for baseline classification experiments.
+- `data/demo_scenarios.csv` describes expected cluster/action outcomes for demo validation and future recommendation tests.
+
+The current fixture set is synthetic only; do not treat it as real student data.
+
 ## Recommendation Logic (initial heuristic)
 | Condition | Recommended Action |
 |---|---|

@@ -1,1 +1,8 @@
 scenario_id,description,expected_cluster,expected_action
+DS001,"Several students ask about graph algorithms, BFS/DFS, Dijkstra, and shortest paths before the final.",graph_algorithms_review,Schedule group review session
+DS002,"Multiple requests ask whether the final is cumulative, what room it is in, what time it starts, and what materials are allowed.",final_exam_logistics,Post FAQ response
+DS003,"A small group reports stress, panic, and trouble planning study time before the final.",student_stress_support,Offer priority one-to-one meeting
+DS004,"Students report exam conflicts, religious observance conflicts, accommodations, and medical documentation needs.",makeup_accommodation_route,Route to admin/accommodation process
+DS005,"Project requests mention hidden test failures, wrong files, demo problems, report requirements, and team contribution issues.",final_project_support,Create TA-led project support block
+DS006,"Several students dispute grading outcomes, late penalties, or rubric interpretation near finals week.",grading_review_queue,Route to grading review workflow
+DS007,"Students request help with derivatives, integration, confidence intervals, and study plans across different topics.",mixed_conceptual_questions,Offer office-hours triage and topic-specific follow-up
