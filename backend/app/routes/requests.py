@@ -5,6 +5,7 @@ Routes for submitting and retrieving student requests.
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.ai.clustering import assign_cluster_id
 from app.database.session import get_db
 from app.models.request import Request, RequestCreate, RequestOut
 from app.services.classification_service import classify_and_recommend
@@ -21,6 +22,9 @@ def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
         request_data["category"] = classification["category"]
     if not request_data.get("recommended_action"):
         request_data["recommended_action"] = classification["recommended_action"]
+    if request_data.get("cluster_id") is None:
+        existing_requests = db.query(Request).order_by(Request.id).all()
+        request_data["cluster_id"] = assign_cluster_id(payload.text, existing_requests)
 
     db_request = Request(**request_data)
     db.add(db_request)

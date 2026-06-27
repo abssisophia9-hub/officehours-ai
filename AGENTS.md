@@ -7,7 +7,8 @@
 
 ### Backend environment
 - Python deps are installed into a virtualenv at `backend/venv` (created during setup; the system package `python3.12-venv` is required to create it). The update script refreshes this venv.
-- Installing `sentence-transformers` pulls in `torch` and the full NVIDIA CUDA wheel stack, so a clean dependency install downloads several GB and is slow. These heavy packages are listed in `requirements.txt` but are NOT yet used by the running app.
+- Installing `sentence-transformers` pulls in `torch` and the full NVIDIA CUDA wheel stack, so a clean dependency install downloads several GB and is slow. The running app uses `sentence-transformers` for request clustering unless `OFFICEHOURS_CLUSTERING_BACKEND=lexical` is set.
+- Request clustering defaults to sentence-transformer embeddings (`OFFICEHOURS_EMBEDDING_MODEL`, default `all-MiniLM-L6-v2`). Tests set `OFFICEHOURS_CLUSTERING_BACKEND=lexical` to avoid model downloads.
 
 ### Backend run / test / lint (run from `backend/`)
 - Dev server: `venv/bin/uvicorn app.main:app --reload` — serves http://127.0.0.1:8000 (root `/`, `/health`, Swagger UI at `/docs`, request CRUD under `/requests/`).

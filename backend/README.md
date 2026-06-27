@@ -21,6 +21,17 @@ Visit:
 - API root: http://127.0.0.1:8000/
 - Interactive docs (Swagger UI): http://127.0.0.1:8000/docs
 
+## Clustering configuration
+
+Request clustering uses `sentence-transformers` embeddings by default.
+
+Optional environment variables:
+
+- `OFFICEHOURS_EMBEDDING_MODEL` — defaults to `all-MiniLM-L6-v2`
+- `OFFICEHOURS_CLUSTER_SIMILARITY_THRESHOLD` — defaults to `0.72`
+- `OFFICEHOURS_CLUSTERING_BACKEND=lexical` — lightweight deterministic backend
+  for tests/local runs where you do not want to download the embedding model
+
 ## Run tests
 
 ```bash

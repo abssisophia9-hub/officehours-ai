@@ -6,6 +6,7 @@ Run with: pytest
 import os
 
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+os.environ["OFFICEHOURS_CLUSTERING_BACKEND"] = "lexical"
 
 from fastapi.testclient import TestClient
 
@@ -48,7 +49,7 @@ def test_create_request():
     assert data["anonymous"] is False
     assert data["student_id"] == "student-123"
     assert data["category"] == "conceptual_question"
-    assert data["cluster_id"] is None
+    assert data["cluster_id"] == 1
     assert (
         data["recommended_action"]
         == "Review in office hours; schedule a group session if repeated"
