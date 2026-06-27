@@ -3,7 +3,7 @@
 ## Cursor Cloud specific instructions
 
 ### Scope of what is runnable
-- The **FastAPI backend** (`backend/`) and **student kiosk frontend** (`frontend/student-kiosk/`) are runnable applications. The professor dashboard remains plan-only scaffolding, and `backend/app/ai/*` plus `backend/app/services/*` are docstring-only stubs that are not imported at runtime.
+- The **FastAPI backend** (`backend/`), **student kiosk frontend** (`frontend/student-kiosk/`), and **professor dashboard frontend** (`frontend/professor-dashboard/`) are runnable applications. `backend/app/ai/*` plus `backend/app/services/*` are docstring-only stubs that are not imported at runtime.
 
 ### Backend environment
 - Python deps are installed into a virtualenv at `backend/venv` (created during setup; the system package `python3.12-venv` is required to create it). The update script refreshes this venv.
@@ -15,6 +15,12 @@
 - Lint: no linter is configured in this repo (no ruff/flake8/black in `requirements.txt`); use `venv/bin/python -m py_compile` for a basic syntax check.
 
 ### Student kiosk run / test (run from `frontend/student-kiosk/`)
+- Install: `npm ci`.
+- Dev server: `npm run dev`.
+- Build: `npm run build`.
+- Dependency audit: `npm audit --audit-level=moderate`.
+
+### Professor dashboard run / test (run from `frontend/professor-dashboard/`)
 - Install: `npm ci`.
 - Dev server: `npm run dev`.
 - Build: `npm run build`.
