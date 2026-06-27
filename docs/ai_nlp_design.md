@@ -1,0 +1,24 @@
+# AI / NLP Design
+
+## Pipeline Overview
+1. **Preprocessing** — clean and normalize incoming request text
+2. **Classification** — categorize request into types (e.g., conceptual question, logistics/admin, retake request, emotional/stress-related, grading dispute)
+3. **Embedding generation** — use sentence-transformers to embed request text
+4. **Clustering** — group semantically similar requests using cosine similarity (and/or k-means / HDBSCAN for batch clustering)
+5. **Recommendation** — map cluster size + category + urgency to a recommended action
+
+## Models / Libraries
+- `sentence-transformers` (e.g., `all-MiniLM-L6-v2`) for embeddings
+- `scikit-learn` for clustering and baseline classifiers
+- Optional: LLM API call for harder classification cases or generating FAQ-style responses
+
+## Recommendation Logic (initial heuristic)
+| Condition | Recommended Action |
+|---|---|
+| Cluster size ≥ N, conceptual question | Group review session |
+| Single occurrence, simple/factual | Quick FAQ response |
+| Cluster size ≥ N, procedural | TA-led review session |
+| Grading dispute / retake | Admin/retake route |
+| Flagged as urgent/emotional | One-to-one meeting (priority) |
+
+This heuristic will be refined using labeled data in `data/labeled_requests.csv` and tested in `notebooks/ai_classification_tests.ipynb`.
