@@ -47,7 +47,10 @@ def test_create_request():
     assert data["text"] == payload["text"]
     assert data["anonymous"] is False
     assert data["student_id"] == "student-123"
-    assert data["category"] is None
+    assert data["category"] == "conceptual_question"
     assert data["cluster_id"] is None
-    assert data["recommended_action"] is None
+    assert (
+        data["recommended_action"]
+        == "Review in office hours; schedule a group session if repeated"
+    )
     assert "created_at" in data
