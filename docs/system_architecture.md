@@ -4,18 +4,23 @@
 OfficeHours AI consists of four main components:
 
 1. **Student Kiosk (frontend/student-kiosk)** — QR/NFC check-in + request submission UI
-2. **Professor Dashboard (frontend/professor-dashboard)** — request triage, clustering view, recommendation cards
+2. **Professor Dashboard (frontend/professor-dashboard)** — request triage, clustering view, recommendation cards, professor office-hours setup
 3. **Backend API (backend/)** — FastAPI service handling auth, requests, classification, clustering
 4. **AI/NLP Layer (backend/app/ai)** — classification model, embedding generation, clustering logic
 
 ## Data Flow
-1. Student submits a request via kiosk (anonymous or identified)
-2. Request is sent to backend `/requests` endpoint
-3. AI layer classifies request type + generates embedding
-4. Clustering service groups it with similar existing requests
-5. Recommendation engine suggests an action (FAQ / group session / TA / 1:1 / admin)
-6. Professor dashboard displays clustered requests + recommended actions
-7. Professor approves/edits the action; system logs outcome
+1. Professor configures office-hour windows in the dashboard settings/availability panel
+2. Backend persists those office-hour windows so scheduling and recommendation logic can use them
+3. Student submits a request via kiosk (anonymous or identified)
+4. Request is sent to backend `/requests` endpoint
+5. AI layer classifies request type + generates embedding
+6. Clustering service groups it with similar existing requests
+7. Recommendation engine suggests an action (FAQ / group session / TA / 1:1 / admin) using request context and professor availability
+8. Professor dashboard displays clustered requests + recommended actions
+9. Professor approves/edits the action; system logs outcome
+
+## Professor office-hours configuration
+Professor office hours belong in the **Professor Dashboard** as an availability/settings workflow, backed by the **Backend API** as persisted scheduling data. In the current dashboard MVP, the office-hours panel is front-end state only. The next backend step should add an office-hours model and CRUD routes so recommendation cards can schedule group sessions or 1:1 follow-ups against real professor availability.
 
 ## Diagram
 See `diagrams/architecture.png` (to be added).

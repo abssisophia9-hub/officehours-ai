@@ -9,7 +9,7 @@ Two separate React apps:
 
 ```bash
 cd frontend/student-kiosk      # or frontend/professor-dashboard
-npm install
+npm ci
 npm run dev
 ```
 
@@ -20,4 +20,4 @@ npm run dev
 
 ## Status
 - **student-kiosk/** — MVP built (Vite + React + Tailwind): anonymous/identified request submission wired to the backend `POST /requests/` endpoint.
-- **professor-dashboard/** — scaffolding pending (see GitHub Issue #3).
+- **professor-dashboard/** — MVP built (Vite + React + Tailwind + Recharts): request triage dashboard wired to the backend `GET /requests/` endpoint, with an office-hours setup panel.
