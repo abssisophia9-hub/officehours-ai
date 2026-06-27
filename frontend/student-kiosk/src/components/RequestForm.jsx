@@ -4,12 +4,13 @@ import { submitRequest } from "../api/requests.js";
 
 const MAX_LENGTH = 1000;
 
-export default function RequestForm({ onSubmitted }) {
+export default function RequestForm({ checkIn, onSubmitted }) {
   const [text, setText] = useState("");
-  const [anonymous, setAnonymous] = useState(true);
-  const [studentId, setStudentId] = useState("");
+  const [anonymous, setAnonymous] = useState(!checkIn?.studentId);
+  const [studentId, setStudentId] = useState(checkIn?.studentId || "");
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const scannedStudentId = checkIn?.studentId || "";
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -53,6 +54,21 @@ export default function RequestForm({ onSubmitted }) {
         </p>
       </div>
 
+      {scannedStudentId && (
+        <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
+          <p className="text-sm font-bold uppercase tracking-wide text-emerald-700">
+            Checked in
+          </p>
+          <p className="mt-1 text-lg font-bold text-emerald-950">
+            Student ID {scannedStudentId}
+          </p>
+          <p className="mt-1 text-sm text-emerald-700">
+            Choose anonymous below if you do not want this request linked to the
+            scanned ID.
+          </p>
+        </div>
+      )}
+
       <label className="mb-2 block text-sm font-semibold uppercase tracking-wide text-slate-500">
         How would you like to submit?
       </label>
@@ -71,7 +87,7 @@ export default function RequestForm({ onSubmitted }) {
             type="text"
             value={studentId}
             onChange={(e) => setStudentId(e.target.value)}
-            placeholder="e.g. student-123"
+            placeholder="e.g. 117027"
             className="w-full rounded-2xl border-2 border-slate-200 px-5 py-4 text-lg outline-none transition focus:border-indigo-500"
           />
         </div>

@@ -1,10 +1,17 @@
 import { useState } from "react";
+import CheckInScreen from "./components/CheckInScreen.jsx";
 import RequestForm from "./components/RequestForm.jsx";
 import ConfirmationScreen from "./components/ConfirmationScreen.jsx";
 
 export default function App() {
-  const [screen, setScreen] = useState("form");
+  const [screen, setScreen] = useState("check-in");
+  const [checkIn, setCheckIn] = useState(null);
   const [result, setResult] = useState(null);
+
+  function handleCheckIn(nextCheckIn) {
+    setCheckIn(nextCheckIn);
+    setScreen("form");
+  }
 
   function handleSubmitted(request) {
     setResult(request);
@@ -12,8 +19,9 @@ export default function App() {
   }
 
   function handleReset() {
+    setCheckIn(null);
     setResult(null);
-    setScreen("form");
+    setScreen("check-in");
   }
 
   return (
@@ -33,9 +41,11 @@ export default function App() {
       </header>
 
       <main className="flex flex-1 items-center justify-center px-6 pb-12">
-        {screen === "form" ? (
-          <RequestForm onSubmitted={handleSubmitted} />
-        ) : (
+        {screen === "check-in" && <CheckInScreen onContinue={handleCheckIn} />}
+        {screen === "form" && (
+          <RequestForm checkIn={checkIn} onSubmitted={handleSubmitted} />
+        )}
+        {screen === "confirmation" && (
           <ConfirmationScreen result={result} onReset={handleReset} />
         )}
       </main>

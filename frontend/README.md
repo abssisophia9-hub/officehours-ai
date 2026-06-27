@@ -19,5 +19,5 @@ npm run dev
 - Recharts (for dashboard visualizations)
 
 ## Status
-- **student-kiosk/** — MVP built (Vite + React + Tailwind): anonymous/identified request submission wired to the backend `POST /requests/` endpoint.
+- **student-kiosk/** — MVP built (Vite + React + Tailwind): barcode/manual check-in, anonymous/identified request submission, and backend `POST /requests/` integration.
 - **professor-dashboard/** — MVP built (Vite + React + Tailwind + Recharts): request triage dashboard wired to the backend `GET /requests/` endpoint, with an office-hours setup panel.
