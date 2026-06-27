@@ -12,6 +12,20 @@
 - `scikit-learn` for clustering and baseline classifiers
 - Optional: LLM API call for harder classification cases or generating FAQ-style responses
 
+## Clustering MVP
+New requests are assigned a `cluster_id` at creation time. The clustering layer
+embeds the incoming request with `sentence-transformers`, compares it to
+existing requests using cosine similarity, and reuses the closest cluster when
+similarity is above the configured threshold. Otherwise, it starts the next
+cluster ID.
+
+Configuration:
+
+- `OFFICEHOURS_EMBEDDING_MODEL` — defaults to `all-MiniLM-L6-v2`
+- `OFFICEHOURS_CLUSTER_SIMILARITY_THRESHOLD` — defaults to `0.72`
+- `OFFICEHOURS_CLUSTERING_BACKEND=lexical` — deterministic lightweight backend
+  for tests/dev environments where downloading the embedding model is not wanted
+
 ## Data Fixtures
 - `data/synthetic_requests.csv` contains raw synthetic finals-week student requests for local demos.
 - `data/labeled_requests.csv` mirrors those request IDs with `category` and `urgency` labels for baseline classification experiments.
