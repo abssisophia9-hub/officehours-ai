@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { fetchRequests } from "./api/requests.js";
 import OfficeHoursPanel from "./components/OfficeHoursPanel.jsx";
-import RequestCharts from "./components/RequestCharts.jsx";
 import RequestTable from "./components/RequestTable.jsx";
 import SummaryCards from "./components/SummaryCards.jsx";
+
+const RequestCharts = lazy(() => import("./components/RequestCharts.jsx"));
 
 export default function App() {
   const [requests, setRequests] = useState([]);
@@ -93,7 +94,9 @@ export default function App() {
             <SummaryCards requests={sortedRequests} />
             <div className="grid gap-8 2xl:grid-cols-[minmax(0,1fr)_420px]">
               <div className="space-y-8">
-                <RequestCharts requests={sortedRequests} />
+                <Suspense fallback={<ChartLoadingState />}>
+                  <RequestCharts requests={sortedRequests} />
+                </Suspense>
                 <RequestTable requests={sortedRequests} />
               </div>
               <OfficeHoursPanel />
@@ -101,6 +104,14 @@ export default function App() {
           </>
         )}
       </main>
+    </div>
+  );
+}
+
+function ChartLoadingState() {
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center text-slate-500 shadow-sm">
+      Loading charts...
     </div>
   );
 }
