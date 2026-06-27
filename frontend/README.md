@@ -19,4 +19,5 @@ npm run dev
 - Recharts (for dashboard visualizations)
 
 ## Status
-Scaffolding pending — see GitHub Issues #2 and #3.
+- **student-kiosk/** — MVP built (Vite + React + Tailwind): anonymous/identified request submission wired to the backend `POST /requests/` endpoint.
+- **professor-dashboard/** — scaffolding pending (see GitHub Issue #3).
