@@ -7,13 +7,22 @@ from sqlalchemy.orm import Session
 
 from app.database.session import get_db
 from app.models.request import Request, RequestCreate, RequestOut
+from app.services.classification_service import classify_and_recommend
 
 router = APIRouter(prefix="/requests", tags=["requests"])
 
 
 @router.post("/", response_model=RequestOut, status_code=status.HTTP_201_CREATED)
 def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
-    db_request = Request(**payload.model_dump())
+    request_data = payload.model_dump()
+    classification = classify_and_recommend(payload.text)
+
+    if not request_data.get("category"):
+        request_data["category"] = classification["category"]
+    if not request_data.get("recommended_action"):
+        request_data["recommended_action"] = classification["recommended_action"]
+
+    db_request = Request(**request_data)
     db.add(db_request)
     db.commit()
     db.refresh(db_request)
