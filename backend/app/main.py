@@ -10,6 +10,11 @@ Then visit http://127.0.0.1:8000/docs for the interactive API docs.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.database.session import Base, engine
+from app.routes.requests import router as requests_router
+
+Base.metadata.create_all(bind=engine)
+
 app = FastAPI(
     title="OfficeHours AI API",
     description="Backend API for the OfficeHours AI triage system.",
@@ -36,6 +41,4 @@ def health_check():
     return {"status": "healthy"}
 
 
-# Routers will be included here as they're built out, e.g.:
-# from app.routes import requests as requests_router
-# app.include_router(requests_router.router, prefix="/requests", tags=["requests"])
+app.include_router(requests_router)
