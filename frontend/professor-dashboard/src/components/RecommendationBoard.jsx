@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { saveRecommendationDecision } from "../api/actions.js";
 import {
   buildRecommendationCards,
   formatDateTime,
@@ -62,6 +63,9 @@ export default function RecommendationBoard({
   onSelectedKindChange,
 }) {
   const [cardStatuses, setCardStatuses] = useState({});
+  const [actionPlans, setActionPlans] = useState({});
+  const [savingCardId, setSavingCardId] = useState("");
+  const [errorByCardId, setErrorByCardId] = useState({});
   const cards = useMemo(() => buildRecommendationCards(requests), [requests]);
   const visibleCards =
     selectedKind === "all"
@@ -69,8 +73,26 @@ export default function RecommendationBoard({
       : cards.filter((card) => card.kind === selectedKind);
   const filters = buildFilters(cards);
 
-  function updateStatus(cardId, status) {
-    setCardStatuses((current) => ({ ...current, [cardId]: status }));
+  async function updateStatus(card, status) {
+    setSavingCardId(card.id);
+    setErrorByCardId((current) => ({ ...current, [card.id]: "" }));
+
+    try {
+      const decision = await saveRecommendationDecision({ card, status });
+      setCardStatuses((current) => ({ ...current, [card.id]: status }));
+      setActionPlans((current) => ({
+        ...current,
+        [card.id]: decision.action_plan,
+      }));
+    } catch (error) {
+      setErrorByCardId((current) => ({
+        ...current,
+        [card.id]:
+          "Could not save this decision. Keep discussing it, then try again.",
+      }));
+    } finally {
+      setSavingCardId("");
+    }
   }
 
   return (
@@ -88,7 +110,7 @@ export default function RecommendationBoard({
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
               AI groups requests into playful action cards. Approve, edit, or
-              dismiss cards locally while you decide what should happen next.
+              dismiss cards to generate agenda, status, and notification plans.
             </p>
           </div>
           <div className="rounded-2xl bg-white/10 px-5 py-4 text-center">
@@ -142,7 +164,10 @@ export default function RecommendationBoard({
               key={card.id}
               card={card}
               status={cardStatuses[card.id] || "draft"}
-              onStatusChange={(status) => updateStatus(card.id, status)}
+              actionPlan={actionPlans[card.id]}
+              error={errorByCardId[card.id]}
+              saving={savingCardId === card.id}
+              onStatusChange={(status) => updateStatus(card, status)}
             />
           ))}
         </div>
@@ -151,7 +176,14 @@ export default function RecommendationBoard({
   );
 }
 
-function RecommendationCard({ card, status, onStatusChange }) {
+function RecommendationCard({
+  card,
+  status,
+  actionPlan,
+  error,
+  saving,
+  onStatusChange,
+}) {
   const style = CARD_STYLES[card.kind] || CARD_STYLES.manual_review;
   const previewRequests = card.requests.slice(0, 3);
 
@@ -176,7 +208,7 @@ function RecommendationCard({ card, status, onStatusChange }) {
             </p>
           </div>
           <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-black text-white backdrop-blur">
-            {STATUS_LABELS[status]}
+            {saving ? "Saving..." : STATUS_LABELS[status]}
           </span>
         </div>
       </div>
@@ -215,23 +247,34 @@ function RecommendationCard({ card, status, onStatusChange }) {
         <div className="grid gap-2 sm:grid-cols-3">
           <ActionButton
             className={`${style.button} text-white`}
+            disabled={saving}
             onClick={() => onStatusChange("approved")}
           >
             Approve
           </ActionButton>
           <ActionButton
             className="bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+            disabled={saving}
             onClick={() => onStatusChange("editing")}
           >
             Edit
           </ActionButton>
           <ActionButton
             className="bg-white text-slate-500 ring-1 ring-slate-200 hover:bg-slate-50"
+            disabled={saving}
             onClick={() => onStatusChange("dismissed")}
           >
             Dismiss
           </ActionButton>
         </div>
+
+        {error ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+            {error}
+          </div>
+        ) : null}
+
+        {actionPlan ? <ActionPlanPreview actionPlan={actionPlan} /> : null}
 
         {status === "editing" ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4">
@@ -247,6 +290,26 @@ function RecommendationCard({ card, status, onStatusChange }) {
         ) : null}
       </div>
     </article>
+  );
+}
+
+function ActionPlanPreview({ actionPlan }) {
+  return (
+    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+      <p className="text-xs font-black uppercase tracking-wide text-emerald-700">
+        Next step generated
+      </p>
+      <p className="mt-1 font-black text-emerald-950">{actionPlan.title}</p>
+      <p className="mt-2 text-sm leading-6 text-emerald-800">
+        {actionPlan.student_update}
+      </p>
+      {actionPlan.agenda_item ? (
+        <p className="mt-2 rounded-xl bg-white/70 p-3 text-sm font-bold text-emerald-900">
+          Agenda: {actionPlan.agenda_item.suggested_window} ·{" "}
+          {actionPlan.agenda_item.format}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -277,12 +340,13 @@ function Badge({ children, className }) {
   );
 }
 
-function ActionButton({ children, className, onClick }) {
+function ActionButton({ children, className, disabled = false, onClick }) {
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={onClick}
-      className={`rounded-xl px-4 py-3 text-sm font-black transition active:scale-[0.98] ${className}`}
+      className={`rounded-xl px-4 py-3 text-sm font-black transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
     >
       {children}
     </button>

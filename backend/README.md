@@ -21,6 +21,16 @@ Visit:
 - API root: http://127.0.0.1:8000/
 - Interactive docs (Swagger UI): http://127.0.0.1:8000/docs
 
+## Core API endpoints
+
+- `POST /requests/` — submit a student request; backend classifies, recommends,
+  and assigns a cluster.
+- `GET /requests/` — list requests for the professor dashboard.
+- `POST /actions/recommendations/` — persist a professor recommendation-card
+  decision and generate an action plan for agenda/status/notification next
+  steps.
+- `GET /actions/recommendations/` — list saved professor decisions/action plans.
+
 ## Clustering configuration
 
 Request clustering uses `sentence-transformers` embeddings by default.
