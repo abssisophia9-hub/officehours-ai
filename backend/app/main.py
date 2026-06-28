@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database.session import Base, engine
+from app.routes.actions import router as actions_router
 from app.routes.requests import router as requests_router
 
 Base.metadata.create_all(bind=engine)
@@ -42,3 +43,4 @@ def health_check():
 
 
 app.include_router(requests_router)
+app.include_router(actions_router)

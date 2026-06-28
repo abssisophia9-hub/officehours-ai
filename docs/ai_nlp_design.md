@@ -26,6 +26,18 @@ Configuration:
 - `OFFICEHOURS_CLUSTERING_BACKEND=lexical` — deterministic lightweight backend
   for tests/dev environments where downloading the embedding model is not wanted
 
+## Cluster Summarization MVP
+When a professor approves/edits a recommendation card, the action orchestration
+layer summarizes related request text with TF-IDF keyword extraction. These
+keywords become human-readable agenda titles such as "Recursion / Binary Search
+Review" and are included in generated action plans.
+
+This creates an AI/NLP contribution at three levels:
+
+1. rule-based request classification baseline
+2. sentence-transformer semantic clustering
+3. TF-IDF cluster keyword summarization for professor-facing action plans
+
 ## Data Fixtures
 - `data/synthetic_requests.csv` contains raw synthetic finals-week student requests for local demos.
 - `data/labeled_requests.csv` mirrors those request IDs with `category` and `urgency` labels for baseline classification experiments.
