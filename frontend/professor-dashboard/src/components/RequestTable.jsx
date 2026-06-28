@@ -5,7 +5,9 @@ import {
   getRecommendedAction,
 } from "../utils/requests.js";
 
-export default function RequestTable({ requests }) {
+export default function RequestTable({ requests, activeFilter = "all" }) {
+  const isFiltered = activeFilter !== "all";
+
   return (
     <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
       <div className="flex flex-col gap-2 border-b border-slate-200 p-6 md:flex-row md:items-end md:justify-between">
@@ -18,7 +20,10 @@ export default function RequestTable({ requests }) {
           </h2>
         </div>
         <p className="text-sm text-slate-500">
-          Showing newest backend snapshot from <code>/requests/</code>
+          {isFiltered
+            ? "Focused by recommendation lane"
+            : "Showing newest backend snapshot from "}
+          {!isFiltered && <code>/requests/</code>}
         </p>
       </div>
 

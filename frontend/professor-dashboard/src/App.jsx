@@ -1,8 +1,13 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { fetchRequests } from "./api/requests.js";
 import OfficeHoursPanel from "./components/OfficeHoursPanel.jsx";
+import RecommendationBoard from "./components/RecommendationBoard.jsx";
 import RequestTable from "./components/RequestTable.jsx";
 import SummaryCards from "./components/SummaryCards.jsx";
+import {
+  getRecommendationKind,
+  getRecommendedAction,
+} from "./utils/requests.js";
 
 const RequestCharts = lazy(() => import("./components/RequestCharts.jsx"));
 
@@ -11,6 +16,8 @@ export default function App() {
   const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
   const [lastLoadedAt, setLastLoadedAt] = useState(null);
+  const [selectedRecommendationKind, setSelectedRecommendationKind] =
+    useState("all");
 
   async function loadRequests() {
     setStatus("loading");
@@ -38,6 +45,17 @@ export default function App() {
       ),
     [requests],
   );
+  const focusedRequests = useMemo(() => {
+    if (selectedRecommendationKind === "all") {
+      return sortedRequests;
+    }
+
+    return sortedRequests.filter(
+      (request) =>
+        getRecommendationKind(getRecommendedAction(request)) ===
+        selectedRecommendationKind,
+    );
+  }, [selectedRecommendationKind, sortedRequests]);
 
   return (
     <div className="min-h-full bg-slate-100 text-slate-950">
@@ -94,10 +112,18 @@ export default function App() {
             <SummaryCards requests={sortedRequests} />
             <div className="grid gap-8 2xl:grid-cols-[minmax(0,1fr)_420px]">
               <div className="space-y-8">
+                <RecommendationBoard
+                  requests={sortedRequests}
+                  selectedKind={selectedRecommendationKind}
+                  onSelectedKindChange={setSelectedRecommendationKind}
+                />
                 <Suspense fallback={<ChartLoadingState />}>
-                  <RequestCharts requests={sortedRequests} />
+                  <RequestCharts requests={focusedRequests} />
                 </Suspense>
-                <RequestTable requests={sortedRequests} />
+                <RequestTable
+                  requests={focusedRequests}
+                  activeFilter={selectedRecommendationKind}
+                />
               </div>
               <OfficeHoursPanel />
             </div>
