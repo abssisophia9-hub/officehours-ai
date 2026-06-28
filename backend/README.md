@@ -42,6 +42,23 @@ Optional environment variables:
 - `OFFICEHOURS_CLUSTERING_BACKEND=lexical` — lightweight deterministic backend
   for tests/local runs where you do not want to download the embedding model
 
+## Seed demo data
+
+Populate local SQLite with synthetic finals-week requests:
+
+```bash
+cd backend
+python3 scripts/seed_demo_data.py --reset --limit 20
+```
+
+The seed script uses `OFFICEHOURS_CLUSTERING_BACKEND=lexical` by default for a
+fast demo. To exercise semantic clustering during seeding:
+
+```bash
+OFFICEHOURS_CLUSTERING_BACKEND=sentence-transformers \
+  python3 scripts/seed_demo_data.py --reset --limit 20
+```
+
 ## Run tests
 
 ```bash
