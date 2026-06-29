@@ -13,17 +13,20 @@
 - [x] Sentence-transformer question clustering
 - [x] Barcode/manual student check-in prototype
 - [x] Interactive professor recommendation cards
+- [x] Action orchestration engine
+- [x] Evaluation survey forms
+- [x] Mid-report draft
+- [x] Demo data seeding script
+- [x] Mid-report demo screenshots
 
 ## Ready / in progress
 
-- [ ] Evaluation survey forms PR
-- [ ] Mid-report draft PR
+- [ ] Insert screenshots into LaTeX mid-report analysis section
 
 ## Remaining project work
 
 - [ ] Persist professor office hours in backend
-- [ ] Persist recommendation approve/edit/dismiss actions
-- [ ] Add demo data seeding script
+- [ ] Persist recommendation approve/edit/dismiss actions (partially via action orchestration API)
 - [ ] Run user surveys and summarize results
 - [ ] Prepare final report
 
