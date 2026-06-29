@@ -1,7 +1,11 @@
 # Demo Script — Finals Week Simulation
 
 ## Setup
-1. Seed the backend with `data/demo_scenarios.csv`
+1. Seed the backend:
+   ```bash
+   cd backend
+   python3 scripts/seed_demo_data.py --reset --limit 20
+   ```
 2. Start backend (`uvicorn app.main:app --reload`) and both frontend apps
 3. Open professor dashboard on one screen, student kiosk on another
 
