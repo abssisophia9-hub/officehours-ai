@@ -56,3 +56,16 @@ npm run dev
 8. **GitHub Actions**
    - Show green CI checks.
    - Caption: "Automated verification for backend and frontend builds."
+
+## Automated capture
+
+After the servers above are running:
+
+```bash
+cd demo
+npm install
+npx playwright install chromium
+node capture_screenshots.mjs
+```
+
+Outputs land in `demo/screenshots/` with LaTeX-ready filenames. See `demo/screenshots/README.md` for captions.
