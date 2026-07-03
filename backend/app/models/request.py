@@ -42,3 +42,17 @@ class RequestOut(RequestCreate):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class RequestStatusOut(BaseModel):
+    request_code: int
+    status: str
+    headline: str
+    message: str
+    category: str | None = None
+    submitted_at: datetime
+    anonymous_submission: bool
+    recommended_next_step: str | None = None
+    agenda_hint: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)

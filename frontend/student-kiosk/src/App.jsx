@@ -2,11 +2,13 @@ import { useState } from "react";
 import CheckInScreen from "./components/CheckInScreen.jsx";
 import RequestForm from "./components/RequestForm.jsx";
 import ConfirmationScreen from "./components/ConfirmationScreen.jsx";
+import StatusLookupScreen from "./components/StatusLookupScreen.jsx";
 
 export default function App() {
   const [screen, setScreen] = useState("check-in");
   const [checkIn, setCheckIn] = useState(null);
   const [result, setResult] = useState(null);
+  const [statusCode, setStatusCode] = useState("");
 
   function handleCheckIn(nextCheckIn) {
     setCheckIn(nextCheckIn);
@@ -21,23 +23,38 @@ export default function App() {
   function handleReset() {
     setCheckIn(null);
     setResult(null);
+    setStatusCode("");
     setScreen("check-in");
+  }
+
+  function openStatusLookup(code = "") {
+    setStatusCode(code ? String(code) : "");
+    setScreen("status");
   }
 
   return (
     <div className="flex min-h-full flex-col bg-gradient-to-br from-indigo-50 via-slate-50 to-emerald-50">
-      <header className="flex items-center gap-3 px-8 py-6">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-600 text-lg font-extrabold text-white shadow-lg shadow-indigo-300">
-          OH
+      <header className="flex items-center justify-between gap-3 px-8 py-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-600 text-lg font-extrabold text-white shadow-lg shadow-indigo-300">
+            OH
+          </div>
+          <div>
+            <p className="text-lg font-bold leading-tight text-slate-900">
+              OfficeHours AI
+            </p>
+            <p className="text-sm leading-tight text-slate-500">
+              Student Help Kiosk
+            </p>
+          </div>
         </div>
-        <div>
-          <p className="text-lg font-bold leading-tight text-slate-900">
-            OfficeHours AI
-          </p>
-          <p className="text-sm leading-tight text-slate-500">
-            Student Help Kiosk
-          </p>
-        </div>
+        <button
+          type="button"
+          onClick={() => openStatusLookup()}
+          className="rounded-full border-2 border-indigo-200 bg-white px-4 py-2 text-sm font-bold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50"
+        >
+          Check request status
+        </button>
       </header>
 
       <main className="flex flex-1 items-center justify-center px-6 pb-12">
@@ -46,7 +63,17 @@ export default function App() {
           <RequestForm checkIn={checkIn} onSubmitted={handleSubmitted} />
         )}
         {screen === "confirmation" && (
-          <ConfirmationScreen result={result} onReset={handleReset} />
+          <ConfirmationScreen
+            result={result}
+            onReset={handleReset}
+            onCheckStatus={() => openStatusLookup(result.id)}
+          />
+        )}
+        {screen === "status" && (
+          <StatusLookupScreen
+            initialCode={statusCode}
+            onBack={handleReset}
+          />
         )}
       </main>
 

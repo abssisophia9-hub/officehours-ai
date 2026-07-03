@@ -28,7 +28,7 @@
 - [x] Persist professor office hours in backend
 - [x] Persist recommendation approve/edit/dismiss actions (via action orchestration API)
 - [x] Add `.ics` calendar export for generated agenda/action plans
-- [ ] Add anonymous request status lookup page
+- [x] Add anonymous request status lookup page
 - [ ] Prepare final report
 
 ## Optional future upgrades

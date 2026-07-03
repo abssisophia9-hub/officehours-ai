@@ -7,8 +7,10 @@ from sqlalchemy.orm import Session
 
 from app.ai.clustering import assign_cluster_id
 from app.database.session import get_db
-from app.models.request import Request, RequestCreate, RequestOut
+from app.models.action import RecommendationDecision
+from app.models.request import Request, RequestCreate, RequestOut, RequestStatusOut
 from app.services.classification_service import classify_and_recommend
+from app.services.request_status_service import build_request_status
 
 router = APIRouter(prefix="/requests", tags=["requests"])
 
@@ -36,6 +38,19 @@ def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
 @router.get("/", response_model=list[RequestOut])
 def list_requests(db: Session = Depends(get_db)):
     return db.query(Request).order_by(Request.id).all()
+
+
+@router.get("/{request_id}/status", response_model=RequestStatusOut)
+def get_request_status(request_id: int, db: Session = Depends(get_db)):
+    db_request = db.get(Request, request_id)
+    if db_request is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Request not found",
+        )
+
+    decisions = db.query(RecommendationDecision).order_by(RecommendationDecision.id).all()
+    return build_request_status(db_request, decisions)
 
 
 @router.get("/{request_id}", response_model=RequestOut)

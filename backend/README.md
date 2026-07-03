@@ -26,6 +26,8 @@ Visit:
 - `POST /requests/` — submit a student request; backend classifies, recommends,
   and assigns a cluster.
 - `GET /requests/` — list requests for the professor dashboard.
+- `GET /requests/{request_id}/status` — privacy-safe anonymous status lookup
+  by request code (no student ID or request text returned).
 - `POST /actions/recommendations/` — persist a professor recommendation-card
   decision and generate an action plan for agenda/status/notification next
   steps.

@@ -1,4 +1,4 @@
-export default function ConfirmationScreen({ result, onReset }) {
+export default function ConfirmationScreen({ result, onReset, onCheckStatus }) {
   return (
     <div className="w-full max-w-2xl animate-fade-in-up rounded-3xl bg-white p-8 text-center shadow-2xl shadow-emerald-200/40 sm:p-10">
       <div className="mx-auto mb-6 flex h-24 w-24 animate-pop-in items-center justify-center rounded-full bg-emerald-100">
@@ -39,15 +39,27 @@ export default function ConfirmationScreen({ result, onReset }) {
             ? "Submitted anonymously"
             : `Submitted as ${result.student_id}`}
         </p>
+        <p className="mt-3 text-sm leading-6 text-indigo-700">
+          Save code #{result.id} to check status later without signing in.
+        </p>
       </div>
 
-      <button
-        type="button"
-        onClick={onReset}
-        className="mt-8 w-full rounded-2xl bg-slate-900 px-6 py-5 text-xl font-bold text-white shadow-lg transition hover:bg-slate-800 active:scale-[0.99]"
-      >
-        Submit another question
-      </button>
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={onCheckStatus}
+          className="rounded-2xl border-2 border-indigo-200 bg-indigo-50 px-6 py-5 text-lg font-bold text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-100 active:scale-[0.99]"
+        >
+          Check status now
+        </button>
+        <button
+          type="button"
+          onClick={onReset}
+          className="rounded-2xl bg-slate-900 px-6 py-5 text-lg font-bold text-white shadow-lg transition hover:bg-slate-800 active:scale-[0.99]"
+        >
+          Submit another question
+        </button>
+      </div>
     </div>
   );
 }
