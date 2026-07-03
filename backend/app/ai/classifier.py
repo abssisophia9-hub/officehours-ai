@@ -9,6 +9,7 @@ without changing route/service callers.
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 
@@ -167,6 +168,17 @@ def classify(text: str) -> dict[str, object]:
     """
     Classify request text into an initial category with confidence metadata.
     """
+    backend = os.getenv("OFFICEHOURS_CLASSIFIER_BACKEND", "rules").strip().lower()
+    if backend == "ml":
+        from app.ai.ml_classifier import classify_ml
+
+        return classify_ml(text)
+
+    return classify_rules(text)
+
+
+def classify_rules(text: str) -> dict[str, object]:
+    """Rule-based classifier used as the default backend and test baseline."""
     normalized_text = _normalize(text)
     if not normalized_text:
         result = ClassificationResult(
@@ -175,7 +187,9 @@ def classify(text: str) -> dict[str, object]:
             confidence=0.0,
             matched_keywords=[],
         )
-        return _to_dict(result)
+        payload = _to_dict(result)
+        payload["classifier_backend"] = "rules"
+        return payload
 
     matches_by_category = {
         category: _matched_keywords(normalized_text, keywords)
@@ -191,7 +205,9 @@ def classify(text: str) -> dict[str, object]:
             confidence=0.2,
             matched_keywords=[],
         )
-        return _to_dict(result)
+        payload = _to_dict(result)
+        payload["classifier_backend"] = "rules"
+        return payload
 
     result = ClassificationResult(
         category=category,
@@ -199,7 +215,9 @@ def classify(text: str) -> dict[str, object]:
         confidence=_confidence(len(matched_keywords)),
         matched_keywords=matched_keywords,
     )
-    return _to_dict(result)
+    payload = _to_dict(result)
+    payload["classifier_backend"] = "rules"
+    return payload
 
 
 def _normalize(text: str) -> str:

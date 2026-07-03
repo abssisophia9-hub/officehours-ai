@@ -51,3 +51,8 @@ Pilot demo survey CSV exports used for final-report evaluation:
 - `professor_responses.csv` — professor post-demo Likert + free-text responses
 
 Summarize with `backend/scripts/analyze_survey_responses.py`.
+
+## `labeled_requests_extended.csv` / `labeled_requests_extra.csv`
+
+Additional labeled finals-week examples used to train and evaluate the ML
+classifier beyond the original 40-row rule-tuned baseline.
