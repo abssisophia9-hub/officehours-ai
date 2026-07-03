@@ -1,12 +1,15 @@
-import { useState } from "react";
-
-const DEFAULT_WINDOWS = [
-  { day: "Monday", start: "10:00", end: "11:30", location: "Room 204" },
-  { day: "Wednesday", start: "14:00", end: "15:30", location: "Zoom" },
-];
+import { useEffect, useState } from "react";
+import {
+  createOfficeHoursWindow,
+  deleteOfficeHoursWindow,
+  fetchOfficeHours,
+} from "../api/officeHours.js";
 
 export default function OfficeHoursPanel() {
-  const [windows, setWindows] = useState(DEFAULT_WINDOWS);
+  const [windows, setWindows] = useState([]);
+  const [status, setStatus] = useState("loading");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState({
     day: "Monday",
     start: "09:00",
@@ -14,27 +17,65 @@ export default function OfficeHoursPanel() {
     location: "",
   });
 
+  useEffect(() => {
+    loadWindows();
+  }, []);
+
+  async function loadWindows() {
+    setStatus("loading");
+    setError("");
+
+    try {
+      const data = await fetchOfficeHours();
+      setWindows(data);
+      setStatus("success");
+    } catch (loadError) {
+      setStatus("error");
+      setError(loadError.message);
+    }
+  }
+
   function updateDraft(field, value) {
     setDraft((current) => ({ ...current, [field]: value }));
   }
 
-  function addWindow(event) {
+  async function addWindow(event) {
     event.preventDefault();
     if (!draft.start || !draft.end) {
       return;
     }
 
-    setWindows((current) => [
-      ...current,
-      { ...draft, location: draft.location.trim() || "TBD" },
-    ]);
-    setDraft({ day: draft.day, start: "09:00", end: "10:00", location: "" });
+    setSaving(true);
+    setError("");
+
+    try {
+      const created = await createOfficeHoursWindow({
+        day: draft.day,
+        start: draft.start,
+        end: draft.end,
+        location: draft.location.trim() || "TBD",
+      });
+      setWindows((current) => [...current, created]);
+      setDraft({ day: draft.day, start: "09:00", end: "10:00", location: "" });
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function removeWindow(indexToRemove) {
-    setWindows((current) =>
-      current.filter((_, index) => index !== indexToRemove),
-    );
+  async function removeWindow(windowId) {
+    setSaving(true);
+    setError("");
+
+    try {
+      await deleteOfficeHoursWindow(windowId);
+      setWindows((current) => current.filter((window) => window.id !== windowId));
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -44,15 +85,29 @@ export default function OfficeHoursPanel() {
       </p>
       <h2 className="mt-1 text-2xl font-black">Office hours</h2>
       <p className="mt-2 text-sm leading-6 text-indigo-100">
-        Professors should specify office-hour windows in this dashboard. The
-        backend should persist these windows before recommendation logic uses
-        them to suggest group sessions or 1:1 follow-ups.
+        Office-hour windows are saved to the backend so recommendation and
+        action-plan logic can reference professor availability.
       </p>
 
+      {status === "loading" ? (
+        <p className="mt-6 text-sm text-indigo-100">Loading saved windows...</p>
+      ) : null}
+
+      {error ? (
+        <div className="mt-6 rounded-2xl border border-red-300/40 bg-red-500/10 p-4 text-sm font-bold text-red-100">
+          {error}
+        </div>
+      ) : null}
+
       <div className="mt-6 space-y-3">
-        {windows.map((window, index) => (
+        {windows.length === 0 && status === "success" ? (
+          <p className="rounded-2xl bg-white/10 p-4 text-sm text-indigo-100">
+            No office-hour slots saved yet. Add one below.
+          </p>
+        ) : null}
+        {windows.map((window) => (
           <div
-            key={`${window.day}-${window.start}-${index}`}
+            key={window.id}
             className="flex items-center justify-between gap-4 rounded-2xl bg-white/10 p-4"
           >
             <div>
@@ -63,8 +118,9 @@ export default function OfficeHoursPanel() {
             </div>
             <button
               type="button"
-              onClick={() => removeWindow(index)}
-              className="rounded-full bg-white/10 px-3 py-1 text-sm font-bold text-indigo-50 hover:bg-white/20"
+              disabled={saving}
+              onClick={() => removeWindow(window.id)}
+              className="rounded-full bg-white/10 px-3 py-1 text-sm font-bold text-indigo-50 hover:bg-white/20 disabled:opacity-60"
             >
               Remove
             </button>
@@ -119,9 +175,10 @@ export default function OfficeHoursPanel() {
 
         <button
           type="submit"
-          className="self-end rounded-xl bg-emerald-400 px-4 py-2 font-black text-emerald-950 hover:bg-emerald-300"
+          disabled={saving}
+          className="self-end rounded-xl bg-emerald-400 px-4 py-2 font-black text-emerald-950 hover:bg-emerald-300 disabled:opacity-60"
         >
-          Add slot
+          {saving ? "Saving..." : "Add slot"}
         </button>
       </form>
     </section>
