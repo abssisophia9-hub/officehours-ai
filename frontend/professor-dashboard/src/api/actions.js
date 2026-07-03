@@ -22,6 +22,10 @@ export async function saveRecommendationDecision({ card, status, professorNote }
   return response.json();
 }
 
+export function getCalendarExportUrl(decisionId) {
+  return `${API_BASE}/actions/recommendations/${decisionId}/calendar.ics`;
+}
+
 function firstClusterId(card) {
   const clusterId = card.requests.find(
     (request) => request.cluster_id !== null && request.cluster_id !== undefined,

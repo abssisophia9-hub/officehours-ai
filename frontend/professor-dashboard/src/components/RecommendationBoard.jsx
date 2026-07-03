@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { saveRecommendationDecision } from "../api/actions.js";
+import { getCalendarExportUrl, saveRecommendationDecision } from "../api/actions.js";
 import {
   buildRecommendationCards,
   formatDateTime,
@@ -64,6 +64,7 @@ export default function RecommendationBoard({
 }) {
   const [cardStatuses, setCardStatuses] = useState({});
   const [actionPlans, setActionPlans] = useState({});
+  const [decisionIds, setDecisionIds] = useState({});
   const [savingCardId, setSavingCardId] = useState("");
   const [errorByCardId, setErrorByCardId] = useState({});
   const cards = useMemo(() => buildRecommendationCards(requests), [requests]);
@@ -83,6 +84,10 @@ export default function RecommendationBoard({
       setActionPlans((current) => ({
         ...current,
         [card.id]: decision.action_plan,
+      }));
+      setDecisionIds((current) => ({
+        ...current,
+        [card.id]: decision.id,
       }));
     } catch (error) {
       setErrorByCardId((current) => ({
@@ -165,6 +170,7 @@ export default function RecommendationBoard({
               card={card}
               status={cardStatuses[card.id] || "draft"}
               actionPlan={actionPlans[card.id]}
+              decisionId={decisionIds[card.id]}
               error={errorByCardId[card.id]}
               saving={savingCardId === card.id}
               onStatusChange={(status) => updateStatus(card, status)}
@@ -180,6 +186,7 @@ function RecommendationCard({
   card,
   status,
   actionPlan,
+  decisionId,
   error,
   saving,
   onStatusChange,
@@ -274,7 +281,9 @@ function RecommendationCard({
           </div>
         ) : null}
 
-        {actionPlan ? <ActionPlanPreview actionPlan={actionPlan} /> : null}
+        {actionPlan ? (
+          <ActionPlanPreview actionPlan={actionPlan} decisionId={decisionId} />
+        ) : null}
 
         {status === "editing" ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4">
@@ -293,7 +302,9 @@ function RecommendationCard({
   );
 }
 
-function ActionPlanPreview({ actionPlan }) {
+function ActionPlanPreview({ actionPlan, decisionId }) {
+  const calendarReady = actionPlan.calendar?.ics_ready && decisionId;
+
   return (
     <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
       <p className="text-xs font-black uppercase tracking-wide text-emerald-700">
@@ -308,6 +319,14 @@ function ActionPlanPreview({ actionPlan }) {
           Agenda: {actionPlan.agenda_item.suggested_window} ·{" "}
           {actionPlan.agenda_item.format}
         </p>
+      ) : null}
+      {calendarReady ? (
+        <a
+          href={getCalendarExportUrl(decisionId)}
+          className="mt-3 inline-flex rounded-xl bg-emerald-700 px-4 py-2 text-sm font-black text-white hover:bg-emerald-800"
+        >
+          Download calendar (.ics)
+        </a>
       ) : null}
     </div>
   );

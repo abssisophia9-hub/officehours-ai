@@ -5,6 +5,7 @@ Routes for professor recommendation decisions and generated action plans.
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
@@ -13,8 +14,14 @@ from app.models.action import (
     RecommendationDecisionCreate,
     RecommendationDecisionOut,
 )
+from app.models.office_hours import OfficeHoursWindow
 from app.models.request import Request
 from app.services.action_orchestration_service import build_action_plan
+from app.services.ics_calendar_service import (
+    build_ics_calendar,
+    ics_export_available,
+    pick_office_hours_window,
+)
 
 router = APIRouter(prefix="/actions", tags=["actions"])
 
@@ -29,7 +36,8 @@ def create_recommendation_decision(
     db: Session = Depends(get_db),
 ):
     related_requests = _get_related_requests(db, payload.request_ids)
-    action_plan = build_action_plan(payload, related_requests)
+    office_hours = db.query(OfficeHoursWindow).all()
+    action_plan = build_action_plan(payload, related_requests, office_hours)
 
     decision = RecommendationDecision(
         card_id=payload.card_id,
@@ -52,6 +60,39 @@ def create_recommendation_decision(
 def list_recommendation_decisions(db: Session = Depends(get_db)):
     decisions = db.query(RecommendationDecision).order_by(RecommendationDecision.id).all()
     return [_to_out(decision) for decision in decisions]
+
+
+@router.get("/recommendations/{decision_id}/calendar.ics")
+def export_recommendation_calendar(decision_id: int, db: Session = Depends(get_db)):
+    decision = db.get(RecommendationDecision, decision_id)
+    if decision is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Recommendation decision not found",
+        )
+
+    if not ics_export_available(decision):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="This decision does not support calendar export.",
+        )
+
+    window = pick_office_hours_window(db.query(OfficeHoursWindow).all())
+    if window is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No office-hour windows are configured for calendar export.",
+        )
+
+    action_plan = json.loads(decision.action_plan)
+    ics_content = build_ics_calendar(decision, action_plan, window)
+    filename = f"officehours-action-{decision_id}.ics"
+
+    return Response(
+        content=ics_content,
+        media_type="text/calendar",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 def _get_related_requests(db: Session, request_ids: list[int]) -> list[Request]:

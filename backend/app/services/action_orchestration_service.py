@@ -6,12 +6,19 @@ from __future__ import annotations
 
 from app.ai.summarizer import summarize_request_cluster
 from app.models.action import RecommendationDecisionCreate
+from app.models.office_hours import OfficeHoursWindow
 from app.models.request import Request
+from app.services.ics_calendar_service import (
+    ICS_EXPORT_KINDS,
+    office_hours_snapshot,
+    pick_office_hours_window,
+)
 
 
 def build_action_plan(
     decision: RecommendationDecisionCreate,
     related_requests: list[Request],
+    office_hours: list[OfficeHoursWindow] | None = None,
 ) -> dict[str, object]:
     cluster_summary = summarize_request_cluster([request.text for request in related_requests])
     request_count = len(related_requests)
@@ -33,6 +40,12 @@ def build_action_plan(
     strategy = _strategy_for(decision.action_kind)
     title = f"{strategy['title_prefix']}: {cluster_summary['title']}"
     summary = _summary(decision, strategy, request_count)
+    selected_window = pick_office_hours_window(office_hours or [])
+    ics_ready = (
+        decision.status == "approved"
+        and decision.action_kind in ICS_EXPORT_KINDS
+        and selected_window is not None
+    )
 
     return {
         "plan_type": decision.action_kind,
@@ -40,14 +53,17 @@ def build_action_plan(
         "summary": summary,
         "agenda_item": {
             "label": title,
-            "suggested_window": strategy["window"],
+            "suggested_window": _suggested_window_label(selected_window, strategy["window"]),
             "format": strategy["format"],
             "walk_in_policy": "Keep office hours open; this block gives students a shared starting point, not a hard appointment gate.",
         },
         "calendar": {
             "suggestion": strategy["calendar"],
-            "ics_ready": False,
+            "ics_ready": ics_ready,
             "description": summary,
+            "office_hours_window": (
+                office_hours_snapshot(selected_window) if selected_window else None
+            ),
         },
         "student_update": _student_update(decision, strategy),
         "privacy": _privacy_summary(identified_count, anonymous_count),
@@ -133,3 +149,16 @@ def _privacy_summary(identified_count: int, anonymous_count: int) -> dict[str, o
         "identified_delivery": "Direct notification can be added later via roster/email integration.",
         "anonymous_delivery": "Use request code or public anonymized status board; do not expose student identity.",
     }
+
+
+def _suggested_window_label(
+    selected_window: OfficeHoursWindow | None,
+    fallback: str,
+) -> str:
+    if selected_window is None:
+        return fallback
+
+    return (
+        f"{selected_window.day}, {selected_window.start}-{selected_window.end} "
+        f"({selected_window.location})"
+    )
