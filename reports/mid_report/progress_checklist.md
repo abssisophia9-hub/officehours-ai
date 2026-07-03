@@ -25,8 +25,8 @@
 
 ## Remaining project work
 
-- [ ] Persist professor office hours in backend
-- [ ] Persist recommendation approve/edit/dismiss actions (partially via action orchestration API)
+- [x] Persist professor office hours in backend
+- [x] Persist recommendation approve/edit/dismiss actions (via action orchestration API)
 - [ ] Run user surveys and summarize results
 - [ ] Prepare final report
 

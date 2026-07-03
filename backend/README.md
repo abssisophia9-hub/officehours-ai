@@ -30,6 +30,9 @@ Visit:
   decision and generate an action plan for agenda/status/notification next
   steps.
 - `GET /actions/recommendations/` — list saved professor decisions/action plans.
+- `GET /office-hours/` — list persisted professor office-hour windows.
+- `POST /office-hours/` — add an office-hour window (day, start, end, location).
+- `DELETE /office-hours/{window_id}` — remove an office-hour window.
 
 ## Clustering configuration
 
