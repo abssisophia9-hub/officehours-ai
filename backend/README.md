@@ -30,6 +30,9 @@ Visit:
   decision and generate an action plan for agenda/status/notification next
   steps.
 - `GET /actions/recommendations/` — list saved professor decisions/action plans.
+- `GET /actions/recommendations/{decision_id}/calendar.ics` — download an
+  iCalendar (`.ics`) file for approved group-session / 1:1 / TA-support plans
+  when office-hour windows are configured.
 - `GET /office-hours/` — list persisted professor office-hour windows.
 - `POST /office-hours/` — add an office-hour window (day, start, end, location).
 - `DELETE /office-hours/{window_id}` — remove an office-hour window.
