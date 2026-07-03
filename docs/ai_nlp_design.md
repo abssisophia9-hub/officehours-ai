@@ -32,11 +32,15 @@ layer summarizes related request text with TF-IDF keyword extraction. These
 keywords become human-readable agenda titles such as "Recursion / Binary Search
 Review" and are included in generated action plans.
 
-This creates an AI/NLP contribution at three levels:
+This creates an AI/NLP contribution at four levels:
 
 1. rule-based request classification baseline
 2. sentence-transformer semantic clustering
 3. TF-IDF cluster keyword summarization for professor-facing action plans
+4. embedding + logistic regression classifier trained on 120 labeled examples
+
+Train/evaluate the ML classifier with `backend/scripts/train_classifier.py`.
+Set `OFFICEHOURS_CLASSIFIER_BACKEND=ml` to use it at runtime.
 
 ## Data Fixtures
 - `data/synthetic_requests.csv` contains raw synthetic finals-week student requests for local demos.

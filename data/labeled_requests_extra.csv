@@ -1,0 +1,41 @@
+request_id,text,category,urgency,label_source
+FS081,"Can you explain how memoization works in dynamic programming for the final?",conceptual_question,medium,synthetic_finals_week_v3
+FS082,"I'm struggling with heap operations and priority queue problems on the review sheet.",conceptual_question,medium,synthetic_finals_week_v3
+FS083,"What room is the final in and will seating be assigned alphabetically?",exam_logistics,low,synthetic_finals_week_v3
+FS084,"Is the final open notes or closed book this semester?",exam_logistics,low,synthetic_finals_week_v3
+FS085,"I missed the final because of illness. How do I request a makeup exam?",retake_request,high,synthetic_finals_week_v3
+FS086,"My exam conflict form was approved but I still do not have a new time.",retake_request,high,synthetic_finals_week_v3
+FS087,"I have extended time accommodations. Where do I check in on exam day?",accessibility_accommodation,high,synthetic_finals_week_v3
+FS088,"Disability services said my accommodation letter was updated. Who receives it?",accessibility_accommodation,high,synthetic_finals_week_v3
+FS089,"The rubric says I should receive partial credit but the grader marked it wrong.",grading_dispute,medium,synthetic_finals_week_v3
+FS090,"Can someone review whether my late submission penalty was applied correctly?",grading_dispute,medium,synthetic_finals_week_v3
+FS091,"I'm panicking and feel like I will fail if I do not get help tonight.",emotional_stress,urgent,synthetic_finals_week_v3
+FS092,"I'm overwhelmed and cannot focus because of back-to-back finals.",emotional_stress,high,synthetic_finals_week_v3
+FS093,"The autograder fails on hidden tests even though my local tests pass.",project_submission,medium,synthetic_finals_week_v3
+FS094,"Our final project demo video will not upload before the deadline.",project_submission,high,synthetic_finals_week_v3
+FS095,"Can you add another office hours slot this week? All the current ones are full.",office_hours_access,medium,synthetic_finals_week_v3
+FS096,"Where can I find the Zoom link for virtual office hours?",office_hours_access,low,synthetic_finals_week_v3
+FS097,"I received an academic integrity notice about similar code structure.",academic_integrity,high,synthetic_finals_week_v3
+FS098,"The similarity report flagged my project and I need to know next steps.",academic_integrity,high,synthetic_finals_week_v3
+FS099,"Where can I find campus tutoring center hours?",uncategorized,low,synthetic_finals_week_v3
+FS100,"Can you write me a recommendation letter before grades are posted?",uncategorized,low,synthetic_finals_week_v3
+FS101,"How do I prove an algorithm is correct using loop invariants?",conceptual_question,medium,synthetic_finals_week_v3
+FS102,"Will the final include multiple choice, short answer, or coding questions?",exam_logistics,low,synthetic_finals_week_v3
+FS103,"I need a religious accommodation for the Saturday exam slot.",retake_request,high,synthetic_finals_week_v3
+FS104,"My screen reader failed during the practice exam platform test.",accessibility_accommodation,high,synthetic_finals_week_v3
+FS105,"I think my homework was graded with the wrong rubric version.",grading_dispute,medium,synthetic_finals_week_v3
+FS106,"I'm scared I will blank on the exam and forget everything I studied.",emotional_stress,urgent,synthetic_finals_week_v3
+FS107,"We have merge conflicts in our team repo and the project is due tonight.",project_submission,high,synthetic_finals_week_v3
+FS108,"Are office hours walk-in or do we need to reserve a slot?",office_hours_access,low,synthetic_finals_week_v3
+FS109,"Does the library stay open late during finals week?",uncategorized,low,synthetic_finals_week_v3
+FS110,"Can we review Dijkstra and BFS for shortest path questions?",conceptual_question,medium,synthetic_finals_week_v3
+FS111,"What materials are allowed on the final exam desk?",exam_logistics,low,synthetic_finals_week_v3
+FS112,"I had a family emergency and need a deferred final exam.",retake_request,high,synthetic_finals_week_v3
+FS113,"My accommodation for a separate room was not listed on the seating chart.",accessibility_accommodation,high,synthetic_finals_week_v3
+FS114,"I want to appeal the grading on my final project report.",grading_dispute,medium,synthetic_finals_week_v3
+FS115,"I feel stuck and need help building a study plan for the last two days.",emotional_stress,high,synthetic_finals_week_v3
+FS116,"I submitted the wrong file to Gradescope for the final project.",project_submission,high,synthetic_finals_week_v3
+FS117,"Can we schedule a group review session during office hours?",office_hours_access,medium,synthetic_finals_week_v3
+FS118,"I shared pseudocode with a friend and got an honor code email.",academic_integrity,high,synthetic_finals_week_v3
+FS119,"How do I drop the course after the withdrawal deadline?",uncategorized,low,synthetic_finals_week_v3
+FS120,"Can you explain the difference between stack and queue applications on the exam?",conceptual_question,medium,synthetic_finals_week_v3

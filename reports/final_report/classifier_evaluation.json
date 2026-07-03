@@ -1,0 +1,236 @@
+{
+  "dataset_size": 120,
+  "labels": [
+    "academic_integrity",
+    "accessibility_accommodation",
+    "conceptual_question",
+    "emotional_stress",
+    "exam_logistics",
+    "grading_dispute",
+    "office_hours_access",
+    "project_submission",
+    "retake_request",
+    "uncategorized"
+  ],
+  "cv_folds": 5,
+  "accuracy": 0.8917,
+  "macro_f1": 0.8961,
+  "weighted_f1": 0.8896,
+  "classification_report": {
+    "academic_integrity": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 7.0
+    },
+    "accessibility_accommodation": {
+      "precision": 0.9,
+      "recall": 1.0,
+      "f1-score": 0.9473684210526315,
+      "support": 9.0
+    },
+    "conceptual_question": {
+      "precision": 0.9523809523809523,
+      "recall": 1.0,
+      "f1-score": 0.975609756097561,
+      "support": 20.0
+    },
+    "emotional_stress": {
+      "precision": 0.9090909090909091,
+      "recall": 0.9090909090909091,
+      "f1-score": 0.9090909090909091,
+      "support": 11.0
+    },
+    "exam_logistics": {
+      "precision": 0.875,
+      "recall": 0.7777777777777778,
+      "f1-score": 0.8235294117647058,
+      "support": 18.0
+    },
+    "grading_dispute": {
+      "precision": 0.8888888888888888,
+      "recall": 0.7272727272727273,
+      "f1-score": 0.8,
+      "support": 11.0
+    },
+    "office_hours_access": {
+      "precision": 0.9,
+      "recall": 1.0,
+      "f1-score": 0.9473684210526315,
+      "support": 9.0
+    },
+    "project_submission": {
+      "precision": 0.8,
+      "recall": 0.8,
+      "f1-score": 0.8,
+      "support": 15.0
+    },
+    "retake_request": {
+      "precision": 0.8333333333333334,
+      "recall": 0.9090909090909091,
+      "f1-score": 0.8695652173913043,
+      "support": 11.0
+    },
+    "uncategorized": {
+      "precision": 0.8888888888888888,
+      "recall": 0.8888888888888888,
+      "f1-score": 0.8888888888888888,
+      "support": 9.0
+    },
+    "accuracy": 0.8916666666666667,
+    "macro avg": {
+      "precision": 0.8947582972582973,
+      "recall": 0.9012121212121211,
+      "f1-score": 0.8961421025338632,
+      "support": 120.0
+    },
+    "weighted avg": {
+      "precision": 0.8911838624338625,
+      "recall": 0.8916666666666667,
+      "f1-score": 0.8896131125330636,
+      "support": 120.0
+    }
+  },
+  "confusion_matrix": {
+    "labels": [
+      "academic_integrity",
+      "accessibility_accommodation",
+      "conceptual_question",
+      "emotional_stress",
+      "exam_logistics",
+      "grading_dispute",
+      "office_hours_access",
+      "project_submission",
+      "retake_request",
+      "uncategorized"
+    ],
+    "matrix": [
+      [
+        7,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        9,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        20,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        10,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        1,
+        14,
+        0,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        8,
+        0,
+        2,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        9,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        12,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        10,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        8
+      ]
+    ]
+  },
+  "source_files": [
+    "data/labeled_requests.csv",
+    "data/labeled_requests_extended.csv",
+    "data/labeled_requests_extra.csv"
+  ],
+  "feature_backend": "sentence-transformer-embeddings + logistic regression"
+}

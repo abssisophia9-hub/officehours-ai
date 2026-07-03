@@ -49,6 +49,21 @@ Optional environment variables:
 - `OFFICEHOURS_CLUSTER_SIMILARITY_THRESHOLD` — defaults to `0.72`
 - `OFFICEHOURS_CLUSTERING_BACKEND=lexical` — lightweight deterministic backend
   for tests/local runs where you do not want to download the embedding model
+- `OFFICEHOURS_CLASSIFIER_BACKEND=rules|ml` — defaults to `rules`; set `ml` to
+  use the trained embedding classifier in `backend/models/request_classifier.joblib`
+- `OFFICEHOURS_CLASSIFIER_MODEL` — optional override path to the saved ML model
+
+## Train ML classifier
+
+Train/evaluate the embedding + logistic regression classifier on labeled CSVs:
+
+```bash
+cd backend
+python3 scripts/train_classifier.py
+```
+
+Metrics are written to `reports/final_report/classifier_evaluation.{json,md}`.
+Labeled data lives in `data/labeled_requests*.csv`.
 
 ## Seed demo data
 

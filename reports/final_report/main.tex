@@ -100,9 +100,10 @@ pull request.
 \subsection{Classification accuracy}
 On the synthetic labeled dataset (\path{data/labeled_requests.csv}, $n=40$),
 the rule-based classifier achieved \textbf{100\%} category accuracy in the
-development environment. This meets the $\geq 80\%$ target from
-\path{docs/evaluation_plan.md}, though real-world generalization would require
-more diverse labeled examples.
+development environment. With 120 labeled examples across three CSV files, an
+embedding + logistic regression classifier reached \textbf{89.2\%} stratified
+cross-validation accuracy and \textbf{0.90 macro F1} (see
+\path{reports/final_report/classifier_evaluation.json}).
 
 \subsection{Clustering and demo behavior}
 Demo scenarios in \path{data/demo_scenarios.csv} validate that repeated

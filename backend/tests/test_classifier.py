@@ -1,7 +1,7 @@
 import csv
 from pathlib import Path
 
-from app.ai.classifier import classify
+from app.ai.classifier import classify, classify_rules
 from app.services.classification_service import classify_and_recommend
 
 
@@ -41,16 +41,16 @@ def test_classify_and_recommend_grading_dispute():
     assert result["recommended_action"] == "Route to grading review workflow"
 
 
-def test_classifier_matches_synthetic_labeled_dataset():
+def test_rule_classifier_matches_synthetic_labeled_dataset():
     dataset_path = Path(__file__).parents[2] / "data" / "labeled_requests.csv"
 
     with dataset_path.open(newline="") as dataset_file:
         rows = list(csv.DictReader(dataset_file))
 
     mismatches = [
-        (row["request_id"], row["category"], classify(row["text"])["category"])
+        (row["request_id"], row["category"], classify_rules(row["text"])["category"])
         for row in rows
-        if classify(row["text"])["category"] != row["category"]
+        if classify_rules(row["text"])["category"] != row["category"]
     ]
 
     assert len(rows) == 40

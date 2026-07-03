@@ -1,0 +1,41 @@
+request_id,text,category,urgency,label_source
+FS041,"Could you walk through how to trace a recursive call stack on the practice exam?",conceptual_question,medium,synthetic_finals_week_v2
+FS042,"I'm lost on Big-O proofs for divide and conquer. The induction step keeps breaking for me.",conceptual_question,medium,synthetic_finals_week_v2
+FS043,"What's the policy on calculators for the final? The syllabus and Canvas post disagree.",exam_logistics,low,synthetic_finals_week_v2
+FS044,"Are we allowed a cheat sheet, and if so what size paper can we bring?",exam_logistics,low,synthetic_finals_week_v2
+FS045,"The final schedule says 8am but my registration email says 10am. Which is correct?",exam_logistics,medium,synthetic_finals_week_v2
+FS046,"I had a family emergency and missed the final. How do I request a deferred exam?",retake_request,high,synthetic_finals_week_v2
+FS047,"My doctor note covers exam day. Who processes makeup exam approvals?",retake_request,high,synthetic_finals_week_v2
+FS048,"I need an alternate exam time because of two finals scheduled back-to-back.",retake_request,high,synthetic_finals_week_v2
+FS049,"I have ADHD accommodations on file. Will the proctor know about my extended time?",accessibility_accommodation,high,synthetic_finals_week_v2
+FS050,"Where do I send updated disability services paperwork before the final?",accessibility_accommodation,high,synthetic_finals_week_v2
+FS051,"My note-taking accommodation wasn't applied on the midterm. Can we fix that for finals?",accessibility_accommodation,high,synthetic_finals_week_v2
+FS052,"The autograder says wrong answer but my manual tests pass locally.",grading_dispute,medium,synthetic_finals_week_v2
+FS053,"I think the TA applied the wrong late policy to my homework submission.",grading_dispute,medium,synthetic_finals_week_v2
+FS054,"Can someone review whether my partial credit on question 3 was fair?",grading_dispute,medium,synthetic_finals_week_v2
+FS055,"I'm anxious about failing and haven't been able to study all week.",emotional_stress,urgent,synthetic_finals_week_v2
+FS056,"Feeling overwhelmed with three projects due before finals. Any advice?",emotional_stress,high,synthetic_finals_week_v2
+FS057,"Hidden test case 7 fails on the autograder but passes in PyCharm.",project_submission,medium,synthetic_finals_week_v2
+FS058,"Our demo video upload keeps failing on Canvas right before the deadline.",project_submission,high,synthetic_finals_week_v2
+FS059,"Can we add another office hours block? Every slot was full in five minutes.",office_hours_access,medium,synthetic_finals_week_v2
+FS060,"Is there a Zoom link for virtual office hours this week?",office_hours_access,low,synthetic_finals_week_v2
+FS061,"The honor code office emailed me about similarity on my essay draft.",academic_integrity,high,synthetic_finals_week_v2
+FS062,"I accidentally shared code with a friend and got an integrity flag.",academic_integrity,high,synthetic_finals_week_v2
+FS063,"Where is the tutoring center located?",uncategorized,low,synthetic_finals_week_v2
+FS064,"Can I get a recommendation letter before grades post?",uncategorized,low,synthetic_finals_week_v2
+FS065,"The vending machine in the CS building is broken again.",uncategorized,low,synthetic_finals_week_v2
+FS066,"Does the library have extended hours during finals week?",uncategorized,low,synthetic_finals_week_v2
+FS067,"Please explain linked lists versus arrays for the conceptual section.",conceptual_question,medium,synthetic_finals_week_v2
+FS068,"Will the final be proctored online or in person this semester?",exam_logistics,low,synthetic_finals_week_v2
+FS069,"I uploaded the correct PDF but Gradescope linked the wrong page range.",project_submission,medium,synthetic_finals_week_v2
+FS070,"Can professors post a FAQ about allowed materials before exam day?",exam_logistics,medium,synthetic_finals_week_v2
+FS071,"I'm scared I'll blank during the exam and forget everything.",emotional_stress,urgent,synthetic_finals_week_v2
+FS072,"Need a private meeting about a grade appeal before the deadline.",grading_dispute,high,synthetic_finals_week_v2
+FS073,"My screen reader didn't work during the practice quiz platform.",accessibility_accommodation,high,synthetic_finals_week_v2
+FS074,"Can we schedule a group office hour for the whole recitation section?",office_hours_access,medium,synthetic_finals_week_v2
+FS075,"The similarity report flagged common variable names. Is that a problem?",academic_integrity,medium,synthetic_finals_week_v2
+FS076,"How do I drop the class if I'm past the withdrawal date?",uncategorized,low,synthetic_finals_week_v2
+FS077,"What's the best way to review graph shortest-path algorithms quickly?",conceptual_question,medium,synthetic_finals_week_v2
+FS078,"I have a religious conflict with the Saturday exam slot.",retake_request,high,synthetic_finals_week_v2
+FS079,"Team Git repo has merge conflicts and our submission is due tonight.",project_submission,high,synthetic_finals_week_v2
+FS080,"Are office hours first-come first-served or do we need to sign up?",office_hours_access,low,synthetic_finals_week_v2
