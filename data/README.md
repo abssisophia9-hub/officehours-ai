@@ -42,3 +42,12 @@ Columns:
 These rows are intentionally synthetic and should not be treated as real student
 data. They are meant to exercise finals-week patterns before the project has
 production data.
+
+## `survey_responses/`
+
+Pilot demo survey CSV exports used for final-report evaluation:
+
+- `student_responses.csv` — student post-demo Likert + free-text responses
+- `professor_responses.csv` — professor post-demo Likert + free-text responses
+
+Summarize with `backend/scripts/analyze_survey_responses.py`.

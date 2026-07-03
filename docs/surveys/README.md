@@ -16,6 +16,8 @@ This folder contains survey templates for evaluating the OfficeHours AI demo.
 3. Do not collect real grades, medical details, or private student records.
 4. Run the surveys after a simulated demo, not during a real advising session.
 5. Export responses as CSV for qualitative notes and Likert-score summaries.
+6. Store pilot/demo CSV exports under `data/survey_responses/`.
+7. Summarize results with `backend/scripts/analyze_survey_responses.py`.
 
 ## Metrics supported
 
