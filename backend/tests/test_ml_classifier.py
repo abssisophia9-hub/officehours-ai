@@ -1,3 +1,6 @@
+import csv
+from pathlib import Path
+
 from app.ai.classifier import classify, classify_rules
 from app.ai.ml_classifier import classify_ml, load_classifier, save_classifier, train_classifier, _load_embedder
 from scripts.train_classifier import evaluate_classifier, load_labeled_rows
@@ -54,7 +57,6 @@ def test_ml_classifier_trains_and_predicts():
 def test_classify_ml_backend_shape(tmp_path, monkeypatch):
     rows = load_labeled_rows()
     model_path = tmp_path / "request_classifier.joblib"
-    from app.ai.ml_classifier import save_classifier, train_classifier
 
     save_classifier(
         train_classifier([row["text"] for row in rows], [row["category"] for row in rows]),
@@ -74,7 +76,6 @@ def test_classify_ml_backend_shape(tmp_path, monkeypatch):
 def test_classify_respects_ml_backend_env(tmp_path, monkeypatch):
     rows = load_labeled_rows()
     model_path = tmp_path / "request_classifier.joblib"
-    from app.ai.ml_classifier import save_classifier, train_classifier
 
     save_classifier(
         train_classifier([row["text"] for row in rows], [row["category"] for row in rows]),
