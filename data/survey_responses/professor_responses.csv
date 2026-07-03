@@ -1,0 +1,5 @@
+respondent_id,q1_queue_clarity,q2_clustering_help,q3_recommendations_useful,q4_professor_control,q5_workload_reduction,q6_most_useful_type,q7_caution_type,q8_missing_info,q9_card_changes,q10_privacy_concerns
+P01,5,5,5,5,4,Group review session,Grading/admin route,Would want persisted office hours reflected in calendar export sooner.,Add one-click edit before approve.,No major privacy concerns if anonymous mode stays default.
+P02,4,4,4,5,4,FAQ response,Priority 1:1 meeting,Need clearer signal when a cluster mixes urgent and routine requests.,Cards are strong; maybe show total students affected.,Students should not assume auto-scheduling.
+P03,5,5,5,5,5,Group review session,Grading/admin route,Integration with real LMS/roster would help for identified follow-up.,Approve/edit/dismiss flow matches how I would triage.,Anonymous requests should never expose identity on status page.
+P04,4,4,4,5,4,TA/project support block,Grading/admin route,More examples of action-plan text before sending student updates.,Useful to download .ics after approving a group session.,Fairness review needed if recommendations differ by wording style.

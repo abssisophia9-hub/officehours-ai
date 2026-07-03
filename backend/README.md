@@ -67,6 +67,17 @@ OFFICEHOURS_CLUSTERING_BACKEND=sentence-transformers \
   python3 scripts/seed_demo_data.py --reset --limit 20
 ```
 
+## Analyze pilot survey responses
+
+Summarize demo survey CSVs in `data/survey_responses/`:
+
+```bash
+cd backend
+python3 scripts/analyze_survey_responses.py
+```
+
+Outputs land in `reports/final_report/survey_evaluation_summary.{json,md}`.
+
 ## Run tests
 
 ```bash

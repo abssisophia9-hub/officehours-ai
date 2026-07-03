@@ -21,7 +21,7 @@
 
 ## Ready / in progress
 
-- [ ] Insert screenshots into LaTeX mid-report analysis section
+- [x] Insert screenshots into LaTeX mid-report analysis section (`reports/mid_report/main.tex`)
 
 ## Remaining project work
 
@@ -29,7 +29,8 @@
 - [x] Persist recommendation approve/edit/dismiss actions (via action orchestration API)
 - [x] Add `.ics` calendar export for generated agenda/action plans
 - [x] Add anonymous request status lookup page
-- [ ] Prepare final report
+- [x] Run user surveys and summarize results
+- [x] Prepare final report (`reports/final_report/main.tex`)
 
 ## Optional future upgrades
 
