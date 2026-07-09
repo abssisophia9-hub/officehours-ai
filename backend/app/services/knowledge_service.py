@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
+from app.ai.claude_drafter import draft_with_claude
 from app.ai.clustering import cosine_similarity, embed_text
 from app.ai.summarizer import extract_keywords
 from app.models.knowledge import KnowledgeEntry, KnowledgeEntryOut, KnowledgeEntryUpdate
@@ -23,67 +24,34 @@ DIFFICULTY_BY_URGENCY = {
 }
 
 
-def draft_answer(question_text: str, category: str | None, tags: list[str]) -> str:
-    topic = ", ".join(tags[:3]) if tags else (category or "this topic").replace("_", " ")
-    return (
-        f"Teaching approach for {topic}:\n"
-        "1. Restate the student's goal and identify the stuck point.\n"
-        "2. Walk through one worked example that isolates the core idea.\n"
-        "3. Ask the student to re-apply the idea on a second short example.\n"
-        "4. Confirm the takeaway in one sentence before they leave.\n"
-        f"Original question: {question_text.strip()}"
-    )
-
-
-def draft_student_hint(question_text: str, category: str | None, tags: list[str]) -> str:
-    if tags:
-        focus = tags[0]
-        return (
-            f"While you wait, revisit the base idea behind “{focus}” — "
-            "what must stay true before and after each step?"
-        )
-
-    if category == "conceptual_question":
-        return (
-            "Start from the definition or invariant, then check the smallest example "
-            "that should work before debugging the full case."
-        )
-
-    if category == "exam_logistics":
-        return (
-            "Check the posted exam FAQ for timing, materials, and room details while "
-            "your request is reviewed."
-        )
-
-    if category == "project_submission":
-        return (
-            "Reproduce the failure with the smallest input you can, and note the exact "
-            "error or failing test name."
-        )
-
-    return (
-        "Write down what you already tried and the exact point where your understanding "
-        "breaks — that helps the next helper jump in faster."
-    )
-
-
 def create_pending_entry_from_request(
     db: Session,
     request: Request,
     *,
     urgency: str | None = None,
     matched_keywords: list[str] | None = None,
+    learning_style: str | None = None,
 ) -> KnowledgeEntry:
     tags = matched_keywords or extract_keywords([request.text], max_keywords=4)
+    style = learning_style or getattr(request, "learning_style", None) or "unknown"
     difficulty = DIFFICULTY_BY_URGENCY.get((urgency or "").lower(), "medium")
+    draft = draft_with_claude(
+        question_text=request.text,
+        category=request.category,
+        tags=tags,
+        learning_style=style,
+        urgency=urgency or getattr(request, "urgency", None),
+    )
     entry = KnowledgeEntry(
         question_text=request.text,
-        answer_draft=draft_answer(request.text, request.category, tags),
-        student_hint=draft_student_hint(request.text, request.category, tags),
+        answer_draft=str(draft["answer_draft"]),
+        student_hint=str(draft["student_hint"]),
         category=request.category,
         tags=_serialize_tags(tags),
         urgency=urgency or getattr(request, "urgency", None),
         difficulty=difficulty,
+        learning_style=style,
+        drafter_backend=str(draft.get("drafter_backend") or "mock_claude"),
         status="pending_review",
         source_request_id=request.id,
         cluster_id=request.cluster_id,
@@ -168,6 +136,8 @@ def to_out(entry: KnowledgeEntry) -> KnowledgeEntryOut:
         tags=_deserialize_tags(entry.tags),
         urgency=entry.urgency,
         difficulty=entry.difficulty,
+        learning_style=entry.learning_style,
+        drafter_backend=entry.drafter_backend,
         status=entry.status,  # type: ignore[arg-type]
         source_request_id=entry.source_request_id,
         cluster_id=entry.cluster_id,

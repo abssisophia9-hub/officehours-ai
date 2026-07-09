@@ -15,6 +15,7 @@ from app.models.knowledge import (
     KnowledgeEntryUpdate,
     StruggleHeatmapOut,
 )
+from app.realtime.hub import hub
 from app.services.analytics_service import build_escalation_feed, build_struggle_heatmap
 from app.services.kb_agent_service import answer_from_knowledge_base
 from app.services.knowledge_service import list_entries, to_out, update_entry
@@ -47,7 +48,7 @@ def get_knowledge_entry(entry_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/knowledge/{entry_id}", response_model=KnowledgeEntryOut)
-def patch_knowledge_entry(
+async def patch_knowledge_entry(
     entry_id: int,
     payload: KnowledgeEntryUpdate,
     db: Session = Depends(get_db),
@@ -58,7 +59,17 @@ def patch_knowledge_entry(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Knowledge entry not found",
         )
-    return to_out(update_entry(db, entry, payload))
+    updated = to_out(update_entry(db, entry, payload))
+    await hub.broadcast(
+        "knowledge.updated",
+        {
+            "id": updated.id,
+            "status": updated.status,
+            "source_request_id": updated.source_request_id,
+            "learning_style": updated.learning_style,
+        },
+    )
+    return updated
 
 
 @router.post("/agent/ask", response_model=AgentAskResponse)

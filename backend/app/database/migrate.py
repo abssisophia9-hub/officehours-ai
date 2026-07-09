@@ -17,6 +17,31 @@ def ensure_schema(engine: Engine) -> None:
 
     if "requests" in table_names:
         columns = {column["name"] for column in inspector.get_columns("requests")}
-        if "urgency" not in columns:
-            with engine.begin() as connection:
-                connection.execute(text("ALTER TABLE requests ADD COLUMN urgency VARCHAR"))
+        _add_column_if_missing(engine, "requests", columns, "urgency", "VARCHAR")
+        _add_column_if_missing(engine, "requests", columns, "learning_style", "VARCHAR")
+
+    if "knowledge_entries" in table_names:
+        columns = {
+            column["name"] for column in inspector.get_columns("knowledge_entries")
+        }
+        _add_column_if_missing(
+            engine, "knowledge_entries", columns, "learning_style", "VARCHAR"
+        )
+        _add_column_if_missing(
+            engine, "knowledge_entries", columns, "drafter_backend", "VARCHAR"
+        )
+
+
+def _add_column_if_missing(
+    engine: Engine,
+    table: str,
+    columns: set[str],
+    column_name: str,
+    column_type: str,
+) -> None:
+    if column_name in columns:
+        return
+    with engine.begin() as connection:
+        connection.execute(
+            text(f"ALTER TABLE {table} ADD COLUMN {column_name} {column_type}")
+        )

@@ -1,0 +1,41 @@
+text,learning_style
+Can you show me an example of recursion on a small array?,example_driven
+I learn better with concrete examples of binary search.,example_driven
+Walk through a sample Dijkstra run on a tiny graph.,example_driven
+Please give a worked example of memoization.,example_driven
+Show me an instance where BFS and DFS differ.,example_driven
+For instance how does rotation fix a red-black tree?,example_driven
+I need a concrete sample of SQL joins.,example_driven
+Can we do an example of dynamic programming on coins?,example_driven
+Please walk me through the steps of merge sort.,step_by_step
+How do I insert into a heap step by step?,step_by_step
+Give me the procedure for tracing recursion calls.,step_by_step
+What is the order of operations in topological sort?,step_by_step
+How to normalize a database schema step-by-step?,step_by_step
+First what do I do then what comes next in DFS?,step_by_step
+I need an algorithm checklist for Dijkstra.,step_by_step
+Walk me through each step of quicksort partition.,step_by_step
+Can you draw the tree structure after deletion?,visual_structural
+I need a diagram of the memory hierarchy.,visual_structural
+How should I visualize pointer updates after rotation?,visual_structural
+Show the graph layout before and after BFS layers.,visual_structural
+I understand better with a picture of the call stack.,visual_structural
+Map the structure of a red-black tree for me.,visual_structural
+Draw the before and after of a left rotation.,visual_structural
+Help me see the spatial layout of the hash table.,visual_structural
+Why does the invariant hold after recoloring?,conceptual
+I want the intuition behind dynamic programming.,conceptual
+Explain the concept of amortization not the code.,conceptual
+What does it fundamentally mean for a tree to be balanced?,conceptual
+Help me understand the difference between BFS and DFS conceptually.,conceptual
+Prove why binary search needs a sorted array.,conceptual
+What is the meaning of an AVL balance factor?,conceptual
+I am confused about the idea behind memoization.,conceptual
+I am stuck on this homework problem about sorting.,unknown
+Need help with the project autograder failure.,unknown
+Office hours question about the final exam room.,unknown
+Can someone look at my grade appeal?,unknown
+I missed the deadline for the makeup exam.,unknown
+Is the exam closed book?,unknown
+My teammate submitted the wrong file.,unknown
+Where do I register for office hours?,unknown

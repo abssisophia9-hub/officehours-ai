@@ -160,6 +160,16 @@ export default function KnowledgeCurationPanel() {
                       {entry.difficulty}
                     </span>
                   ) : null}
+                  {entry.learning_style ? (
+                    <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
+                      {entry.learning_style.replaceAll("_", " ")}
+                    </span>
+                  ) : null}
+                  {entry.drafter_backend ? (
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+                      {entry.drafter_backend}
+                    </span>
+                  ) : null}
                   <span className="text-xs text-slate-400">
                     Request #{entry.source_request_id}
                   </span>

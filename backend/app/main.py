@@ -7,27 +7,41 @@ Run locally with:
 Then visit http://127.0.0.1:8000/docs for the interactive API docs.
 """
 
+import asyncio
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.database.migrate import ensure_schema
 from app.database.session import Base, engine
 from app.models import knowledge as _knowledge_model  # noqa: F401
+from app.realtime.hub import set_main_loop
 from app.routes.actions import router as actions_router
 from app.routes.knowledge import router as knowledge_router
 from app.routes.office_hours import router as office_hours_router
+from app.routes.realtime import router as realtime_router
 from app.routes.requests import router as requests_router
-from app.database.migrate import ensure_schema
+from app.routes.ta import router as ta_router
 
 Base.metadata.create_all(bind=engine)
 ensure_schema(engine)
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    set_main_loop(asyncio.get_running_loop())
+    yield
+
 
 app = FastAPI(
     title="OfficeHours AI API",
     description="Backend API for the OfficeHours AI triage system.",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
-# Allow the frontend (kiosk + dashboard) to call this API during local dev.
+# Allow the frontend (kiosk + dashboards) to call this API during local dev.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # tighten this before production
@@ -51,3 +65,5 @@ app.include_router(requests_router)
 app.include_router(actions_router)
 app.include_router(office_hours_router)
 app.include_router(knowledge_router)
+app.include_router(ta_router)
+app.include_router(realtime_router)

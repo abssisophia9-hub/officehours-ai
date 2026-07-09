@@ -28,6 +28,8 @@ class KnowledgeEntry(Base):
     tags: Mapped[str] = mapped_column(Text, nullable=False, default="")
     urgency: Mapped[str | None] = mapped_column(String, nullable=True)
     difficulty: Mapped[str | None] = mapped_column(String, nullable=True)
+    learning_style: Mapped[str | None] = mapped_column(String, nullable=True)
+    drafter_backend: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[str] = mapped_column(
         String,
         nullable=False,
@@ -60,6 +62,8 @@ class KnowledgeEntryOut(BaseModel):
     tags: list[str] = Field(default_factory=list)
     urgency: str | None = None
     difficulty: str | None = None
+    learning_style: str | None = None
+    drafter_backend: str | None = None
     status: KnowledgeStatus
     source_request_id: int | None = None
     cluster_id: int | None = None

@@ -20,6 +20,7 @@ class Request(Base):
     student_id: Mapped[str | None] = mapped_column(String, nullable=True)
     category: Mapped[str | None] = mapped_column(String, nullable=True)
     urgency: Mapped[str | None] = mapped_column(String, nullable=True)
+    learning_style: Mapped[str | None] = mapped_column(String, nullable=True)
     cluster_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     recommended_action: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -35,6 +36,7 @@ class RequestCreate(BaseModel):
     student_id: str | None = None
     category: str | None = None
     urgency: str | None = None
+    learning_style: str | None = None
     cluster_id: int | None = None
     recommended_action: str | None = None
 

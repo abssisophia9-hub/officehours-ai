@@ -1,0 +1,13 @@
+{
+  "model_path": "/workspace/backend/models/learning_style_classifier.joblib",
+  "n_examples": 40,
+  "labels": [
+    "conceptual",
+    "example_driven",
+    "step_by_step",
+    "unknown",
+    "visual_structural"
+  ],
+  "cv_accuracy_mean": 0.925,
+  "cv_accuracy_std": 0.09999999999999999
+}

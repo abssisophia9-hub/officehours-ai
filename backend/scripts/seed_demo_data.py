@@ -80,6 +80,7 @@ def seed_demo_data(*, reset: bool = False, limit: int | None = None) -> int:
                 student_id=None if anonymous else row["request_id"].replace("FS", "117"),
                 category=str(classification["category"]),
                 urgency=str(classification.get("urgency") or "medium"),
+                learning_style=str(classification.get("learning_style") or "unknown"),
                 cluster_id=cluster_id,
                 recommended_action=str(classification["recommended_action"]),
             )
@@ -91,6 +92,7 @@ def seed_demo_data(*, reset: bool = False, limit: int | None = None) -> int:
                 request,
                 urgency=str(classification.get("urgency") or "medium"),
                 matched_keywords=list(classification.get("matched_keywords") or []),
+                learning_style=str(classification.get("learning_style") or "unknown"),
             )
             created_count += 1
 
