@@ -10,6 +10,7 @@ from app.database.session import get_db
 from app.models.action import RecommendationDecision
 from app.models.request import Request, RequestCreate, RequestOut, RequestStatusOut
 from app.services.classification_service import classify_and_recommend
+from app.services.knowledge_service import create_pending_entry_from_request
 from app.services.request_status_service import build_request_status
 
 router = APIRouter(prefix="/requests", tags=["requests"])
@@ -22,6 +23,8 @@ def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
 
     if not request_data.get("category"):
         request_data["category"] = classification["category"]
+    if not request_data.get("urgency"):
+        request_data["urgency"] = classification.get("urgency")
     if not request_data.get("recommended_action"):
         request_data["recommended_action"] = classification["recommended_action"]
     if request_data.get("cluster_id") is None:
@@ -32,6 +35,14 @@ def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
     db.add(db_request)
     db.commit()
     db.refresh(db_request)
+
+    # Every question seeds a KB draft; professor approval gates student-agent use.
+    create_pending_entry_from_request(
+        db,
+        db_request,
+        urgency=str(classification.get("urgency") or db_request.urgency or ""),
+        matched_keywords=list(classification.get("matched_keywords") or []),
+    )
     return db_request
 
 

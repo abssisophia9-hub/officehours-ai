@@ -11,11 +11,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database.session import Base, engine
+from app.models import knowledge as _knowledge_model  # noqa: F401
 from app.routes.actions import router as actions_router
+from app.routes.knowledge import router as knowledge_router
 from app.routes.office_hours import router as office_hours_router
 from app.routes.requests import router as requests_router
+from app.database.migrate import ensure_schema
 
 Base.metadata.create_all(bind=engine)
+ensure_schema(engine)
 
 app = FastAPI(
     title="OfficeHours AI API",
@@ -46,3 +50,4 @@ def health_check():
 app.include_router(requests_router)
 app.include_router(actions_router)
 app.include_router(office_hours_router)
+app.include_router(knowledge_router)

@@ -1,8 +1,11 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { fetchRequests } from "./api/requests.js";
+import EscalationFeed from "./components/EscalationFeed.jsx";
+import KnowledgeCurationPanel from "./components/KnowledgeCurationPanel.jsx";
 import OfficeHoursPanel from "./components/OfficeHoursPanel.jsx";
 import RecommendationBoard from "./components/RecommendationBoard.jsx";
 import RequestTable from "./components/RequestTable.jsx";
+import StruggleHeatmap from "./components/StruggleHeatmap.jsx";
 import SummaryCards from "./components/SummaryCards.jsx";
 import {
   getRecommendationKind,
@@ -18,6 +21,7 @@ export default function App() {
   const [lastLoadedAt, setLastLoadedAt] = useState(null);
   const [selectedRecommendationKind, setSelectedRecommendationKind] =
     useState("all");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   async function loadRequests() {
     setStatus("loading");
@@ -27,6 +31,7 @@ export default function App() {
       const data = await fetchRequests();
       setRequests(data);
       setLastLoadedAt(new Date());
+      setRefreshKey((value) => value + 1);
       setStatus("success");
     } catch (requestError) {
       setStatus("error");
@@ -36,6 +41,13 @@ export default function App() {
 
   useEffect(() => {
     loadRequests();
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      loadRequests();
+    }, 15000);
+    return () => window.clearInterval(timer);
   }, []);
 
   const sortedRequests = useMemo(
@@ -78,7 +90,8 @@ export default function App() {
           <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
             {lastLoadedAt ? (
               <p className="text-sm text-slate-500">
-                Last refreshed {lastLoadedAt.toLocaleTimeString()}
+                Last refreshed {lastLoadedAt.toLocaleTimeString()} · auto every
+                15s
               </p>
             ) : null}
             <button
@@ -110,6 +123,11 @@ export default function App() {
         ) : (
           <>
             <SummaryCards requests={sortedRequests} />
+            <div className="grid gap-8 xl:grid-cols-2">
+              <StruggleHeatmap key={`heatmap-${refreshKey}`} />
+              <EscalationFeed key={`escalations-${refreshKey}`} />
+            </div>
+            <KnowledgeCurationPanel key={`kb-${refreshKey}`} />
             <div className="grid gap-8 2xl:grid-cols-[minmax(0,1fr)_420px]">
               <div className="space-y-8">
                 <RecommendationBoard

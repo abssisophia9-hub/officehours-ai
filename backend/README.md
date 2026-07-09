@@ -24,10 +24,17 @@ Visit:
 ## Core API endpoints
 
 - `POST /requests/` — submit a student request; backend classifies, recommends,
-  and assigns a cluster.
+  assigns a cluster, persists urgency, and seeds a `pending_review` knowledge
+  draft for professor curation.
 - `GET /requests/` — list requests for the professor dashboard.
 - `GET /requests/{request_id}/status` — privacy-safe anonymous status lookup
   by request code (no student ID or request text returned).
+- `GET /knowledge/` — list knowledge-base entries (`?status=pending_review|approved|rejected`).
+- `PATCH /knowledge/{id}` — professor approve / edit / reject a KB draft.
+- `POST /agent/ask` — student-facing KB agent; answers only from **approved** entries
+  via semantic similarity search.
+- `GET /analytics/struggle-heatmap` — weekly category aggregation for the professor heatmap.
+- `GET /analytics/escalations` — auto-flagged aging / high-urgency / recurring topics.
 - `POST /actions/recommendations/` — persist a professor recommendation-card
   decision and generate an action plan for agenda/status/notification next
   steps.

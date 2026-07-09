@@ -3,6 +3,7 @@ import CheckInScreen from "./components/CheckInScreen.jsx";
 import RequestForm from "./components/RequestForm.jsx";
 import ConfirmationScreen from "./components/ConfirmationScreen.jsx";
 import StatusLookupScreen from "./components/StatusLookupScreen.jsx";
+import KbAgentScreen from "./components/KbAgentScreen.jsx";
 
 export default function App() {
   const [screen, setScreen] = useState("check-in");
@@ -48,13 +49,22 @@ export default function App() {
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => openStatusLookup()}
-          className="rounded-full border-2 border-indigo-200 bg-white px-4 py-2 text-sm font-bold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50"
-        >
-          Check request status
-        </button>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setScreen("agent")}
+            className="rounded-full border-2 border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-50"
+          >
+            Ask KB agent
+          </button>
+          <button
+            type="button"
+            onClick={() => openStatusLookup()}
+            className="rounded-full border-2 border-indigo-200 bg-white px-4 py-2 text-sm font-bold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50"
+          >
+            Check request status
+          </button>
+        </div>
       </header>
 
       <main className="flex flex-1 items-center justify-center px-6 pb-12">
@@ -75,10 +85,12 @@ export default function App() {
             onBack={handleReset}
           />
         )}
+        {screen === "agent" && <KbAgentScreen onBack={handleReset} />}
       </main>
 
       <footer className="px-8 pb-6 text-center text-sm text-slate-400">
         Your privacy matters — anonymous requests never store your identity.
+        The KB agent only uses professor-approved answers.
       </footer>
     </div>
   );

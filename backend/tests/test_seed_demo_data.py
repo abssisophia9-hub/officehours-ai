@@ -4,6 +4,7 @@ os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["OFFICEHOURS_CLUSTERING_BACKEND"] = "lexical"
 
 from app.database.session import Base, SessionLocal, engine
+from app.models.knowledge import KnowledgeEntry
 from app.models.request import Request
 from scripts.seed_demo_data import load_synthetic_rows, seed_demo_data
 
@@ -29,10 +30,14 @@ def test_seed_demo_data_creates_requests_and_is_idempotent():
     db = SessionLocal()
     try:
         requests = db.query(Request).order_by(Request.id).all()
+        kb_entries = db.query(KnowledgeEntry).all()
         assert first_count == 3
         assert second_count == 0
         assert len(requests) == 3
+        assert len(kb_entries) == 3
         assert requests[0].category
+        assert requests[0].urgency
         assert requests[0].cluster_id is not None
+        assert all(entry.status == "pending_review" for entry in kb_entries)
     finally:
         db.close()
