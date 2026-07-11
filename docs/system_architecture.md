@@ -46,10 +46,14 @@ This preserves open office hours: agenda blocks organize the room without
 turning every student interaction into a strict appointment.
 
 ## Professor office-hours configuration
-Professor office hours belong in the **Professor Dashboard** as an availability/settings workflow, backed by the **Backend API** as persisted scheduling data. In the current dashboard MVP, the office-hours panel is front-end state only. The next backend step should add an office-hours model and CRUD routes so recommendation cards can schedule group sessions or 1:1 follow-ups against real professor availability.
+Professor office hours belong in the **Professor Dashboard** as an availability/settings workflow, backed by the **Backend API** as persisted scheduling data (`/office-hours` CRUD). Recommendation calendar export (`.ics`) uses these windows to place agenda blocks on real availability.
 
-## Diagram
-See `diagrams/architecture.png` (to be added).
+## Diagrams
+- `diagrams/architecture.png` — system components
+- `diagrams/workflow.png` — end-to-end request workflow
+- `diagrams/database_erd.png` — SQLite entity relationships
+
+Regenerate with `backend/venv/bin/python scripts/generate_architecture_diagrams.py`.
 
 ## Tech Stack Rationale
 - **FastAPI**: async-friendly, fast to prototype, good typing support
