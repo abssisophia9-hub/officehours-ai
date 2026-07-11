@@ -1,9 +1,13 @@
-import { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react";
 import { fetchRequests } from "./api/requests.js";
+import EscalationFeed from "./components/EscalationFeed.jsx";
+import KnowledgeCurationPanel from "./components/KnowledgeCurationPanel.jsx";
 import OfficeHoursPanel from "./components/OfficeHoursPanel.jsx";
 import RecommendationBoard from "./components/RecommendationBoard.jsx";
 import RequestTable from "./components/RequestTable.jsx";
+import StruggleHeatmap from "./components/StruggleHeatmap.jsx";
 import SummaryCards from "./components/SummaryCards.jsx";
+import { useOfficeHoursSocket } from "./hooks/useOfficeHoursSocket.js";
 import {
   getRecommendationKind,
   getRecommendedAction,
@@ -18,8 +22,9 @@ export default function App() {
   const [lastLoadedAt, setLastLoadedAt] = useState(null);
   const [selectedRecommendationKind, setSelectedRecommendationKind] =
     useState("all");
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  async function loadRequests() {
+  const loadRequests = useCallback(async () => {
     setStatus("loading");
     setError("");
 
@@ -27,16 +32,29 @@ export default function App() {
       const data = await fetchRequests();
       setRequests(data);
       setLastLoadedAt(new Date());
+      setRefreshKey((value) => value + 1);
       setStatus("success");
     } catch (requestError) {
       setStatus("error");
       setError(requestError.message);
     }
-  }
+  }, []);
 
   useEffect(() => {
     loadRequests();
-  }, []);
+  }, [loadRequests]);
+
+  const { live } = useOfficeHoursSocket((event) => {
+    if (
+      event.type === "request.created" ||
+      event.type === "knowledge.created" ||
+      event.type === "knowledge.updated" ||
+      event.type === "ta.resolved" ||
+      event.type === "escalation"
+    ) {
+      loadRequests();
+    }
+  });
 
   const sortedRequests = useMemo(
     () =>
@@ -76,6 +94,18 @@ export default function App() {
           </div>
 
           <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
+            <span
+              className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ${
+                live
+                  ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                  : "bg-slate-100 text-slate-500 ring-1 ring-slate-200"
+              }`}
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${live ? "bg-emerald-500" : "bg-slate-400"}`}
+              />
+              {live ? "Live" : "Reconnecting"}
+            </span>
             {lastLoadedAt ? (
               <p className="text-sm text-slate-500">
                 Last refreshed {lastLoadedAt.toLocaleTimeString()}
@@ -110,6 +140,11 @@ export default function App() {
         ) : (
           <>
             <SummaryCards requests={sortedRequests} />
+            <div className="grid gap-8 xl:grid-cols-2">
+              <StruggleHeatmap key={`heatmap-${refreshKey}`} />
+              <EscalationFeed key={`escalations-${refreshKey}`} />
+            </div>
+            <KnowledgeCurationPanel key={`kb-${refreshKey}`} />
             <div className="grid gap-8 2xl:grid-cols-[minmax(0,1fr)_420px]">
               <div className="space-y-8">
                 <RecommendationBoard

@@ -26,8 +26,10 @@ os.environ.setdefault("OFFICEHOURS_CLUSTERING_BACKEND", "lexical")
 from app.ai.clustering import assign_cluster_id
 from app.database.session import Base, SessionLocal, engine
 from app.models.action import RecommendationDecision
+from app.models.knowledge import KnowledgeEntry
 from app.models.request import Request
 from app.services.classification_service import classify_and_recommend
+from app.services.knowledge_service import create_pending_entry_from_request
 
 
 def load_synthetic_rows(data_dir: Path = DATA_DIR) -> list[dict[str, str]]:
@@ -58,6 +60,7 @@ def seed_demo_data(*, reset: bool = False, limit: int | None = None) -> int:
     try:
         if reset:
             db.query(RecommendationDecision).delete()
+            db.query(KnowledgeEntry).delete()
             db.query(Request).delete()
             db.commit()
 
@@ -76,13 +79,23 @@ def seed_demo_data(*, reset: bool = False, limit: int | None = None) -> int:
                 anonymous=anonymous,
                 student_id=None if anonymous else row["request_id"].replace("FS", "117"),
                 category=str(classification["category"]),
+                urgency=str(classification.get("urgency") or "medium"),
+                learning_style=str(classification.get("learning_style") or "unknown"),
                 cluster_id=cluster_id,
                 recommended_action=str(classification["recommended_action"]),
             )
             db.add(request)
+            db.commit()
+            db.refresh(request)
+            create_pending_entry_from_request(
+                db,
+                request,
+                urgency=str(classification.get("urgency") or "medium"),
+                matched_keywords=list(classification.get("matched_keywords") or []),
+                learning_style=str(classification.get("learning_style") or "unknown"),
+            )
             created_count += 1
 
-        db.commit()
         return created_count
     finally:
         db.close()

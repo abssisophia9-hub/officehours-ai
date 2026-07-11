@@ -131,6 +131,36 @@ def test_export_recommendation_calendar_requires_office_hours():
     assert response.status_code == 404
 
 
+def test_list_recommendation_decisions_returns_saved_entries():
+    request = client.post(
+        "/requests/",
+        json={
+            "text": "I am confused about recursion and binary search.",
+            "anonymous": True,
+        },
+    ).json()
+    created = client.post(
+        "/actions/recommendations/",
+        json={
+            "card_id": "group_session:recursion:cluster-1",
+            "action_kind": "group_session",
+            "action_title": "Review in office hours",
+            "status": "approved",
+            "cluster_id": request["cluster_id"],
+            "request_ids": [request["id"]],
+        },
+    ).json()
+
+    response = client.get("/actions/recommendations/")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["id"] == created["id"]
+    assert data[0]["card_id"] == "group_session:recursion:cluster-1"
+    assert data[0]["status"] == "approved"
+    assert data[0]["action_plan"]["plan_type"] == "group_session"
+
+
 def test_create_recommendation_decision_requires_existing_requests():
     response = client.post(
         "/actions/recommendations/",

@@ -4,6 +4,7 @@ into a recommended action.
 """
 
 from app.ai.classifier import classify
+from app.ai.learning_style import infer_learning_style
 
 
 RECOMMENDATIONS_BY_CATEGORY = {
@@ -22,10 +23,12 @@ RECOMMENDATIONS_BY_CATEGORY = {
 
 def classify_and_recommend(text: str) -> dict[str, object]:
     classification = classify(text)
+    learning = infer_learning_style(text)
     category = str(classification["category"])
 
     return {
         **classification,
+        **learning,
         "recommended_action": _recommend_action(
             category=category,
             urgency=str(classification["urgency"]),

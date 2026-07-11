@@ -24,10 +24,20 @@ Visit:
 ## Core API endpoints
 
 - `POST /requests/` — submit a student request; backend classifies, recommends,
-  and assigns a cluster.
+  assigns a cluster, persists urgency, and seeds a `pending_review` knowledge
+  draft for professor curation.
 - `GET /requests/` — list requests for the professor dashboard.
 - `GET /requests/{request_id}/status` — privacy-safe anonymous status lookup
   by request code (no student ID or request text returned).
+- `GET /knowledge/` — list knowledge-base entries (`?status=pending_review|approved|rejected`).
+- `PATCH /knowledge/{id}` — professor approve / edit / reject a KB draft.
+- `POST /agent/ask` — student-facing KB agent; answers only from **approved** entries
+  via semantic similarity search.
+- `GET /ta/queue/` — open TA queue (hides approved/rejected KB items).
+- `POST /ta/resolve/` — TA saves teaching notes; entry stays `pending_review` for professor curation.
+- `WS /ws` — live events (`request.created`, `knowledge.*`, `ta.resolved`, `escalation`).
+- `GET /analytics/struggle-heatmap` — weekly category aggregation for the professor heatmap.
+- `GET /analytics/escalations` — auto-flagged aging / high-urgency / recurring topics.
 - `POST /actions/recommendations/` — persist a professor recommendation-card
   decision and generate an action plan for agenda/status/notification next
   steps.
@@ -52,6 +62,11 @@ Optional environment variables:
 - `OFFICEHOURS_CLASSIFIER_BACKEND=rules|ml` — defaults to `rules`; set `ml` to
   use the trained embedding classifier in `backend/models/request_classifier.joblib`
 - `OFFICEHOURS_CLASSIFIER_MODEL` — optional override path to the saved ML model
+- `OFFICEHOURS_LEARNING_STYLE_BACKEND=rules|ml` — defaults to `rules`
+- `OFFICEHOURS_LEARNING_STYLE_MODEL` — optional path to learning-style classifier
+- `USE_MOCK_CLAUDE=true|false` — defaults to `true` (deterministic style-aware drafts)
+- `ANTHROPIC_API_KEY` — required only when `USE_MOCK_CLAUDE=false`
+- `OFFICEHOURS_CLAUDE_MODEL` — defaults to `claude-3-5-sonnet-20241022`
 
 ## Train ML classifier
 
@@ -64,6 +79,19 @@ python3 scripts/train_classifier.py
 
 Metrics are written to `reports/final_report/classifier_evaluation.{json,md}`.
 Labeled data lives in `data/labeled_requests*.csv`.
+
+## Train learning-style classifier
+
+Infers how a student prefers to understand a topic (`example_driven`,
+`step_by_step`, `visual_structural`, `conceptual`, `unknown`) so Claude/mock
+drafts can adapt the teaching approach:
+
+```bash
+cd backend
+OFFICEHOURS_CLUSTERING_BACKEND=lexical python3 scripts/train_learning_style.py
+```
+
+Labeled data: `data/labeled_learning_styles.csv`.
 
 ## Seed demo data
 

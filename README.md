@@ -8,7 +8,7 @@ During final exam periods, professors often receive a sudden overload of emails,
 
 ## Proposed Solution
 
-OfficeHours AI provides a QR/NFC-enabled kiosk and web dashboard where students can submit academic requests anonymously or with identification. The AI classifies requests, groups repeated questions, detects learning preferences, and recommends actions such as:
+OfficeHours AI provides a QR/NFC-enabled kiosk and web dashboard where students can submit academic requests anonymously or with identification. The AI classifies requests, groups repeated questions, infers learning style for teaching drafts, and recommends actions such as:
 
 - quick FAQ response
 - group review session
@@ -79,7 +79,9 @@ Can an AI-assisted office-hours triage system reduce faculty communication overl
 
 ## Status
 
-Project planning and prototype design in progress.
+MVP complete: student kiosk, professor dashboard, TA dashboard, curated knowledge
+base + student KB agent, learning-style–aware teaching drafts, WebSockets, survey
+evaluation, and LaTeX reports. See PR history and `reports/final_report/`.
 
 ## License
 

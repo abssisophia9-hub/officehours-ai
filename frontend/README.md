@@ -1,23 +1,30 @@
 # OfficeHours AI — Frontend
 
-Two separate React apps:
+Three separate React apps:
 
-- **student-kiosk/** — the check-in + request submission interface students use
-- **professor-dashboard/** — the triage dashboard professors use to review clustered requests and approve recommended actions
+- **student-kiosk/** — check-in, request submission, status lookup, and KB agent (port **5173**)
+- **professor-dashboard/** — triage, KB curation, heatmap, escalations (port **5174**)
+- **ta-dashboard/** — live TA queue; resolutions feed the professor curation queue (port **5175**)
 
-## Planned Setup (per app)
+## Setup (per app)
 
 ```bash
-cd frontend/student-kiosk      # or frontend/professor-dashboard
+cd frontend/student-kiosk      # or professor-dashboard / ta-dashboard
 npm ci
 npm run dev
 ```
 
+Set `VITE_API_BASE=http://127.0.0.1:8000` (see each app's `.env.example`).
+
+Professor and TA dashboards connect to `ws://127.0.0.1:8000/ws` for live updates (green **Live** indicator).
+
 ## Tech
 - React
 - Tailwind CSS
-- Recharts (for dashboard visualizations)
+- Recharts (professor dashboard)
+- WebSockets for live queue/curation updates
 
 ## Status
-- **student-kiosk/** — MVP built (Vite + React + Tailwind): barcode/manual check-in, anonymous/identified request submission, and backend `POST /requests/` integration.
-- **professor-dashboard/** — MVP built (Vite + React + Tailwind + Recharts): request triage dashboard wired to the backend `GET /requests/` endpoint, interactive recommendation cards, charts, and an office-hours setup panel.
+- **student-kiosk/** — MVP: barcode/manual check-in, anonymous/identified submit, status lookup, KB agent chat.
+- **professor-dashboard/** — MVP: triage, recommendation cards, office hours, KB curation, struggle heatmap, escalations, WebSocket refresh.
+- **ta-dashboard/** — MVP: live queue, learning-style–aware teaching drafts, resolve → `pending_review` curation queue.
