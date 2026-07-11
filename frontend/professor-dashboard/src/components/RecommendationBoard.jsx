@@ -1,5 +1,9 @@
-import { useMemo, useState } from "react";
-import { getCalendarExportUrl, saveRecommendationDecision } from "../api/actions.js";
+import { useEffect, useMemo, useState } from "react";
+import {
+  fetchRecommendationDecisions,
+  getCalendarExportUrl,
+  saveRecommendationDecision,
+} from "../api/actions.js";
 import {
   buildRecommendationCards,
   formatDateTime,
@@ -73,6 +77,42 @@ export default function RecommendationBoard({
       ? cards
       : cards.filter((card) => card.kind === selectedKind);
   const filters = buildFilters(cards);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchRecommendationDecisions()
+      .then((decisions) => {
+        if (cancelled || !Array.isArray(decisions)) {
+          return;
+        }
+
+        // Prefer the latest decision per card_id.
+        const latestByCard = new Map();
+        for (const decision of decisions) {
+          latestByCard.set(decision.card_id, decision);
+        }
+
+        const nextStatuses = {};
+        const nextPlans = {};
+        const nextIds = {};
+        for (const [cardId, decision] of latestByCard.entries()) {
+          nextStatuses[cardId] = decision.status;
+          nextPlans[cardId] = decision.action_plan;
+          nextIds[cardId] = decision.id;
+        }
+        setCardStatuses(nextStatuses);
+        setActionPlans(nextPlans);
+        setDecisionIds(nextIds);
+      })
+      .catch(() => {
+        // Keep local empty state if the backend is unreachable.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [requests]);
 
   async function updateStatus(card, status) {
     setSavingCardId(card.id);

@@ -81,3 +81,30 @@ jobs:
       - name: Build professor dashboard
         working-directory: frontend/professor-dashboard
         run: npm run build
+
+  ta-dashboard:
+    name: TA dashboard build and audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/ta-dashboard/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend/ta-dashboard
+        run: npm ci
+
+      - name: Audit frontend dependencies
+        working-directory: frontend/ta-dashboard
+        run: npm audit --audit-level=moderate
+
+      - name: Build TA dashboard
+        working-directory: frontend/ta-dashboard
+        run: npm run build

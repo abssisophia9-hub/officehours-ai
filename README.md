@@ -79,7 +79,9 @@ Can an AI-assisted office-hours triage system reduce faculty communication overl
 
 ## Status
 
-Project planning and prototype design in progress.
+MVP complete: student kiosk, professor dashboard, TA dashboard, curated knowledge
+base + student KB agent, learning-style–aware teaching drafts, WebSockets, survey
+evaluation, and LaTeX reports. See PR history and `reports/final_report/`.
 
 ## License
 
