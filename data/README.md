@@ -52,37 +52,13 @@ Pilot demo survey CSV exports used for final-report evaluation:
 
 Summarize with `backend/scripts/analyze_survey_responses.py`.
 
-## `labeled_learning_styles.csv`
+## `labeled_requests*.csv` / Matcher / Synthesizer banks
 
-Supervised labels for the learning-style classifier.
+See [`docs/training_data.md`](../docs/training_data.md) for the full custom-trained
+Oracle dataset inventory (Analyzer 120, Matcher 120, Synthesizer 50, learning-style 40).
 
-## `matcher_training.csv`
+## `labeled_requests_extended.csv` / `labeled_requests_extra.csv`
 
-Silver labels for the custom Matcher (TA assignment) classifier.
-
-Columns:
-
-- `text` — student question
-- `category` — Analyzer taxonomy label
-- `assigned_ta` — primary TA name
-- `alternative_ta` — secondary TA name
-- `source` — label provenance
-
-## `synthesizer_teaching_bank.csv`
-
-Curated teaching-bank entries for the custom Synthesizer RAG path.
-
-Columns:
-
-- `entry_id`
-- `category`
-- `learning_style`
-- `topic`
-- `student_hint`
-- `teaching_approach`
-- `source`
-
-## `ta_roster_seed.csv`
-
-Default TA roster used when seeding Matcher training / demos.
+Additional labeled finals-week examples used to train and evaluate the Analyzer
+classifier beyond the original 40-row baseline.
 

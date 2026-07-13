@@ -1,61 +1,65 @@
-# AI / NLP Design
+# AI / NLP Design (Custom-Trained Oracle)
 
-## Pipeline Overview
-1. **Preprocessing** — clean and normalize incoming request text
-2. **Classification** — categorize request into types (e.g., conceptual question, logistics/admin, retake request, emotional/stress-related, grading dispute)
-3. **Embedding generation** — use sentence-transformers to embed request text
-4. **Clustering** — group semantically similar requests using cosine similarity (and/or k-means / HDBSCAN for batch clustering)
-5. **Recommendation** — map cluster size + category + urgency to a recommended action
+## FYP constraint
 
-## Models / Libraries
-- `sentence-transformers` (e.g., `all-MiniLM-L6-v2`) for embeddings
-- `scikit-learn` for clustering and baseline classifiers
-- Optional: LLM API call for harder classification cases or generating FAQ-style responses
+The assessed runtime path uses **custom-trained local models only**.
+Prompted Claude calls and `USE_MOCK_CLAUDE` mocks are disabled by default
+(`OFFICEHOURS_ALLOW_EXTERNAL_LLM=false`).
 
-## Clustering MVP
-New requests are assigned a `cluster_id` at creation time. The clustering layer
-embeds the incoming request with `sentence-transformers`, compares it to
-existing requests using cosine similarity, and reuses the closest cluster when
-similarity is above the configured threshold. Otherwise, it starts the next
-cluster ID.
+## Oracle pipeline
 
-Configuration:
+On every `POST /requests/`:
 
-- `OFFICEHOURS_EMBEDDING_MODEL` — defaults to `all-MiniLM-L6-v2`
-- `OFFICEHOURS_CLUSTER_SIMILARITY_THRESHOLD` — defaults to `0.72`
-- `OFFICEHOURS_CLUSTERING_BACKEND=lexical` — deterministic lightweight backend
-  for tests/dev environments where downloading the embedding model is not wanted
+1. **Analyzer** — fine-tuned embedding + logistic regression classifier  
+   Artifact: `backend/models/request_classifier.joblib`
+2. **Matcher** — fine-tuned TA assignment classifier + queue penalty  
+   Artifact: `backend/models/matcher_classifier.joblib`
+3. **Synthesizer** — RAG over teaching bank / approved KB + style ranker  
+   Artifact: `backend/models/synthesizer_ranker.joblib`
 
-## Cluster Summarization MVP
-When a professor approves/edits a recommendation card, the action orchestration
-layer summarizes related request text with TF-IDF keyword extraction. These
-keywords become human-readable agenda titles such as "Recursion / Binary Search
-Review" and are included in generated action plans.
+Plus supporting pieces:
 
-This creates an AI/NLP contribution at four levels:
+- **Learning-style classifier** — `learning_style_classifier.joblib`
+- **Clustering** — sentence-transformer embeddings + cosine similarity (`cluster_id`)
+- **Summarizer** — TF-IDF keywords for action-plan titles
 
-1. rule-based request classification baseline
-2. sentence-transformer semantic clustering
-3. TF-IDF cluster keyword summarization for professor-facing action plans
-4. embedding + logistic regression classifier trained on 120 labeled examples
+Details: [`training_data.md`](training_data.md) · diagrams: `diagrams/oracle_agents.png`
 
-Train/evaluate the ML classifier with `backend/scripts/train_classifier.py`.
-Set `OFFICEHOURS_CLASSIFIER_BACKEND=ml` to use it at runtime.
+## Models / libraries
 
-## Data Fixtures
-- `data/synthetic_requests.csv` contains raw synthetic finals-week student requests for local demos.
-- `data/labeled_requests.csv` mirrors those request IDs with `category` and `urgency` labels for baseline classification experiments.
-- `data/demo_scenarios.csv` describes expected cluster/action outcomes for demo validation and future recommendation tests.
+- `sentence-transformers` (`all-MiniLM-L6-v2`) for embeddings
+- `scikit-learn` `LogisticRegression` for Analyzer / Matcher / style ranker
+- Local CSV teaching bank for Synthesizer RAG (no generative LLM required)
 
-The current fixture set is synthetic only; do not treat it as real student data.
+## Clustering
 
-## Recommendation Logic (initial heuristic)
-| Condition | Recommended Action |
-|---|---|
-| Cluster size ≥ N, conceptual question | Group review session |
-| Single occurrence, simple/factual | Quick FAQ response |
-| Cluster size ≥ N, procedural | TA-led review session |
-| Grading dispute / retake | Admin/retake route |
-| Flagged as urgent/emotional | One-to-one meeting (priority) |
+New requests get a `cluster_id` by embedding similarity against existing requests.
+Threshold: `OFFICEHOURS_CLUSTER_SIMILARITY_THRESHOLD` (default `0.72`).
+Tests use `OFFICEHOURS_CLUSTERING_BACKEND=lexical` to avoid model downloads.
 
-This heuristic will be refined using labeled data in `data/labeled_requests.csv` and tested in `notebooks/ai_classification_tests.ipynb`.
+## Recommendation heuristics (professor cards)
+
+| Condition | Suggested action |
+| --- | --- |
+| Large conceptual cluster | Group review session |
+| Single factual/logistics | Quick FAQ |
+| Procedural cluster | TA-led review |
+| Grading / retake / integrity | Admin route |
+| Urgent / emotional | Priority 1:1 |
+
+Oracle Matcher assignment is separate from these professor recommendation cards:
+Matcher picks a TA for the live queue; recommendation cards help the professor
+plan office-hours agenda blocks.
+
+## Train / refresh
+
+```bash
+cd backend
+python3 scripts/train_classifier.py
+python3 scripts/train_matcher.py
+python3 scripts/train_synthesizer.py
+python3 scripts/train_learning_style.py
+```
+
+Professor-approved KB exports can later expand Analyzer training via
+`scripts/export_analyzer_training_data.py`.

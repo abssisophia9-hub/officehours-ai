@@ -83,6 +83,7 @@ export default function App() {
   return (
     <div className="aui-shell min-h-full text-aui-ink">
       <header className="px-6 pt-6">
+        <div className="mx-auto mb-3 h-1.5 max-w-6xl overflow-hidden rounded-full bg-gradient-to-r from-emerald-400 via-sky-400 to-orange-400 shadow-[0_0_24px_rgba(16,185,129,0.45)]" />
         <div className="glass-header mx-auto flex max-w-6xl flex-col gap-4 rounded-2xl px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <img

@@ -51,7 +51,7 @@ export default function ConfirmationScreen({ result, onReset, onCheckStatus }) {
         <div className="mt-6 grid gap-4 lg:grid-cols-3">
           <AgentCard
             title="Analyzer"
-            accent="bg-sky-600"
+            accent="bg-sky-500"
             lines={[
               `Category: ${oracle.analyzer.category}`,
               `Difficulty: ${oracle.analyzer.difficulty}`,
@@ -61,7 +61,7 @@ export default function ConfirmationScreen({ result, onReset, onCheckStatus }) {
           />
           <AgentCard
             title="Matcher"
-            accent="bg-aui-forest"
+            accent="bg-orange-500"
             lines={[
               `Assigned: ${oracle.matcher.assigned_ta}`,
               `Wait: ~${oracle.matcher.estimated_wait_minutes} min`,
@@ -71,7 +71,7 @@ export default function ConfirmationScreen({ result, onReset, onCheckStatus }) {
           />
           <AgentCard
             title="Synthesizer"
-            accent="bg-emerald-600"
+            accent="bg-emerald-500"
             lines={[
               `Similar KB hits: ${oracle.synthesizer.similar_count}`,
               `Hint: ${oracle.synthesizer.student_hint}`,
