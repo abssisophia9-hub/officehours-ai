@@ -3,8 +3,9 @@ ORM and Pydantic models for student requests.
 """
 
 from datetime import datetime
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import Boolean, DateTime, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -18,11 +19,23 @@ class Request(Base):
     text: Mapped[str] = mapped_column(Text, nullable=False)
     anonymous: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     student_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    student_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    course: Mapped[str | None] = mapped_column(String, nullable=True)
+    code_snippet: Mapped[str | None] = mapped_column(Text, nullable=True)
     category: Mapped[str | None] = mapped_column(String, nullable=True)
     urgency: Mapped[str | None] = mapped_column(String, nullable=True)
     learning_style: Mapped[str | None] = mapped_column(String, nullable=True)
     cluster_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     recommended_action: Mapped[str | None] = mapped_column(Text, nullable=True)
+    oracle_category: Mapped[str | None] = mapped_column(String, nullable=True)
+    oracle_difficulty: Mapped[str | None] = mapped_column(String, nullable=True)
+    oracle_estimated_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    oracle_tags: Mapped[str | None] = mapped_column(Text, nullable=True)
+    assigned_ta: Mapped[str | None] = mapped_column(String, nullable=True)
+    alternative_ta: Mapped[str | None] = mapped_column(String, nullable=True)
+    estimated_wait_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    student_hint: Mapped[str | None] = mapped_column(Text, nullable=True)
+    oracle_trace_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -34,6 +47,9 @@ class RequestCreate(BaseModel):
     text: str
     anonymous: bool = True
     student_id: str | None = None
+    student_name: str | None = None
+    course: str | None = None
+    code_snippet: str | None = None
     category: str | None = None
     urgency: str | None = None
     learning_style: str | None = None
@@ -41,9 +57,55 @@ class RequestCreate(BaseModel):
     recommended_action: str | None = None
 
 
+class OracleAnalyzerOut(BaseModel):
+    category: str | None = None
+    difficulty: str | None = None
+    estimated_minutes: int | None = None
+    tags: list[str] = Field(default_factory=list)
+    urgency: str | None = None
+    rationale: str | None = None
+
+
+class OracleMatcherOut(BaseModel):
+    assigned_ta: str | None = None
+    alternative_ta: str | None = None
+    estimated_wait_minutes: int | None = None
+    rationale: str | None = None
+
+
+class OracleSynthesizerOut(BaseModel):
+    student_hint: str | None = None
+    teaching_approach: str | None = None
+    similar_count: int = 0
+    similar_questions: list[dict[str, Any]] = Field(default_factory=list)
+    kb_insight: str | None = None
+
+
+class OracleStepOut(BaseModel):
+    agent: str
+    elapsed_ms: int
+
+
+class OracleResultOut(BaseModel):
+    analyzer: OracleAnalyzerOut
+    matcher: OracleMatcherOut
+    synthesizer: OracleSynthesizerOut
+    steps: list[OracleStepOut] = Field(default_factory=list)
+    elapsed_ms: int | None = None
+
+
 class RequestOut(RequestCreate):
     id: int
     created_at: datetime
+    oracle_category: str | None = None
+    oracle_difficulty: str | None = None
+    oracle_estimated_minutes: int | None = None
+    oracle_tags: list[str] = Field(default_factory=list)
+    assigned_ta: str | None = None
+    alternative_ta: str | None = None
+    estimated_wait_minutes: int | None = None
+    student_hint: str | None = None
+    oracle: OracleResultOut | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -58,5 +120,8 @@ class RequestStatusOut(BaseModel):
     anonymous_submission: bool
     recommended_next_step: str | None = None
     agenda_hint: str | None = None
+    student_hint: str | None = None
+    assigned_ta: str | None = None
+    estimated_wait_minutes: int | None = None
 
     model_config = ConfigDict(from_attributes=True)

@@ -19,6 +19,21 @@ def ensure_schema(engine: Engine) -> None:
         columns = {column["name"] for column in inspector.get_columns("requests")}
         _add_column_if_missing(engine, "requests", columns, "urgency", "VARCHAR")
         _add_column_if_missing(engine, "requests", columns, "learning_style", "VARCHAR")
+        for column_name, column_type in (
+            ("student_name", "VARCHAR"),
+            ("course", "VARCHAR"),
+            ("code_snippet", "TEXT"),
+            ("oracle_category", "VARCHAR"),
+            ("oracle_difficulty", "VARCHAR"),
+            ("oracle_estimated_minutes", "INTEGER"),
+            ("oracle_tags", "TEXT"),
+            ("assigned_ta", "VARCHAR"),
+            ("alternative_ta", "VARCHAR"),
+            ("estimated_wait_minutes", "INTEGER"),
+            ("student_hint", "TEXT"),
+            ("oracle_trace_json", "TEXT"),
+        ):
+            _add_column_if_missing(engine, "requests", columns, column_name, column_type)
 
     if "knowledge_entries" in table_names:
         columns = {

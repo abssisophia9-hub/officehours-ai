@@ -16,9 +16,14 @@ from app.models.knowledge import (
     StruggleHeatmapOut,
 )
 from app.realtime.hub import hub
-from app.services.analytics_service import build_escalation_feed, build_struggle_heatmap
+from app.services.analytics_service import (
+    build_escalation_feed,
+    build_oracle_metrics,
+    build_struggle_heatmap,
+)
 from app.services.kb_agent_service import answer_from_knowledge_base
 from app.services.knowledge_service import list_entries, to_out, update_entry
+from app.services.oracle_service import lifetime_confusion_topics
 
 router = APIRouter(tags=["knowledge"])
 
@@ -85,3 +90,19 @@ def struggle_heatmap(db: Session = Depends(get_db)):
 @router.get("/analytics/escalations", response_model=list[EscalationItem])
 def escalations(db: Session = Depends(get_db)):
     return build_escalation_feed(db)
+
+
+@router.get("/analytics/oracle-metrics")
+def oracle_metrics(db: Session = Depends(get_db)):
+    return build_oracle_metrics(db)
+
+
+@router.get("/analytics/lifetime-confusion")
+def lifetime_confusion(db: Session = Depends(get_db), limit: int = Query(default=8, ge=1, le=25)):
+    return {
+        "topics": lifetime_confusion_topics(db, limit=limit),
+        "message": (
+            "Lifetime agent foundation: approved KB topics that confuse students "
+            "most this semester. Professor curation remains the gate."
+        ),
+    }

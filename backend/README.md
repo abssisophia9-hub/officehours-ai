@@ -1,6 +1,25 @@
 # OfficeHours AI — Backend
 
-FastAPI backend for the OfficeHours AI triage system.
+FastAPI backend for the OfficeHours AI / Office Hours Oracle triage system.
+
+## Oracle multi-agent pipeline
+
+On `POST /requests/`, the backend runs:
+
+1. **Analyzer** — category, difficulty, tags, estimated minutes (`app/ai/claude_client.py`)
+2. **Matcher** — TA assignment by expertise + queue depth
+3. **Synthesizer** — student hint + teaching approach + similar KB hits
+
+Professor curation remains the gate: TA resolve → `pending_review` → professor approve → student KB / lifetime confusion agent.
+
+Useful endpoints:
+
+- `GET /ta/roster/`
+- `GET /analytics/oracle-metrics`
+- `GET /analytics/lifetime-confusion`
+- `WS /ws` live events including `oracle.analyzer.done`, `oracle.matcher.done`, `oracle.synthesizer.done`
+
+Set `USE_MOCK_CLAUDE=true` (default) for deterministic demos. Set `USE_MOCK_CLAUDE=false` and `ANTHROPIC_API_KEY` for live Claude.
 
 ## Setup
 

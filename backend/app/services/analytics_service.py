@@ -9,11 +9,13 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from app.models.knowledge import EscalationItem, StruggleHeatmapCell, StruggleHeatmapOut
+from app.models.knowledge import EscalationItem, KnowledgeEntry, StruggleHeatmapCell, StruggleHeatmapOut
 from app.models.request import Request
 
 ESCALATION_AGE_MINUTES = 30
 HARD_URGENCIES = {"urgent", "high"}
+MANUAL_MINUTES_PER_REQUEST = 8
+AI_ASSIST_MINUTES_PER_REQUEST = 3
 
 
 def build_struggle_heatmap(db: Session) -> StruggleHeatmapOut:
@@ -78,6 +80,56 @@ def build_escalation_feed(
 
     items.sort(key=lambda item: (-item.age_minutes, item.request_id))
     return items[:50]
+
+
+def build_oracle_metrics(db: Session) -> dict:
+    requests = db.query(Request).all()
+    entries = db.query(KnowledgeEntry).all()
+    approved = [entry for entry in entries if entry.status == "approved"]
+    pending = [entry for entry in entries if entry.status == "pending_review"]
+    with_oracle = [request for request in requests if request.oracle_trace_json]
+    assigned = [request for request in requests if request.assigned_ta]
+
+    time_saved = max(
+        0,
+        len(with_oracle) * (MANUAL_MINUTES_PER_REQUEST - AI_ASSIST_MINUTES_PER_REQUEST),
+    )
+
+    recent_traces = []
+    for request in sorted(requests, key=lambda item: item.id, reverse=True)[:8]:
+        if not request.oracle_trace_json:
+            continue
+        try:
+            import json
+
+            trace = json.loads(request.oracle_trace_json)
+        except Exception:
+            continue
+        recent_traces.append(
+            {
+                "request_id": request.id,
+                "elapsed_ms": trace.get("elapsed_ms"),
+                "steps": [
+                    {"agent": step.get("agent"), "elapsed_ms": step.get("elapsed_ms")}
+                    for step in trace.get("steps") or []
+                ],
+                "assigned_ta": request.assigned_ta,
+                "oracle_category": request.oracle_category,
+            }
+        )
+
+    return {
+        "total_requests": len(requests),
+        "oracle_runs": len(with_oracle),
+        "matched_assignments": len(assigned),
+        "kb_pending_review": len(pending),
+        "kb_approved": len(approved),
+        "kb_growth": len(entries),
+        "time_saved_minutes": time_saved,
+        "avg_manual_minutes_assumed": MANUAL_MINUTES_PER_REQUEST,
+        "avg_ai_assist_minutes_assumed": AI_ASSIST_MINUTES_PER_REQUEST,
+        "recent_agent_traces": recent_traces,
+    }
 
 
 def _week_start(value: datetime | None) -> str:

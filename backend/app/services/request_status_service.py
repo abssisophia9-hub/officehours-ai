@@ -30,6 +30,9 @@ def build_request_status(
         "category": request.category,
         "submitted_at": request.created_at,
         "anonymous_submission": request.anonymous,
+        "student_hint": getattr(request, "student_hint", None),
+        "assigned_ta": getattr(request, "assigned_ta", None),
+        "estimated_wait_minutes": getattr(request, "estimated_wait_minutes", None),
     }
 
     if latest_decision and latest_decision.status == "approved":
