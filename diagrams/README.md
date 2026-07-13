@@ -1,12 +1,14 @@
 # Diagrams
 
-Generated architecture visuals for OfficeHours AI:
+Generated visuals for the **custom-trained Oracle** upgrade:
 
 | File | Description |
 | --- | --- |
-| `architecture.png` | System components: kiosk, dashboard, FastAPI, AI/NLP, orchestration |
-| `workflow.png` | End-to-end request → classify → cluster → decide → status flow |
-| `database_erd.png` | SQLite entities: requests, recommendation_decisions, office_hours_windows |
+| `architecture.png` | Three browser apps + FastAPI + Analyzer/Matcher/Synthesizer + curation gate |
+| `workflow.png` | End-to-end submit → Oracle → TA → professor → student KB |
+| `oracle_agents.png` | Per-agent models, training sizes, artifacts |
+| `product_deployment.png` | What the final product is / is not |
+| `database_erd.png` | SQLite ERD including KB, TA roster, Oracle fields |
 
 Regenerate:
 
@@ -14,4 +16,9 @@ Regenerate:
 backend/venv/bin/python scripts/generate_architecture_diagrams.py
 ```
 
-Source narrative: `docs/system_architecture.md`.
+Narrative docs:
+
+- `docs/system_architecture.md`
+- `docs/product_overview.md`
+- `docs/training_data.md`
+- `docs/ai_nlp_design.md`

@@ -1,62 +1,63 @@
 # System Architecture
 
 ## Overview
-OfficeHours AI consists of four main components:
 
-1. **Student Kiosk (frontend/student-kiosk)** — QR/NFC check-in + request submission UI
-2. **Professor Dashboard (frontend/professor-dashboard)** — request triage, clustering view, recommendation cards, professor office-hours setup
-3. **Backend API (backend/)** — FastAPI service handling auth, requests, classification, clustering, professor decisions, and action plans
-4. **AI/NLP Layer (backend/app/ai)** — classification model, embedding generation, clustering logic
-5. **Action Orchestration Layer (backend/app/services)** — turns professor decisions into agenda, calendar, and student-status plans
+OfficeHours AI is a **campus web system** for finals-week office-hours triage at
+Al Akhawayn University. It is **not** a native desktop App Store product and
+does **not** currently ship SSO login. The FYP deliverable is three browser apps
+plus one FastAPI backend that runs custom-trained Oracle agents.
 
-## Data Flow
-1. Professor configures office-hour windows in the dashboard settings/availability panel
-2. Backend persists those office-hour windows so scheduling and recommendation logic can use them
-3. Student submits a request via kiosk (anonymous or identified)
-4. Request is sent to backend `/requests` endpoint
-5. AI layer classifies request type + generates embedding
-6. Clustering service groups it with similar existing requests
-7. Recommendation engine suggests an action (FAQ / group session / TA / 1:1 / admin) using request context and professor availability
-8. Professor dashboard displays clustered requests + recommended actions
-9. Professor approves/edits/dismisses the action
-10. Action orchestration generates a concrete next-step plan:
-    - office-hours agenda item
-    - student status update
-    - calendar/export suggestion
-    - privacy-safe delivery guidance for anonymous vs. identified students
-11. System logs the professor decision and generated action plan
+| Surface | Port (dev) | Who uses it | How |
+| --- | --- | --- | --- |
+| Student kiosk | `5173` | Students | Shared tablet/kiosk **or** browser URL |
+| Professor dashboard | `5174` | Professor | Desktop browser |
+| TA dashboard | `5175` | TAs | Desktop browser |
+| Backend API | `8000` | All of the above | FastAPI + SQLite (+ WebSocket `/ws`) |
 
-## Decision-to-action automation
-The project should not stop at categorized and clustered requests. The next
-layer is an action orchestration engine:
+See also: [`product_overview.md`](product_overview.md), [`training_data.md`](training_data.md), [`ai_nlp_design.md`](ai_nlp_design.md).
 
-1. Recommendation card is approved, edited, or dismissed by the professor.
-2. Backend stores the professor decision.
-3. NLP summarization extracts cluster keywords and a readable action title.
-4. The action engine creates a plan for:
-   - group review sessions
-   - FAQ/status updates
-   - priority 1:1 follow-up
-   - TA/project support blocks
-   - private admin/grading/accommodation routes
-5. Anonymous students receive request-code/status-board guidance, while
-   identified students can later receive direct notifications.
+## Components
 
-This preserves open office hours: agenda blocks organize the room without
-turning every student interaction into a strict appointment.
+1. **Student Kiosk** — barcode/manual check-in, anonymous/identified submit, status lookup, approved-KB agent chat
+2. **Professor Dashboard** — live triage, Oracle metrics, KB curation gate, heatmap, escalations, office hours, recommendations
+3. **TA Dashboard** — live queue, edit teaching draft / hint, resolve → `pending_review`
+4. **Backend API** — requests, Oracle pipeline, clustering, knowledge, TA roster, analytics, action plans, `.ics`
+5. **Oracle AI layer (custom-trained)** — Analyzer / Matcher / Synthesizer (no prompted Claude on the FYP path)
+6. **Action orchestration** — professor decisions → agenda / status / calendar plans
 
-## Professor office-hours configuration
-Professor office hours belong in the **Professor Dashboard** as an availability/settings workflow, backed by the **Backend API** as persisted scheduling data (`/office-hours` CRUD). Recommendation calendar export (`.ics`) uses these windows to place agenda blocks on real availability.
+## Oracle data flow (current)
+
+1. Student submits on the kiosk (`POST /requests/`)
+2. **Analyzer** (fine-tuned classifier) → category, urgency, difficulty, tags, ETA
+3. **Matcher** (fine-tuned TA assigner) → primary/alt TA + wait estimate
+4. **Synthesizer** (RAG + style ranker) → student hint + teaching approach
+5. Backend also clusters the request and seeds a `pending_review` knowledge draft
+6. WebSocket `/ws` pushes live events to professor + TA dashboards (no refresh required)
+7. TA may edit/resolve notes (still `pending_review`)
+8. Professor approves/edits/rejects KB entries — **only approved** answers reach `/agent/ask`
+9. Professor may approve recommendation cards → action plans + optional `.ics`
+10. Student checks status by request code (privacy-safe)
 
 ## Diagrams
-- `diagrams/architecture.png` — system components
-- `diagrams/workflow.png` — end-to-end request workflow
-- `diagrams/database_erd.png` — SQLite entity relationships
 
-Regenerate with `backend/venv/bin/python scripts/generate_architecture_diagrams.py`.
+| File | What it shows |
+| --- | --- |
+| `diagrams/architecture.png` | Three apps + API + three custom agents + curation gate |
+| `diagrams/workflow.png` | End-to-end Oracle → TA → professor → student KB flow |
+| `diagrams/oracle_agents.png` | Analyzer / Matcher / Synthesizer training artifacts |
+| `diagrams/product_deployment.png` | What the final product is / is not |
+| `diagrams/database_erd.png` | SQLite entities including KB + TA roster + Oracle fields |
 
-## Tech Stack Rationale
-- **FastAPI**: async-friendly, fast to prototype, good typing support
-- **SQLAlchemy + SQLite/Postgres**: easy local dev, swappable to Postgres for deployment
-- **sentence-transformers + cosine similarity**: lightweight, no fine-tuning required for MVP clustering
-- **React + Tailwind**: fast UI iteration for both kiosk and dashboard
+Regenerate:
+
+```bash
+backend/venv/bin/python scripts/generate_architecture_diagrams.py
+```
+
+## Tech stack rationale
+
+- **FastAPI + SQLite** — fast local demo; `DATABASE_URL` can point at Postgres later
+- **sentence-transformers (`all-MiniLM-L6-v2`) + scikit-learn** — trainable local models suitable for FYP constraints
+- **React + Tailwind** — three focused UIs (kiosk / professor / TA)
+- **WebSockets** — live queue/curation without polling
+- **External LLM disabled by default** (`OFFICEHOURS_ALLOW_EXTERNAL_LLM=false`)

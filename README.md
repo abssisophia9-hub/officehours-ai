@@ -1,88 +1,73 @@
 # OfficeHours AI
 
-OfficeHours AI is a smart AI-powered office-hours triage system designed to help faculty manage finals-week student requests more efficiently while making help-seeking easier for students.
+Campus office-hours triage system for **Al Akhawayn University** (FYP).
+
+Students submit questions on a kiosk/browser page. Custom-trained **Oracle**
+agents (Analyzer → Matcher → Synthesizer) triage and draft help. TAs and the
+professor work in browser dashboards. The professor remains the gate for what
+students can retrieve from the knowledge base.
+
+## What is the final product?
+
+A **web system** (three React apps + FastAPI), not a native desktop App Store
+app and not AUI SSO login yet. Demo day = run backend + open the three URLs on
+campus devices. Full answer: [`docs/product_overview.md`](docs/product_overview.md).
+
+## Oracle agents (custom-trained)
+
+| Agent | Model | Training data |
+| --- | --- | --- |
+| Analyzer | embeddings + LogReg | 120 labeled synthetic requests |
+| Matcher | embeddings + LogReg | 120 silver TA labels |
+| Synthesizer | RAG + style ranker | 50 curated teaching-bank rows |
+
+No prompted Claude / no `USE_MOCK_CLAUDE` on the assessed path. Details:
+[`docs/training_data.md`](docs/training_data.md).
 
 ## Problem
 
-During final exam periods, professors often receive a sudden overload of emails, Teams messages, office-hour requests, repeated academic questions, and retake/admin cases. At the same time, some students hesitate to contact professors directly because they feel shy, socially anxious, or unsure how to explain their confusion.
+Finals week floods faculty with repeated questions while some students hesitate
+to ask for help.
 
-## Proposed Solution
+## Solution highlights
 
-OfficeHours AI provides a QR/NFC-enabled kiosk and web dashboard where students can submit academic requests anonymously or with identification. The AI classifies requests, groups repeated questions, infers learning style for teaching drafts, and recommends actions such as:
+- Anonymous or identified kiosk submission
+- Live WebSocket dashboards (professor + TA)
+- Custom-trained multi-agent triage
+- Professor-approved knowledge base + student KB agent
+- Recommendation cards, office hours, `.ics` export
 
-- quick FAQ response
-- group review session
-- TA-led review session
-- one-to-one meeting
-- admin/retake route
+## Tech stack
 
-The professor remains in control and approves all final actions.
+- React + Tailwind (kiosk `5173`, professor `5174`, TA `5175`)
+- FastAPI + SQLAlchemy + SQLite
+- sentence-transformers + scikit-learn
+- WebSockets for live push
 
-## Main Features
-
-- QR/NFC student check-in
-- Anonymous question submission
-- AI request classification
-- Similar question clustering
-- Learning preference analysis
-- Professor dashboard
-- Action recommendations
-- Calendar/session suggestions
-- Finals-week demo scenario
-
-## Tech Stack
-
-### Frontend
-- React
-- Tailwind CSS
-- Recharts
-
-### Backend
-- Python
-- FastAPI
-- SQLAlchemy
-- SQLite / PostgreSQL
-
-### AI/NLP
-- LLM API or local NLP model
-- sentence-transformers
-- scikit-learn
-- cosine similarity clustering
-
-### Hardware
-- NFC reader
-- QR scanner
-- laptop/tablet or Raspberry Pi kiosk
-
-## Repository Structure
+## Repository structure
 
 ```
 officehours-ai/
-├── docs/              # Proposal, architecture, ethics, evaluation plans
-├── backend/           # FastAPI app, routes, models, services, AI logic
-├── frontend/          # Student kiosk + professor dashboard (React)
-├── hardware/          # NFC/QR integration code + setup guide
-├── data/              # Synthetic and labeled request datasets
-├── notebooks/         # AI/NLP experimentation notebooks
-├── diagrams/          # Architecture, workflow, and ERD diagrams
-├── reports/           # Mid report, final report, paper draft
-└── demo/              # Screenshots, demo script, video notes
+├── docs/              # Architecture, product overview, training data, ethics
+├── backend/           # FastAPI + custom Oracle models
+├── frontend/          # student-kiosk, professor-dashboard, ta-dashboard
+├── data/              # Synthetic / silver / curated training CSVs
+├── diagrams/          # Architecture, workflow, agents, deployment, ERD
+├── reports/           # Mid/final report materials
+└── demo/              # Demo scripts / screenshots
 ```
 
-## Getting Started
+## Getting started
 
-See [`backend/README.md`](backend/README.md) and [`frontend/README.md`](frontend/README.md) for setup instructions for each part of the stack.
-
-## Research Question
-
-Can an AI-assisted office-hours triage system reduce faculty communication overload and improve student comfort in seeking academic help during final exam periods?
+- Backend: [`backend/README.md`](backend/README.md)
+- Frontends: [`frontend/README.md`](frontend/README.md)
+- Architecture: [`docs/system_architecture.md`](docs/system_architecture.md)
 
 ## Status
 
-MVP complete: student kiosk, professor dashboard, TA dashboard, curated knowledge
-base + student KB agent, learning-style–aware teaching drafts, WebSockets, survey
-evaluation, and LaTeX reports. See PR history and `reports/final_report/`.
+MVP + custom-trained Oracle upgrade on `main`: kiosk, professor/TA dashboards,
+KB curation, WebSockets, local ML agents, AUI glass UI, updated diagrams.
 
 ## License
 
-This project is licensed under the MIT License — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](LICENSE).
