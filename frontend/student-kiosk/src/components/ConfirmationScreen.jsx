@@ -1,5 +1,37 @@
-export default function ConfirmationScreen({ result, onReset, onCheckStatus }) {
+import { useState } from "react";
+import { addFollowUp, getRequest } from "../api/requests.js";
+
+export default function ConfirmationScreen({
+  result,
+  onReset,
+  onCheckStatus,
+  onResultUpdate,
+}) {
   const oracle = result.oracle;
+  const [followUpText, setFollowUpText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function sendFollowUp(event) {
+    event.preventDefault();
+    if (!followUpText.trim()) return;
+    setBusy(true);
+    setError("");
+    try {
+      await addFollowUp(result.id, {
+        message: followUpText,
+        authorRole: "student",
+        authorName: result.student_name || result.student_id || "Student",
+      });
+      const fresh = await getRequest(result.id);
+      onResultUpdate?.(fresh);
+      setFollowUpText("");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <div className="glass-panel w-full max-w-4xl animate-fade-in-up p-8 sm:p-10">
@@ -31,9 +63,7 @@ export default function ConfirmationScreen({ result, onReset, onCheckStatus }) {
           <span className="text-sm font-semibold uppercase tracking-wide text-slate-400">
             Request
           </span>
-          <span className="glass-chip">
-            #{result.id}
-          </span>
+          <span className="glass-chip">#{result.id}</span>
         </div>
         <p className="mt-3 text-lg leading-relaxed text-slate-800">
           “{result.text}”
@@ -91,6 +121,42 @@ export default function ConfirmationScreen({ result, onReset, onCheckStatus }) {
           </p>
         </div>
       ) : null}
+
+      <div className="mt-6 rounded-2xl border border-slate-100 bg-white/70 p-5 text-left">
+        <p className="text-sm font-bold uppercase tracking-wide text-slate-500">
+          Follow-ups
+        </p>
+        {(result.followups || []).length === 0 ? (
+          <p className="mt-2 text-sm text-slate-500">
+            Need to clarify something? Add a follow-up for your TA.
+          </p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {(result.followups || []).map((item) => (
+              <li
+                key={item.id}
+                className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700"
+              >
+                <span className="font-semibold">{item.author_name}</span>: {item.message}
+              </li>
+            ))}
+          </ul>
+        )}
+        <form onSubmit={sendFollowUp} className="mt-4 space-y-3">
+          <textarea
+            className="field-glass min-h-24 w-full px-4 py-3"
+            placeholder="Add a follow-up message…"
+            value={followUpText}
+            onChange={(event) => setFollowUpText(event.target.value)}
+            required
+            minLength={2}
+          />
+          {error ? <p className="text-sm text-red-700">{error}</p> : null}
+          <button type="submit" disabled={busy} className="btn-ghost px-4 py-2 text-sm">
+            {busy ? "Sending…" : "Send follow-up"}
+          </button>
+        </form>
+      </div>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         <button

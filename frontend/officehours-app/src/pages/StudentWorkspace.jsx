@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
+import FollowUpThread from "../components/FollowUpThread.jsx";
 
 export default function StudentWorkspace() {
   const { token, user, activeCourse } = useAuth();
@@ -44,6 +45,12 @@ export default function StudentWorkspace() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function refreshResult() {
+    if (!result?.id) return;
+    const fresh = await api(`/requests/${result.id}`, { token });
+    setResult(fresh);
   }
 
   async function askAgent(event) {
@@ -110,6 +117,16 @@ export default function StudentWorkspace() {
                 </div>
               </div>
             ) : null}
+            <div className="mt-5 border-t border-white/50 pt-5">
+              <FollowUpThread
+                requestId={result.id}
+                followups={result.followups || []}
+                token={token}
+                authorRole="student"
+                authorName={user.display_name}
+                onUpdated={refreshResult}
+              />
+            </div>
           </section>
         ) : null}
 

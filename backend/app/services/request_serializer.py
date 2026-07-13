@@ -5,10 +5,15 @@ from __future__ import annotations
 import json
 
 from app.models.request import OracleResultOut, Request, RequestOut
+from app.models.followup import FollowUpOut, RequestFollowUp
 from app.services.oracle_service import build_oracle_public_payload
 
 
-def to_request_out(request: Request, oracle: dict | None = None) -> RequestOut:
+def to_request_out(
+    request: Request,
+    oracle: dict | None = None,
+    followups: list[RequestFollowUp] | None = None,
+) -> RequestOut:
     tags: list[str] = []
     if request.oracle_tags:
         try:
@@ -30,6 +35,10 @@ def to_request_out(request: Request, oracle: dict | None = None) -> RequestOut:
         except Exception:
             oracle_payload = None
 
+    followup_payload = [
+        FollowUpOut.model_validate(item) for item in (followups or [])
+    ]
+
     return RequestOut(
         id=request.id,
         text=request.text,
@@ -37,6 +46,7 @@ def to_request_out(request: Request, oracle: dict | None = None) -> RequestOut:
         student_id=request.student_id,
         student_name=request.student_name,
         course=request.course,
+        course_id=getattr(request, "course_id", None),
         code_snippet=request.code_snippet,
         category=request.category,
         urgency=request.urgency,
@@ -53,4 +63,5 @@ def to_request_out(request: Request, oracle: dict | None = None) -> RequestOut:
         estimated_wait_minutes=request.estimated_wait_minutes,
         student_hint=request.student_hint,
         oracle=oracle_payload,
+        followups=followup_payload,
     )

@@ -82,6 +82,7 @@ export default function App() {
             result={result}
             onReset={handleReset}
             onCheckStatus={() => openStatusLookup(result.id)}
+            onResultUpdate={setResult}
           />
         )}
         {screen === "status" && (

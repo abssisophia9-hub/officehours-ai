@@ -2,11 +2,13 @@ import { useCallback, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
+import FollowUpThread from "../components/FollowUpThread.jsx";
 
 export default function ProfessorWorkspace() {
-  const { token, activeCourse } = useAuth();
+  const { token, user, activeCourse } = useAuth();
   const [requests, setRequests] = useState([]);
   const [entries, setEntries] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -117,13 +119,43 @@ export default function ProfessorWorkspace() {
         <h2 className="font-display text-2xl font-bold">Recent requests</h2>
         <ul className="mt-4 space-y-2">
           {requests.slice(0, 12).map((request) => (
-            <li key={request.id} className="rounded-2xl bg-white/45 px-4 py-3 text-sm">
-              <span className="font-bold">#{request.id}</span> · {request.assigned_ta || "Unassigned"} ·{" "}
-              {request.category || "n/a"}
-              <p className="mt-1 text-aui-deep/80">{request.text}</p>
+            <li key={request.id}>
+              <button
+                type="button"
+                className={`w-full rounded-2xl px-4 py-3 text-left text-sm ${
+                  selectedId === request.id
+                    ? "bg-aui-mist/80 ring-1 ring-aui-forest/30"
+                    : "bg-white/45"
+                }`}
+                onClick={() => setSelectedId(request.id)}
+              >
+                <span className="font-bold">#{request.id}</span> ·{" "}
+                {request.assigned_ta || "Unassigned"} · {request.category || "n/a"}
+                {(request.followups || []).length > 0 ? (
+                  <span className="ml-2 text-xs font-bold text-aui-forest">
+                    · {(request.followups || []).length} follow-up
+                    {(request.followups || []).length === 1 ? "" : "s"}
+                  </span>
+                ) : null}
+                <p className="mt-1 text-aui-deep/80">{request.text}</p>
+              </button>
             </li>
           ))}
         </ul>
+        {selectedId ? (
+          <div className="mt-5 border-t border-white/50 pt-5">
+            <FollowUpThread
+              requestId={selectedId}
+              followups={
+                requests.find((item) => item.id === selectedId)?.followups || []
+              }
+              token={token}
+              authorRole="professor"
+              authorName={user.display_name}
+              onUpdated={load}
+            />
+          </div>
+        ) : null}
       </section>
     </div>
   );

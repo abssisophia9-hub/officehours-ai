@@ -18,6 +18,8 @@ from app.database.session import Base, engine
 from app.models import knowledge as _knowledge_model  # noqa: F401
 from app.models import ta_roster as _ta_roster_model  # noqa: F401
 from app.models import auth as _auth_model  # noqa: F401
+from app.models import followup as _followup_model  # noqa: F401
+from app.models import request as _request_model  # noqa: F401
 from app.realtime.hub import set_main_loop
 from app.routes.actions import router as actions_router
 from app.routes.auth import courses_router, router as auth_router

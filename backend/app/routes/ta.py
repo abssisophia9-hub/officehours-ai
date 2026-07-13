@@ -15,6 +15,7 @@ from app.models.ta_roster import TaRoster, TaRosterOut
 from app.realtime.hub import hub
 from app.services.knowledge_service import to_out
 from app.services.oracle_service import ensure_default_roster
+from app.services.followup_service import load_followups_map
 from app.services.request_serializer import to_request_out
 
 router = APIRouter(prefix="/ta", tags=["ta"])
@@ -28,6 +29,7 @@ def list_ta_roster(db: Session = Depends(get_db)):
 @router.get("/queue/", response_model=list[TaQueueItem])
 def list_ta_queue(db: Session = Depends(get_db)):
     requests = db.query(Request).order_by(Request.created_at.desc()).all()
+    followups_by_request = load_followups_map(db, [request.id for request in requests])
     entries = {
         entry.source_request_id: entry
         for entry in db.query(KnowledgeEntry).all()
@@ -42,13 +44,17 @@ def list_ta_queue(db: Session = Depends(get_db)):
             continue
         items.append(
             TaQueueItem(
-                request=to_request_out(request),
+                request=to_request_out(
+                    request,
+                    followups=followups_by_request.get(request.id, []),
+                ),
                 knowledge_entry=to_out(entry) if entry else None,
                 learning_style=request.learning_style,
                 urgency=request.urgency,
             )
         )
     return items
+
 
 
 @router.post("/resolve/", response_model=TaResolveResponse)

@@ -43,3 +43,35 @@ export async function submitRequest({
 
   return response.json();
 }
+
+/**
+ * Add a follow-up message to an existing request.
+ */
+export async function addFollowUp(requestId, { message, authorRole, authorName }) {
+  const response = await fetch(`${API_BASE}/requests/${requestId}/followups`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message: message.trim(),
+      author_role: authorRole,
+      author_name: authorName,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Follow-up failed with status ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Fetch a request including follow-ups.
+ */
+export async function getRequest(requestId) {
+  const response = await fetch(`${API_BASE}/requests/${requestId}`);
+  if (!response.ok) {
+    throw new Error(`Request lookup failed with status ${response.status}`);
+  }
+  return response.json();
+}

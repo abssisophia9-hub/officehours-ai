@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
+import FollowUpThread from "../components/FollowUpThread.jsx";
 
 export default function TaWorkspace() {
   const { token, user, activeCourse } = useAuth();
@@ -128,6 +129,16 @@ export default function TaWorkspace() {
               <button type="button" className="btn-ghost px-4 py-2 text-sm" onClick={() => resolve("needs_professor")}>
                 Needs professor
               </button>
+            </div>
+            <div className="border-t border-white/50 pt-4">
+              <FollowUpThread
+                requestId={selected.request.id}
+                followups={selected.request.followups || []}
+                token={token}
+                authorRole="ta"
+                authorName={user.display_name}
+                onUpdated={loadQueue}
+              />
             </div>
           </div>
         )}

@@ -108,8 +108,12 @@ class RequestOut(RequestCreate):
     estimated_wait_minutes: int | None = None
     student_hint: str | None = None
     oracle: OracleResultOut | None = None
+    followups: list["FollowUpOut"] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
+
+
+from app.models.followup import FollowUpOut  # noqa: E402
 
 
 class RequestStatusOut(BaseModel):

@@ -10,8 +10,10 @@ from sqlalchemy.orm import Session
 from app.ai.clustering import assign_cluster_id
 from app.database.session import get_db
 from app.models.action import RecommendationDecision
+from app.models.followup import FollowUpCreate, FollowUpOut
 from app.models.request import Request, RequestCreate, RequestOut, RequestStatusOut
 from app.realtime.hub import hub
+from app.services.followup_service import create_followup, list_followups, load_followups
 from app.services.knowledge_service import create_pending_entry_from_request
 from app.services.oracle_service import (
     apply_oracle_to_request,
@@ -22,6 +24,15 @@ from app.services.request_serializer import to_request_out
 from app.services.request_status_service import build_request_status
 
 router = APIRouter(prefix="/requests", tags=["requests"])
+
+
+def _request_out(db, request: Request, oracle: dict | None = None) -> RequestOut:
+    return to_request_out(
+        request,
+        oracle=oracle,
+        followups=load_followups(db, request.id),
+    )
+
 
 
 @router.post("/", response_model=RequestOut, status_code=status.HTTP_201_CREATED)
@@ -127,12 +138,13 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
             },
         )
 
-    return to_request_out(db_request, oracle=public_oracle)
+    return _request_out(db, db_request, oracle=public_oracle)
 
 
 @router.get("/", response_model=list[RequestOut])
 def list_requests(db: Session = Depends(get_db)):
-    return [to_request_out(item) for item in db.query(Request).order_by(Request.id).all()]
+    rows = db.query(Request).order_by(Request.id).all()
+    return [_request_out(db, item) for item in rows]
 
 
 @router.get("/{request_id}/status", response_model=RequestStatusOut)
@@ -148,6 +160,45 @@ def get_request_status(request_id: int, db: Session = Depends(get_db)):
     return build_request_status(db_request, decisions)
 
 
+@router.get("/{request_id}/followups", response_model=list[FollowUpOut])
+def get_request_followups(request_id: int, db: Session = Depends(get_db)):
+    db_request = db.get(Request, request_id)
+    if db_request is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Request not found",
+        )
+    return list_followups(db, request_id)
+
+
+@router.post(
+    "/{request_id}/followups",
+    response_model=FollowUpOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def post_request_followup(
+    request_id: int,
+    payload: FollowUpCreate,
+    db: Session = Depends(get_db),
+):
+    db_request = db.get(Request, request_id)
+    if db_request is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Request not found",
+        )
+
+    followup = create_followup(db, request_id, payload)
+    await hub.broadcast(
+        "request.followup",
+        {
+            "request_id": request_id,
+            "followup": followup.model_dump(mode="json"),
+        },
+    )
+    return followup
+
+
 @router.get("/{request_id}", response_model=RequestOut)
 def get_request(request_id: int, db: Session = Depends(get_db)):
     db_request = db.get(Request, request_id)
@@ -156,4 +207,5 @@ def get_request(request_id: int, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Request not found",
         )
-    return to_request_out(db_request)
+    return _request_out(db, db_request)
+
