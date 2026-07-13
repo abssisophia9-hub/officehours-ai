@@ -21,6 +21,7 @@ class Request(Base):
     student_id: Mapped[str | None] = mapped_column(String, nullable=True)
     student_name: Mapped[str | None] = mapped_column(String, nullable=True)
     course: Mapped[str | None] = mapped_column(String, nullable=True)
+    course_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     code_snippet: Mapped[str | None] = mapped_column(Text, nullable=True)
     category: Mapped[str | None] = mapped_column(String, nullable=True)
     urgency: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -49,6 +50,7 @@ class RequestCreate(BaseModel):
     student_id: str | None = None
     student_name: str | None = None
     course: str | None = None
+    course_id: int | None = None
     code_snippet: str | None = None
     category: str | None = None
     urgency: str | None = None

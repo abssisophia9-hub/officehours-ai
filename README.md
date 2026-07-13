@@ -9,9 +9,14 @@ students can retrieve from the knowledge base.
 
 ## What is the final product?
 
-A **web system** (three React apps + FastAPI), not a native desktop App Store
-app and not AUI SSO login yet. Demo day = run backend + open the three URLs on
-campus devices. Full answer: [`docs/product_overview.md`](docs/product_overview.md).
+A **packaged multi-role campus application** with login:
+
+- students / TAs / professors sign in
+- course memberships decide their role per course
+- one app workspace (`frontend/officehours-app`)
+
+Not three separate URL demos. Full answer: [`docs/product_overview.md`](docs/product_overview.md).
+
 
 ## Oracle agents (custom-trained)
 
@@ -59,9 +64,21 @@ officehours-ai/
 
 ## Getting started
 
-- Backend: [`backend/README.md`](backend/README.md)
-- Frontends: [`frontend/README.md`](frontend/README.md)
-- Architecture: [`docs/system_architecture.md`](docs/system_architecture.md)
+**Product app (supervisor testing):**
+
+```bash
+./scripts/run_product.sh
+# open http://127.0.0.1:5180
+# password: aui-demo
+# student@aui.ma | ta.alice@aui.ma | professor@aui.ma
+```
+
+Details: [`docs/product_overview.md`](docs/product_overview.md) ·
+[`frontend/officehours-app/README.md`](frontend/officehours-app/README.md)
+
+Backend / legacy frontends: [`backend/README.md`](backend/README.md),
+[`frontend/README.md`](frontend/README.md).
+
 
 ## Status
 

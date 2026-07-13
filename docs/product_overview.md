@@ -1,56 +1,47 @@
-# Product overview — what is the final product?
+# Product overview — what supervisors test
 
-## Short answer
+## The product
 
-Your FYP product is a **campus web triage system** for AUI office hours:
+**OfficeHours AI is one packaged multi-role campus application**, not three
+separate URL demos.
 
-- students use a **kiosk/browser page**
-- TAs use a **browser dashboard**
-- the professor uses a **browser dashboard**
-- one **FastAPI backend** runs **custom-trained Oracle agents**
+Users **log in** as themselves. Memberships decide whether they act as a
+**student**, **TA**, or **professor** **per course**. A professor can teach
+multiple courses; a course can have one or more TAs; a student can enroll in
+several courses and switch between them.
 
-It is **not** (today) a published desktop app with App Store installers or AUI SSO login.
+Primary app:
 
-## What users actually open
+- `frontend/officehours-app` (dev port **5180**)
+- Launch helper: `./scripts/run_product.sh`
 
-| Role | What they open | Typical device |
+Legacy separate kiosk/dashboard folders remain for hardware/kiosk experiments,
+but **the unified app is what you send for product testing**.
+
+## Demo accounts
+
+Password for all: `aui-demo`
+
+| Email | Role | Courses |
 | --- | --- | --- |
-| Student | Student kiosk web app | Shared hallway tablet / laptop kiosk, or personal laptop browser |
-| TA | TA dashboard web app | Desktop browser during office hours |
-| Professor | Professor dashboard web app | Desktop browser |
+| `student@aui.ma` | student | CS 400, CS 330 |
+| `student2@aui.ma` | student | CS 330 |
+| `ta.alice@aui.ma` | TA | CS 400 |
+| `ta.bob@aui.ma` | TA | CS 400, CS 330 |
+| `professor@aui.ma` | professor | CS 400, CS 330 |
 
-All three talk to the same backend (`http://…:8000`). In development:
+## What a supervisor does
 
-- kiosk → `http://127.0.0.1:5173`
-- professor → `http://127.0.0.1:5174`
-- TA → `http://127.0.0.1:5175`
+1. Run `./scripts/run_product.sh` (or start backend + `officehours-app`)
+2. Open **http://127.0.0.1:5180**
+3. Sign in as student → submit a CS 400 question
+4. Sign in as TA Alice → resolve it
+5. Sign in as professor → approve the knowledge draft
+6. Switch courses with the course picker to see multi-course behavior
 
-## What “publish” means for this FYP
+## Packaging note
 
-For demo day / evaluation, “publishing” usually means:
-
-1. Run the backend on a campus laptop or small server
-2. Serve the three Vite builds (or run `npm run dev`) on the LAN
-3. Point kiosk tablets / staff browsers at those URLs
-4. Optionally put the kiosk in fullscreen for a hardware prototype feel
-
-Future production hardening (out of current MVP scope) could add:
-
-- AUI SSO / role-based login
-- HTTPS reverse proxy
-- Postgres instead of SQLite
-- hosted deployment (university VM / cloud)
-
-## What the AI is allowed to do
-
-Oracle agents **draft and triage**. They do **not** auto-publish answers to students.
-
-Publication gate:
-
-`TA resolve → pending_review → professor approve → student KB agent`
-
-That human-in-the-loop design is intentional for ethics + FYP grading.
-
-## Branding
-
-UI is AUI-branded (official logo asset + Ifrane-inspired forest/sand glass theme) across all three apps.
+Today the deliverable is a **single web application package** (one frontend +
+API) with authentication. It can later be wrapped as a desktop installer
+(Electron) or deployed behind AUI SSO. The important product rule is already
+true: **one login, role + course context, not three naked URLs**.

@@ -32,6 +32,7 @@ def ensure_schema(engine: Engine) -> None:
             ("estimated_wait_minutes", "INTEGER"),
             ("student_hint", "TEXT"),
             ("oracle_trace_json", "TEXT"),
+            ("course_id", "INTEGER"),
         ):
             _add_column_if_missing(engine, "requests", columns, column_name, column_type)
 

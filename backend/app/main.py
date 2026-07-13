@@ -17,13 +17,17 @@ from app.database.migrate import ensure_schema
 from app.database.session import Base, engine
 from app.models import knowledge as _knowledge_model  # noqa: F401
 from app.models import ta_roster as _ta_roster_model  # noqa: F401
+from app.models import auth as _auth_model  # noqa: F401
 from app.realtime.hub import set_main_loop
 from app.routes.actions import router as actions_router
+from app.routes.auth import courses_router, router as auth_router
 from app.routes.knowledge import router as knowledge_router
 from app.routes.office_hours import router as office_hours_router
 from app.routes.realtime import router as realtime_router
 from app.routes.requests import router as requests_router
 from app.routes.ta import router as ta_router
+from app.database.session import SessionLocal
+from app.services.demo_accounts import ensure_demo_accounts
 
 Base.metadata.create_all(bind=engine)
 ensure_schema(engine)
@@ -32,13 +36,18 @@ ensure_schema(engine)
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     set_main_loop(asyncio.get_running_loop())
+    db = SessionLocal()
+    try:
+        ensure_demo_accounts(db)
+    finally:
+        db.close()
     yield
 
 
 app = FastAPI(
     title="OfficeHours AI API",
-    description="Backend API for the OfficeHours AI triage system.",
-    version="0.1.0",
+    description="Backend API for the OfficeHours AI multi-role campus product.",
+    version="0.2.0",
     lifespan=lifespan,
 )
 
@@ -62,6 +71,8 @@ def health_check():
     return {"status": "healthy"}
 
 
+app.include_router(auth_router)
+app.include_router(courses_router)
 app.include_router(requests_router)
 app.include_router(actions_router)
 app.include_router(office_hours_router)
