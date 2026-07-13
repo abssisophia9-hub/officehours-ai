@@ -34,40 +34,44 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-gradient-to-br from-indigo-50 via-slate-50 to-emerald-50">
-      <header className="flex items-center justify-between gap-3 px-8 py-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-600 text-lg font-extrabold text-white shadow-lg shadow-indigo-300">
-            OH
+    <div className="aui-shell flex min-h-full flex-col">
+      <header className="px-5 pt-5 sm:px-8 sm:pt-6">
+        <div className="glass-header flex flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-6">
+          <div className="flex items-center gap-4">
+            <img
+              src="/aui-logo.png"
+              alt="Al Akhawayn University"
+              className="aui-logo animate-floaty"
+            />
+            <div>
+              <p className="font-display text-2xl font-bold leading-tight text-aui-ink sm:text-3xl">
+                OfficeHours AI
+              </p>
+              <p className="text-sm font-medium text-aui-deep/75">
+                AUI Student Help Kiosk · Ifrane
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-lg font-bold leading-tight text-slate-900">
-              OfficeHours AI
-            </p>
-            <p className="text-sm leading-tight text-slate-500">
-              Student Help Kiosk
-            </p>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setScreen("agent")}
+              className="btn-ghost px-4 py-2 text-sm"
+            >
+              Ask KB agent
+            </button>
+            <button
+              type="button"
+              onClick={() => openStatusLookup()}
+              className="btn-ghost px-4 py-2 text-sm"
+            >
+              Check request status
+            </button>
           </div>
-        </div>
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => setScreen("agent")}
-            className="rounded-full border-2 border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-50"
-          >
-            Ask KB agent
-          </button>
-          <button
-            type="button"
-            onClick={() => openStatusLookup()}
-            className="rounded-full border-2 border-indigo-200 bg-white px-4 py-2 text-sm font-bold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50"
-          >
-            Check request status
-          </button>
         </div>
       </header>
 
-      <main className="flex flex-1 items-center justify-center px-6 pb-12">
+      <main className="flex flex-1 items-center justify-center px-5 py-8 sm:px-6 sm:pb-12">
         {screen === "check-in" && <CheckInScreen onContinue={handleCheckIn} />}
         {screen === "form" && (
           <RequestForm checkIn={checkIn} onSubmitted={handleSubmitted} />
@@ -88,9 +92,9 @@ export default function App() {
         {screen === "agent" && <KbAgentScreen onBack={handleReset} />}
       </main>
 
-      <footer className="px-8 pb-6 text-center text-sm text-slate-400">
-        Your privacy matters — anonymous requests never store your identity.
-        The KB agent only uses professor-approved answers.
+      <footer className="px-8 pb-6 text-center text-sm text-aui-deep/55">
+        Al Akhawayn University · Your privacy matters — anonymous requests never
+        store your identity. The KB agent only uses professor-approved answers.
       </footer>
     </div>
   );

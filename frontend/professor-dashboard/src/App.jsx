@@ -77,18 +77,20 @@ export default function App() {
   }, [selectedRecommendationKind, sortedRequests]);
 
   return (
-    <div className="min-h-full bg-slate-100 text-slate-950">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-6 py-6 lg:flex-row lg:items-center lg:justify-between">
+    <div className="aui-shell min-h-full text-aui-ink">
+      <header className="px-6 pt-6">
+        <div className="glass-header mx-auto flex max-w-7xl flex-col gap-5 rounded-2xl px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-lg font-black text-white shadow-lg shadow-indigo-200">
-              OH
-            </div>
+            <img
+              src="/aui-logo.png"
+              alt="Al Akhawayn University"
+              className="aui-logo"
+            />
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-indigo-600">
-                OfficeHours AI
+              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-aui-forest">
+                OfficeHours AI · AUI
               </p>
-              <h1 className="text-3xl font-black tracking-tight">
+              <h1 className="font-display text-3xl font-bold tracking-tight">
                 Professor Dashboard
               </h1>
             </div>
@@ -96,26 +98,22 @@ export default function App() {
 
           <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
             <span
-              className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ${
-                live
-                  ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                  : "bg-slate-100 text-slate-500 ring-1 ring-slate-200"
-              }`}
+              className={`glass-chip ${live ? "" : "opacity-70"}`}
             >
               <span
-                className={`h-2 w-2 rounded-full ${live ? "bg-emerald-500" : "bg-slate-400"}`}
+                className={`h-2 w-2 rounded-full ${live ? "live-pulse bg-emerald-500" : "bg-slate-400"}`}
               />
               {live ? "Live" : "Reconnecting"}
             </span>
             {lastLoadedAt ? (
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-aui-deep/65">
                 Last refreshed {lastLoadedAt.toLocaleTimeString()}
               </p>
             ) : null}
             <button
               type="button"
               onClick={loadRequests}
-              className="rounded-full bg-slate-950 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-slate-800"
+              className="btn-primary px-5 py-2.5 text-sm"
             >
               Refresh requests
             </button>
@@ -125,7 +123,7 @@ export default function App() {
 
       <main className="mx-auto flex max-w-7xl flex-col gap-8 px-6 py-8">
         {status === "error" ? (
-          <div className="rounded-3xl border border-red-200 bg-red-50 p-5 text-red-800">
+          <div className="glass-panel border-red-200/70 bg-red-50/70 p-5 text-red-800">
             <p className="font-bold">Could not load backend requests.</p>
             <p className="mt-1 text-sm">
               {error}. Make sure the FastAPI backend is running and
@@ -135,7 +133,7 @@ export default function App() {
         ) : null}
 
         {status === "loading" && requests.length === 0 ? (
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center text-slate-500">
+          <div className="glass-panel p-8 text-center text-slate-500">
             Loading request queue...
           </div>
         ) : (
@@ -173,7 +171,7 @@ export default function App() {
 
 function ChartLoadingState() {
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center text-slate-500 shadow-sm">
+    <div className="glass-panel p-8 text-center text-slate-500">
       Loading charts...
     </div>
   );

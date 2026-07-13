@@ -12,7 +12,7 @@ export default function RequestTable({ requests, activeFilter = "all" }) {
     <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
       <div className="flex flex-col gap-2 border-b border-slate-200 p-6 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-indigo-600">
+          <p className="text-sm font-semibold uppercase tracking-wide text-aui-forest">
             Live queue
           </p>
           <h2 className="text-2xl font-black text-slate-950">
@@ -90,7 +90,7 @@ export default function RequestTable({ requests, activeFilter = "all" }) {
 function Badge({ children, tone }) {
   const toneClasses = {
     emerald: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-    indigo: "bg-indigo-50 text-indigo-700 ring-indigo-200",
+    indigo: "bg-emerald-50 text-[var(--aui-forest-deep)] ring-emerald-200",
   };
 
   return (

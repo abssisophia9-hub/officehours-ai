@@ -62,7 +62,7 @@ export default function StruggleHeatmap() {
   }
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="glass-panel p-6">
       <div className="mb-5">
         <p className="text-sm font-semibold uppercase tracking-wide text-rose-600">
           Struggle heatmap
