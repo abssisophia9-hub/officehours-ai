@@ -57,10 +57,10 @@ export default function OracleIntelligencePanel() {
   }
 
   return (
-    <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="glass-panel p-6">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-600">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-aui-forest">
             Office Hours Oracle
           </p>
           <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">
@@ -83,7 +83,7 @@ export default function OracleIntelligencePanel() {
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         <div className="rounded-3xl bg-slate-950 p-5 text-white">
-          <p className="text-sm font-bold uppercase tracking-wide text-indigo-200">
+          <p className="text-sm font-bold uppercase tracking-wide text-emerald-100">
             Agent flow
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">

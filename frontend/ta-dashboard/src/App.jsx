@@ -81,39 +81,37 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-full bg-slate-100 text-slate-950">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
+    <div className="aui-shell min-h-full text-aui-ink">
+      <header className="px-6 pt-6">
+        <div className="glass-header mx-auto flex max-w-6xl flex-col gap-4 rounded-2xl px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500 text-lg font-black text-white">
-              TA
-            </div>
+            <img
+              src="/aui-logo.png"
+              alt="Al Akhawayn University"
+              className="aui-logo"
+            />
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-amber-700">
-                OfficeHours AI
+              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-aui-forest">
+                OfficeHours AI · AUI
               </p>
-              <h1 className="text-3xl font-black tracking-tight">TA Dashboard</h1>
+              <h1 className="font-display text-3xl font-bold tracking-tight">
+                TA Dashboard
+              </h1>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span
-              className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ${
-                live
-                  ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                  : "bg-slate-100 text-slate-500 ring-1 ring-slate-200"
-              }`}
-            >
+          <div className="flex flex-wrap items-center gap-3">
+            <span className={`glass-chip ${live ? "" : "opacity-70"}`}>
               <span
-                className={`h-2 w-2 rounded-full ${live ? "bg-emerald-500" : "bg-slate-400"}`}
+                className={`h-2 w-2 rounded-full ${live ? "live-pulse bg-emerald-500" : "bg-slate-400"}`}
               />
               {live ? "Live" : "Reconnecting"}
             </span>
-            <label className="text-sm font-semibold text-slate-600">
+            <label className="text-sm font-semibold text-aui-deep/75">
               TA name
               <input
                 value={taName}
                 onChange={(event) => setTaName(event.target.value)}
-                className="ml-2 rounded-full border border-slate-200 px-3 py-1.5 text-sm"
+                className="field-glass ml-2 px-3 py-1.5 text-sm"
               />
             </label>
           </div>
@@ -132,8 +130,8 @@ export default function App() {
           </div>
         ) : null}
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h2 className="mb-3 text-lg font-bold">Open queue</h2>
+        <section className="glass-panel p-4">
+          <h2 className="mb-3 font-display text-lg font-bold">Open queue</h2>
           {status === "loading" && queue.length === 0 ? (
             <p className="text-sm text-slate-500">Loading...</p>
           ) : null}
@@ -150,8 +148,8 @@ export default function App() {
                     onClick={() => selectItem(item)}
                     className={`w-full rounded-2xl border px-3 py-3 text-left transition ${
                       selectedId === item.request.id
-                        ? "border-amber-400 bg-amber-50"
-                        : "border-slate-200 bg-slate-50 hover:border-slate-300"
+                        ? "border-aui-forest bg-aui-mist/80"
+                        : "border-white/50 bg-white/35 hover:border-aui-forest/35"
                     }`}
                   >
                     <div className="mb-1 flex flex-wrap gap-2">
@@ -159,12 +157,12 @@ export default function App() {
                         #{item.request.id}
                       </span>
                       {item.request.assigned_ta ? (
-                        <span className="rounded-full bg-violet-50 px-2 py-0.5 text-xs font-bold text-violet-700 ring-1 ring-violet-100">
+                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-[var(--aui-forest-deep)] ring-1 ring-emerald-100">
                           {item.request.assigned_ta}
                         </span>
                       ) : null}
                       {item.learning_style ? (
-                        <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-indigo-700 ring-1 ring-indigo-100">
+                        <span className="rounded-full glass-chip !px-2 !py-0.5">
                           {item.learning_style.replaceAll("_", " ")}
                         </span>
                       ) : null}
@@ -184,9 +182,9 @@ export default function App() {
           )}
         </section>
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="glass-panel p-6">
           {!selected ? (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-aui-deep/70">
               Select a request to review the AI teaching draft, adapt it to the
               student&apos;s learning style, then mark resolved. Resolutions go
               to the professor curation queue as <strong>pending review</strong>
@@ -195,10 +193,10 @@ export default function App() {
           ) : (
             <div className="space-y-4">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-wide text-amber-700">
+                <p className="text-sm font-semibold uppercase tracking-wide text-aui-forest">
                   Request #{selected.request.id}
                 </p>
-                <h2 className="mt-1 text-xl font-bold text-slate-950">
+                <h2 className="font-display mt-1 text-xl font-bold text-aui-ink">
                   {selected.request.text}
                 </h2>
                 <p className="mt-2 text-sm text-slate-500">
@@ -229,7 +227,7 @@ export default function App() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-violet-700">
+                  <p className="text-xs font-bold uppercase tracking-wide text-aui-forest">
                     Matcher
                   </p>
                   <p className="mt-1 text-sm font-semibold text-slate-900">
@@ -266,17 +264,17 @@ export default function App() {
                   value={notes}
                   onChange={(event) => setNotes(event.target.value)}
                   rows={8}
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm"
+                  className="field-glass mt-1 w-full px-3 py-2 text-sm"
                 />
               </label>
 
-              <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">
+              <label className="block text-xs font-bold uppercase tracking-wide text-aui-deep/60">
                 Student hint (non-spoiler)
                 <textarea
                   value={hint}
                   onChange={(event) => setHint(event.target.value)}
                   rows={3}
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm"
+                  className="field-glass mt-1 w-full px-3 py-2 text-sm"
                 />
               </label>
 
@@ -285,7 +283,7 @@ export default function App() {
                   type="button"
                   disabled={saving || notes.trim().length < 3}
                   onClick={() => handleResolve("resolved")}
-                  className="rounded-full bg-amber-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-amber-700 disabled:opacity-60"
+                  className="btn-primary px-5 py-2.5 text-sm disabled:opacity-60"
                 >
                   Mark resolved → curation queue
                 </button>
@@ -293,7 +291,7 @@ export default function App() {
                   type="button"
                   disabled={saving || notes.trim().length < 3}
                   onClick={() => handleResolve("needs_professor")}
-                  className="rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-60"
+                  className="btn-ghost px-5 py-2.5 text-sm disabled:opacity-60"
                 >
                   Needs professor
                 </button>

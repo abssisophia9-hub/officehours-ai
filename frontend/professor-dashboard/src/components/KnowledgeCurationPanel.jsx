@@ -85,7 +85,7 @@ export default function KnowledgeCurationPanel() {
   }
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="glass-panel p-6">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-amber-700">
@@ -151,7 +151,7 @@ export default function KnowledgeCurationPanel() {
                     {entry.status.replace("_", " ")}
                   </span>
                   {entry.category ? (
-                    <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700">
+                    <span className="rounded-full glass-chip !px-3 !py-1">
                       {entry.category}
                     </span>
                   ) : null}
@@ -161,7 +161,7 @@ export default function KnowledgeCurationPanel() {
                     </span>
                   ) : null}
                   {entry.learning_style ? (
-                    <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
+                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-[var(--aui-forest-deep)]">
                       {entry.learning_style.replaceAll("_", " ")}
                     </span>
                   ) : null}
@@ -225,7 +225,7 @@ export default function KnowledgeCurationPanel() {
                     type="button"
                     disabled={savingId === entry.id}
                     onClick={() => saveEntry(entry.id, "approved")}
-                    className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
+                    className="btn-primary px-4 py-2 text-sm disabled:opacity-60"
                   >
                     Approve for student agent
                   </button>
@@ -233,7 +233,7 @@ export default function KnowledgeCurationPanel() {
                     type="button"
                     disabled={savingId === entry.id}
                     onClick={() => saveEntry(entry.id, "pending_review")}
-                    className="rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-slate-800 disabled:opacity-60"
+                    className="btn-ghost px-4 py-2 text-sm disabled:opacity-60"
                   >
                     Save edits
                   </button>

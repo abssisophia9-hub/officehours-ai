@@ -24,9 +24,9 @@ export default function RequestCharts({ requests }) {
 
   return (
     <section className="grid gap-6 xl:grid-cols-2">
-      <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <article className="glass-panel p-6">
         <div className="mb-5">
-          <p className="text-sm font-semibold uppercase tracking-wide text-indigo-600">
+          <p className="text-sm font-semibold uppercase tracking-wide text-aui-forest">
             Category mix
           </p>
           <h2 className="text-xl font-bold text-slate-950">
@@ -61,7 +61,7 @@ export default function RequestCharts({ requests }) {
         </div>
       </article>
 
-      <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <article className="glass-panel p-6">
         <div className="mb-5">
           <p className="text-sm font-semibold uppercase tracking-wide text-emerald-600">
             Clustering

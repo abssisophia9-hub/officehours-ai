@@ -13,9 +13,9 @@ const CARD_STYLES = {
   group_session: {
     emoji: "🎓",
     title: "Group review session",
-    gradient: "from-indigo-600 via-violet-600 to-fuchsia-500",
-    chip: "bg-indigo-50 text-indigo-700 ring-indigo-200",
-    button: "bg-indigo-600 hover:bg-indigo-700",
+    gradient: "from-[var(--aui-forest)] via-[#147a52] to-[#0a4f34]",
+    chip: "bg-emerald-50 text-[var(--aui-forest-deep)] ring-emerald-200",
+    button: "bg-[var(--aui-forest)] hover:brightness-110",
   },
   faq: {
     emoji: "📌",
@@ -141,13 +141,13 @@ export default function RecommendationBoard({
   }
 
   return (
-    <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
+    <section className="glass-panel overflow-hidden">
       <div className="relative overflow-hidden bg-slate-950 p-6 text-white">
-        <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-indigo-500/30 blur-3xl" />
+        <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-emerald-500/25 blur-3xl" />
         <div className="absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-emerald-400/20 blur-3xl" />
         <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-200">
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-emerald-100">
               Recommendation cockpit
             </p>
             <h2 className="mt-2 text-3xl font-black tracking-tight">
@@ -333,7 +333,7 @@ function RecommendationCard({
             <textarea
               rows={3}
               defaultValue={card.action}
-              className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none focus:border-indigo-400"
+              className="field-glass mt-2 w-full resize-none p-3 text-sm"
             />
           </div>
         ) : null}

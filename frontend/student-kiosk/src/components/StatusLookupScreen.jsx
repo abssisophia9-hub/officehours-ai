@@ -54,15 +54,13 @@ export default function StatusLookupScreen({ initialCode = "", onBack }) {
   const style = result ? STATUS_STYLES[result.status] || STATUS_STYLES.queued : null;
 
   return (
-    <section className="w-full max-w-2xl animate-fade-in-up rounded-3xl bg-white p-8 shadow-2xl shadow-indigo-200/40 sm:p-10">
+    <section className="glass-panel w-full max-w-2xl animate-fade-in-up p-8 sm:p-10">
       <div className="mb-8">
-        <p className="text-sm font-bold uppercase tracking-wide text-indigo-600">
-          Anonymous status check
-        </p>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+        <p className="glass-chip mb-3">Anonymous status check</p>
+        <h1 className="font-display mt-2 text-3xl font-bold tracking-tight text-aui-ink sm:text-4xl">
           Check your request status
         </h1>
-        <p className="mt-3 text-lg leading-8 text-slate-500">
+        <p className="mt-3 text-lg leading-8 text-aui-deep/70">
           Enter the request code you received after submitting. No student ID or
           login is required.
         </p>
@@ -71,7 +69,7 @@ export default function StatusLookupScreen({ initialCode = "", onBack }) {
       <form onSubmit={handleLookup} className="space-y-4">
         <label
           htmlFor="requestCode"
-          className="block text-sm font-semibold uppercase tracking-wide text-slate-500"
+          className="block text-sm font-semibold uppercase tracking-wide text-aui-deep/60"
         >
           Request code
         </label>
@@ -83,11 +81,11 @@ export default function StatusLookupScreen({ initialCode = "", onBack }) {
           value={requestCode}
           onChange={(event) => setRequestCode(event.target.value)}
           placeholder="e.g. 42"
-          className="w-full rounded-2xl border-2 border-slate-200 px-5 py-4 text-2xl font-bold tracking-wide text-slate-900 outline-none transition placeholder:text-lg placeholder:font-medium placeholder:tracking-normal focus:border-indigo-500"
+          className="field-glass px-5 py-4 text-2xl font-bold tracking-wide text-aui-ink placeholder:text-lg placeholder:font-medium placeholder:tracking-normal"
         />
 
         {error ? (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-base font-medium text-red-700">
+          <div className="rounded-2xl border border-red-200/80 bg-red-50/80 px-5 py-4 text-base font-medium text-red-700 backdrop-blur">
             {error}
           </div>
         ) : null}
@@ -95,7 +93,7 @@ export default function StatusLookupScreen({ initialCode = "", onBack }) {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center rounded-2xl bg-indigo-600 px-6 py-5 text-xl font-bold text-white shadow-lg shadow-indigo-300 transition hover:bg-indigo-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+          className="btn-primary flex w-full items-center justify-center px-6 py-5 text-xl disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? "Checking..." : "Look up status"}
         </button>

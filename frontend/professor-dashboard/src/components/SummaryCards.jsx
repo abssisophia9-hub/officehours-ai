@@ -41,7 +41,7 @@ export default function SummaryCards({ requests }) {
       {cards.map((card) => (
         <article
           key={card.label}
-          className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+          className="glass-panel p-5"
         >
           <p className="text-sm font-medium text-slate-500">{card.label}</p>
           <p className="mt-3 text-4xl font-black tracking-tight text-slate-950">

@@ -79,18 +79,18 @@ export default function OfficeHoursPanel() {
   }
 
   return (
-    <section className="rounded-3xl border border-indigo-100 bg-indigo-950 p-6 text-white shadow-sm">
-      <p className="text-sm font-semibold uppercase tracking-wide text-indigo-200">
+    <section className="glass-panel glass-panel-deep bg-[linear-gradient(160deg,rgba(15,107,69,0.9),rgba(10,79,52,0.96))] p-6 text-white">
+      <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-100">
         Availability setup
       </p>
-      <h2 className="mt-1 text-2xl font-black">Office hours</h2>
-      <p className="mt-2 text-sm leading-6 text-indigo-100">
+      <h2 className="font-display mt-1 text-2xl font-bold">Office hours</h2>
+      <p className="mt-2 text-sm leading-6 text-emerald-50/90">
         Office-hour windows are saved to the backend so recommendation and
         action-plan logic can reference professor availability.
       </p>
 
       {status === "loading" ? (
-        <p className="mt-6 text-sm text-indigo-100">Loading saved windows...</p>
+        <p className="mt-6 text-sm text-emerald-50/90">Loading saved windows...</p>
       ) : null}
 
       {error ? (
@@ -101,26 +101,26 @@ export default function OfficeHoursPanel() {
 
       <div className="mt-6 space-y-3">
         {windows.length === 0 && status === "success" ? (
-          <p className="rounded-2xl bg-white/10 p-4 text-sm text-indigo-100">
+          <p className="rounded-2xl bg-white/10 p-4 text-sm text-emerald-50/90">
             No office-hour slots saved yet. Add one below.
           </p>
         ) : null}
         {windows.map((window) => (
           <div
             key={window.id}
-            className="flex items-center justify-between gap-4 rounded-2xl bg-white/10 p-4"
+            className="flex items-center justify-between gap-4 rounded-2xl bg-white/10 p-4 backdrop-blur"
           >
             <div>
               <p className="font-bold">
                 {window.day}, {window.start} - {window.end}
               </p>
-              <p className="text-sm text-indigo-100">{window.location}</p>
+              <p className="text-sm text-emerald-50/85">{window.location}</p>
             </div>
             <button
               type="button"
               disabled={saving}
               onClick={() => removeWindow(window.id)}
-              className="rounded-full bg-white/10 px-3 py-1 text-sm font-bold text-indigo-50 hover:bg-white/20 disabled:opacity-60"
+              className="rounded-full bg-white/10 px-3 py-1 text-sm font-bold text-emerald-50 hover:bg-white/20 disabled:opacity-60"
             >
               Remove
             </button>
@@ -130,7 +130,7 @@ export default function OfficeHoursPanel() {
 
       <form onSubmit={addWindow} className="mt-6 grid gap-3 md:grid-cols-5">
         <label className="md:col-span-1">
-          <span className="text-xs font-bold uppercase text-indigo-200">
+          <span className="text-xs font-bold uppercase text-emerald-100">
             Day
           </span>
           <select
@@ -162,7 +162,7 @@ export default function OfficeHoursPanel() {
         />
 
         <label className="md:col-span-1">
-          <span className="text-xs font-bold uppercase text-indigo-200">
+          <span className="text-xs font-bold uppercase text-emerald-100">
             Location
           </span>
           <input
@@ -188,7 +188,7 @@ export default function OfficeHoursPanel() {
 function TimeInput({ label, value, onChange }) {
   return (
     <label>
-      <span className="text-xs font-bold uppercase text-indigo-200">
+      <span className="text-xs font-bold uppercase text-emerald-100">
         {label}
       </span>
       <input

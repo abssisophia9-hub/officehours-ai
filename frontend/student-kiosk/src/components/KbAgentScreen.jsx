@@ -58,10 +58,10 @@ export default function KbAgentScreen({ onBack }) {
   }
 
   return (
-    <section className="w-full max-w-3xl animate-fade-in-up rounded-3xl bg-white p-6 shadow-2xl shadow-indigo-200/40 sm:p-8">
+    <section className="glass-panel w-full max-w-3xl animate-fade-in-up p-6 sm:p-8">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-bold uppercase tracking-wide text-emerald-700">
+          <p className="glass-chip mb-3">
             Course knowledge agent
           </p>
           <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-slate-900">
@@ -75,7 +75,7 @@ export default function KbAgentScreen({ onBack }) {
         <button
           type="button"
           onClick={onBack}
-          className="rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+          className="btn-ghost px-4 py-2 text-sm"
         >
           Back
         </button>
@@ -87,7 +87,7 @@ export default function KbAgentScreen({ onBack }) {
             key={`${message.role}-${index}`}
             className={`rounded-2xl px-4 py-3 text-sm leading-6 whitespace-pre-wrap ${
               message.role === "user"
-                ? "ml-8 bg-indigo-600 text-white"
+                ? "ml-8 bg-aui-forest text-white"
                 : "mr-8 bg-white text-slate-800 ring-1 ring-slate-200"
             }`}
           >
@@ -106,12 +106,12 @@ export default function KbAgentScreen({ onBack }) {
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
           placeholder="e.g. How do I think about recursion base cases?"
-          className="flex-1 rounded-2xl border-2 border-slate-200 px-4 py-3 text-base font-medium text-slate-900 outline-none focus:border-indigo-500"
+          className="field-glass flex-1 px-4 py-3 text-base font-medium text-slate-900"
         />
         <button
           type="submit"
           disabled={busy || question.trim().length < 3}
-          className="rounded-2xl bg-emerald-600 px-6 py-3 text-base font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
+          className="btn-primary px-6 py-3 text-base disabled:opacity-60"
         >
           {busy ? "Thinking..." : "Ask"}
         </button>

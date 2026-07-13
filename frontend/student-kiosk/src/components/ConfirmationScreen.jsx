@@ -2,10 +2,10 @@ export default function ConfirmationScreen({ result, onReset, onCheckStatus }) {
   const oracle = result.oracle;
 
   return (
-    <div className="w-full max-w-4xl animate-fade-in-up rounded-3xl bg-white p-8 shadow-2xl shadow-emerald-200/40 sm:p-10">
-      <div className="mx-auto mb-6 flex h-20 w-20 animate-pop-in items-center justify-center rounded-full bg-emerald-100">
+    <div className="glass-panel w-full max-w-4xl animate-fade-in-up p-8 sm:p-10">
+      <div className="mx-auto mb-6 flex h-20 w-20 animate-pop-in items-center justify-center rounded-full bg-emerald-100/90 backdrop-blur">
         <svg
-          className="h-10 w-10 text-emerald-600"
+          className="h-10 w-10 text-aui-forest"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -17,7 +17,7 @@ export default function ConfirmationScreen({ result, onReset, onCheckStatus }) {
         </svg>
       </div>
 
-      <h1 className="text-center text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+      <h1 className="font-display text-center text-3xl font-bold tracking-tight text-aui-ink sm:text-4xl">
         Request submitted
       </h1>
       <p className="mt-2 text-center text-lg text-slate-500">
@@ -31,7 +31,7 @@ export default function ConfirmationScreen({ result, onReset, onCheckStatus }) {
           <span className="text-sm font-semibold uppercase tracking-wide text-slate-400">
             Request
           </span>
-          <span className="rounded-full bg-indigo-100 px-3 py-1 text-sm font-bold text-indigo-700">
+          <span className="glass-chip">
             #{result.id}
           </span>
         </div>
@@ -61,7 +61,7 @@ export default function ConfirmationScreen({ result, onReset, onCheckStatus }) {
           />
           <AgentCard
             title="Matcher"
-            accent="bg-violet-600"
+            accent="bg-aui-forest"
             lines={[
               `Assigned: ${oracle.matcher.assigned_ta}`,
               `Wait: ~${oracle.matcher.estimated_wait_minutes} min`,
@@ -96,14 +96,14 @@ export default function ConfirmationScreen({ result, onReset, onCheckStatus }) {
         <button
           type="button"
           onClick={onCheckStatus}
-          className="rounded-2xl border-2 border-indigo-200 bg-indigo-50 px-6 py-5 text-lg font-bold text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-100 active:scale-[0.99]"
+          className="btn-ghost rounded-2xl px-6 py-5 text-lg"
         >
           Check status now
         </button>
         <button
           type="button"
           onClick={onReset}
-          className="rounded-2xl bg-slate-900 px-6 py-5 text-lg font-bold text-white shadow-lg transition hover:bg-slate-800 active:scale-[0.99]"
+          className="btn-primary rounded-2xl px-6 py-5 text-lg"
         >
           Submit another question
         </button>
@@ -114,7 +114,7 @@ export default function ConfirmationScreen({ result, onReset, onCheckStatus }) {
 
 function AgentCard({ title, accent, lines }) {
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm">
+    <article className="glass-panel p-5 text-left">
       <div className="flex items-center gap-2">
         <span className={`h-2.5 w-2.5 rounded-full ${accent}`} />
         <h2 className="text-lg font-black text-slate-900">{title}</h2>

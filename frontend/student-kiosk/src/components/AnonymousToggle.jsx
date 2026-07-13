@@ -25,7 +25,7 @@ export default function AnonymousToggle({ anonymous, onChange }) {
             className={[
               "rounded-2xl border-2 px-5 py-4 text-left transition-all duration-200",
               selected
-                ? "border-indigo-500 bg-indigo-50 shadow-md"
+                ? "border-aui-forest bg-aui-mist/80 shadow-md"
                 : "border-slate-200 bg-white hover:border-slate-300",
             ].join(" ")}
           >
@@ -33,7 +33,7 @@ export default function AnonymousToggle({ anonymous, onChange }) {
               <span
                 className={[
                   "text-lg font-semibold",
-                  selected ? "text-indigo-700" : "text-slate-700",
+                  selected ? "text-aui-deep" : "text-slate-700",
                 ].join(" ")}
               >
                 {option.label}
@@ -42,7 +42,7 @@ export default function AnonymousToggle({ anonymous, onChange }) {
                 className={[
                   "flex h-6 w-6 items-center justify-center rounded-full border-2",
                   selected
-                    ? "border-indigo-500 bg-indigo-500"
+                    ? "border-aui-forest bg-aui-forest"
                     : "border-slate-300",
                 ].join(" ")}
               >

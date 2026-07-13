@@ -53,10 +53,10 @@ export default function RequestForm({ checkIn, onSubmitted }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full max-w-3xl animate-fade-in-up rounded-3xl bg-white p-8 shadow-2xl shadow-indigo-200/40 sm:p-10"
+      className="glass-panel w-full max-w-3xl animate-fade-in-up p-8 sm:p-10"
     >
       <div className="mb-8">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+        <h1 className="font-display text-3xl font-bold tracking-tight text-aui-ink sm:text-4xl">
           Ask for help
         </h1>
         <p className="mt-2 text-lg text-slate-500">
@@ -67,7 +67,7 @@ export default function RequestForm({ checkIn, onSubmitted }) {
 
       {scannedStudentId && (
         <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
-          <p className="text-sm font-bold uppercase tracking-wide text-emerald-700">
+          <p className="glass-chip mb-3">
             Checked in
           </p>
           <p className="mt-1 text-lg font-bold text-emerald-950">
@@ -90,7 +90,7 @@ export default function RequestForm({ checkIn, onSubmitted }) {
             value={studentName}
             onChange={(event) => setStudentName(event.target.value)}
             placeholder="Alex Smith"
-            className="w-full rounded-2xl border-2 border-slate-200 px-5 py-4 text-lg outline-none transition focus:border-indigo-500"
+            className="field-glass px-5 py-4 text-lg"
           />
         </label>
         <label className="block">
@@ -101,7 +101,7 @@ export default function RequestForm({ checkIn, onSubmitted }) {
             value={course}
             onChange={(event) => setCourse(event.target.value)}
             placeholder="CS 400"
-            className="w-full rounded-2xl border-2 border-slate-200 px-5 py-4 text-lg outline-none transition focus:border-indigo-500"
+            className="field-glass px-5 py-4 text-lg"
           />
         </label>
       </div>
@@ -120,7 +120,7 @@ export default function RequestForm({ checkIn, onSubmitted }) {
             value={studentId}
             onChange={(e) => setStudentId(e.target.value)}
             placeholder="e.g. 117027"
-            className="w-full rounded-2xl border-2 border-slate-200 px-5 py-4 text-lg outline-none transition focus:border-indigo-500"
+            className="field-glass px-5 py-4 text-lg"
           />
         </div>
       )}
@@ -139,7 +139,7 @@ export default function RequestForm({ checkIn, onSubmitted }) {
           onChange={(e) => setText(e.target.value)}
           rows={5}
           placeholder="e.g. I'm getting infinite recursion in my red-black tree delete fixup…"
-          className="w-full resize-none rounded-2xl border-2 border-slate-200 px-5 py-4 text-lg leading-relaxed outline-none transition focus:border-indigo-500"
+          className="field-glass resize-none px-5 py-4 text-lg leading-relaxed"
         />
         <div className="mt-1 text-right text-sm text-slate-400">
           {text.length}/{MAX_LENGTH}
@@ -160,7 +160,7 @@ export default function RequestForm({ checkIn, onSubmitted }) {
           onChange={(e) => setCodeSnippet(e.target.value)}
           rows={6}
           placeholder="Paste a short snippet if it helps explain the bug…"
-          className="w-full resize-y rounded-2xl border-2 border-slate-200 px-5 py-4 font-mono text-sm leading-relaxed outline-none transition focus:border-indigo-500"
+          className="field-glass resize-y px-5 py-4 font-mono text-sm leading-relaxed"
         />
       </div>
 
@@ -173,7 +173,7 @@ export default function RequestForm({ checkIn, onSubmitted }) {
       <button
         type="submit"
         disabled={submitting}
-        className="mt-6 flex w-full items-center justify-center gap-3 rounded-2xl bg-indigo-600 px-6 py-5 text-xl font-bold text-white shadow-lg shadow-indigo-300 transition hover:bg-indigo-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+        className="btn-primary mt-6 flex w-full items-center justify-center gap-3 px-6 py-5 text-xl disabled:cursor-not-allowed disabled:opacity-60"
       >
         {submitting ? (
           <>
