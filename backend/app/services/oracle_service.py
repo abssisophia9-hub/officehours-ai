@@ -106,7 +106,7 @@ def run_oracle_pipeline(
     ]
 
     t1 = time.perf_counter()
-    matcher = match_ta(analyzer, roster)
+    matcher = match_ta(analyzer, roster, question_text=question_text)
     steps.append(
         {
             "agent": "matcher",

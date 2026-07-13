@@ -2,8 +2,8 @@ import os
 
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["OFFICEHOURS_CLUSTERING_BACKEND"] = "lexical"
-os.environ["USE_MOCK_CLAUDE"] = "true"
 os.environ["OFFICEHOURS_ANALYZER_BACKEND"] = "ml"
+os.environ["OFFICEHOURS_ALLOW_EXTERNAL_LLM"] = "false"
 
 from pathlib import Path
 

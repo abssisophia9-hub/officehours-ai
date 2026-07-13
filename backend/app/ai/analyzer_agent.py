@@ -8,7 +8,7 @@ Optional overlays:
   - keyword/topic labels for richer Oracle display names
   - TF-IDF tags, difficulty / ETA heuristics
 
-Synthesizer stays RAG + LLM and is intentionally not fine-tuned here.
+FYP path uses custom-trained models only (no prompted Claude / mocks).
 """
 
 from __future__ import annotations
@@ -90,15 +90,21 @@ def analyze_with_classifier(
     Backend selection (``OFFICEHOURS_ANALYZER_BACKEND``):
       - ``ml`` (default): fine-tuned embedding + logistic regression classifier
       - ``rules``: keyword rules only
-      - ``claude``: LLM JSON extraction (legacy / optional)
+      - ``claude``: blocked unless ``OFFICEHOURS_ALLOW_EXTERNAL_LLM=true``
     """
     backend = os.getenv("OFFICEHOURS_ANALYZER_BACKEND", "ml").strip().lower()
     combined = _combine(question_text, code_snippet)
 
     if backend == "claude":
-        from app.ai.claude_client import analyze_question_llm
+        allow = os.getenv("OFFICEHOURS_ALLOW_EXTERNAL_LLM", "false").strip().lower()
+        if allow not in {"1", "true", "yes", "on"}:
+            raise RuntimeError(
+                "Claude Analyzer is disabled for FYP (custom models required). "
+                "Use OFFICEHOURS_ANALYZER_BACKEND=ml."
+            )
+        from app.ai import claude_client_legacy as legacy
 
-        return analyze_question_llm(
+        return legacy.analyze_question_llm(
             question_text=question_text,
             code_snippet=code_snippet,
             course=course,

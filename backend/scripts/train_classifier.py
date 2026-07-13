@@ -2,7 +2,7 @@
 Train and evaluate the Analyzer's fine-tuned small classifier.
 
 Uses labeled CSV fixtures (and optionally professor-approved exports).
-Synthesizer stays RAG+LLM and is not trained by this script.
+Matcher and Synthesizer have separate training scripts.
 
 Run from `backend/`:
     python3 scripts/train_classifier.py

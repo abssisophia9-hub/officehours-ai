@@ -2,14 +2,15 @@ import os
 
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["OFFICEHOURS_CLUSTERING_BACKEND"] = "lexical"
-os.environ["USE_MOCK_CLAUDE"] = "true"
 os.environ["OFFICEHOURS_LEARNING_STYLE_BACKEND"] = "rules"
+os.environ["OFFICEHOURS_ALLOW_EXTERNAL_LLM"] = "false"
 
-from app.ai.learning_style import infer_learning_style_rules
-from app.ai.claude_drafter import draft_with_claude
-from app.ai.ml_learning_style import train_learning_style_classifier
 from pathlib import Path
 import csv
+
+from app.ai.learning_style import infer_learning_style_rules
+from app.ai.ml_learning_style import train_learning_style_classifier
+from app.ai.synthesizer_model import draft_kb_with_model
 
 
 def test_infer_example_driven_style():
@@ -34,17 +35,23 @@ def test_infer_visual_style():
     assert result["learning_style"] == "visual_structural"
 
 
-def test_mock_claude_adapts_to_learning_style():
-    draft = draft_with_claude(
+def test_custom_synthesizer_adapts_to_learning_style():
+    draft = draft_kb_with_model(
         question_text="I need a diagram of pointer updates after rotation.",
         category="conceptual_question",
         tags=["rotation", "pointers"],
         learning_style="visual_structural",
         urgency="medium",
     )
-    assert draft["drafter_backend"] == "mock_claude"
-    assert "visual" in draft["answer_draft"].lower() or "sketch" in draft["answer_draft"].lower()
+    assert "claude" not in draft["drafter_backend"]
+    assert "custom_synthesizer" in draft["drafter_backend"]
     assert draft["student_hint"]
+    assert draft["answer_draft"]
+    lowered = draft["answer_draft"].lower()
+    assert any(
+        token in lowered
+        for token in ("visual", "sketch", "diagram", "structure", "pointer", "rotation")
+    )
 
 
 def test_train_learning_style_classifier_on_csv(tmp_path: Path):

@@ -2,8 +2,8 @@ import os
 
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["OFFICEHOURS_CLUSTERING_BACKEND"] = "lexical"
-os.environ["USE_MOCK_CLAUDE"] = "true"
 os.environ["OFFICEHOURS_ANALYZER_BACKEND"] = "ml"
+os.environ["OFFICEHOURS_ALLOW_EXTERNAL_LLM"] = "false"
 
 from fastapi.testclient import TestClient
 
@@ -71,6 +71,7 @@ def test_oracle_pipeline_on_red_black_submission():
         item = next(item for item in queue if item["request"]["id"] == data["id"])
         assert item["request"]["assigned_ta"] == "Alice Chen"
         assert item["knowledge_entry"]["student_hint"]
+        assert "claude" not in (item["knowledge_entry"].get("drafter_backend") or "")
 
         metrics = client.get("/analytics/oracle-metrics").json()
         assert metrics["oracle_runs"] >= 1

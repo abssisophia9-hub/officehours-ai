@@ -9,9 +9,9 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from app.ai.claude_drafter import draft_with_claude
 from app.ai.clustering import cosine_similarity, embed_text
 from app.ai.summarizer import extract_keywords
+from app.ai.synthesizer_model import draft_kb_with_model
 from app.models.knowledge import KnowledgeEntry, KnowledgeEntryOut, KnowledgeEntryUpdate
 from app.models.request import Request
 
@@ -35,12 +35,13 @@ def create_pending_entry_from_request(
     tags = matched_keywords or extract_keywords([request.text], max_keywords=4)
     style = learning_style or getattr(request, "learning_style", None) or "unknown"
     difficulty = DIFFICULTY_BY_URGENCY.get((urgency or "").lower(), "medium")
-    draft = draft_with_claude(
+    draft = draft_kb_with_model(
         question_text=request.text,
         category=request.category,
         tags=tags,
         learning_style=style,
         urgency=urgency or getattr(request, "urgency", None),
+        code_snippet=getattr(request, "code_snippet", None),
     )
     entry = KnowledgeEntry(
         question_text=request.text,
@@ -51,7 +52,7 @@ def create_pending_entry_from_request(
         urgency=urgency or getattr(request, "urgency", None),
         difficulty=difficulty,
         learning_style=style,
-        drafter_backend=str(draft.get("drafter_backend") or "mock_claude"),
+        drafter_backend=str(draft.get("drafter_backend") or "custom_synthesizer"),
         status="pending_review",
         source_request_id=request.id,
         cluster_id=request.cluster_id,
