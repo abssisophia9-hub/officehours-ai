@@ -2,10 +2,14 @@ import { useState } from "react";
 import AnonymousToggle from "./AnonymousToggle.jsx";
 import { submitRequest } from "../api/requests.js";
 
-const MAX_LENGTH = 1000;
+const MAX_LENGTH = 2000;
+const CODE_MAX = 4000;
 
 export default function RequestForm({ checkIn, onSubmitted }) {
   const [text, setText] = useState("");
+  const [studentName, setStudentName] = useState("");
+  const [course, setCourse] = useState("CS 400");
+  const [codeSnippet, setCodeSnippet] = useState("");
   const [anonymous, setAnonymous] = useState(!checkIn?.studentId);
   const [studentId, setStudentId] = useState(checkIn?.studentId || "");
   const [error, setError] = useState(null);
@@ -28,11 +32,18 @@ export default function RequestForm({ checkIn, onSubmitted }) {
 
     setSubmitting(true);
     try {
-      const result = await submitRequest({ text, anonymous, studentId });
+      const result = await submitRequest({
+        text,
+        anonymous,
+        studentId,
+        studentName,
+        course,
+        codeSnippet,
+      });
       onSubmitted(result);
     } catch (err) {
       setError(
-        "We couldn't reach the server. Please try again or ask a staff member."
+        "We couldn't reach the server. Please try again or ask a staff member.",
       );
     } finally {
       setSubmitting(false);
@@ -42,15 +53,15 @@ export default function RequestForm({ checkIn, onSubmitted }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full max-w-2xl animate-fade-in-up rounded-3xl bg-white p-8 shadow-2xl shadow-indigo-200/40 sm:p-10"
+      className="w-full max-w-3xl animate-fade-in-up rounded-3xl bg-white p-8 shadow-2xl shadow-indigo-200/40 sm:p-10"
     >
       <div className="mb-8">
         <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
           Ask for help
         </h1>
         <p className="mt-2 text-lg text-slate-500">
-          Tell us what you're stuck on. A professor will review it during office
-          hours.
+          Oracle agents analyze your question, match a TA, and draft a teaching
+          plan — professor still approves what enters the student KB.
         </p>
       </div>
 
@@ -62,10 +73,6 @@ export default function RequestForm({ checkIn, onSubmitted }) {
           <p className="mt-1 text-lg font-bold text-emerald-950">
             Student ID {scannedStudentId}
           </p>
-          <p className="mt-1 text-sm text-emerald-700">
-            Choose anonymous below if you do not want this request linked to the
-            scanned ID.
-          </p>
         </div>
       )}
 
@@ -73,6 +80,31 @@ export default function RequestForm({ checkIn, onSubmitted }) {
         How would you like to submit?
       </label>
       <AnonymousToggle anonymous={anonymous} onChange={setAnonymous} />
+
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <label className="block">
+          <span className="mb-2 block text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Name {anonymous ? "(optional)" : ""}
+          </span>
+          <input
+            value={studentName}
+            onChange={(event) => setStudentName(event.target.value)}
+            placeholder="Alex Smith"
+            className="w-full rounded-2xl border-2 border-slate-200 px-5 py-4 text-lg outline-none transition focus:border-indigo-500"
+          />
+        </label>
+        <label className="block">
+          <span className="mb-2 block text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Course
+          </span>
+          <input
+            value={course}
+            onChange={(event) => setCourse(event.target.value)}
+            placeholder="CS 400"
+            className="w-full rounded-2xl border-2 border-slate-200 px-5 py-4 text-lg outline-none transition focus:border-indigo-500"
+          />
+        </label>
+      </div>
 
       {!anonymous && (
         <div className="mt-5 animate-fade-in-up">
@@ -106,12 +138,30 @@ export default function RequestForm({ checkIn, onSubmitted }) {
           maxLength={MAX_LENGTH}
           onChange={(e) => setText(e.target.value)}
           rows={5}
-          placeholder="e.g. I don't understand how recursion works for the final exam…"
+          placeholder="e.g. I'm getting infinite recursion in my red-black tree delete fixup…"
           className="w-full resize-none rounded-2xl border-2 border-slate-200 px-5 py-4 text-lg leading-relaxed outline-none transition focus:border-indigo-500"
         />
         <div className="mt-1 text-right text-sm text-slate-400">
           {text.length}/{MAX_LENGTH}
         </div>
+      </div>
+
+      <div className="mt-4">
+        <label
+          htmlFor="code"
+          className="mb-2 block text-sm font-semibold uppercase tracking-wide text-slate-500"
+        >
+          Code (optional)
+        </label>
+        <textarea
+          id="code"
+          value={codeSnippet}
+          maxLength={CODE_MAX}
+          onChange={(e) => setCodeSnippet(e.target.value)}
+          rows={6}
+          placeholder="Paste a short snippet if it helps explain the bug…"
+          className="w-full resize-y rounded-2xl border-2 border-slate-200 px-5 py-4 font-mono text-sm leading-relaxed outline-none transition focus:border-indigo-500"
+        />
       </div>
 
       {error && (
@@ -128,10 +178,10 @@ export default function RequestForm({ checkIn, onSubmitted }) {
         {submitting ? (
           <>
             <span className="h-6 w-6 animate-spin rounded-full border-[3px] border-white/40 border-t-white" />
-            Submitting…
+            Running Oracle agents…
           </>
         ) : (
-          "Submit request"
+          "Submit Question"
         )}
       </button>
     </form>

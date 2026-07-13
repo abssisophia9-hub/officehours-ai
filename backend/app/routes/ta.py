@@ -9,12 +9,20 @@ from sqlalchemy.orm import Session
 
 from app.database.session import get_db
 from app.models.knowledge import KnowledgeEntry
-from app.models.request import Request, RequestOut
+from app.models.request import Request
 from app.models.ta import TaQueueItem, TaResolveRequest, TaResolveResponse
+from app.models.ta_roster import TaRoster, TaRosterOut
 from app.realtime.hub import hub
 from app.services.knowledge_service import to_out
+from app.services.oracle_service import ensure_default_roster
+from app.services.request_serializer import to_request_out
 
 router = APIRouter(prefix="/ta", tags=["ta"])
+
+
+@router.get("/roster/", response_model=list[TaRosterOut])
+def list_ta_roster(db: Session = Depends(get_db)):
+    return [TaRosterOut.from_orm_row(row) for row in ensure_default_roster(db)]
 
 
 @router.get("/queue/", response_model=list[TaQueueItem])
@@ -34,7 +42,7 @@ def list_ta_queue(db: Session = Depends(get_db)):
             continue
         items.append(
             TaQueueItem(
-                request=RequestOut.model_validate(request),
+                request=to_request_out(request),
                 knowledge_entry=to_out(entry) if entry else None,
                 learning_style=request.learning_style,
                 urgency=request.urgency,

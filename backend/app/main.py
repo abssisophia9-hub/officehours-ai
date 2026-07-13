@@ -16,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database.migrate import ensure_schema
 from app.database.session import Base, engine
 from app.models import knowledge as _knowledge_model  # noqa: F401
+from app.models import ta_roster as _ta_roster_model  # noqa: F401
 from app.realtime.hub import set_main_loop
 from app.routes.actions import router as actions_router
 from app.routes.knowledge import router as knowledge_router

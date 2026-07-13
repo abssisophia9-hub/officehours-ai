@@ -158,6 +158,11 @@ export default function App() {
                       <span className="text-xs font-bold text-slate-500">
                         #{item.request.id}
                       </span>
+                      {item.request.assigned_ta ? (
+                        <span className="rounded-full bg-violet-50 px-2 py-0.5 text-xs font-bold text-violet-700 ring-1 ring-violet-100">
+                          {item.request.assigned_ta}
+                        </span>
+                      ) : null}
                       {item.learning_style ? (
                         <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-indigo-700 ring-1 ring-indigo-100">
                           {item.learning_style.replaceAll("_", " ")}
@@ -197,11 +202,63 @@ export default function App() {
                   {selected.request.text}
                 </h2>
                 <p className="mt-2 text-sm text-slate-500">
-                  Category: {selected.request.category || "n/a"} · Style:{" "}
-                  {(selected.learning_style || "unknown").replaceAll("_", " ")} ·
-                  Drafter: {selected.knowledge_entry?.drafter_backend || "n/a"}
+                  {selected.request.student_name
+                    ? `${selected.request.student_name} · `
+                    : ""}
+                  {selected.request.course || "Course TBD"} · Category:{" "}
+                  {selected.request.oracle_category ||
+                    selected.request.category ||
+                    "n/a"}{" "}
+                  · Style:{" "}
+                  {(selected.learning_style || "unknown").replaceAll("_", " ")}
                 </p>
               </div>
+
+              <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-sky-700">
+                    Analyzer
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">
+                    {selected.request.oracle_difficulty || "MEDIUM"} ·{" "}
+                    {selected.request.oracle_estimated_minutes || "?"} min
+                  </p>
+                  <p className="mt-1 text-xs text-slate-600">
+                    {(selected.request.oracle_tags || []).join(", ") ||
+                      "No tags"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-violet-700">
+                    Matcher
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">
+                    {selected.request.assigned_ta || "Unassigned"}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Wait ~{selected.request.estimated_wait_minutes || "?"} min
+                    {selected.request.alternative_ta
+                      ? ` · Alt: ${selected.request.alternative_ta}`
+                      : ""}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">
+                    Synthesizer
+                  </p>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {selected.request.oracle?.synthesizer?.kb_insight ||
+                      selected.knowledge_entry?.drafter_backend ||
+                      "Teaching draft ready"}
+                  </p>
+                </div>
+              </div>
+
+              {selected.request.code_snippet ? (
+                <pre className="overflow-x-auto rounded-2xl bg-slate-950 p-4 text-xs text-emerald-100">
+                  {selected.request.code_snippet}
+                </pre>
+              ) : null}
 
               <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">
                 Teaching approach (editable)

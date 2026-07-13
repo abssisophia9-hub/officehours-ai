@@ -3,6 +3,7 @@ import { fetchRequests } from "./api/requests.js";
 import EscalationFeed from "./components/EscalationFeed.jsx";
 import KnowledgeCurationPanel from "./components/KnowledgeCurationPanel.jsx";
 import OfficeHoursPanel from "./components/OfficeHoursPanel.jsx";
+import OracleIntelligencePanel from "./components/OracleIntelligencePanel.jsx";
 import RecommendationBoard from "./components/RecommendationBoard.jsx";
 import RequestTable from "./components/RequestTable.jsx";
 import StruggleHeatmap from "./components/StruggleHeatmap.jsx";
@@ -140,6 +141,7 @@ export default function App() {
         ) : (
           <>
             <SummaryCards requests={sortedRequests} />
+            <OracleIntelligencePanel key={`oracle-${refreshKey}`} />
             <div className="grid gap-8 xl:grid-cols-2">
               <StruggleHeatmap key={`heatmap-${refreshKey}`} />
               <EscalationFeed key={`escalations-${refreshKey}`} />

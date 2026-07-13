@@ -2,6 +2,8 @@
 Routes for submitting and retrieving student requests.
 """
 
+from __future__ import annotations
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -10,8 +12,13 @@ from app.database.session import get_db
 from app.models.action import RecommendationDecision
 from app.models.request import Request, RequestCreate, RequestOut, RequestStatusOut
 from app.realtime.hub import hub
-from app.services.classification_service import classify_and_recommend
 from app.services.knowledge_service import create_pending_entry_from_request
+from app.services.oracle_service import (
+    apply_oracle_to_request,
+    build_oracle_public_payload,
+    run_oracle_pipeline,
+)
+from app.services.request_serializer import to_request_out
 from app.services.request_status_service import build_request_status
 
 router = APIRouter(prefix="/requests", tags=["requests"])
@@ -20,16 +27,30 @@ router = APIRouter(prefix="/requests", tags=["requests"])
 @router.post("/", response_model=RequestOut, status_code=status.HTTP_201_CREATED)
 async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
     request_data = payload.model_dump()
-    classification = classify_and_recommend(payload.text)
+
+    oracle = run_oracle_pipeline(
+        db,
+        question_text=payload.text,
+        code_snippet=payload.code_snippet,
+        course=payload.course,
+        learning_style=payload.learning_style,
+    )
+    classification = oracle["classification"]
+    analyzer = oracle["analyzer"]
+    synthesizer = oracle["synthesizer"]
 
     if not request_data.get("category"):
-        request_data["category"] = classification["category"]
+        request_data["category"] = classification.get("category") or analyzer.get(
+            "category"
+        )
     if not request_data.get("urgency"):
-        request_data["urgency"] = classification.get("urgency")
+        request_data["urgency"] = classification.get("urgency") or analyzer.get(
+            "urgency"
+        )
     if not request_data.get("learning_style"):
         request_data["learning_style"] = classification.get("learning_style")
     if not request_data.get("recommended_action"):
-        request_data["recommended_action"] = classification["recommended_action"]
+        request_data["recommended_action"] = classification.get("recommended_action")
     if request_data.get("cluster_id") is None:
         existing_requests = db.query(Request).order_by(Request.id).all()
         request_data["cluster_id"] = assign_cluster_id(payload.text, existing_requests)
@@ -39,15 +60,39 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_request)
 
+    db_request = apply_oracle_to_request(db, db_request, oracle)
+
     entry = create_pending_entry_from_request(
         db,
         db_request,
-        urgency=str(classification.get("urgency") or db_request.urgency or ""),
-        matched_keywords=list(classification.get("matched_keywords") or []),
-        learning_style=str(
-            classification.get("learning_style") or db_request.learning_style or "unknown"
-        ),
+        urgency=str(db_request.urgency or ""),
+        matched_keywords=list(analyzer.get("tags") or classification.get("matched_keywords") or []),
+        learning_style=str(db_request.learning_style or "unknown"),
     )
+    # Prefer Oracle Synthesizer outputs for TA teaching roadmap + student hint.
+    entry.answer_draft = str(synthesizer.get("teaching_approach") or entry.answer_draft)
+    entry.student_hint = str(synthesizer.get("student_hint") or entry.student_hint)
+    entry.difficulty = str(
+        (analyzer.get("difficulty") or entry.difficulty or "MEDIUM")
+    ).lower()
+    if analyzer.get("category"):
+        entry.category = str(analyzer["category"])
+    entry.drafter_backend = str(synthesizer.get("backend") or entry.drafter_backend)
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+
+    public_oracle = build_oracle_public_payload(oracle)
+
+    for step in public_oracle.get("steps") or []:
+        await hub.broadcast(
+            f"oracle.{step['agent']}.done",
+            {
+                "request_id": db_request.id,
+                "elapsed_ms": step["elapsed_ms"],
+                "agent": step["agent"],
+            },
+        )
 
     await hub.broadcast(
         "request.created",
@@ -57,6 +102,8 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
             "urgency": db_request.urgency,
             "learning_style": db_request.learning_style,
             "cluster_id": db_request.cluster_id,
+            "assigned_ta": db_request.assigned_ta,
+            "oracle_category": db_request.oracle_category,
         },
     )
     await hub.broadcast(
@@ -80,12 +127,12 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
             },
         )
 
-    return db_request
+    return to_request_out(db_request, oracle=public_oracle)
 
 
 @router.get("/", response_model=list[RequestOut])
 def list_requests(db: Session = Depends(get_db)):
-    return db.query(Request).order_by(Request.id).all()
+    return [to_request_out(item) for item in db.query(Request).order_by(Request.id).all()]
 
 
 @router.get("/{request_id}/status", response_model=RequestStatusOut)
@@ -109,4 +156,4 @@ def get_request(request_id: int, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Request not found",
         )
-    return db_request
+    return to_request_out(db_request)

@@ -3,10 +3,16 @@ const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
 /**
  * Submit a student request to the backend.
  *
- * @param {{ text: string, anonymous: boolean, studentId?: string }} input
- * @returns {Promise<object>} the created request (RequestOut shape)
+ * @returns {Promise<object>} the created request (RequestOut + oracle)
  */
-export async function submitRequest({ text, anonymous, studentId }) {
+export async function submitRequest({
+  text,
+  anonymous,
+  studentId,
+  studentName,
+  course,
+  codeSnippet,
+}) {
   const body = {
     text: text.trim(),
     anonymous,
@@ -14,6 +20,15 @@ export async function submitRequest({ text, anonymous, studentId }) {
 
   if (!anonymous && studentId) {
     body.student_id = studentId.trim();
+  }
+  if (studentName?.trim()) {
+    body.student_name = studentName.trim();
+  }
+  if (course?.trim()) {
+    body.course = course.trim();
+  }
+  if (codeSnippet?.trim()) {
+    body.code_snippet = codeSnippet.trim();
   }
 
   const response = await fetch(`${API_BASE}/requests/`, {
