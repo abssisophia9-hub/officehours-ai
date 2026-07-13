@@ -2,19 +2,21 @@
 
 ## Overview
 
-OfficeHours AI is a **campus web system** for finals-week office-hours triage at
-Al Akhawayn University. It is **not** a native desktop App Store product and
-does **not** currently ship SSO login. The FYP deliverable is three browser apps
-plus one FastAPI backend that runs custom-trained Oracle agents.
+OfficeHours AI is a **packaged multi-role campus application** for finals-week
+office-hours triage at Al Akhawayn University.
 
-| Surface | Port (dev) | Who uses it | How |
-| --- | --- | --- | --- |
-| Student kiosk | `5173` | Students | Shared tablet/kiosk **or** browser URL |
-| Professor dashboard | `5174` | Professor | Desktop browser |
-| TA dashboard | `5175` | TAs | Desktop browser |
-| Backend API | `8000` | All of the above | FastAPI + SQLite (+ WebSocket `/ws`) |
+Users log in once. **Course memberships** decide whether they work as a student,
+TA, or professor for each course. Professors may teach multiple courses; courses
+may have multiple TAs; students may enroll in several courses and switch context.
 
-See also: [`product_overview.md`](product_overview.md), [`training_data.md`](training_data.md), [`ai_nlp_design.md`](ai_nlp_design.md).
+| Surface | Port (dev) | Who uses it |
+| --- | --- | --- |
+| **Unified product app** | `5180` | Students, TAs, professors (login + course switcher) |
+| Backend API | `8000` | Serves the product app |
+| Legacy kiosk / dashboards | `5173–5175` | Optional hardware/experiment shells |
+
+See also: [`product_overview.md`](product_overview.md), [`training_data.md`](training_data.md).
+
 
 ## Components
 
