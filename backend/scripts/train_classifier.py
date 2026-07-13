@@ -1,5 +1,8 @@
 """
-Train and evaluate the ML request classifier on labeled CSV data.
+Train and evaluate the Analyzer's fine-tuned small classifier.
+
+Uses labeled CSV fixtures (and optionally professor-approved exports).
+Matcher and Synthesizer have separate training scripts.
 
 Run from `backend/`:
     python3 scripts/train_classifier.py

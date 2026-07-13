@@ -2,7 +2,7 @@ import os
 
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["OFFICEHOURS_CLUSTERING_BACKEND"] = "lexical"
-os.environ["USE_MOCK_CLAUDE"] = "true"
+os.environ["OFFICEHOURS_ALLOW_EXTERNAL_LLM"] = "false"
 
 from fastapi.testclient import TestClient
 
@@ -31,12 +31,11 @@ def test_create_request_infers_learning_style_and_drafts():
         entries = client.get("/knowledge/?status=pending_review").json()
         assert len(entries) == 1
         assert entries[0]["learning_style"] == "example_driven"
-        assert entries[0]["drafter_backend"] in {
-            "mock_claude",
-            "claude",
-            "mock_claude_fallback",
-        }
-        assert "example" in entries[0]["answer_draft"].lower()
+        backend = entries[0]["drafter_backend"] or ""
+        assert "claude" not in backend
+        assert "custom_synthesizer" in backend
+        assert entries[0]["answer_draft"]
+        assert entries[0]["student_hint"]
 
 
 def test_ta_resolve_keeps_entry_pending_review():

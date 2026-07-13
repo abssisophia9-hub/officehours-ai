@@ -52,7 +52,37 @@ Pilot demo survey CSV exports used for final-report evaluation:
 
 Summarize with `backend/scripts/analyze_survey_responses.py`.
 
-## `labeled_requests_extended.csv` / `labeled_requests_extra.csv`
+## `labeled_learning_styles.csv`
 
-Additional labeled finals-week examples used to train and evaluate the ML
-classifier beyond the original 40-row rule-tuned baseline.
+Supervised labels for the learning-style classifier.
+
+## `matcher_training.csv`
+
+Silver labels for the custom Matcher (TA assignment) classifier.
+
+Columns:
+
+- `text` — student question
+- `category` — Analyzer taxonomy label
+- `assigned_ta` — primary TA name
+- `alternative_ta` — secondary TA name
+- `source` — label provenance
+
+## `synthesizer_teaching_bank.csv`
+
+Curated teaching-bank entries for the custom Synthesizer RAG path.
+
+Columns:
+
+- `entry_id`
+- `category`
+- `learning_style`
+- `topic`
+- `student_hint`
+- `teaching_approach`
+- `source`
+
+## `ta_roster_seed.csv`
+
+Default TA roster used when seeding Matcher training / demos.
+

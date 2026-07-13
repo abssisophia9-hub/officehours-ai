@@ -1,0 +1,251 @@
+entry_id,category,learning_style,topic,student_hint,teaching_approach,source
+TB001,conceptual_question,example_driven,conceptual question,Try inventing the smallest example that should obviously work — what happens in that case?,"Teaching approach (conceptual question, example-driven):
+1. Restate the stuck point in the student's words.
+2. Work one tiny concrete example end-to-end.
+3. Change one input and ask what must change.
+4. Name the general rule only after the examples land.",curated_training_bank
+TB002,conceptual_question,step_by_step,conceptual question,"List the steps you think the process should take, then mark the first step you are unsure about.","Teaching approach (conceptual question, step-by-step):
+1. Write a 4-step checklist for the procedure.
+2. Execute steps 1–2 together on their case.
+3. Have them complete steps 3–4 aloud.
+4. Ask which step failed last time and why.",curated_training_bank
+TB003,conceptual_question,visual_structural,conceptual question,Draw the structure before and after the operation — what relationship must stay true?,"Teaching approach (conceptual question, visual/structural):
+1. Sketch the before/after structure (boxes, pointers, layers).
+2. Mark the invariant that must hold after each transformation.
+3. Trace one failing case on the sketch.
+4. Correct the structure, then restate the invariant in one sentence.",curated_training_bank
+TB004,conceptual_question,conceptual,conceptual question,"Before debugging details, write one sentence: what must remain true for this idea to work?","Teaching approach (conceptual question, conceptual):
+1. Ask what definition or invariant they believe applies.
+2. Clarify the core idea in one sentence.
+3. Attach one minimal example that proves the idea.
+4. Ask them to explain the why back to you.",curated_training_bank
+TB005,conceptual_question,unknown,conceptual question,Write what you already tried and the exact point where your understanding breaks.,"Teaching approach (conceptual question, hybrid):
+1. One-sentence intuition.
+2. One tiny example.
+3. Three-step checklist they can reuse.
+4. Confirm the takeaway in their own words.",curated_training_bank
+TB006,exam_logistics,example_driven,exam logistics,Try inventing the smallest example that should obviously work — what happens in that case?,"Teaching approach (exam logistics, example-driven):
+1. Restate the stuck point in the student's words.
+2. Work one tiny concrete example end-to-end.
+3. Change one input and ask what must change.
+4. Name the general rule only after the examples land.",curated_training_bank
+TB007,exam_logistics,step_by_step,exam logistics,"List the steps you think the process should take, then mark the first step you are unsure about.","Teaching approach (exam logistics, step-by-step):
+1. Write a 4-step checklist for the procedure.
+2. Execute steps 1–2 together on their case.
+3. Have them complete steps 3–4 aloud.
+4. Ask which step failed last time and why.",curated_training_bank
+TB008,exam_logistics,visual_structural,exam logistics,Draw the structure before and after the operation — what relationship must stay true?,"Teaching approach (exam logistics, visual/structural):
+1. Sketch the before/after structure (boxes, pointers, layers).
+2. Mark the invariant that must hold after each transformation.
+3. Trace one failing case on the sketch.
+4. Correct the structure, then restate the invariant in one sentence.",curated_training_bank
+TB009,exam_logistics,conceptual,exam logistics,"Before debugging details, write one sentence: what must remain true for this idea to work?","Teaching approach (exam logistics, conceptual):
+1. Ask what definition or invariant they believe applies.
+2. Clarify the core idea in one sentence.
+3. Attach one minimal example that proves the idea.
+4. Ask them to explain the why back to you.",curated_training_bank
+TB010,exam_logistics,unknown,exam logistics,Write what you already tried and the exact point where your understanding breaks.,"Teaching approach (exam logistics, hybrid):
+1. One-sentence intuition.
+2. One tiny example.
+3. Three-step checklist they can reuse.
+4. Confirm the takeaway in their own words.",curated_training_bank
+TB011,retake_request,example_driven,retake request,Try inventing the smallest example that should obviously work — what happens in that case?,"Teaching approach (retake request, example-driven):
+1. Restate the stuck point in the student's words.
+2. Work one tiny concrete example end-to-end.
+3. Change one input and ask what must change.
+4. Name the general rule only after the examples land.",curated_training_bank
+TB012,retake_request,step_by_step,retake request,"List the steps you think the process should take, then mark the first step you are unsure about.","Teaching approach (retake request, step-by-step):
+1. Write a 4-step checklist for the procedure.
+2. Execute steps 1–2 together on their case.
+3. Have them complete steps 3–4 aloud.
+4. Ask which step failed last time and why.",curated_training_bank
+TB013,retake_request,visual_structural,retake request,Draw the structure before and after the operation — what relationship must stay true?,"Teaching approach (retake request, visual/structural):
+1. Sketch the before/after structure (boxes, pointers, layers).
+2. Mark the invariant that must hold after each transformation.
+3. Trace one failing case on the sketch.
+4. Correct the structure, then restate the invariant in one sentence.",curated_training_bank
+TB014,retake_request,conceptual,retake request,"Before debugging details, write one sentence: what must remain true for this idea to work?","Teaching approach (retake request, conceptual):
+1. Ask what definition or invariant they believe applies.
+2. Clarify the core idea in one sentence.
+3. Attach one minimal example that proves the idea.
+4. Ask them to explain the why back to you.",curated_training_bank
+TB015,retake_request,unknown,retake request,Write what you already tried and the exact point where your understanding breaks.,"Teaching approach (retake request, hybrid):
+1. One-sentence intuition.
+2. One tiny example.
+3. Three-step checklist they can reuse.
+4. Confirm the takeaway in their own words.",curated_training_bank
+TB016,accessibility_accommodation,example_driven,accessibility accommodation,Try inventing the smallest example that should obviously work — what happens in that case?,"Teaching approach (accessibility accommodation, example-driven):
+1. Restate the stuck point in the student's words.
+2. Work one tiny concrete example end-to-end.
+3. Change one input and ask what must change.
+4. Name the general rule only after the examples land.",curated_training_bank
+TB017,accessibility_accommodation,step_by_step,accessibility accommodation,"List the steps you think the process should take, then mark the first step you are unsure about.","Teaching approach (accessibility accommodation, step-by-step):
+1. Write a 4-step checklist for the procedure.
+2. Execute steps 1–2 together on their case.
+3. Have them complete steps 3–4 aloud.
+4. Ask which step failed last time and why.",curated_training_bank
+TB018,accessibility_accommodation,visual_structural,accessibility accommodation,Draw the structure before and after the operation — what relationship must stay true?,"Teaching approach (accessibility accommodation, visual/structural):
+1. Sketch the before/after structure (boxes, pointers, layers).
+2. Mark the invariant that must hold after each transformation.
+3. Trace one failing case on the sketch.
+4. Correct the structure, then restate the invariant in one sentence.",curated_training_bank
+TB019,accessibility_accommodation,conceptual,accessibility accommodation,"Before debugging details, write one sentence: what must remain true for this idea to work?","Teaching approach (accessibility accommodation, conceptual):
+1. Ask what definition or invariant they believe applies.
+2. Clarify the core idea in one sentence.
+3. Attach one minimal example that proves the idea.
+4. Ask them to explain the why back to you.",curated_training_bank
+TB020,accessibility_accommodation,unknown,accessibility accommodation,Write what you already tried and the exact point where your understanding breaks.,"Teaching approach (accessibility accommodation, hybrid):
+1. One-sentence intuition.
+2. One tiny example.
+3. Three-step checklist they can reuse.
+4. Confirm the takeaway in their own words.",curated_training_bank
+TB021,grading_dispute,example_driven,grading dispute,Try inventing the smallest example that should obviously work — what happens in that case?,"Teaching approach (grading dispute, example-driven):
+1. Restate the stuck point in the student's words.
+2. Work one tiny concrete example end-to-end.
+3. Change one input and ask what must change.
+4. Name the general rule only after the examples land.",curated_training_bank
+TB022,grading_dispute,step_by_step,grading dispute,"List the steps you think the process should take, then mark the first step you are unsure about.","Teaching approach (grading dispute, step-by-step):
+1. Write a 4-step checklist for the procedure.
+2. Execute steps 1–2 together on their case.
+3. Have them complete steps 3–4 aloud.
+4. Ask which step failed last time and why.",curated_training_bank
+TB023,grading_dispute,visual_structural,grading dispute,Draw the structure before and after the operation — what relationship must stay true?,"Teaching approach (grading dispute, visual/structural):
+1. Sketch the before/after structure (boxes, pointers, layers).
+2. Mark the invariant that must hold after each transformation.
+3. Trace one failing case on the sketch.
+4. Correct the structure, then restate the invariant in one sentence.",curated_training_bank
+TB024,grading_dispute,conceptual,grading dispute,"Before debugging details, write one sentence: what must remain true for this idea to work?","Teaching approach (grading dispute, conceptual):
+1. Ask what definition or invariant they believe applies.
+2. Clarify the core idea in one sentence.
+3. Attach one minimal example that proves the idea.
+4. Ask them to explain the why back to you.",curated_training_bank
+TB025,grading_dispute,unknown,grading dispute,Write what you already tried and the exact point where your understanding breaks.,"Teaching approach (grading dispute, hybrid):
+1. One-sentence intuition.
+2. One tiny example.
+3. Three-step checklist they can reuse.
+4. Confirm the takeaway in their own words.",curated_training_bank
+TB026,emotional_stress,example_driven,emotional stress,Try inventing the smallest example that should obviously work — what happens in that case?,"Teaching approach (emotional stress, example-driven):
+1. Restate the stuck point in the student's words.
+2. Work one tiny concrete example end-to-end.
+3. Change one input and ask what must change.
+4. Name the general rule only after the examples land.",curated_training_bank
+TB027,emotional_stress,step_by_step,emotional stress,"List the steps you think the process should take, then mark the first step you are unsure about.","Teaching approach (emotional stress, step-by-step):
+1. Write a 4-step checklist for the procedure.
+2. Execute steps 1–2 together on their case.
+3. Have them complete steps 3–4 aloud.
+4. Ask which step failed last time and why.",curated_training_bank
+TB028,emotional_stress,visual_structural,emotional stress,Draw the structure before and after the operation — what relationship must stay true?,"Teaching approach (emotional stress, visual/structural):
+1. Sketch the before/after structure (boxes, pointers, layers).
+2. Mark the invariant that must hold after each transformation.
+3. Trace one failing case on the sketch.
+4. Correct the structure, then restate the invariant in one sentence.",curated_training_bank
+TB029,emotional_stress,conceptual,emotional stress,"Before debugging details, write one sentence: what must remain true for this idea to work?","Teaching approach (emotional stress, conceptual):
+1. Ask what definition or invariant they believe applies.
+2. Clarify the core idea in one sentence.
+3. Attach one minimal example that proves the idea.
+4. Ask them to explain the why back to you.",curated_training_bank
+TB030,emotional_stress,unknown,emotional stress,Write what you already tried and the exact point where your understanding breaks.,"Teaching approach (emotional stress, hybrid):
+1. One-sentence intuition.
+2. One tiny example.
+3. Three-step checklist they can reuse.
+4. Confirm the takeaway in their own words.",curated_training_bank
+TB031,project_submission,example_driven,project submission,Try inventing the smallest example that should obviously work — what happens in that case?,"Teaching approach (project submission, example-driven):
+1. Restate the stuck point in the student's words.
+2. Work one tiny concrete example end-to-end.
+3. Change one input and ask what must change.
+4. Name the general rule only after the examples land.",curated_training_bank
+TB032,project_submission,step_by_step,project submission,"List the steps you think the process should take, then mark the first step you are unsure about.","Teaching approach (project submission, step-by-step):
+1. Write a 4-step checklist for the procedure.
+2. Execute steps 1–2 together on their case.
+3. Have them complete steps 3–4 aloud.
+4. Ask which step failed last time and why.",curated_training_bank
+TB033,project_submission,visual_structural,project submission,Draw the structure before and after the operation — what relationship must stay true?,"Teaching approach (project submission, visual/structural):
+1. Sketch the before/after structure (boxes, pointers, layers).
+2. Mark the invariant that must hold after each transformation.
+3. Trace one failing case on the sketch.
+4. Correct the structure, then restate the invariant in one sentence.",curated_training_bank
+TB034,project_submission,conceptual,project submission,"Before debugging details, write one sentence: what must remain true for this idea to work?","Teaching approach (project submission, conceptual):
+1. Ask what definition or invariant they believe applies.
+2. Clarify the core idea in one sentence.
+3. Attach one minimal example that proves the idea.
+4. Ask them to explain the why back to you.",curated_training_bank
+TB035,project_submission,unknown,project submission,Write what you already tried and the exact point where your understanding breaks.,"Teaching approach (project submission, hybrid):
+1. One-sentence intuition.
+2. One tiny example.
+3. Three-step checklist they can reuse.
+4. Confirm the takeaway in their own words.",curated_training_bank
+TB036,office_hours_access,example_driven,office hours access,Try inventing the smallest example that should obviously work — what happens in that case?,"Teaching approach (office hours access, example-driven):
+1. Restate the stuck point in the student's words.
+2. Work one tiny concrete example end-to-end.
+3. Change one input and ask what must change.
+4. Name the general rule only after the examples land.",curated_training_bank
+TB037,office_hours_access,step_by_step,office hours access,"List the steps you think the process should take, then mark the first step you are unsure about.","Teaching approach (office hours access, step-by-step):
+1. Write a 4-step checklist for the procedure.
+2. Execute steps 1–2 together on their case.
+3. Have them complete steps 3–4 aloud.
+4. Ask which step failed last time and why.",curated_training_bank
+TB038,office_hours_access,visual_structural,office hours access,Draw the structure before and after the operation — what relationship must stay true?,"Teaching approach (office hours access, visual/structural):
+1. Sketch the before/after structure (boxes, pointers, layers).
+2. Mark the invariant that must hold after each transformation.
+3. Trace one failing case on the sketch.
+4. Correct the structure, then restate the invariant in one sentence.",curated_training_bank
+TB039,office_hours_access,conceptual,office hours access,"Before debugging details, write one sentence: what must remain true for this idea to work?","Teaching approach (office hours access, conceptual):
+1. Ask what definition or invariant they believe applies.
+2. Clarify the core idea in one sentence.
+3. Attach one minimal example that proves the idea.
+4. Ask them to explain the why back to you.",curated_training_bank
+TB040,office_hours_access,unknown,office hours access,Write what you already tried and the exact point where your understanding breaks.,"Teaching approach (office hours access, hybrid):
+1. One-sentence intuition.
+2. One tiny example.
+3. Three-step checklist they can reuse.
+4. Confirm the takeaway in their own words.",curated_training_bank
+TB041,academic_integrity,example_driven,academic integrity,Try inventing the smallest example that should obviously work — what happens in that case?,"Teaching approach (academic integrity, example-driven):
+1. Restate the stuck point in the student's words.
+2. Work one tiny concrete example end-to-end.
+3. Change one input and ask what must change.
+4. Name the general rule only after the examples land.",curated_training_bank
+TB042,academic_integrity,step_by_step,academic integrity,"List the steps you think the process should take, then mark the first step you are unsure about.","Teaching approach (academic integrity, step-by-step):
+1. Write a 4-step checklist for the procedure.
+2. Execute steps 1–2 together on their case.
+3. Have them complete steps 3–4 aloud.
+4. Ask which step failed last time and why.",curated_training_bank
+TB043,academic_integrity,visual_structural,academic integrity,Draw the structure before and after the operation — what relationship must stay true?,"Teaching approach (academic integrity, visual/structural):
+1. Sketch the before/after structure (boxes, pointers, layers).
+2. Mark the invariant that must hold after each transformation.
+3. Trace one failing case on the sketch.
+4. Correct the structure, then restate the invariant in one sentence.",curated_training_bank
+TB044,academic_integrity,conceptual,academic integrity,"Before debugging details, write one sentence: what must remain true for this idea to work?","Teaching approach (academic integrity, conceptual):
+1. Ask what definition or invariant they believe applies.
+2. Clarify the core idea in one sentence.
+3. Attach one minimal example that proves the idea.
+4. Ask them to explain the why back to you.",curated_training_bank
+TB045,academic_integrity,unknown,academic integrity,Write what you already tried and the exact point where your understanding breaks.,"Teaching approach (academic integrity, hybrid):
+1. One-sentence intuition.
+2. One tiny example.
+3. Three-step checklist they can reuse.
+4. Confirm the takeaway in their own words.",curated_training_bank
+TB046,uncategorized,example_driven,uncategorized,Try inventing the smallest example that should obviously work — what happens in that case?,"Teaching approach (uncategorized, example-driven):
+1. Restate the stuck point in the student's words.
+2. Work one tiny concrete example end-to-end.
+3. Change one input and ask what must change.
+4. Name the general rule only after the examples land.",curated_training_bank
+TB047,uncategorized,step_by_step,uncategorized,"List the steps you think the process should take, then mark the first step you are unsure about.","Teaching approach (uncategorized, step-by-step):
+1. Write a 4-step checklist for the procedure.
+2. Execute steps 1–2 together on their case.
+3. Have them complete steps 3–4 aloud.
+4. Ask which step failed last time and why.",curated_training_bank
+TB048,uncategorized,visual_structural,uncategorized,Draw the structure before and after the operation — what relationship must stay true?,"Teaching approach (uncategorized, visual/structural):
+1. Sketch the before/after structure (boxes, pointers, layers).
+2. Mark the invariant that must hold after each transformation.
+3. Trace one failing case on the sketch.
+4. Correct the structure, then restate the invariant in one sentence.",curated_training_bank
+TB049,uncategorized,conceptual,uncategorized,"Before debugging details, write one sentence: what must remain true for this idea to work?","Teaching approach (uncategorized, conceptual):
+1. Ask what definition or invariant they believe applies.
+2. Clarify the core idea in one sentence.
+3. Attach one minimal example that proves the idea.
+4. Ask them to explain the why back to you.",curated_training_bank
+TB050,uncategorized,unknown,uncategorized,Write what you already tried and the exact point where your understanding breaks.,"Teaching approach (uncategorized, hybrid):
+1. One-sentence intuition.
+2. One tiny example.
+3. Three-step checklist they can reuse.
+4. Confirm the takeaway in their own words.",curated_training_bank

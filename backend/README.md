@@ -2,13 +2,23 @@
 
 FastAPI backend for the OfficeHours AI / Office Hours Oracle triage system.
 
-## Oracle multi-agent pipeline
+## Oracle multi-agent pipeline (custom-trained models)
 
-On `POST /requests/`, the backend runs:
+On `POST /requests/`, the backend runs **local trained models only** (FYP path —
+no prompted Claude calls, no `USE_MOCK_CLAUDE` mocks):
 
-1. **Analyzer** — category, difficulty, tags, estimated minutes (`app/ai/claude_client.py`)
-2. **Matcher** — TA assignment by expertise + queue depth
-3. **Synthesizer** — student hint + teaching approach + similar KB hits
+1. **Analyzer** — fine-tuned small classifier (embeddings + logistic regression)
+   (`OFFICEHOURS_ANALYZER_BACKEND=ml`). Produces category, difficulty, tags,
+   estimated minutes. Train/refresh with:
+   `python3 scripts/train_classifier.py`
+   Optional professor-feedback export:
+   `python3 scripts/export_analyzer_training_data.py`
+2. **Matcher** — trained TA assignment classifier (embeddings + logistic
+   regression + queue-depth penalty). Train with:
+   `python3 scripts/train_matcher.py`
+3. **Synthesizer** — RAG over curated teaching bank / professor-approved KB +
+   trained learning-style ranker (no LLM). Train with:
+   `python3 scripts/train_synthesizer.py`
 
 Professor curation remains the gate: TA resolve → `pending_review` → professor approve → student KB / lifetime confusion agent.
 
@@ -19,7 +29,7 @@ Useful endpoints:
 - `GET /analytics/lifetime-confusion`
 - `WS /ws` live events including `oracle.analyzer.done`, `oracle.matcher.done`, `oracle.synthesizer.done`
 
-Set `USE_MOCK_CLAUDE=true` (default) for deterministic demos. Set `USE_MOCK_CLAUDE=false` and `ANTHROPIC_API_KEY` for live Claude.
+External LLM calls are disabled by default (`OFFICEHOURS_ALLOW_EXTERNAL_LLM=false`).
 
 ## Setup
 
@@ -78,16 +88,20 @@ Optional environment variables:
 - `OFFICEHOURS_CLUSTER_SIMILARITY_THRESHOLD` — defaults to `0.72`
 - `OFFICEHOURS_CLUSTERING_BACKEND=lexical` — lightweight deterministic backend
   for tests/local runs where you do not want to download the embedding model
+- `OFFICEHOURS_ANALYZER_BACKEND=ml|rules` — Analyzer backend; defaults to `ml`
 - `OFFICEHOURS_CLASSIFIER_BACKEND=rules|ml` — defaults to `rules`; set `ml` to
   use the trained embedding classifier in `backend/models/request_classifier.joblib`
 - `OFFICEHOURS_CLASSIFIER_MODEL` — optional override path to the saved ML model
+- `OFFICEHOURS_MATCHER_MODEL` — optional path to Matcher classifier
+  (`backend/models/matcher_classifier.joblib`)
+- `OFFICEHOURS_SYNTHESIZER_MODEL` — optional path to Synthesizer style ranker
+  (`backend/models/synthesizer_ranker.joblib`)
+- `OFFICEHOURS_TEACHING_BANK` — optional path to Synthesizer teaching-bank CSV
 - `OFFICEHOURS_LEARNING_STYLE_BACKEND=rules|ml` — defaults to `rules`
 - `OFFICEHOURS_LEARNING_STYLE_MODEL` — optional path to learning-style classifier
-- `USE_MOCK_CLAUDE=true|false` — defaults to `true` (deterministic style-aware drafts)
-- `ANTHROPIC_API_KEY` — required only when `USE_MOCK_CLAUDE=false`
-- `OFFICEHOURS_CLAUDE_MODEL` — defaults to `claude-3-5-sonnet-20241022`
+- `OFFICEHOURS_ALLOW_EXTERNAL_LLM=false` — keep external Claude disabled (FYP default)
 
-## Train ML classifier
+## Train ML classifier (Analyzer)
 
 Train/evaluate the embedding + logistic regression classifier on labeled CSVs:
 
@@ -99,11 +113,31 @@ python3 scripts/train_classifier.py
 Metrics are written to `reports/final_report/classifier_evaluation.{json,md}`.
 Labeled data lives in `data/labeled_requests*.csv`.
 
+## Train Matcher
+
+```bash
+cd backend
+python3 scripts/train_matcher.py
+```
+
+Labeled data: `data/matcher_training.csv`. Model:
+`backend/models/matcher_classifier.joblib`.
+
+## Train Synthesizer
+
+```bash
+cd backend
+python3 scripts/train_synthesizer.py
+```
+
+Teaching bank: `data/synthesizer_teaching_bank.csv`. Model:
+`backend/models/synthesizer_ranker.joblib`.
+
 ## Train learning-style classifier
 
 Infers how a student prefers to understand a topic (`example_driven`,
-`step_by_step`, `visual_structural`, `conceptual`, `unknown`) so Claude/mock
-drafts can adapt the teaching approach:
+`step_by_step`, `visual_structural`, `conceptual`, `unknown`) so the custom
+Synthesizer can prefer matching teaching-bank entries:
 
 ```bash
 cd backend
@@ -156,6 +190,6 @@ backend/
 │   ├── models/        # Pydantic / ORM models
 │   ├── services/       # Business logic (classification → recommendation, etc.)
 │   ├── database/      # DB session/engine setup
-│   └── ai/            # Classification + clustering logic
+│   └── ai/            # Custom-trained Analyzer / Matcher / Synthesizer
 └── tests/              # Pytest test suite
 ```

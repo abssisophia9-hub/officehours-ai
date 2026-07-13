@@ -1,0 +1,121 @@
+text,category,assigned_ta,alternative_ta,source
+"I understand the derivative rules separately, but I keep mixing up product rule and chain rule on practice final problems.",conceptual_question,Alice Chen,Bob Martinez,silver_label_from_expertise_overlap
+Can someone explain when to use integration by parts versus substitution? The final review sheet has both and I am confused.,conceptual_question,Alice Chen,Bob Martinez,silver_label_from_expertise_overlap
+I missed the lecture on recursion and now the sample final has two recursion tracing questions. Can I get a quick explanation?,conceptual_question,Bob Martinez,Alice Chen,silver_label_from_expertise_overlap
+"For the final, do we need to memorize all sorting algorithm runtimes or will there be a reference table?",exam_logistics,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+I keep getting off-by-one errors in binary search problems. Is there a simple way to check my loop boundaries?,conceptual_question,Alice Chen,Bob Martinez,silver_label_from_expertise_overlap
+What topics are definitely not on the final exam? I want to prioritize my studying tonight.,exam_logistics,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+Is the final cumulative or only the material after midterm two?,exam_logistics,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+Where is the final exam room posted? Canvas still shows the regular classroom.,exam_logistics,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+"What time does the final start, and is there a grace period if the campus shuttle is late?",exam_logistics,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+Can I bring one handwritten notes page to the final or is it closed book?,exam_logistics,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+My exam conflicts with another final at the same time. What is the process for arranging a makeup?,retake_request,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I have a documented accommodation for extra time. Who confirms that it is applied to the final?,accessibility_accommodation,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I was sick during the last project deadline and my grade is a zero. Can I still submit medical documentation?,retake_request,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I need to request a retake because my exam slot overlaps with a religious observance. Who should I email?,retake_request,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I think my project score is missing points for tests that passed in Gradescope. Can someone recheck it before finals?,grading_dispute,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+"My quiz grade says late penalty, but I submitted before midnight. Can this be reviewed?",grading_dispute,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+"The rubric says partial credit for explaining the approach, but my answer got zero. Can I appeal?",grading_dispute,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I am really overwhelmed and have not slept because I am scared I will fail the class. I need help making a plan.,emotional_stress,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I am panicking about the final and cannot focus. Is there any emergency office hour today?,emotional_stress,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I have three finals in two days and I feel completely stuck. Could I meet one-on-one about what to study?,emotional_stress,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+My laptop broke and my final project demo is tomorrow. What should I do if I cannot record the demo?,project_submission,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+The autograder times out only on the hidden tests. Can office hours help debug performance issues before the deadline?,project_submission,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+"For the final project report, do screenshots count toward the page limit?",project_submission,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+Do we need to cite ChatGPT if we used it to brainstorm tests for the final project?,project_submission,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+I do not understand dynamic programming tables. The practice final asks for the recurrence and table fill order.,conceptual_question,Alice Chen,Bob Martinez,silver_label_from_expertise_overlap
+Can we review how to prove an algorithm is O(n log n)? I can solve the code but not the explanation.,conceptual_question,Alice Chen,Bob Martinez,silver_label_from_expertise_overlap
+What is the difference between BFS and DFS for shortest path questions on the exam?,conceptual_question,Alice Chen,Bob Martinez,silver_label_from_expertise_overlap
+I need help understanding SQL joins for the final. Inner join versus left join keeps confusing me.,conceptual_question,Alice Chen,Bob Martinez,silver_label_from_expertise_overlap
+Will there be a group review session for graph algorithms? A lot of us are confused by Dijkstra.,conceptual_question,Bob Martinez,Alice Chen,silver_label_from_expertise_overlap
+Could you post solutions for the practice final? I cannot tell if my answers are correct.,exam_logistics,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+I missed the deadline to choose a final presentation slot. Is there still a way to sign up?,project_submission,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+"Is attendance required for the optional review session, or will it be recorded?",exam_logistics,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+Can office hours be extended this week? The current slots filled before I could register.,office_hours_access,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I got a warning about academic integrity on my project similarity report and I am very worried. What should I do next?,academic_integrity,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+How should I study cache and memory hierarchy questions? The slides feel too detailed for the final.,conceptual_question,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+"Will the final include coding by hand, multiple choice, or both?",exam_logistics,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+I submitted the wrong file for the final project. Can it be replaced before grading starts?,project_submission,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+My team member stopped responding and our project presentation is tomorrow. How do we report contribution issues?,project_submission,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+Can I get feedback on my study plan? I have only six hours left and want to focus on high-value topics.,emotional_stress,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I still do not understand confidence intervals and hypothesis tests. Could we do a mini review?,conceptual_question,Alice Chen,Bob Martinez,silver_label_from_expertise_overlap
+Could you walk through how to trace a recursive call stack on the practice exam?,conceptual_question,Alice Chen,Bob Martinez,silver_label_from_expertise_overlap
+I'm lost on Big-O proofs for divide and conquer. The induction step keeps breaking for me.,conceptual_question,Alice Chen,Bob Martinez,silver_label_from_expertise_overlap
+What's the policy on calculators for the final? The syllabus and Canvas post disagree.,exam_logistics,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+"Are we allowed a cheat sheet, and if so what size paper can we bring?",exam_logistics,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+The final schedule says 8am but my registration email says 10am. Which is correct?,exam_logistics,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+I had a family emergency and missed the final. How do I request a deferred exam?,retake_request,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+My doctor note covers exam day. Who processes makeup exam approvals?,retake_request,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I need an alternate exam time because of two finals scheduled back-to-back.,retake_request,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I have ADHD accommodations on file. Will the proctor know about my extended time?,accessibility_accommodation,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Where do I send updated disability services paperwork before the final?,accessibility_accommodation,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+My note-taking accommodation wasn't applied on the midterm. Can we fix that for finals?,accessibility_accommodation,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+The autograder says wrong answer but my manual tests pass locally.,grading_dispute,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I think the TA applied the wrong late policy to my homework submission.,grading_dispute,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Can someone review whether my partial credit on question 3 was fair?,grading_dispute,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I'm anxious about failing and haven't been able to study all week.,emotional_stress,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Feeling overwhelmed with three projects due before finals. Any advice?,emotional_stress,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Hidden test case 7 fails on the autograder but passes in PyCharm.,project_submission,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+Our demo video upload keeps failing on Canvas right before the deadline.,project_submission,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+Can we add another office hours block? Every slot was full in five minutes.,office_hours_access,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Is there a Zoom link for virtual office hours this week?,office_hours_access,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+The honor code office emailed me about similarity on my essay draft.,academic_integrity,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I accidentally shared code with a friend and got an integrity flag.,academic_integrity,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Where is the tutoring center located?,uncategorized,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Can I get a recommendation letter before grades post?,uncategorized,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+The vending machine in the CS building is broken again.,uncategorized,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Does the library have extended hours during finals week?,uncategorized,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Please explain linked lists versus arrays for the conceptual section.,conceptual_question,Alice Chen,Bob Martinez,silver_label_from_expertise_overlap
+Will the final be proctored online or in person this semester?,exam_logistics,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+I uploaded the correct PDF but Gradescope linked the wrong page range.,project_submission,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+Can professors post a FAQ about allowed materials before exam day?,exam_logistics,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+I'm scared I'll blank during the exam and forget everything.,emotional_stress,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Need a private meeting about a grade appeal before the deadline.,grading_dispute,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+My screen reader didn't work during the practice quiz platform.,accessibility_accommodation,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Can we schedule a group office hour for the whole recitation section?,office_hours_access,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+The similarity report flagged common variable names. Is that a problem?,academic_integrity,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+How do I drop the class if I'm past the withdrawal date?,uncategorized,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+What's the best way to review graph shortest-path algorithms quickly?,conceptual_question,Bob Martinez,Alice Chen,silver_label_from_expertise_overlap
+I have a religious conflict with the Saturday exam slot.,retake_request,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Team Git repo has merge conflicts and our submission is due tonight.,project_submission,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+Are office hours first-come first-served or do we need to sign up?,office_hours_access,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Can you explain how memoization works in dynamic programming for the final?,conceptual_question,Bob Martinez,Alice Chen,silver_label_from_expertise_overlap
+I'm struggling with heap operations and priority queue problems on the review sheet.,conceptual_question,Alice Chen,Bob Martinez,silver_label_from_expertise_overlap
+What room is the final in and will seating be assigned alphabetically?,exam_logistics,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+Is the final open notes or closed book this semester?,exam_logistics,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+I missed the final because of illness. How do I request a makeup exam?,retake_request,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+My exam conflict form was approved but I still do not have a new time.,retake_request,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I have extended time accommodations. Where do I check in on exam day?,accessibility_accommodation,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Disability services said my accommodation letter was updated. Who receives it?,accessibility_accommodation,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+The rubric says I should receive partial credit but the grader marked it wrong.,grading_dispute,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Can someone review whether my late submission penalty was applied correctly?,grading_dispute,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I'm panicking and feel like I will fail if I do not get help tonight.,emotional_stress,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I'm overwhelmed and cannot focus because of back-to-back finals.,emotional_stress,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+The autograder fails on hidden tests even though my local tests pass.,project_submission,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+Our final project demo video will not upload before the deadline.,project_submission,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+Can you add another office hours slot this week? All the current ones are full.,office_hours_access,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Where can I find the Zoom link for virtual office hours?,office_hours_access,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I received an academic integrity notice about similar code structure.,academic_integrity,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+The similarity report flagged my project and I need to know next steps.,academic_integrity,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Where can I find campus tutoring center hours?,uncategorized,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Can you write me a recommendation letter before grades are posted?,uncategorized,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+How do I prove an algorithm is correct using loop invariants?,conceptual_question,Alice Chen,Bob Martinez,silver_label_from_expertise_overlap
+"Will the final include multiple choice, short answer, or coding questions?",exam_logistics,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+I need a religious accommodation for the Saturday exam slot.,retake_request,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+My screen reader failed during the practice exam platform test.,accessibility_accommodation,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I think my homework was graded with the wrong rubric version.,grading_dispute,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I'm scared I will blank on the exam and forget everything I studied.,emotional_stress,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+We have merge conflicts in our team repo and the project is due tonight.,project_submission,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+Are office hours walk-in or do we need to reserve a slot?,office_hours_access,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Does the library stay open late during finals week?,uncategorized,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Can we review Dijkstra and BFS for shortest path questions?,conceptual_question,Alice Chen,Bob Martinez,silver_label_from_expertise_overlap
+What materials are allowed on the final exam desk?,exam_logistics,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+I had a family emergency and need a deferred final exam.,retake_request,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+My accommodation for a separate room was not listed on the seating chart.,accessibility_accommodation,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I want to appeal the grading on my final project report.,grading_dispute,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I feel stuck and need help building a study plan for the last two days.,emotional_stress,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I submitted the wrong file to Gradescope for the final project.,project_submission,Priya Nair,Sam Ortiz,silver_label_from_expertise_overlap
+Can we schedule a group review session during office hours?,office_hours_access,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+I shared pseudocode with a friend and got an honor code email.,academic_integrity,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+How do I drop the course after the withdrawal deadline?,uncategorized,Sam Ortiz,Alice Chen,silver_label_from_expertise_overlap
+Can you explain the difference between stack and queue applications on the exam?,conceptual_question,Alice Chen,Bob Martinez,silver_label_from_expertise_overlap

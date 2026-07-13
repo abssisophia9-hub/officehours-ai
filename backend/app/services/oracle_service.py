@@ -8,11 +8,13 @@ and records traces for metrics / lifetime confusion analytics.
 from __future__ import annotations
 
 import json
+import os
 import time
 from typing import Any
 
 from sqlalchemy.orm import Session
 
+from app.ai.analyzer_agent import CATEGORY_DISPLAY
 from app.ai.claude_client import analyze_question, match_ta, synthesize_solution
 from app.ai.clustering import cosine_similarity, embed_text
 from app.models.knowledge import KnowledgeEntry
@@ -52,7 +54,17 @@ def run_oracle_pipeline(
     steps: list[dict[str, Any]] = []
 
     # Keep existing classifier for category compatibility with professor dashboard.
-    classification = classify_and_recommend(question_text)
+    # Prefer ML when available so Analyzer + dashboard taxonomy stay aligned.
+    previous_backend = os.environ.get("OFFICEHOURS_CLASSIFIER_BACKEND")
+    if previous_backend is None:
+        os.environ["OFFICEHOURS_CLASSIFIER_BACKEND"] = "ml"
+    try:
+        classification = classify_and_recommend(question_text)
+    finally:
+        if previous_backend is None:
+            os.environ.pop("OFFICEHOURS_CLASSIFIER_BACKEND", None)
+        else:
+            os.environ["OFFICEHOURS_CLASSIFIER_BACKEND"] = previous_backend
     style = learning_style or str(classification.get("learning_style") or "unknown")
 
     t0 = time.perf_counter()
@@ -61,11 +73,18 @@ def run_oracle_pipeline(
         code_snippet=code_snippet,
         course=course,
     )
-    # Prefer classifier category labels when Oracle category is generic.
+    # Prefer trained taxonomy for dashboard routing; keep Analyzer display label.
+    if analyzer.get("ml_category"):
+        classification["category"] = analyzer["ml_category"]
+    if analyzer.get("urgency"):
+        classification["urgency"] = analyzer["urgency"]
     if analyzer.get("category") in {None, "", "General", "General CS"}:
-        analyzer["category"] = str(classification.get("category") or analyzer["category"])
-    if not analyzer.get("urgency"):
-        analyzer["urgency"] = str(classification.get("urgency") or "medium")
+        analyzer["category"] = str(
+            CATEGORY_DISPLAY.get(
+                str(classification.get("category")),
+                classification.get("category") or analyzer["category"],
+            )
+        )
     steps.append(
         {
             "agent": "analyzer",
@@ -87,7 +106,7 @@ def run_oracle_pipeline(
     ]
 
     t1 = time.perf_counter()
-    matcher = match_ta(analyzer, roster)
+    matcher = match_ta(analyzer, roster, question_text=question_text)
     steps.append(
         {
             "agent": "matcher",
