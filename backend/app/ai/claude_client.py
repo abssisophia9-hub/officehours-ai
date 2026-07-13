@@ -46,6 +46,28 @@ def analyze_question(
     code_snippet: str | None = None,
     course: str | None = None,
 ) -> dict[str, Any]:
+    """
+    Analyzer entrypoint.
+
+    Default: fine-tuned small classifier (``OFFICEHOURS_ANALYZER_BACKEND=ml``).
+    Set backend to ``claude`` for LLM extraction or ``rules`` for keywords only.
+    """
+    from app.ai.analyzer_agent import analyze_with_classifier
+
+    return analyze_with_classifier(
+        question_text=question_text,
+        code_snippet=code_snippet,
+        course=course,
+    )
+
+
+def analyze_question_llm(
+    *,
+    question_text: str,
+    code_snippet: str | None = None,
+    course: str | None = None,
+) -> dict[str, Any]:
+    """Optional LLM Analyzer path (not the default)."""
     if _use_mock():
         return _mock_analyze(question_text, code_snippet=code_snippet, course=course)
 
@@ -115,6 +137,12 @@ def synthesize_solution(
     learning_style: str | None = None,
     code_snippet: str | None = None,
 ) -> dict[str, Any]:
+    """
+    Synthesizer agent: RAG over approved KB + LLM teaching draft.
+
+    Intentionally not fine-tuned — knowledge compounds through professor-approved
+    retrieval, while Claude/mock drafts the teaching approach and student hint.
+    """
     # Reuse the existing style-aware drafter as the reliable synthesizer core.
     draft = draft_with_claude(
         question_text=question_text,

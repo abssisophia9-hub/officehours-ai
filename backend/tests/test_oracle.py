@@ -3,6 +3,7 @@ import os
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["OFFICEHOURS_CLUSTERING_BACKEND"] = "lexical"
 os.environ["USE_MOCK_CLAUDE"] = "true"
+os.environ["OFFICEHOURS_ANALYZER_BACKEND"] = "ml"
 
 from fastapi.testclient import TestClient
 
@@ -59,6 +60,11 @@ def test_oracle_pipeline_on_red_black_submission():
             "matcher",
             "synthesizer",
         }
+        assert data["category"] in {
+            "conceptual_question",
+            "project_submission",
+            "uncategorized",
+        }
 
         queue = client.get("/ta/queue/").json()
         assert any(item["request"]["id"] == data["id"] for item in queue)
@@ -93,4 +99,7 @@ def test_lifetime_confusion_uses_approved_kb_only():
 
         lifetime = client.get("/analytics/lifetime-confusion").json()
         assert lifetime["topics"]
-        assert any("Red-Black" in topic["topic"] or "tree" in topic["topic"].lower() for topic in lifetime["topics"]) or lifetime["topics"][0]["approved_count"] >= 1
+        assert any(
+            "Red-Black" in topic["topic"] or "tree" in topic["topic"].lower()
+            for topic in lifetime["topics"]
+        ) or lifetime["topics"][0]["approved_count"] >= 1

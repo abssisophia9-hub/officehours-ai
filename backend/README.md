@@ -6,9 +6,15 @@ FastAPI backend for the OfficeHours AI / Office Hours Oracle triage system.
 
 On `POST /requests/`, the backend runs:
 
-1. **Analyzer** — category, difficulty, tags, estimated minutes (`app/ai/claude_client.py`)
+1. **Analyzer** — fine-tuned small classifier (embeddings + logistic regression)
+   by default (`OFFICEHOURS_ANALYZER_BACKEND=ml`). Produces category, difficulty,
+   tags, estimated minutes. Train/refresh with:
+   `python3 scripts/train_classifier.py`
+   Optional professor-feedback export:
+   `python3 scripts/export_analyzer_training_data.py`
 2. **Matcher** — TA assignment by expertise + queue depth
-3. **Synthesizer** — student hint + teaching approach + similar KB hits
+3. **Synthesizer** — **RAG over approved KB + LLM** teaching draft / student hint
+   (not fine-tuned; knowledge compounds through professor curation)
 
 Professor curation remains the gate: TA resolve → `pending_review` → professor approve → student KB / lifetime confusion agent.
 
@@ -19,7 +25,7 @@ Useful endpoints:
 - `GET /analytics/lifetime-confusion`
 - `WS /ws` live events including `oracle.analyzer.done`, `oracle.matcher.done`, `oracle.synthesizer.done`
 
-Set `USE_MOCK_CLAUDE=true` (default) for deterministic demos. Set `USE_MOCK_CLAUDE=false` and `ANTHROPIC_API_KEY` for live Claude.
+Set `USE_MOCK_CLAUDE=true` (default) for deterministic Synthesizer drafts. Set `USE_MOCK_CLAUDE=false` and `ANTHROPIC_API_KEY` for live Claude on Matcher/Synthesizer.
 
 ## Setup
 
