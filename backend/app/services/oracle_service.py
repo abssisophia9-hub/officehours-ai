@@ -171,6 +171,20 @@ def apply_oracle_to_request(
     request.recommended_action = str(
         classification.get("recommended_action") or request.recommended_action
     )
+    if bool(getattr(request, "sensitive", False)) or (
+        request.category
+        in {
+            "emotional_stress",
+            "accessibility_accommodation",
+            "academic_integrity",
+            "retake_request",
+            "grading_dispute",
+        }
+    ):
+        request.sensitive = True
+        request.recommended_action = (
+            "Private 1:1 / admin route — do not discuss in a public group review"
+        )
     request.oracle_category = str(analyzer.get("category") or "")
     request.oracle_difficulty = str(analyzer.get("difficulty") or "MEDIUM")
     request.oracle_estimated_minutes = int(analyzer.get("estimated_minutes") or 15)

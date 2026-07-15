@@ -38,6 +38,8 @@ class KnowledgeEntry(Base):
     )
     source_request_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     cluster_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    course_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    material_source: Mapped[str | None] = mapped_column(String, nullable=True)
     professor_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -67,12 +69,78 @@ class KnowledgeEntryOut(BaseModel):
     status: KnowledgeStatus
     source_request_id: int | None = None
     cluster_id: int | None = None
+    course_id: int | None = None
+    material_source: str | None = None
     professor_note: str | None = None
     created_at: datetime
     updated_at: datetime
     reviewed_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CourseMaterialIngest(BaseModel):
+    """Paste or export course slides/notes into the approved KB corpus."""
+
+    title: str = Field(min_length=2, max_length=200)
+    content: str = Field(min_length=20, max_length=100_000)
+    course_id: int | None = None
+    course: str | None = None
+    source: str = Field(
+        default="slides",
+        description="slides | notes | canvas_export | syllabus",
+    )
+    auto_approve: bool = True
+
+
+class CourseMaterialIngestOut(BaseModel):
+    title: str
+    source: str
+    chunks_created: int
+    entry_ids: list[int]
+    message: str
+
+
+class EscalationItem(BaseModel):
+    request_id: int
+    text: str
+    category: str | None
+    urgency: str | None
+    cluster_id: int | None
+    created_at: datetime
+    reason: str
+    age_minutes: float
+    sensitive: bool = False
+
+
+class ClusterTopicOut(BaseModel):
+    cluster_id: int
+    title: str
+    keywords: list[str] = Field(default_factory=list)
+    request_count: int
+    request_ids: list[int] = Field(default_factory=list)
+    sample_texts: list[str] = Field(default_factory=list)
+    urgency_mix: dict[str, int] = Field(default_factory=dict)
+    anonymous_count: int = 0
+    sensitive_count: int = 0
+    suggested_action: str
+    suggestion_reason: str
+    category: str | None = None
+
+
+class ClusterCommandCenterOut(BaseModel):
+    course: str | None = None
+    course_id: int | None = None
+    total_requests: int
+    clusters: list[ClusterTopicOut]
+    escalations: list[EscalationItem] = Field(default_factory=list)
+    message: str
+
+
+class FaqFromClusterRequest(BaseModel):
+    cluster_id: int
+    course_id: int | None = None
+    course: str | None = None
 
 
 class KnowledgeEntryUpdate(BaseModel):
@@ -92,6 +160,7 @@ class KnowledgeSearchHit(BaseModel):
 class AgentAskRequest(BaseModel):
     question: str = Field(min_length=3, max_length=4000)
     top_k: int = Field(default=3, ge=1, le=8)
+    course_id: int | None = None
 
 
 class AgentAskResponse(BaseModel):
@@ -112,14 +181,3 @@ class StruggleHeatmapCell(BaseModel):
 class StruggleHeatmapOut(BaseModel):
     cells: list[StruggleHeatmapCell]
     total_requests: int
-
-
-class EscalationItem(BaseModel):
-    request_id: int
-    text: str
-    category: str | None
-    urgency: str | None
-    cluster_id: int | None
-    created_at: datetime
-    reason: str
-    age_minutes: float

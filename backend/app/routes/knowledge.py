@@ -9,7 +9,11 @@ from app.database.session import get_db
 from app.models.knowledge import (
     AgentAskRequest,
     AgentAskResponse,
+    ClusterCommandCenterOut,
+    CourseMaterialIngest,
+    CourseMaterialIngestOut,
     EscalationItem,
+    FaqFromClusterRequest,
     KnowledgeEntry,
     KnowledgeEntryOut,
     KnowledgeEntryUpdate,
@@ -17,12 +21,19 @@ from app.models.knowledge import (
 )
 from app.realtime.hub import hub
 from app.services.analytics_service import (
+    build_cluster_command_center,
     build_escalation_feed,
     build_oracle_metrics,
     build_struggle_heatmap,
 )
 from app.services.kb_agent_service import answer_from_knowledge_base
-from app.services.knowledge_service import list_entries, to_out, update_entry
+from app.services.knowledge_service import (
+    create_faq_from_cluster,
+    ingest_course_material,
+    list_entries,
+    to_out,
+    update_entry,
+)
 from app.services.oracle_service import lifetime_confusion_topics
 
 router = APIRouter(tags=["knowledge"])
@@ -31,6 +42,7 @@ router = APIRouter(tags=["knowledge"])
 @router.get("/knowledge/", response_model=list[KnowledgeEntryOut])
 def list_knowledge_entries(
     status_filter: str | None = Query(default=None, alias="status"),
+    course_id: int | None = Query(default=None),
     db: Session = Depends(get_db),
 ):
     if status_filter and status_filter not in {"pending_review", "approved", "rejected"}:
@@ -38,7 +50,10 @@ def list_knowledge_entries(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="status must be pending_review, approved, or rejected",
         )
-    return [to_out(entry) for entry in list_entries(db, status_filter=status_filter)]
+    return [
+        to_out(entry)
+        for entry in list_entries(db, status_filter=status_filter, course_id=course_id)
+    ]
 
 
 @router.get("/knowledge/{entry_id}", response_model=KnowledgeEntryOut)
@@ -77,9 +92,85 @@ async def patch_knowledge_entry(
     return updated
 
 
+@router.post(
+    "/knowledge/from-cluster",
+    response_model=KnowledgeEntryOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def faq_from_cluster(payload: FaqFromClusterRequest, db: Session = Depends(get_db)):
+    entry = create_faq_from_cluster(
+        db,
+        cluster_id=payload.cluster_id,
+        course=payload.course,
+        course_id=payload.course_id,
+    )
+    if entry is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No requests found for that cluster",
+        )
+    out = to_out(entry)
+    await hub.broadcast(
+        "knowledge.created",
+        {
+            "id": out.id,
+            "status": out.status,
+            "source_request_id": out.source_request_id,
+            "cluster_id": out.cluster_id,
+        },
+    )
+    return out
+
+
+@router.post(
+    "/knowledge/materials",
+    response_model=CourseMaterialIngestOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def upload_course_materials(
+    payload: CourseMaterialIngest,
+    db: Session = Depends(get_db),
+):
+    entries = ingest_course_material(
+        db,
+        title=payload.title.strip(),
+        content=payload.content,
+        source=payload.source.strip().lower() or "slides",
+        course_id=payload.course_id,
+        course=payload.course,
+        auto_approve=payload.auto_approve,
+    )
+    for entry in entries:
+        await hub.broadcast(
+            "knowledge.created",
+            {
+                "id": entry.id,
+                "status": entry.status,
+                "material_source": entry.material_source,
+                "course_id": entry.course_id,
+            },
+        )
+    return CourseMaterialIngestOut(
+        title=payload.title.strip(),
+        source=payload.source,
+        chunks_created=len(entries),
+        entry_ids=[entry.id for entry in entries],
+        message=(
+            f"Ingested {len(entries)} material chunk(s) into the course KB "
+            f"({'approved' if payload.auto_approve else 'pending_review'}). "
+            "Canvas LMS sync can later feed this same ingest path."
+        ),
+    )
+
+
 @router.post("/agent/ask", response_model=AgentAskResponse)
 def ask_kb_agent(payload: AgentAskRequest, db: Session = Depends(get_db)):
-    return answer_from_knowledge_base(db, payload.question, top_k=payload.top_k)
+    return answer_from_knowledge_base(
+        db,
+        payload.question,
+        top_k=payload.top_k,
+        course_id=payload.course_id,
+    )
 
 
 @router.get("/analytics/struggle-heatmap", response_model=StruggleHeatmapOut)
@@ -88,8 +179,21 @@ def struggle_heatmap(db: Session = Depends(get_db)):
 
 
 @router.get("/analytics/escalations", response_model=list[EscalationItem])
-def escalations(db: Session = Depends(get_db)):
-    return build_escalation_feed(db)
+def escalations(
+    course: str | None = Query(default=None),
+    course_id: int | None = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    return build_escalation_feed(db, course=course, course_id=course_id)
+
+
+@router.get("/analytics/clusters", response_model=ClusterCommandCenterOut)
+def cluster_command_center(
+    course: str | None = Query(default=None),
+    course_id: int | None = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    return build_cluster_command_center(db, course=course, course_id=course_id)
 
 
 @router.get("/analytics/oracle-metrics")

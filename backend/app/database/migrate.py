@@ -33,6 +33,7 @@ def ensure_schema(engine: Engine) -> None:
             ("student_hint", "TEXT"),
             ("oracle_trace_json", "TEXT"),
             ("course_id", "INTEGER"),
+            ("sensitive", "BOOLEAN"),
         ):
             _add_column_if_missing(engine, "requests", columns, column_name, column_type)
 
@@ -45,6 +46,12 @@ def ensure_schema(engine: Engine) -> None:
         )
         _add_column_if_missing(
             engine, "knowledge_entries", columns, "drafter_backend", "VARCHAR"
+        )
+        _add_column_if_missing(
+            engine, "knowledge_entries", columns, "course_id", "INTEGER"
+        )
+        _add_column_if_missing(
+            engine, "knowledge_entries", columns, "material_source", "VARCHAR"
         )
 
 

@@ -34,9 +34,13 @@ Password for all: `aui-demo`
 
 1. Run `./scripts/run_product.sh` (or start backend + `officehours-app`)
 2. Open **http://127.0.0.1:5180**
-3. Sign in as student → submit a CS 400 question
-4. Sign in as TA Alice → resolve it
-5. Sign in as professor → approve the knowledge draft
+3. Sign in as student → use **Quiet ask (anonymous)** by default, or identify yourself
+4. Sign in as TA Alice → resolve a queue item
+5. Sign in as professor → use the **Office-hours command center**:
+   - repeated topic clusters (group review vs FAQ)
+   - urgent/sensitive flags
+   - paste course slides/notes into the KB agent
+   - approve pending FAQ/KB drafts
 6. Switch courses with the course picker to see multi-course behavior
 
 ## Packaging note
@@ -45,3 +49,10 @@ Today the deliverable is a **single web application package** (one frontend +
 API) with authentication. It can later be wrapped as a desktop installer
 (Electron) or deployed behind AUI SSO. The important product rule is already
 true: **one login, role + course context, not three naked URLs**.
+
+## Canvas / course materials
+
+Professors can paste slide notes or Canvas page exports into
+`POST /knowledge/materials`. Chunks are approved into the course KB so the
+student agent answers from course content. A future Canvas OAuth sync can feed
+the same ingest path without changing the student/professor UX.

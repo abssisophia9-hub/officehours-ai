@@ -18,8 +18,9 @@ def answer_from_knowledge_base(
     question: str,
     *,
     top_k: int = 3,
+    course_id: int | None = None,
 ) -> AgentAskResponse:
-    matches = search_approved_entries(db, question, top_k=top_k)
+    matches = search_approved_entries(db, question, top_k=top_k, course_id=course_id)
     sources = [
         KnowledgeSearchHit(entry=to_out(entry), similarity=round(similarity, 4))
         for entry, similarity in matches

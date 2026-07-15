@@ -111,8 +111,37 @@ def _lexical_embedding(text: str) -> list[float]:
         "accommodation",
         "retake",
         "makeup",
+        "hash",
+        "table",
+        "tables",
+        "collision",
+        "collisions",
+        "chaining",
+        "probing",
+        "bucket",
+        "buckets",
+        "linked",
+        "list",
+        "overwhelmed",
+        "failing",
+        "autograder",
+        "hidden",
+        "tests",
     )
     return [1.0 if token in tokens else 0.0 for token in vocabulary]
+
+
+def _tokenize(text: str) -> set[str]:
+    return set(re.findall(r"[a-z0-9]+", text.lower()))
+
+
+def _jaccard_similarity(left: set[str], right: set[str]) -> float:
+    if not left or not right:
+        return 0.0
+    union = left | right
+    if not union:
+        return 0.0
+    return len(left & right) / len(union)
 
 
 def _next_cluster_id(existing_requests: list[ExistingRequest]) -> int:
