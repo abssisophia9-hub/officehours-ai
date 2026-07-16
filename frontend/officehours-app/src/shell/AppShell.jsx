@@ -15,12 +15,16 @@ export default function AppShell() {
         <div className="clay-stripe mb-3" />
         <div className="glass-header flex flex-col gap-4 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
-            <img src="/aui-logo.png" alt="Al Akhawayn University" className="aui-logo clay-wiggle" />
+            <img
+              src="/aui-logo.png"
+              alt="Al Akhawayn University"
+              className="aui-logo"
+            />
             <div>
-              <p className="font-display text-2xl font-bold leading-tight text-aui-ink sm:text-3xl">
+              <p className="font-display text-2xl font-semibold leading-tight text-aui-ink sm:text-3xl">
                 OfficeHours AI
               </p>
-              <p className="text-sm font-semibold text-aui-deep/70">
+              <p className="text-sm font-medium text-aui-deep/65">
                 {user.display_name} ·{" "}
                 {activeCourse
                   ? `${activeCourse.code} (${activeCourse.role})`
@@ -30,10 +34,10 @@ export default function AppShell() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <label className="text-xs font-extrabold uppercase tracking-wide text-aui-deep/60">
+            <label className="text-xs font-semibold uppercase tracking-wide text-aui-deep/55">
               Course
               <select
-                className="field-glass ml-2 px-3 py-2 text-sm font-bold"
+                className="field-glass ml-2 px-3 py-2 text-sm font-medium"
                 value={activeCourse?.id || ""}
                 onChange={(event) => {
                   const next = user.courses.find(
@@ -84,8 +88,8 @@ export default function AppShell() {
         <Outlet />
       </main>
 
-      <footer className="px-5 pb-8 text-center text-sm font-semibold text-aui-deep/55 sm:px-8">
-        Al Akhawayn University · OfficeHours AI · Ask quietly, get help faster
+      <footer className="px-5 pb-8 text-center text-sm font-medium text-aui-deep/45 sm:px-8">
+        Al Akhawayn University · OfficeHours AI
       </footer>
     </div>
   );

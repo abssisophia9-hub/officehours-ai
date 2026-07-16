@@ -69,15 +69,10 @@ export default function TaWorkspace() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-      <section className="glass-panel relative overflow-hidden p-4">
-        <img
-          src="/figures/ta.png"
-          alt=""
-          className="clay-hero-figure pointer-events-none absolute -right-3 top-2 max-h-24 opacity-90"
-        />
-        <p className="glass-chip mb-3">TA workspace · {activeCourse.code}</p>
-        <h1 className="font-display relative z-10 text-2xl font-bold sm:text-3xl">Open queue</h1>
+    <div className="fade-up grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+      <section className="glass-panel p-4">
+        <p className="glass-chip mb-3">TA · {activeCourse.code}</p>
+        <h1 className="font-display text-2xl font-semibold sm:text-3xl">Open queue</h1>
         {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
         {toast ? <p className="mt-2 text-sm text-emerald-700">{toast}</p> : null}
         <ul className="mt-4 space-y-2">
@@ -96,18 +91,18 @@ export default function TaWorkspace() {
                   setHint(item.knowledge_entry?.student_hint || "");
                 }}
               >
-                <p className="text-xs font-extrabold text-aui-deep/60">
+                <p className="text-xs font-semibold text-aui-deep/55">
                   #{item.request.id}
                   {item.request.assigned_ta
                     ? ` · ${item.request.assigned_ta}`
                     : ""}
                 </p>
-                <p className="line-clamp-3 text-sm font-bold">{item.request.text}</p>
+                <p className="line-clamp-3 text-sm font-medium">{item.request.text}</p>
               </button>
             </li>
           ))}
           {queue.length === 0 ? (
-            <p className="rounded-2xl bg-white/40 px-3 py-6 text-center text-sm text-aui-deep/60">
+            <p className="rounded-xl bg-aui-mist/60 px-3 py-6 text-center text-sm text-aui-deep/60">
               No open requests for this course.
             </p>
           ) : null}
@@ -119,15 +114,15 @@ export default function TaWorkspace() {
           <p className="text-aui-deep/70">Select a request to edit the teaching draft.</p>
         ) : (
           <div className="space-y-4">
-            <h2 className="font-display text-2xl font-bold">{selected.request.text}</h2>
+            <h2 className="font-display text-2xl font-semibold">{selected.request.text}</h2>
             {selected.request.oracle_category || selected.request.student_hint ? (
               <div className="grid gap-2 sm:grid-cols-2">
-                <div className="clay-blob clay-blob-sky px-3 py-2 text-sm font-semibold">
+                <div className="soft-stat text-sm font-medium">
                   <strong>Oracle:</strong>{" "}
                   {selected.request.oracle_category || "n/a"} ·{" "}
                   {selected.request.oracle_difficulty || "n/a"}
                 </div>
-                <div className="clay-blob clay-blob-butter px-3 py-2 text-sm font-semibold">
+                <div className="soft-stat text-sm font-medium">
                   <strong>Wait:</strong> ~
                   {selected.request.estimated_wait_minutes ?? "?"} min ·{" "}
                   {selected.request.assigned_ta || "Unassigned"}

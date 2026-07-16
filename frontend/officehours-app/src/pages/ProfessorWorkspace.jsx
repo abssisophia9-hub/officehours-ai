@@ -149,51 +149,50 @@ export default function ProfessorWorkspace() {
   const anonCount = requests.filter((item) => item.anonymous).length;
 
   return (
-    <div className="space-y-6">
+    <div className="fade-up space-y-6">
       <section className="glass-panel p-6">
-        <img
-          src="/figures/professor.png"
-          alt=""
-          className="clay-hero-figure pointer-events-none absolute -right-2 -top-2 max-h-32 opacity-95 sm:max-h-40"
-        />
         <p className="glass-chip mb-3">Professor · {activeCourse.code}</p>
-        <h1 className="font-display relative z-10 max-w-[18ch] text-3xl font-bold sm:text-4xl">
+        <h1 className="font-display max-w-[18ch] text-3xl font-semibold sm:text-4xl">
           Office-hours command center
         </h1>
-        <p className="relative z-10 mt-2 max-w-2xl font-semibold text-aui-deep/70">
-          Organize chaos: group repeats, prefer shared review over one-by-one replies,
-          draft FAQs, flag sensitive cases, and ground the KB agent in your slides.
+        <p className="mt-2 max-w-2xl font-medium text-aui-deep/70">
+          Group repeats, draft FAQs, flag sensitive cases, and ground the KB agent
+          in your course materials.
         </p>
         {error ? (
-          <p className="clay-blob clay-blob-coral mt-3 px-4 py-2 text-sm font-bold">{error}</p>
+          <p className="clay-blob clay-blob-coral mt-3 block w-full px-4 py-2 text-sm font-semibold">
+            {error}
+          </p>
         ) : null}
         {message ? (
-          <p className="clay-blob clay-blob-mint mt-3 px-4 py-2 text-sm font-bold">{message}</p>
+          <p className="clay-blob clay-blob-mint mt-3 block w-full px-4 py-2 text-sm font-semibold">
+            {message}
+          </p>
         ) : null}
-        <div className="mt-6 grid gap-4 sm:grid-cols-4">
-          <article className="clay-blob clay-blob-mint p-4">
-            <p className="text-sm font-bold text-aui-deep/70">Requests</p>
-            <p className="font-display text-3xl font-bold">{requests.length}</p>
+        <div className="mt-6 grid gap-3 sm:grid-cols-4">
+          <article className="soft-stat">
+            <p className="text-sm font-medium text-aui-deep/60">Requests</p>
+            <p className="font-display text-3xl font-semibold">{requests.length}</p>
           </article>
-          <article className="clay-blob clay-blob-sky p-4">
-            <p className="text-sm font-bold text-aui-deep/70">Topic clusters</p>
-            <p className="font-display text-3xl font-bold">
+          <article className="soft-stat">
+            <p className="text-sm font-medium text-aui-deep/60">Topic clusters</p>
+            <p className="font-display text-3xl font-semibold">
               {commandCenter?.clusters?.length || 0}
             </p>
           </article>
-          <article className="clay-blob clay-blob-coral p-4">
-            <p className="text-sm font-bold text-aui-deep/70">Sensitive flags</p>
-            <p className="font-display text-3xl font-bold">{sensitiveCount}</p>
+          <article className="soft-stat">
+            <p className="text-sm font-medium text-aui-deep/60">Sensitive flags</p>
+            <p className="font-display text-3xl font-semibold">{sensitiveCount}</p>
           </article>
-          <article className="clay-blob clay-blob-butter p-4">
-            <p className="text-sm font-bold text-aui-deep/70">Anonymous asks</p>
-            <p className="font-display text-3xl font-bold">{anonCount}</p>
+          <article className="soft-stat">
+            <p className="text-sm font-medium text-aui-deep/60">Anonymous asks</p>
+            <p className="font-display text-3xl font-semibold">{anonCount}</p>
           </article>
         </div>
       </section>
 
       <section className="glass-panel p-6">
-        <h2 className="font-display text-2xl font-bold">Repeated topics</h2>
+        <h2 className="font-display text-2xl font-semibold">Repeated topics</h2>
         <p className="mt-1 text-sm text-aui-deep/65">
           {commandCenter?.message ||
             "Similar questions are clustered so you can FAQ or group-review once."}
@@ -210,7 +209,7 @@ export default function ProfessorWorkspace() {
                     Cluster {cluster.cluster_id} · {cluster.request_count} asks ·{" "}
                     {cluster.suggested_action.replaceAll("_", " ")}
                   </p>
-                  <h3 className="font-display mt-1 text-xl font-bold">{cluster.title}</h3>
+                  <h3 className="font-display mt-1 text-xl font-semibold">{cluster.title}</h3>
                   <p className="mt-1 text-sm text-aui-deep/75">{cluster.suggestion_reason}</p>
                   {cluster.sensitive_count > 0 ? (
                     <p className="mt-2 text-sm font-semibold text-red-700">
@@ -257,7 +256,7 @@ export default function ProfessorWorkspace() {
       </section>
 
       <section className="glass-panel p-6">
-        <h2 className="font-display text-2xl font-bold">Urgent & sensitive</h2>
+        <h2 className="font-display text-2xl font-semibold">Urgent & sensitive</h2>
         <ul className="mt-4 space-y-2">
           {(commandCenter?.escalations || []).map((item) => (
             <li
@@ -281,7 +280,7 @@ export default function ProfessorWorkspace() {
       </section>
 
       <section className="glass-panel p-6">
-        <h2 className="font-display text-2xl font-bold">Course materials → KB agent</h2>
+        <h2 className="font-display text-2xl font-semibold">Course materials → KB agent</h2>
         <p className="mt-1 text-sm text-aui-deep/65">
           Paste slide notes or a Canvas page export. Chunks are approved into the KB so
           the student agent can answer from your materials (Canvas OAuth can reuse this
@@ -310,7 +309,7 @@ export default function ProfessorWorkspace() {
       </section>
 
       <section className="glass-panel p-6">
-        <h2 className="font-display text-2xl font-bold">Pending knowledge curation</h2>
+        <h2 className="font-display text-2xl font-semibold">Pending knowledge curation</h2>
         <ul className="mt-4 space-y-3">
           {entries.map((entry) => (
             <li
@@ -338,7 +337,7 @@ export default function ProfessorWorkspace() {
       </section>
 
       <section className="glass-panel p-6">
-        <h2 className="font-display text-2xl font-bold">Recent requests</h2>
+        <h2 className="font-display text-2xl font-semibold">Recent requests</h2>
         <ul className="mt-4 space-y-2">
           {requests.slice(0, 12).map((request) => (
             <li key={request.id} className="rounded-2xl bg-white/45 px-4 py-3 text-sm">
