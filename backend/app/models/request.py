@@ -37,6 +37,7 @@ class Request(Base):
     estimated_wait_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     student_hint: Mapped[str | None] = mapped_column(Text, nullable=True)
     oracle_trace_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sensitive: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -57,6 +58,7 @@ class RequestCreate(BaseModel):
     learning_style: str | None = None
     cluster_id: int | None = None
     recommended_action: str | None = None
+    sensitive: bool | None = None
 
 
 class OracleAnalyzerOut(BaseModel):
@@ -99,6 +101,7 @@ class OracleResultOut(BaseModel):
 class RequestOut(RequestCreate):
     id: int
     created_at: datetime
+    sensitive: bool = False
     oracle_category: str | None = None
     oracle_difficulty: str | None = None
     oracle_estimated_minutes: int | None = None

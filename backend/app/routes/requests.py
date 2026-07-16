@@ -12,6 +12,7 @@ from app.database.session import get_db
 from app.models.action import RecommendationDecision
 from app.models.request import Request, RequestCreate, RequestOut, RequestStatusOut
 from app.realtime.hub import hub
+from app.services.analytics_service import is_sensitive_category
 from app.services.knowledge_service import create_pending_entry_from_request
 from app.services.oracle_service import (
     apply_oracle_to_request,
@@ -27,6 +28,11 @@ router = APIRouter(prefix="/requests", tags=["requests"])
 @router.post("/", response_model=RequestOut, status_code=status.HTTP_201_CREATED)
 async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
     request_data = payload.model_dump()
+
+    # Quiet / low-exposure asks never persist identity even if the client sent it.
+    if request_data.get("anonymous"):
+        request_data["student_id"] = None
+        request_data["student_name"] = None
 
     oracle = run_oracle_pipeline(
         db,
@@ -51,8 +57,22 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
         request_data["learning_style"] = classification.get("learning_style")
     if not request_data.get("recommended_action"):
         request_data["recommended_action"] = classification.get("recommended_action")
+
+    category = request_data.get("category")
+    sensitive = bool(request_data.get("sensitive")) or is_sensitive_category(category)
+    request_data["sensitive"] = sensitive
+    if sensitive:
+        request_data["recommended_action"] = (
+            "Private 1:1 / admin route — do not discuss in a public group review"
+        )
+
     if request_data.get("cluster_id") is None:
-        existing_requests = db.query(Request).order_by(Request.id).all()
+        existing_query = db.query(Request).order_by(Request.id)
+        if payload.course_id is not None:
+            existing_query = existing_query.filter(Request.course_id == payload.course_id)
+        elif payload.course:
+            existing_query = existing_query.filter(Request.course == payload.course)
+        existing_requests = existing_query.all()
         request_data["cluster_id"] = assign_cluster_id(payload.text, existing_requests)
 
     db_request = Request(**request_data)
@@ -116,14 +136,20 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
             "drafter_backend": entry.drafter_backend,
         },
     )
-    if (db_request.urgency or "").lower() in {"urgent", "high"}:
+    if (db_request.urgency or "").lower() in {"urgent", "high"} or db_request.sensitive:
+        reason = (
+            "Sensitive / private follow-up needed"
+            if db_request.sensitive
+            else f"Marked {db_request.urgency} urgency"
+        )
         await hub.broadcast(
             "escalation",
             {
                 "request_id": db_request.id,
                 "urgency": db_request.urgency,
                 "category": db_request.category,
-                "reason": f"Marked {db_request.urgency} urgency",
+                "sensitive": bool(db_request.sensitive),
+                "reason": reason,
             },
         )
 
