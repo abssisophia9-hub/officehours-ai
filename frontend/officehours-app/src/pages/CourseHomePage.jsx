@@ -8,9 +8,15 @@ const ROLE_PATH = {
 };
 
 const ROLE_COPY = {
-  student: "Ask questions, check status, and use the approved KB agent.",
+  student: "Ask quietly, check status, and use the approved KB agent.",
   ta: "Work the live queue and prepare teaching drafts for curation.",
-  professor: "Triage requests, approve knowledge, and manage office hours.",
+  professor: "Triage repeats, draft FAQs, and approve knowledge for students.",
+};
+
+const ROLE_PILL = {
+  student: "role-pill-student",
+  ta: "role-pill-ta",
+  professor: "role-pill-professor",
 };
 
 export default function CourseHomePage() {
@@ -18,15 +24,19 @@ export default function CourseHomePage() {
   const navigate = useNavigate();
 
   return (
-    <section>
-      <p className="glass-chip mb-4">Your courses</p>
-      <h1 className="font-display text-4xl font-bold">Welcome, {user.display_name}</h1>
-      <p className="mt-3 max-w-2xl text-lg text-aui-deep/75">
-        Pick a course workspace. Your role can differ by course — for example a
-        student in CS 330 and a TA elsewhere.
-      </p>
+    <section className="fade-up">
+      <div className="mb-8 max-w-2xl">
+        <p className="glass-chip mb-4">Your courses</p>
+        <h1 className="font-display text-4xl font-semibold sm:text-5xl">
+          Welcome, {user.display_name.split(" ")[0]}
+        </h1>
+        <p className="mt-3 text-base font-medium text-aui-deep/70">
+          Choose a course workspace. Your role can differ by course — for
+          example a student in CS 330 and a TA elsewhere.
+        </p>
+      </div>
 
-      <div className="mt-8 grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         {user.courses.map((course) => (
           <button
             key={`${course.id}-${course.role}`}
@@ -37,13 +47,19 @@ export default function CourseHomePage() {
               navigate(ROLE_PATH[course.role] || "/");
             }}
           >
-            <p className="glass-chip">{course.role}</p>
-            <h2 className="font-display mt-3 text-2xl font-bold">
+            <p
+              className={`role-pill ${ROLE_PILL[course.role] || "role-pill-student"}`}
+            >
+              {course.role}
+            </p>
+            <h2 className="font-display mt-4 text-3xl font-semibold">
               {course.code}
             </h2>
-            <p className="mt-1 text-aui-deep/80">{course.title}</p>
-            <p className="mt-1 text-sm text-aui-deep/60">{course.term}</p>
-            <p className="mt-4 text-sm text-aui-deep/70">
+            <p className="mt-1 font-medium text-aui-deep/80">{course.title}</p>
+            <p className="mt-1 text-sm font-medium text-aui-deep/50">
+              {course.term}
+            </p>
+            <p className="mt-4 text-sm font-medium text-aui-deep/65">
               {ROLE_COPY[course.role]}
             </p>
           </button>

@@ -49,6 +49,9 @@ export function AuthProvider({ children }) {
       method: "POST",
       body: { email, password },
     });
+    // Clear previous role/course before applying the new membership.
+    localStorage.removeItem(COURSE_KEY);
+    setActiveCourseState(null);
     localStorage.setItem(TOKEN_KEY, result.token);
     setToken(result.token);
     setUser(result.user);

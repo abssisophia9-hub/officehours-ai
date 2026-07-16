@@ -63,26 +63,27 @@ export default function StudentWorkspace() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="fade-up grid gap-6 lg:grid-cols-2">
       <form onSubmit={submitQuestion} className="glass-panel p-6">
-        <p className="glass-chip mb-3">Student workspace · {activeCourse.code}</p>
-        <h1 className="font-display text-3xl font-bold">Ask for help</h1>
-        <p className="mt-2 text-aui-deep/70">
+        <p className="glass-chip mb-3">Student · {activeCourse.code}</p>
+        <h1 className="font-display max-w-[16ch] text-3xl font-semibold sm:text-4xl">
+          Ask for help
+        </h1>
+        <p className="mt-2 max-w-md font-medium text-aui-deep/70">
           Start quietly if you prefer. Anonymous asks never store your name or ID —
           staff only see the question and a request code.
         </p>
-        <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl bg-white/45 px-4 py-3">
+        <label className="clay-blob clay-blob-mint mt-5 flex w-full cursor-pointer items-start gap-3 px-4 py-3">
           <input
             type="checkbox"
-            className="mt-1"
+            className="mt-1 h-4 w-4 accent-aui-forest"
             checked={anonymous}
             onChange={(event) => setAnonymous(event.target.checked)}
           />
           <span>
             <span className="block font-semibold text-aui-ink">Quiet ask (anonymous)</span>
-            <span className="mt-1 block text-sm text-aui-deep/70">
-              Recommended if you feel shy about office hours. You can still check status
-              with your request code later.
+            <span className="mt-1 block text-sm font-medium text-aui-deep/70">
+              Keep your request code and check status later.
             </span>
           </span>
         </label>
@@ -109,7 +110,7 @@ export default function StudentWorkspace() {
         {result ? (
           <section className="glass-panel p-6">
             <p className="glass-chip">Request #{result.id}</p>
-            <h2 className="font-display mt-3 text-2xl font-bold">
+            <h2 className="font-display mt-3 text-2xl font-semibold">
               {result.anonymous ? "Submitted quietly" : "Submitted"}
             </h2>
             <p className="mt-2 text-sm text-aui-deep/75">{result.text}</p>
@@ -126,16 +127,16 @@ export default function StudentWorkspace() {
               </p>
             ) : null}
             {result.oracle ? (
-              <div className="mt-4 grid gap-3">
-                <div className="rounded-2xl bg-sky-50/80 p-3 text-sm">
+              <div className="mt-4 grid gap-2">
+                <div className="soft-stat text-sm font-medium">
                   <strong>Analyzer:</strong> {result.oracle.analyzer.category} ·{" "}
                   {result.oracle.analyzer.difficulty}
                 </div>
-                <div className="rounded-2xl bg-orange-50/80 p-3 text-sm">
+                <div className="soft-stat text-sm font-medium">
                   <strong>Matcher:</strong> {result.oracle.matcher.assigned_ta} · wait ~
                   {result.oracle.matcher.estimated_wait_minutes} min
                 </div>
-                <div className="rounded-2xl bg-emerald-50/80 p-3 text-sm">
+                <div className="soft-stat text-sm font-medium">
                   <strong>Hint:</strong> {result.oracle.synthesizer.student_hint}
                 </div>
               </div>
@@ -144,7 +145,7 @@ export default function StudentWorkspace() {
         ) : null}
 
         <form onSubmit={askAgent} className="glass-panel p-6">
-          <h2 className="font-display text-2xl font-bold">Approved KB agent</h2>
+          <h2 className="font-display text-2xl font-semibold">Approved KB agent</h2>
           <p className="mt-1 text-sm text-aui-deep/65">
             Answers only from professor-approved FAQs and course materials for this course.
           </p>

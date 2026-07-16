@@ -69,10 +69,10 @@ export default function TaWorkspace() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+    <div className="fade-up grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
       <section className="glass-panel p-4">
         <p className="glass-chip mb-3">TA · {activeCourse.code}</p>
-        <h1 className="font-display text-2xl font-bold">Open queue</h1>
+        <h1 className="font-display text-2xl font-semibold sm:text-3xl">Open queue</h1>
         {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
         {toast ? <p className="mt-2 text-sm text-emerald-700">{toast}</p> : null}
         <ul className="mt-4 space-y-2">
@@ -80,10 +80,10 @@ export default function TaWorkspace() {
             <li key={item.request.id}>
               <button
                 type="button"
-                className={`w-full rounded-2xl border px-3 py-3 text-left ${
+                className={`clay-blob w-full px-3 py-3 text-left ${
                   selectedId === item.request.id
-                    ? "border-aui-forest bg-aui-mist/80"
-                    : "border-white/50 bg-white/40"
+                    ? "clay-blob-mint"
+                    : "clay-blob-sky"
                 }`}
                 onClick={() => {
                   setSelectedId(item.request.id);
@@ -91,13 +91,18 @@ export default function TaWorkspace() {
                   setHint(item.knowledge_entry?.student_hint || "");
                 }}
               >
-                <p className="text-xs font-bold text-aui-deep/60">#{item.request.id}</p>
+                <p className="text-xs font-semibold text-aui-deep/55">
+                  #{item.request.id}
+                  {item.request.assigned_ta
+                    ? ` · ${item.request.assigned_ta}`
+                    : ""}
+                </p>
                 <p className="line-clamp-3 text-sm font-medium">{item.request.text}</p>
               </button>
             </li>
           ))}
           {queue.length === 0 ? (
-            <p className="rounded-2xl bg-white/40 px-3 py-6 text-center text-sm text-aui-deep/60">
+            <p className="rounded-xl bg-aui-mist/60 px-3 py-6 text-center text-sm text-aui-deep/60">
               No open requests for this course.
             </p>
           ) : null}
@@ -109,18 +114,38 @@ export default function TaWorkspace() {
           <p className="text-aui-deep/70">Select a request to edit the teaching draft.</p>
         ) : (
           <div className="space-y-4">
-            <h2 className="font-display text-2xl font-bold">{selected.request.text}</h2>
-            <textarea
-              className="field-glass min-h-48 w-full px-3 py-2 text-sm"
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-            />
-            <textarea
-              className="field-glass min-h-24 w-full px-3 py-2 text-sm"
-              value={hint}
-              onChange={(event) => setHint(event.target.value)}
-              placeholder="Student hint"
-            />
+            <h2 className="font-display text-2xl font-semibold">{selected.request.text}</h2>
+            {selected.request.oracle_category || selected.request.student_hint ? (
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="soft-stat text-sm font-medium">
+                  <strong>Oracle:</strong>{" "}
+                  {selected.request.oracle_category || "n/a"} ·{" "}
+                  {selected.request.oracle_difficulty || "n/a"}
+                </div>
+                <div className="soft-stat text-sm font-medium">
+                  <strong>Wait:</strong> ~
+                  {selected.request.estimated_wait_minutes ?? "?"} min ·{" "}
+                  {selected.request.assigned_ta || "Unassigned"}
+                </div>
+              </div>
+            ) : null}
+            <label className="block text-xs font-extrabold uppercase tracking-wide text-aui-deep/60">
+              Teaching draft
+              <textarea
+                className="field-glass mt-1 min-h-48 w-full px-3 py-2 text-sm font-semibold"
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+              />
+            </label>
+            <label className="block text-xs font-extrabold uppercase tracking-wide text-aui-deep/60">
+              Student hint
+              <textarea
+                className="field-glass mt-1 min-h-24 w-full px-3 py-2 text-sm font-semibold"
+                value={hint}
+                onChange={(event) => setHint(event.target.value)}
+                placeholder="Student hint"
+              />
+            </label>
             <div className="flex flex-wrap gap-2">
               <button type="button" className="btn-primary px-4 py-2 text-sm" onClick={() => resolve("resolved")}>
                 Mark resolved → professor curation
