@@ -151,11 +151,16 @@ export default function ProfessorWorkspace() {
   return (
     <div className="space-y-6">
       <section className="glass-panel p-6">
-        <p className="glass-chip mb-3">Professor clay board · {activeCourse.code}</p>
-        <h1 className="font-display text-3xl font-bold sm:text-4xl">
+        <img
+          src="/figures/professor.png"
+          alt=""
+          className="clay-hero-figure pointer-events-none absolute -right-2 -top-2 max-h-32 opacity-95 sm:max-h-40"
+        />
+        <p className="glass-chip mb-3">Professor · {activeCourse.code}</p>
+        <h1 className="font-display relative z-10 max-w-[18ch] text-3xl font-bold sm:text-4xl">
           Office-hours command center
         </h1>
-        <p className="mt-2 font-semibold text-aui-deep/70">
+        <p className="relative z-10 mt-2 max-w-2xl font-semibold text-aui-deep/70">
           Organize chaos: group repeats, prefer shared review over one-by-one replies,
           draft FAQs, flag sensitive cases, and ground the KB agent in your slides.
         </p>

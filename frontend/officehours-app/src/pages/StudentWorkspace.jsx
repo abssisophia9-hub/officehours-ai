@@ -64,10 +64,17 @@ export default function StudentWorkspace() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <form onSubmit={submitQuestion} className="glass-panel p-6">
-        <p className="glass-chip mb-3">Student clay desk · {activeCourse.code}</p>
-        <h1 className="font-display text-3xl font-bold sm:text-4xl">Ask for help</h1>
-        <p className="mt-2 font-semibold text-aui-deep/70">
+      <form onSubmit={submitQuestion} className="glass-panel relative overflow-hidden p-6">
+        <img
+          src="/figures/student.png"
+          alt=""
+          className="clay-hero-figure pointer-events-none absolute -right-4 -top-2 max-h-28 opacity-95 sm:max-h-36"
+        />
+        <p className="glass-chip mb-3">Student workspace · {activeCourse.code}</p>
+        <h1 className="font-display relative z-10 max-w-[16ch] text-3xl font-bold sm:text-4xl">
+          Ask for help
+        </h1>
+        <p className="relative z-10 mt-2 max-w-md font-semibold text-aui-deep/70">
           Start quietly if you prefer. Anonymous asks never store your name or ID —
           staff only see the question and a request code.
         </p>

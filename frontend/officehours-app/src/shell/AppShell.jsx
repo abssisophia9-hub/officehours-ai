@@ -85,7 +85,7 @@ export default function AppShell() {
       </main>
 
       <footer className="px-5 pb-8 text-center text-sm font-semibold text-aui-deep/55 sm:px-8">
-        Soft clay UI · AUI campus product · Ask quietly, get help faster
+        Al Akhawayn University · OfficeHours AI · Ask quietly, get help faster
       </footer>
     </div>
   );

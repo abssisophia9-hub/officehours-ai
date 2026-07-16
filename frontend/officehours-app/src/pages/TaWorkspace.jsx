@@ -70,9 +70,14 @@ export default function TaWorkspace() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-      <section className="glass-panel p-4">
-        <p className="glass-chip mb-3">TA clay queue · {activeCourse.code}</p>
-        <h1 className="font-display text-2xl font-bold sm:text-3xl">Open queue</h1>
+      <section className="glass-panel relative overflow-hidden p-4">
+        <img
+          src="/figures/ta.png"
+          alt=""
+          className="clay-hero-figure pointer-events-none absolute -right-3 top-2 max-h-24 opacity-90"
+        />
+        <p className="glass-chip mb-3">TA workspace · {activeCourse.code}</p>
+        <h1 className="font-display relative z-10 text-2xl font-bold sm:text-3xl">Open queue</h1>
         {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
         {toast ? <p className="mt-2 text-sm text-emerald-700">{toast}</p> : null}
         <ul className="mt-4 space-y-2">

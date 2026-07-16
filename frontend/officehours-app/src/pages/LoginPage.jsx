@@ -3,9 +3,27 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 const DEMO_ACCOUNTS = [
-  { email: "student@aui.ma", role: "Student", note: "CS 400 + CS 330", blob: "clay-blob-mint" },
-  { email: "ta.alice@aui.ma", role: "TA", note: "CS 400", blob: "clay-blob-sky" },
-  { email: "professor@aui.ma", role: "Professor", note: "CS 400 + CS 330", blob: "clay-blob-butter" },
+  {
+    email: "student@aui.ma",
+    role: "Student",
+    note: "CS 400 + CS 330",
+    blob: "clay-blob-mint",
+    figure: "/figures/student.png",
+  },
+  {
+    email: "ta.alice@aui.ma",
+    role: "TA",
+    note: "CS 400",
+    blob: "clay-blob-sky",
+    figure: "/figures/ta.png",
+  },
+  {
+    email: "professor@aui.ma",
+    role: "Professor",
+    note: "CS 400 + CS 330",
+    blob: "clay-blob-butter",
+    figure: "/figures/professor.png",
+  },
 ];
 
 export default function LoginPage() {
@@ -56,79 +74,104 @@ export default function LoginPage() {
 
   return (
     <div className="aui-shell flex min-h-screen items-center justify-center px-5 py-10">
-      <div className="grid w-full max-w-5xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <form onSubmit={handleSubmit} className="glass-panel p-8 sm:p-10">
+      <div className="grid w-full max-w-6xl items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="relative">
           <img
-            src="/aui-logo.png"
-            alt="Al Akhawayn University"
-            className="aui-logo clay-wiggle mb-6"
+            src="/figures/student.png"
+            alt=""
+            className="clay-hero-figure pointer-events-none mx-auto mb-[-2.5rem] max-h-64 w-auto select-none lg:absolute lg:-right-6 lg:-top-16 lg:mb-0 lg:max-h-72"
           />
-          <p className="glass-chip mb-4">Extra-squishy campus login</p>
-          <h1 className="font-display text-4xl font-bold text-aui-ink sm:text-5xl">
-            OfficeHours AI
-          </h1>
-          <p className="mt-3 text-lg font-semibold text-aui-deep/75">
-            Poke the clay tiles, press the buttons, ask quietly — AUI office hours
-            without the intimidation.
-          </p>
-
-          <label className="mt-8 block text-sm font-extrabold uppercase tracking-wide text-aui-deep/60">
-            Email
-            <input
-              className="field-glass mt-2 px-4 py-3 text-base font-semibold"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              autoComplete="username"
+          <form onSubmit={handleSubmit} className="glass-panel relative z-10 p-8 sm:p-10">
+            <img
+              src="/aui-logo.png"
+              alt="Al Akhawayn University"
+              className="aui-logo mb-6"
             />
-          </label>
-          <label className="mt-4 block text-sm font-extrabold uppercase tracking-wide text-aui-deep/60">
-            Password
-            <input
-              type="password"
-              className="field-glass mt-2 px-4 py-3 text-base font-semibold"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
-            />
-          </label>
-
-          {error ? (
-            <p className="clay-blob clay-blob-coral mt-4 px-4 py-3 text-sm font-bold text-aui-ink">
-              {error}
+            <p className="glass-chip mb-4">Campus product login</p>
+            <h1 className="font-display text-4xl font-bold text-aui-ink sm:text-5xl">
+              OfficeHours AI
+            </h1>
+            <p className="mt-3 text-lg font-semibold text-aui-deep/75">
+              One AUI platform for students, TAs, and professors — course-scoped
+              workspaces with a calmer way to ask for help.
             </p>
-          ) : null}
 
-          <button
-            type="submit"
-            disabled={busy}
-            className="btn-primary mt-6 w-full px-5 py-4 text-lg disabled:opacity-60"
-          >
-            {busy ? "Squishing in…" : "Sign in"}
-          </button>
-        </form>
+            <label className="mt-8 block text-sm font-extrabold uppercase tracking-wide text-aui-deep/60">
+              Email
+              <input
+                className="field-glass mt-2 px-4 py-3 text-base font-semibold"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                autoComplete="username"
+              />
+            </label>
+            <label className="mt-4 block text-sm font-extrabold uppercase tracking-wide text-aui-deep/60">
+              Password
+              <input
+                type="password"
+                className="field-glass mt-2 px-4 py-3 text-base font-semibold"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+              />
+            </label>
 
-        <aside className="glass-panel glass-panel-deep p-8">
-          <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-emerald-50/90">
-            Demo play accounts
+            {error ? (
+              <p className="clay-blob clay-blob-coral mt-4 px-4 py-3 text-sm font-bold text-aui-ink">
+                {error}
+              </p>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={busy}
+              className="btn-primary mt-6 w-full px-5 py-4 text-lg disabled:opacity-60"
+            >
+              {busy ? "Signing in…" : "Sign in"}
+            </button>
+          </form>
+        </div>
+
+        <aside className="glass-panel glass-panel-deep relative overflow-hidden p-8">
+          <img
+            src="/figures/professor.png"
+            alt=""
+            className="clay-hero-figure pointer-events-none absolute -right-8 -top-6 max-h-40 opacity-95"
+          />
+          <p className="relative z-10 text-sm font-extrabold uppercase tracking-[0.16em] text-emerald-50/90">
+            Supervisor demo accounts
           </p>
-          <h2 className="font-display mt-2 text-3xl font-bold">Password: aui-demo</h2>
-          <p className="mt-2 text-sm font-semibold text-emerald-50/85">
-            Tap a role — we’ll fill the form for you.
+          <h2 className="font-display relative z-10 mt-2 text-3xl font-bold">
+            Password: aui-demo
+          </h2>
+          <p className="relative z-10 mt-2 text-sm font-semibold text-emerald-50/85">
+            Tap a role to fill the form.
           </p>
-          <ul className="mt-6 space-y-3">
+          <ul className="relative z-10 mt-6 space-y-3">
             {DEMO_ACCOUNTS.map((account) => (
               <li key={account.email}>
                 <button
                   type="button"
-                  className={`clay-blob ${account.blob} w-full px-4 py-3 text-left text-aui-ink transition hover:-translate-y-1`}
+                  className={`clay-blob ${account.blob} flex w-full items-center gap-3 px-3 py-3 text-left text-aui-ink transition hover:-translate-y-1`}
                   onClick={() => {
                     setEmail(account.email);
                     setPassword("aui-demo");
                   }}
                 >
-                  <p className="font-extrabold">{account.role}</p>
-                  <p className="text-sm font-semibold opacity-80">{account.email}</p>
-                  <p className="text-xs font-bold opacity-65">{account.note}</p>
+                  <img
+                    src={account.figure}
+                    alt=""
+                    className="h-14 w-14 rounded-2xl object-cover"
+                  />
+                  <span>
+                    <span className="block font-extrabold">{account.role}</span>
+                    <span className="block text-sm font-semibold opacity-80">
+                      {account.email}
+                    </span>
+                    <span className="block text-xs font-bold opacity-65">
+                      {account.note}
+                    </span>
+                  </span>
                 </button>
               </li>
             ))}
