@@ -3,9 +3,9 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 const DEMO_ACCOUNTS = [
-  { email: "student@aui.ma", role: "Student", note: "CS 400 + CS 330" },
-  { email: "ta.alice@aui.ma", role: "TA", note: "CS 400" },
-  { email: "professor@aui.ma", role: "Professor", note: "CS 400 + CS 330" },
+  { email: "student@aui.ma", role: "Student", note: "CS 400 + CS 330", blob: "clay-blob-mint" },
+  { email: "ta.alice@aui.ma", role: "TA", note: "CS 400", blob: "clay-blob-sky" },
+  { email: "professor@aui.ma", role: "Professor", note: "CS 400 + CS 330", blob: "clay-blob-butter" },
 ];
 
 export default function LoginPage() {
@@ -49,30 +49,34 @@ export default function LoginPage() {
     <div className="aui-shell flex min-h-screen items-center justify-center px-5 py-10">
       <div className="grid w-full max-w-5xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <form onSubmit={handleSubmit} className="glass-panel p-8 sm:p-10">
-          <img src="/aui-logo.png" alt="Al Akhawayn University" className="aui-logo mb-6" />
-          <p className="glass-chip mb-4">Campus product login</p>
-          <h1 className="font-display text-4xl font-bold text-aui-ink">
+          <img
+            src="/aui-logo.png"
+            alt="Al Akhawayn University"
+            className="aui-logo clay-wiggle mb-6"
+          />
+          <p className="glass-chip mb-4">Squishy campus login</p>
+          <h1 className="font-display text-4xl font-bold text-aui-ink sm:text-5xl">
             OfficeHours AI
           </h1>
-          <p className="mt-3 text-lg text-aui-deep/75">
-            One packaged platform for students, TAs, and professors — with
-            course-scoped workspaces.
+          <p className="mt-3 text-lg font-semibold text-aui-deep/75">
+            A playful AUI workspace for students, TAs, and professors — course by
+            course, without the chaos.
           </p>
 
-          <label className="mt-8 block text-sm font-semibold uppercase tracking-wide text-aui-deep/60">
+          <label className="mt-8 block text-sm font-extrabold uppercase tracking-wide text-aui-deep/60">
             Email
             <input
-              className="field-glass mt-2 px-4 py-3 text-base"
+              className="field-glass mt-2 px-4 py-3 text-base font-semibold"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               autoComplete="username"
             />
           </label>
-          <label className="mt-4 block text-sm font-semibold uppercase tracking-wide text-aui-deep/60">
+          <label className="mt-4 block text-sm font-extrabold uppercase tracking-wide text-aui-deep/60">
             Password
             <input
               type="password"
-              className="field-glass mt-2 px-4 py-3 text-base"
+              className="field-glass mt-2 px-4 py-3 text-base font-semibold"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="current-password"
@@ -80,7 +84,7 @@ export default function LoginPage() {
           </label>
 
           {error ? (
-            <p className="mt-4 rounded-xl border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">
+            <p className="clay-blob clay-blob-coral mt-4 px-4 py-3 text-sm font-bold text-aui-ink">
               {error}
             </p>
           ) : null}
@@ -90,29 +94,32 @@ export default function LoginPage() {
             disabled={busy}
             className="btn-primary mt-6 w-full px-5 py-4 text-lg disabled:opacity-60"
           >
-            {busy ? "Signing in…" : "Sign in"}
+            {busy ? "Squishing in…" : "Sign in"}
           </button>
         </form>
 
-        <aside className="glass-panel glass-panel-deep p-8 text-white">
-          <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-50/90">
-            Supervisor demo accounts
+        <aside className="glass-panel glass-panel-deep p-8">
+          <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-emerald-50/90">
+            Demo play accounts
           </p>
           <h2 className="font-display mt-2 text-3xl font-bold">Password: aui-demo</h2>
-          <ul className="mt-6 space-y-4">
+          <p className="mt-2 text-sm font-semibold text-emerald-50/85">
+            Tap a role — we’ll fill the form for you.
+          </p>
+          <ul className="mt-6 space-y-3">
             {DEMO_ACCOUNTS.map((account) => (
               <li key={account.email}>
                 <button
                   type="button"
-                  className="w-full rounded-2xl bg-white/10 px-4 py-3 text-left backdrop-blur transition hover:bg-white/20"
+                  className={`clay-blob ${account.blob} w-full px-4 py-3 text-left text-aui-ink transition hover:-translate-y-1`}
                   onClick={() => {
                     setEmail(account.email);
                     setPassword("aui-demo");
                   }}
                 >
-                  <p className="font-bold">{account.role}</p>
-                  <p className="text-sm text-emerald-50/90">{account.email}</p>
-                  <p className="text-xs text-emerald-50/70">{account.note}</p>
+                  <p className="font-extrabold">{account.role}</p>
+                  <p className="text-sm font-semibold opacity-80">{account.email}</p>
+                  <p className="text-xs font-bold opacity-65">{account.note}</p>
                 </button>
               </li>
             ))}

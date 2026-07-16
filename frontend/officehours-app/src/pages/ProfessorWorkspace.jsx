@@ -151,31 +151,37 @@ export default function ProfessorWorkspace() {
   return (
     <div className="space-y-6">
       <section className="glass-panel p-6">
-        <p className="glass-chip mb-3">Professor · {activeCourse.code}</p>
-        <h1 className="font-display text-3xl font-bold">Office-hours command center</h1>
-        <p className="mt-2 text-aui-deep/70">
+        <p className="glass-chip mb-3">Professor clay board · {activeCourse.code}</p>
+        <h1 className="font-display text-3xl font-bold sm:text-4xl">
+          Office-hours command center
+        </h1>
+        <p className="mt-2 font-semibold text-aui-deep/70">
           Organize chaos: group repeats, prefer shared review over one-by-one replies,
           draft FAQs, flag sensitive cases, and ground the KB agent in your slides.
         </p>
-        {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
-        {message ? <p className="mt-3 text-sm text-emerald-700">{message}</p> : null}
+        {error ? (
+          <p className="clay-blob clay-blob-coral mt-3 px-4 py-2 text-sm font-bold">{error}</p>
+        ) : null}
+        {message ? (
+          <p className="clay-blob clay-blob-mint mt-3 px-4 py-2 text-sm font-bold">{message}</p>
+        ) : null}
         <div className="mt-6 grid gap-4 sm:grid-cols-4">
-          <article className="rounded-2xl bg-emerald-50/80 p-4">
-            <p className="text-sm text-aui-deep/70">Requests</p>
+          <article className="clay-blob clay-blob-mint p-4">
+            <p className="text-sm font-bold text-aui-deep/70">Requests</p>
             <p className="font-display text-3xl font-bold">{requests.length}</p>
           </article>
-          <article className="rounded-2xl bg-sky-50/80 p-4">
-            <p className="text-sm text-aui-deep/70">Topic clusters</p>
+          <article className="clay-blob clay-blob-sky p-4">
+            <p className="text-sm font-bold text-aui-deep/70">Topic clusters</p>
             <p className="font-display text-3xl font-bold">
               {commandCenter?.clusters?.length || 0}
             </p>
           </article>
-          <article className="rounded-2xl bg-orange-50/80 p-4">
-            <p className="text-sm text-aui-deep/70">Sensitive flags</p>
+          <article className="clay-blob clay-blob-coral p-4">
+            <p className="text-sm font-bold text-aui-deep/70">Sensitive flags</p>
             <p className="font-display text-3xl font-bold">{sensitiveCount}</p>
           </article>
-          <article className="rounded-2xl bg-violet-50/80 p-4">
-            <p className="text-sm text-aui-deep/70">Anonymous asks</p>
+          <article className="clay-blob clay-blob-butter p-4">
+            <p className="text-sm font-bold text-aui-deep/70">Anonymous asks</p>
             <p className="font-display text-3xl font-bold">{anonCount}</p>
           </article>
         </div>
