@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --color-aui-ink: #1a2e24;
+  --color-aui-ink: #1b2f26;
   --color-aui-forest: #1f8a5b;
   --color-aui-deep: #146345;
   --color-aui-mist: #dff5ea;
@@ -16,14 +16,14 @@
 }
 
 :root {
-  --aui-ink: #1a2e24;
-  --clay-face: #f4fbf7;
-  --clay-mint: #8fe0b8;
-  --clay-butter: #ffd978;
-  --clay-coral: #ff9b82;
-  --clay-sky: #7ed0ff;
-  --clay-shadow: #9fb8a9;
-  --clay-highlight: #ffffff;
+  --aui-ink: #1b2f26;
+  --clay-face: #fffdf8;
+  --clay-mint: #7fe3b4;
+  --clay-butter: #ffd56a;
+  --clay-coral: #ff9a7a;
+  --clay-sky: #6ecbff;
+  --clay-shadow: #8aa89a;
+  --clay-press: #146345;
 }
 
 html,
@@ -37,18 +37,21 @@ body {
   color: var(--aui-ink);
   font-family: "Nunito", ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  background:
-    radial-gradient(circle at 12% 18%, rgba(143, 224, 184, 0.85), transparent 42%),
-    radial-gradient(circle at 88% 12%, rgba(255, 217, 120, 0.75), transparent 40%),
-    radial-gradient(circle at 78% 78%, rgba(255, 155, 130, 0.55), transparent 42%),
-    radial-gradient(circle at 18% 82%, rgba(126, 208, 255, 0.55), transparent 40%),
-    linear-gradient(160deg, #e8fff4 0%, #fff8e8 45%, #ffe9e2 100%);
+  background-color: #efe7d8;
+  background-image:
+    radial-gradient(circle at 10% 15%, #9af0c4 0 12%, transparent 13%),
+    radial-gradient(circle at 28% 22%, #ffd978 0 9%, transparent 10%),
+    radial-gradient(circle at 86% 14%, #ffb197 0 14%, transparent 15%),
+    radial-gradient(circle at 72% 30%, #8fd8ff 0 10%, transparent 11%),
+    radial-gradient(circle at 18% 78%, #d7c4ff 0 11%, transparent 12%),
+    radial-gradient(circle at 88% 82%, #9af0c4 0 13%, transparent 14%),
+    linear-gradient(160deg, #f7ffe9 0%, #fff4d8 42%, #ffe7df 100%);
   background-attachment: fixed;
 }
 
 .font-display {
   font-family: "Fredoka", "Nunito", sans-serif;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .aui-shell {
@@ -63,35 +66,39 @@ body {
   content: "";
   position: absolute;
   z-index: 0;
-  border-radius: 9999px;
+  border-radius: 40% 60% 55% 45%;
   pointer-events: none;
-  filter: blur(2px);
-  animation: clay-bob 10s ease-in-out infinite alternate;
+  border: 5px solid rgba(255, 255, 255, 0.65);
+  animation: clay-bob 9s ease-in-out infinite alternate;
 }
 
 .aui-shell::before {
-  width: 18rem;
-  height: 18rem;
-  left: -4rem;
-  top: 12%;
-  background: #8fe0b8;
+  width: 15rem;
+  height: 15rem;
+  left: -3rem;
+  top: 10%;
+  background: #7fe3b4;
   box-shadow:
-    18px 18px 0 #7ed0ff,
-    36px -10px 0 #ffd978;
-  opacity: 0.55;
+    22px 18px 0 #6ecbff,
+    40px -8px 0 #ffd56a,
+    inset 6px 8px 0 rgba(255, 255, 255, 0.35),
+    inset -6px -8px 0 rgba(0, 0, 0, 0.06);
+  opacity: 0.7;
 }
 
 .aui-shell::after {
-  width: 14rem;
-  height: 14rem;
-  right: -3rem;
-  bottom: 8%;
-  background: #ff9b82;
+  width: 13rem;
+  height: 13rem;
+  right: -2.5rem;
+  bottom: 6%;
+  background: #ff9a7a;
   box-shadow:
-    -16px -12px 0 #e0d4ff,
-    -28px 18px 0 #b8f0d4;
-  opacity: 0.5;
-  animation-delay: -4s;
+    -18px -14px 0 #d7c4ff,
+    -30px 16px 0 #9af0c4,
+    inset 6px 8px 0 rgba(255, 255, 255, 0.35),
+    inset -6px -8px 0 rgba(0, 0, 0, 0.06);
+  opacity: 0.65;
+  animation-delay: -3.5s;
 }
 
 .aui-shell > * {
@@ -99,53 +106,68 @@ body {
   z-index: 1;
 }
 
-/* Clay panels — soft extruded “play-dough” surfaces */
+/* Chunky extruded clay surfaces */
 .glass-panel,
 .clay-panel {
-  background: linear-gradient(180deg, #ffffff 0%, #f3faf6 100%);
-  border: 3px solid rgba(255, 255, 255, 0.95);
-  border-radius: 2rem;
+  background: linear-gradient(180deg, #ffffff 0%, #fff8ef 55%, #f3ebe0 100%);
+  border: 4px solid #fff;
+  border-radius: 2.25rem;
   box-shadow:
-    10px 12px 0 rgba(159, 184, 169, 0.35),
-    0 18px 28px rgba(26, 46, 36, 0.08),
-    inset 0 3px 0 rgba(255, 255, 255, 0.95),
-    inset 0 -4px 10px rgba(159, 184, 169, 0.18);
+    0 0 0 3px rgba(138, 168, 154, 0.18),
+    14px 16px 0 rgba(138, 168, 154, 0.45),
+    0 22px 30px rgba(27, 47, 38, 0.1),
+    inset 0 5px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -8px 14px rgba(138, 168, 154, 0.22);
   transition:
-    transform 180ms cubic-bezier(0.34, 1.4, 0.64, 1),
-    box-shadow 180ms ease;
+    transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 160ms ease;
 }
 
 .glass-panel:hover,
 .clay-panel:hover {
-  transform: translateY(-4px) rotate(-0.2deg);
+  transform: translateY(-6px) rotate(-0.4deg) scale(1.01);
   box-shadow:
-    12px 16px 0 rgba(159, 184, 169, 0.38),
-    0 24px 34px rgba(26, 46, 36, 0.1),
-    inset 0 3px 0 rgba(255, 255, 255, 0.95),
-    inset 0 -4px 10px rgba(159, 184, 169, 0.18);
+    0 0 0 3px rgba(138, 168, 154, 0.22),
+    16px 20px 0 rgba(138, 168, 154, 0.48),
+    0 28px 36px rgba(27, 47, 38, 0.12),
+    inset 0 5px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -8px 14px rgba(138, 168, 154, 0.22);
+}
+
+.glass-panel:active,
+.clay-panel:active {
+  transform: translateY(2px) scale(0.995);
+  box-shadow:
+    0 0 0 3px rgba(138, 168, 154, 0.18),
+    8px 8px 0 rgba(138, 168, 154, 0.4),
+    0 12px 18px rgba(27, 47, 38, 0.08),
+    inset 0 5px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -6px 12px rgba(138, 168, 154, 0.25);
 }
 
 .glass-panel-deep,
 .clay-panel-deep {
-  background: linear-gradient(160deg, #2bb673 0%, #1f8a5b 55%, #ff9b82 160%) !important;
-  border-color: rgba(255, 255, 255, 0.55) !important;
+  background: linear-gradient(165deg, #3ad07f 0%, #1f8a5b 52%, #ff9a7a 145%) !important;
+  border-color: rgba(255, 255, 255, 0.7) !important;
   color: #fff !important;
   box-shadow:
-    10px 12px 0 rgba(20, 99, 69, 0.35),
-    0 18px 28px rgba(26, 46, 36, 0.16),
-    inset 0 3px 0 rgba(255, 255, 255, 0.28),
-    inset 0 -5px 12px rgba(0, 0, 0, 0.12) !important;
+    0 0 0 3px rgba(20, 99, 69, 0.2),
+    14px 16px 0 rgba(20, 99, 69, 0.4),
+    0 22px 30px rgba(27, 47, 38, 0.16),
+    inset 0 5px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -10px 16px rgba(0, 0, 0, 0.14) !important;
 }
 
 .glass-header,
 .clay-header {
-  background: linear-gradient(180deg, #ffffff 0%, #eafaf2 100%);
-  border: 3px solid #fff;
-  border-radius: 1.75rem;
+  background: linear-gradient(180deg, #ffffff 0%, #fff3df 100%);
+  border: 4px solid #fff;
+  border-radius: 2rem;
   box-shadow:
-    8px 10px 0 rgba(159, 184, 169, 0.3),
-    0 14px 24px rgba(26, 46, 36, 0.08),
-    inset 0 2px 0 #fff;
+    10px 12px 0 rgba(138, 168, 154, 0.4),
+    0 16px 24px rgba(27, 47, 38, 0.08),
+    inset 0 4px 0 #fff,
+    inset 0 -6px 12px rgba(138, 168, 154, 0.18);
 }
 
 .glass-chip,
@@ -154,97 +176,99 @@ body {
   align-items: center;
   gap: 0.45rem;
   border-radius: 999px;
-  border: 2.5px solid #fff;
-  background: linear-gradient(180deg, #d8ffe9 0%, #b8f0d4 100%);
-  padding: 0.4rem 0.95rem;
+  border: 3px solid #fff;
+  background: linear-gradient(180deg, #d9ffe9 0%, #7fe3b4 100%);
+  padding: 0.45rem 1rem;
   font-size: 0.78rem;
   font-weight: 800;
   color: #146345;
   box-shadow:
-    3px 4px 0 rgba(159, 184, 169, 0.35),
-    inset 0 2px 0 rgba(255, 255, 255, 0.8);
-  transition: transform 140ms cubic-bezier(0.34, 1.4, 0.64, 1);
+    4px 5px 0 rgba(138, 168, 154, 0.4),
+    inset 0 3px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -3px 6px rgba(20, 99, 69, 0.12);
+  transition: transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .glass-chip:hover,
 .clay-chip:hover {
-  transform: translateY(-2px) scale(1.04) rotate(-1deg);
+  transform: translateY(-3px) scale(1.06) rotate(-2deg);
 }
 
 .btn-primary {
-  border-radius: 1.15rem;
-  border: 3px solid rgba(255, 255, 255, 0.55);
-  background: linear-gradient(180deg, #39c97f 0%, #1f8a5b 100%);
+  border-radius: 1.35rem;
+  border: 3px solid rgba(255, 255, 255, 0.65);
+  background: linear-gradient(180deg, #45d889 0%, #1f8a5b 100%);
   color: white;
   font-weight: 800;
   box-shadow:
-    0 6px 0 #146345,
-    0 12px 18px rgba(31, 138, 91, 0.28),
-    inset 0 2px 0 rgba(255, 255, 255, 0.35);
+    0 8px 0 #0f5138,
+    0 14px 18px rgba(31, 138, 91, 0.28),
+    inset 0 3px 0 rgba(255, 255, 255, 0.4);
   transition:
-    transform 120ms cubic-bezier(0.34, 1.4, 0.64, 1),
-    box-shadow 120ms ease,
-    filter 120ms ease;
+    transform 110ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 110ms ease,
+    filter 110ms ease;
 }
 
 .btn-primary:hover {
-  filter: saturate(1.08) brightness(1.04);
-  transform: translateY(-2px);
+  filter: saturate(1.1) brightness(1.05);
+  transform: translateY(-3px);
   box-shadow:
-    0 8px 0 #146345,
-    0 16px 22px rgba(31, 138, 91, 0.32),
-    inset 0 2px 0 rgba(255, 255, 255, 0.4);
+    0 11px 0 #0f5138,
+    0 18px 22px rgba(31, 138, 91, 0.32),
+    inset 0 3px 0 rgba(255, 255, 255, 0.45);
 }
 
 .btn-primary:active {
-  transform: translateY(4px);
+  transform: translateY(5px);
   box-shadow:
-    0 2px 0 #146345,
-    0 6px 10px rgba(31, 138, 91, 0.22),
-    inset 0 2px 0 rgba(255, 255, 255, 0.25);
+    0 2px 0 #0f5138,
+    0 6px 10px rgba(31, 138, 91, 0.2),
+    inset 0 3px 0 rgba(255, 255, 255, 0.25);
 }
 
 .btn-ghost {
-  border-radius: 1.15rem;
+  border-radius: 1.35rem;
   border: 3px solid #fff;
-  background: linear-gradient(180deg, #ffffff 0%, #e8f8ff 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #d9f2ff 100%);
   color: #146345;
   font-weight: 800;
   box-shadow:
-    0 5px 0 rgba(126, 208, 255, 0.55),
-    0 10px 16px rgba(26, 46, 36, 0.08),
-    inset 0 2px 0 #fff;
+    0 7px 0 #4eb4e8,
+    0 12px 16px rgba(27, 47, 38, 0.08),
+    inset 0 3px 0 #fff;
   transition:
-    transform 120ms cubic-bezier(0.34, 1.4, 0.64, 1),
-    box-shadow 120ms ease;
+    transform 110ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 110ms ease;
 }
 
 .btn-ghost:hover {
-  background: linear-gradient(180deg, #fff7d6 0%, #ffe8a3 100%);
+  background: linear-gradient(180deg, #fff8d0 0%, #ffd56a 100%);
   box-shadow:
-    0 5px 0 rgba(255, 217, 120, 0.7),
-    0 12px 18px rgba(26, 46, 36, 0.1),
-    inset 0 2px 0 #fff;
-  transform: translateY(-2px);
+    0 7px 0 #e0a82a,
+    0 14px 18px rgba(27, 47, 38, 0.1),
+    inset 0 3px 0 #fff;
+  transform: translateY(-3px);
 }
 
 .btn-ghost:active {
-  transform: translateY(3px);
+  transform: translateY(4px);
   box-shadow:
-    0 2px 0 rgba(255, 217, 120, 0.7),
-    0 6px 10px rgba(26, 46, 36, 0.08),
-    inset 0 2px 0 #fff;
+    0 2px 0 #e0a82a,
+    0 6px 10px rgba(27, 47, 38, 0.08),
+    inset 0 3px 0 #fff;
 }
 
 .field-glass,
 .field-clay {
   width: 100%;
-  border-radius: 1.1rem;
-  border: 3px solid #fff;
-  background: linear-gradient(180deg, #ffffff 0%, #eef8f3 100%);
+  border-radius: 1.35rem;
+  border: 4px solid #fff;
+  background: linear-gradient(180deg, #f4efe6 0%, #fffdf8 100%);
   box-shadow:
-    inset 3px 4px 8px rgba(159, 184, 169, 0.28),
-    inset -2px -2px 0 rgba(255, 255, 255, 0.8);
+    inset 5px 7px 12px rgba(138, 168, 154, 0.35),
+    inset -3px -4px 0 rgba(255, 255, 255, 0.85),
+    0 3px 0 rgba(255, 255, 255, 0.6);
   outline: none;
   transition:
     transform 120ms ease,
@@ -254,77 +278,86 @@ body {
 
 .field-glass:focus,
 .field-clay:focus {
-  border-color: #8fe0b8;
+  border-color: #7fe3b4;
   box-shadow:
-    inset 3px 4px 8px rgba(159, 184, 169, 0.22),
-    0 0 0 4px rgba(143, 224, 184, 0.35);
-  transform: scale(1.01);
+    inset 5px 7px 12px rgba(138, 168, 154, 0.28),
+    inset -3px -4px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 5px rgba(127, 227, 180, 0.4);
+  transform: scale(1.015);
 }
 
 .aui-logo {
-  height: 3.2rem;
+  height: 3.35rem;
   width: auto;
   object-fit: contain;
-  filter: drop-shadow(4px 6px 0 rgba(159, 184, 169, 0.35));
-  transition: transform 220ms cubic-bezier(0.34, 1.4, 0.64, 1);
+  filter: drop-shadow(5px 7px 0 rgba(138, 168, 154, 0.4));
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .aui-logo:hover {
-  transform: scale(1.06) rotate(-3deg);
+  transform: scale(1.1) rotate(-4deg);
 }
 
 .clay-stripe {
-  height: 0.85rem;
+  height: 1rem;
   width: 100%;
   border-radius: 999px;
-  border: 2px solid #fff;
+  border: 3px solid #fff;
   background: linear-gradient(
     90deg,
-    #8fe0b8 0%,
-    #7ed0ff 35%,
-    #ffd978 68%,
-    #ff9b82 100%
+    #7fe3b4 0%,
+    #6ecbff 28%,
+    #ffd56a 58%,
+    #ff9a7a 82%,
+    #d7c4ff 100%
   );
   box-shadow:
-    0 4px 0 rgba(159, 184, 169, 0.35),
-    inset 0 2px 0 rgba(255, 255, 255, 0.55);
+    0 6px 0 rgba(138, 168, 154, 0.4),
+    inset 0 3px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.08);
 }
 
 .clay-blob {
   display: inline-block;
-  border-radius: 1.25rem;
-  border: 2.5px solid #fff;
+  border-radius: 1.4rem;
+  border: 3px solid #fff;
   box-shadow:
-    4px 5px 0 rgba(159, 184, 169, 0.3),
-    inset 0 2px 0 rgba(255, 255, 255, 0.75);
+    5px 6px 0 rgba(138, 168, 154, 0.38),
+    inset 0 3px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.06);
+  transition: transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.clay-blob:hover {
+  transform: translateY(-2px) rotate(-1deg);
 }
 
 .clay-blob-mint {
-  background: linear-gradient(180deg, #e6fff2, #b8f0d4);
+  background: linear-gradient(180deg, #e9fff4, #7fe3b4);
 }
 
 .clay-blob-butter {
-  background: linear-gradient(180deg, #fff7d6, #ffd978);
+  background: linear-gradient(180deg, #fff6cf, #ffd56a);
 }
 
 .clay-blob-coral {
-  background: linear-gradient(180deg, #ffe4dc, #ffb4a2);
+  background: linear-gradient(180deg, #ffe5da, #ff9a7a);
 }
 
 .clay-blob-sky {
-  background: linear-gradient(180deg, #e8f7ff, #b9e7ff);
+  background: linear-gradient(180deg, #e5f7ff, #6ecbff);
 }
 
 .live-pulse {
-  animation: clay-pulse 1.8s ease-in-out infinite;
+  animation: clay-pulse 1.6s ease-in-out infinite;
 }
 
 @keyframes clay-bob {
   from {
-    transform: translate3d(0, 0, 0) rotate(0deg);
+    transform: translate3d(0, 0, 0) rotate(-4deg);
   }
   to {
-    transform: translate3d(14px, -18px, 0) rotate(8deg);
+    transform: translate3d(18px, -22px, 0) rotate(10deg);
   }
 }
 
@@ -334,7 +367,7 @@ body {
     transform: scale(1);
   }
   50% {
-    transform: scale(1.08);
+    transform: scale(1.1);
   }
 }
 
@@ -344,13 +377,20 @@ body {
     transform: rotate(0deg);
   }
   25% {
-    transform: rotate(-1.5deg);
+    transform: rotate(-2deg) scale(1.03);
   }
   75% {
-    transform: rotate(1.5deg);
+    transform: rotate(2deg) scale(1.03);
   }
 }
 
 .clay-wiggle:hover {
-  animation: clay-wiggle 0.45s ease-in-out;
+  animation: clay-wiggle 0.5s ease-in-out;
+}
+
+/* Make list tiles feel like clay pads */
+button.glass-panel,
+li .glass-panel,
+.clay-pad {
+  cursor: pointer;
 }

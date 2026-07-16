@@ -17,7 +17,16 @@ export default function LoginPage() {
   const [error, setError] = useState("");
 
   if (!loading && user) {
-    return <Navigate to="/" replace />;
+    const first = user.courses[0];
+    const path =
+      first?.role === "professor"
+        ? "/professor"
+        : first?.role === "ta"
+          ? "/ta"
+          : first
+            ? "/student"
+            : "/";
+    return <Navigate to={path} replace />;
   }
 
   async function handleSubmit(event) {
@@ -54,13 +63,13 @@ export default function LoginPage() {
             alt="Al Akhawayn University"
             className="aui-logo clay-wiggle mb-6"
           />
-          <p className="glass-chip mb-4">Squishy campus login</p>
+          <p className="glass-chip mb-4">Extra-squishy campus login</p>
           <h1 className="font-display text-4xl font-bold text-aui-ink sm:text-5xl">
             OfficeHours AI
           </h1>
           <p className="mt-3 text-lg font-semibold text-aui-deep/75">
-            A playful AUI workspace for students, TAs, and professors — course by
-            course, without the chaos.
+            Poke the clay tiles, press the buttons, ask quietly — AUI office hours
+            without the intimidation.
           </p>
 
           <label className="mt-8 block text-sm font-extrabold uppercase tracking-wide text-aui-deep/60">
