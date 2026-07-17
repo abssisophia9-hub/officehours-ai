@@ -73,8 +73,21 @@ def test_faq_from_cluster_and_group_suggestion():
 
 
 def test_course_material_ingest_feeds_kb_agent():
+    from app.services.demo_accounts import DEMO_PASSWORD
+
+    login = client.post(
+        "/auth/login",
+        json={"email": "a.benali@aui.ma", "password": DEMO_PASSWORD},
+    )
+    assert login.status_code == 200
+    token = login.json()["token"]
+    course_id = next(
+        c["id"] for c in login.json()["user"]["courses"] if c["code"] == "CS 400"
+    )
+
     ingest = client.post(
         "/knowledge/materials",
+        headers={"Authorization": f"Bearer {token}"},
         json={
             "title": "Week 4 Hashing",
             "content": (
@@ -82,7 +95,7 @@ def test_course_material_ingest_feeds_kb_agent():
                 "Collisions are handled with chaining or open addressing.\n\n"
                 "Chaining stores a linked list in each bucket."
             ),
-            "course_id": 1,
+            "course_id": course_id,
             "course": "CS 400",
             "source": "slides",
             "auto_approve": True,
@@ -93,7 +106,10 @@ def test_course_material_ingest_feeds_kb_agent():
 
     answer = client.post(
         "/agent/ask",
-        json={"question": "How do hash tables handle collisions?", "course_id": 1},
+        json={
+            "question": "How do hash tables handle collisions?",
+            "course_id": course_id,
+        },
     )
     assert answer.status_code == 200
     body = answer.json()

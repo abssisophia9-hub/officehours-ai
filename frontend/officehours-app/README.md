@@ -31,12 +31,14 @@ Or use the helper:
 
 ## Demo accounts (password `aui-demo`)
 
+AUI format: `Initial.Lastname@aui.ma` — role comes from course membership.
+
 | Email | Role | Courses |
 | --- | --- | --- |
-| `student@aui.ma` | student | CS 400, CS 330 |
-| `ta.alice@aui.ma` | TA | CS 400 |
-| `ta.bob@aui.ma` | TA | CS 400, CS 330 |
-| `professor@aui.ma` | professor | CS 400, CS 330 |
+| `s.elidrissi@aui.ma` | student | CS 400, CS 330 |
+| `a.chen@aui.ma` | TA | CS 400 |
+| `b.martinez@aui.ma` | TA | CS 400, CS 330 |
+| `a.benali@aui.ma` | professor | CS 400, CS 330 |
 
 ## Env
 

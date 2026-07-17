@@ -10,19 +10,21 @@ export default function ProfessorWorkspace() {
   const [commandCenter, setCommandCenter] = useState(null);
   const [materialTitle, setMaterialTitle] = useState("");
   const [materialContent, setMaterialContent] = useState("");
+  const [canvasInfo, setCanvasInfo] = useState(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const [req, kb, clusters] = await Promise.all([
+      const [req, kb, clusters, canvas] = await Promise.all([
         api("/requests/", { token }),
         api(`/knowledge/?status=pending_review&course_id=${activeCourse.id}`, { token }),
         api(
           `/analytics/clusters?course_id=${activeCourse.id}&course=${encodeURIComponent(activeCourse.code)}`,
           { token },
         ),
+        api(`/knowledge/canvas/status?course_id=${activeCourse.id}`, { token }),
       ]);
       setRequests(
         req.filter((item) => !item.course || item.course === activeCourse.code),
@@ -35,6 +37,7 @@ export default function ProfessorWorkspace() {
         }),
       );
       setCommandCenter(clusters);
+      setCanvasInfo(canvas);
     } catch (err) {
       setError(err.message);
     }
@@ -121,6 +124,7 @@ export default function ProfessorWorkspace() {
     event.preventDefault();
     setBusy(true);
     setError("");
+    setMessage("");
     try {
       const result = await api("/knowledge/materials", {
         method: "POST",
@@ -137,6 +141,28 @@ export default function ProfessorWorkspace() {
       setMessage(result.message);
       setMaterialTitle("");
       setMaterialContent("");
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function syncCanvas() {
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const result = await api("/knowledge/canvas/sync", {
+        method: "POST",
+        token,
+        body: {
+          course_id: activeCourse.id,
+          auto_approve: true,
+        },
+      });
+      setMessage(result.message);
       await load();
     } catch (err) {
       setError(err.message);
@@ -280,11 +306,47 @@ export default function ProfessorWorkspace() {
       </section>
 
       <section className="glass-panel p-6">
-        <h2 className="font-display text-2xl font-semibold">Course materials → KB agent</h2>
+        <h2 className="font-display text-2xl font-semibold">
+          Canvas LMS → course KB
+        </h2>
         <p className="mt-1 text-sm text-aui-deep/65">
-          Paste slide notes or a Canvas page export. Chunks are approved into the KB so
-          the student agent can answer from your materials (Canvas OAuth can reuse this
-          ingest later).
+          Sync pulls slide/pages from this course&apos;s Canvas link into the same
+          approved KB the student agent searches. Live mode uses{" "}
+          <code className="text-xs">CANVAS_BASE_URL</code> +{" "}
+          <code className="text-xs">CANVAS_ACCESS_TOKEN</code>; otherwise the local
+          AUI Canvas mirror is used for demos.
+        </p>
+        <div className="soft-stat mt-4 text-sm font-medium">
+          <p>
+            Mode: <strong>{canvasInfo?.mode || "…"}</strong>
+            {canvasInfo?.canvas_course_id
+              ? ` · Canvas course ${canvasInfo.canvas_course_id}`
+              : ""}
+          </p>
+          <p className="mt-1 text-aui-deep/65">{canvasInfo?.message}</p>
+          {(canvasInfo?.available_files || []).length > 0 ? (
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-aui-deep/75">
+              {canvasInfo.available_files.map((file) => (
+                <li key={file.external_id}>{file.title}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          disabled={busy}
+          className="btn-primary mt-4 px-5 py-3 text-sm"
+          onClick={syncCanvas}
+        >
+          {busy ? "Syncing…" : "Sync Canvas materials into KB"}
+        </button>
+
+        <h3 className="font-display mt-8 text-xl font-semibold">
+          Or paste slides / notes
+        </h3>
+        <p className="mt-1 text-sm text-aui-deep/65">
+          Manual ingest for the same course-scoped KB (useful when a file is not
+          in Canvas yet).
         </p>
         <form onSubmit={ingestMaterials} className="mt-4 space-y-3">
           <input
@@ -296,14 +358,14 @@ export default function ProfessorWorkspace() {
           />
           <textarea
             className="field-glass min-h-40 w-full px-4 py-3 text-sm"
-            placeholder="Paste slide text / notes / Canvas export…"
+            placeholder="Paste slide text / notes…"
             value={materialContent}
             onChange={(event) => setMaterialContent(event.target.value)}
             required
             minLength={20}
           />
-          <button type="submit" disabled={busy} className="btn-primary px-5 py-3 text-sm">
-            {busy ? "Ingesting…" : "Add to course KB"}
+          <button type="submit" disabled={busy} className="btn-ghost px-5 py-3 text-sm">
+            {busy ? "Ingesting…" : "Add pasted material to course KB"}
           </button>
         </form>
       </section>

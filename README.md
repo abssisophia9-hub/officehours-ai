@@ -70,7 +70,8 @@ officehours-ai/
 ./scripts/run_product.sh
 # open http://127.0.0.1:5180
 # password: aui-demo
-# student@aui.ma | ta.alice@aui.ma | professor@aui.ma
+# s.elidrissi@aui.ma | a.chen@aui.ma | a.benali@aui.ma
+# (AUI format Initial.Last@aui.ma — role from membership)
 ```
 
 Details: [`docs/product_overview.md`](docs/product_overview.md) ·

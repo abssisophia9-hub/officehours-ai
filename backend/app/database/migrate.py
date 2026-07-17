@@ -54,6 +54,12 @@ def ensure_schema(engine: Engine) -> None:
             engine, "knowledge_entries", columns, "material_source", "VARCHAR"
         )
 
+    if "courses" in table_names:
+        columns = {column["name"] for column in inspector.get_columns("courses")}
+        _add_column_if_missing(
+            engine, "courses", columns, "canvas_course_id", "VARCHAR"
+        )
+
 
 def _add_column_if_missing(
     engine: Engine,

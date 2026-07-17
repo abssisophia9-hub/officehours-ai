@@ -42,6 +42,7 @@ def _user_courses(db: Session, user_id: int) -> list[CourseOut]:
             title=course.title,
             term=course.term,
             role=membership.role,
+            canvas_course_id=getattr(course, "canvas_course_id", None),
         )
         for membership, course in rows
     ]

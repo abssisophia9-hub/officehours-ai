@@ -36,6 +36,7 @@ class Course(Base):
     code: Mapped[str] = mapped_column(String, nullable=False, index=True)
     title: Mapped[str] = mapped_column(String, nullable=False)
     term: Mapped[str | None] = mapped_column(String, nullable=True)
+    canvas_course_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
@@ -87,6 +88,7 @@ class CourseOut(BaseModel):
     title: str
     term: str | None = None
     role: str
+    canvas_course_id: str | None = None
 
     model_config = {"from_attributes": True}
 

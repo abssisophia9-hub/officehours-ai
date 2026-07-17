@@ -84,11 +84,11 @@ class CourseMaterialIngest(BaseModel):
 
     title: str = Field(min_length=2, max_length=200)
     content: str = Field(min_length=20, max_length=100_000)
-    course_id: int | None = None
+    course_id: int = Field(ge=1)
     course: str | None = None
     source: str = Field(
         default="slides",
-        description="slides | notes | canvas_export | syllabus",
+        description="slides | notes | canvas | canvas_export | syllabus",
     )
     auto_approve: bool = True
 
@@ -98,6 +98,22 @@ class CourseMaterialIngestOut(BaseModel):
     source: str
     chunks_created: int
     entry_ids: list[int]
+    message: str
+
+
+class CanvasSyncRequest(BaseModel):
+    course_id: int = Field(ge=1)
+    auto_approve: bool = True
+
+
+class CanvasSyncOut(BaseModel):
+    course_id: int
+    canvas_course_id: str | None = None
+    mode: str
+    files_seen: int
+    chunks_created: int
+    entry_ids: list[int]
+    skipped: list[str] = Field(default_factory=list)
     message: str
 
 
