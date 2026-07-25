@@ -112,6 +112,106 @@ def test_unknown_canvas_role_defaults_to_student():
     assert result["role"] == "student"
 
 
+def test_ta_launch_maps_ta_role():
+    result = _launch(
+        email="k.bennis@aui.ma",
+        display_name="Karim Bennis",
+        canvas_role="TaEnrollment",
+        student_id=None,
+    )
+    assert result["role"] == "ta"
+    me = client.get(
+        "/auth/me", headers={"Authorization": f"Bearer {result['token']}"}
+    ).json()
+    assert [c["role"] for c in me["courses"]] == ["ta"]
+
+
+def test_full_community_loop_ask_ta_professor_agent():
+    """The problem this product solves: one student's question, answered once
+    by a human, becomes instant approved knowledge for the whole course."""
+    student = _launch()  # Omar, CS 210
+    course_id = student["course_id"]
+
+    question = "Why does my scheduler starve long processes when I use priorities?"
+
+    # 1. Slides don't cover starvation — the agent honestly says so.
+    before = client.post(
+        "/agent/ask", json={"question": question, "course_id": course_id}
+    ).json()
+    assert before["matched_count"] == 0
+
+    # 2. Student submits a quiet ask; Oracle runs and seeds a pending draft.
+    created = client.post(
+        "/requests/",
+        json={
+            "text": question,
+            "anonymous": True,
+            "course": student["course_code"],
+            "course_id": course_id,
+        },
+    )
+    assert created.status_code == 201
+    request_id = created.json()["id"]
+
+    # 3. TA works the queue and writes the teaching answer.
+    ta = _launch(
+        email="k.bennis@aui.ma",
+        display_name="Karim Bennis",
+        canvas_role="TaEnrollment",
+        student_id=None,
+    )
+    assert ta["role"] == "ta"
+    queue = client.get("/ta/queue/").json()
+    assert any(item["request"]["id"] == request_id for item in queue)
+    resolved = client.post(
+        "/ta/resolve/",
+        json={
+            "request_id": request_id,
+            "ta_name": "Karim Bennis",
+            "teaching_notes": (
+                "Priority scheduling starves long low-priority processes because "
+                "new higher-priority arrivals always preempt them. Fix it with "
+                "aging: gradually raise the priority of waiting processes so "
+                "every process eventually runs."
+            ),
+            "student_hint": "Look up aging — the fix for starvation in priority schedulers.",
+            "resolution_status": "resolved",
+        },
+    )
+    assert resolved.status_code == 200
+
+    # 4. Still gated: nothing reaches students before professor approval.
+    mid = client.post(
+        "/agent/ask", json={"question": question, "course_id": course_id}
+    ).json()
+    assert mid["matched_count"] == 0
+
+    # 5. Professor approves the curated draft.
+    professor = _launch(
+        email="l.mansouri@aui.ma",
+        display_name="Prof. Leila Mansouri",
+        canvas_role="TeacherEnrollment",
+        student_id=None,
+    )
+    pending = client.get(
+        f"/knowledge/?status=pending_review&course_id={course_id}"
+    ).json()
+    entry = next(e for e in pending if e["source_request_id"] == request_id)
+    approved = client.patch(
+        f"/knowledge/{entry['id']}",
+        json={"status": "approved"},
+    )
+    assert approved.status_code == 200
+    assert professor["role"] == "professor"
+
+    # 6. The next student with the same struggle gets the answer instantly.
+    after = client.post(
+        "/agent/ask", json={"question": question, "course_id": course_id}
+    ).json()
+    assert after["matched_count"] >= 1
+    assert "aging" in after["answer"].lower()
+
+
 def test_launch_into_existing_course_joins_without_reprovision():
     """Launching from CS 400 (already seeded by demo accounts) just joins."""
     # Trigger demo seed via a login-dependent endpoint.
