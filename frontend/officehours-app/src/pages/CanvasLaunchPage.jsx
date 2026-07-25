@@ -11,6 +11,33 @@ const STEPS = [
   "Spawning the course agent…",
 ];
 
+// One launch per query string, shared across StrictMode double-mounts so the
+// backend sees a single click per Canvas button press.
+const launchCache = new Map();
+
+function launchOnce(searchParams) {
+  const key = searchParams.toString();
+  if (!launchCache.has(key)) {
+    launchCache.set(
+      key,
+      api("/canvas/launch", {
+        method: "POST",
+        body: {
+          canvas_course_id: searchParams.get("canvas_course_id"),
+          email: searchParams.get("email"),
+          display_name: searchParams.get("display_name"),
+          canvas_role: searchParams.get("canvas_role"),
+          student_id: searchParams.get("student_id") || null,
+        },
+      }).catch((err) => {
+        launchCache.delete(key);
+        throw err;
+      }),
+    );
+  }
+  return launchCache.get(key);
+}
+
 export default function CanvasLaunchPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
@@ -23,28 +50,23 @@ export default function CanvasLaunchPage() {
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
+    const mountedAt = Date.now();
 
     const ticker = setInterval(
       () => setStepIndex((index) => Math.min(index + 1, STEPS.length - 1)),
-      450,
+      550,
     );
 
     async function run() {
       try {
-        const launch = await api("/canvas/launch", {
-          method: "POST",
-          body: {
-            canvas_course_id: params.get("canvas_course_id"),
-            email: params.get("email"),
-            display_name: params.get("display_name"),
-            canvas_role: params.get("canvas_role"),
-            student_id: params.get("student_id") || null,
-          },
-        });
+        const launch = await launchOnce(params);
         setResult(launch);
         await adoptSession(launch.token, launch.course_id);
         clearInterval(ticker);
         setStepIndex(STEPS.length - 1);
+        // Keep the provisioning summary on screen long enough to read.
+        const elapsed = Date.now() - mountedAt;
+        const dwell = Math.max(3400 - elapsed, 0) + 1600;
         setTimeout(() => {
           navigate(
             launch.role === "professor"
@@ -54,7 +76,7 @@ export default function CanvasLaunchPage() {
                 : "/student",
             { replace: true },
           );
-        }, 1200);
+        }, dwell);
       } catch (err) {
         clearInterval(ticker);
         setError(err.message || "Canvas launch failed");
