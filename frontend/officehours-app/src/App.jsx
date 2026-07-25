@@ -6,6 +6,8 @@ import CourseHomePage from "./pages/CourseHomePage.jsx";
 import StudentWorkspace from "./pages/StudentWorkspace.jsx";
 import TaWorkspace from "./pages/TaWorkspace.jsx";
 import ProfessorWorkspace from "./pages/ProfessorWorkspace.jsx";
+import CanvasSimulatorPage from "./pages/CanvasSimulatorPage.jsx";
+import CanvasLaunchPage from "./pages/CanvasLaunchPage.jsx";
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
@@ -24,6 +26,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/canvas-demo" element={<CanvasSimulatorPage />} />
+      <Route path="/launch" element={<CanvasLaunchPage />} />
       <Route
         path="/"
         element={

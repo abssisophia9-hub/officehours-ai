@@ -119,6 +119,13 @@ export default function LoginPage() {
           >
             {busy ? "Signing in…" : "Sign in"}
           </button>
+
+          <p className="mt-4 text-center text-sm font-medium text-aui-deep/60">
+            Coming from your LMS?{" "}
+            <a href="/canvas-demo" className="font-semibold text-aui-forest underline">
+              Open from Canvas (one-click demo)
+            </a>
+          </p>
         </form>
 
         <aside className="glass-panel glass-panel-deep p-8">

@@ -71,7 +71,7 @@ def get_canvas_status(
     course, _membership = require_course_role(
         db, user, course_id, roles={"professor", "ta"}
     )
-    return canvas_status(course)
+    return canvas_status(db, course)
 
 
 @router.get("/knowledge/{entry_id}", response_model=KnowledgeEntryOut)

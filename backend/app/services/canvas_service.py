@@ -1,16 +1,21 @@
-"""Canvas LMS → course KB bridge.
+"""Canvas LMS → course KB bridge (SaaS-style).
 
 Two modes:
 
 1. **Live Canvas** — set ``CANVAS_BASE_URL`` + ``CANVAS_ACCESS_TOKEN``.
-   Sync pulls files/pages from the course's ``canvas_course_id``.
+   Sync pulls course **modules** (then pages/files) from the course's
+   ``canvas_course_id``.
 
 2. **Local AUI mirror (default)** — when live credentials are absent, sync
-   uses seeded Canvas-style course files so professors can still push slides
-   into the KB the same way a real LMS sync would.
+   uses a seeded module-structured Canvas mirror so the exact same launch /
+   sync path works in demos without AUI credentials.
 
-Professors can also paste/upload text via ``POST /knowledge/materials``;
-both paths call ``ingest_course_material`` so the student agent sees one KB.
+Entry points:
+
+- ``POST /canvas/launch`` — one click inside a Canvas course: auto-provision
+  user + course + membership, ingest module slides, spawn the course agent.
+- ``POST /knowledge/canvas/sync`` — professor-triggered re-sync.
+- ``POST /knowledge/materials`` — manual paste; same ingest, same KB.
 """
 
 from __future__ import annotations
@@ -28,42 +33,106 @@ from app.models.auth import Course
 from app.models.knowledge import KnowledgeEntry
 from app.services.knowledge_service import ingest_course_material
 
-# Demo Canvas file mirror keyed by canvas_course_id.
-LOCAL_CANVAS_FILES: dict[str, list[dict[str, str]]] = {
-    "4001": [
-        {
-            "external_id": "cs400-week4-hashing",
-            "title": "Week 4 — Hash tables (Canvas)",
-            "content": (
-                "Hash tables map keys to buckets using a hash function.\n\n"
-                "Collisions are handled with chaining or open addressing.\n\n"
-                "Chaining stores a linked list (or another structure) in each bucket.\n\n"
-                "Open addressing probes for the next empty slot "
-                "(linear, quadratic, or double hashing).\n\n"
-                "Load factor affects lookup performance; rehash when it grows too high."
-            ),
-        },
-        {
-            "external_id": "cs400-week5-bst",
-            "title": "Week 5 — Binary search trees (Canvas)",
-            "content": (
-                "A binary search tree keeps left children smaller and right children larger.\n\n"
-                "Search, insert, and delete depend on balanced shape.\n\n"
-                "Unbalanced trees can degrade to O(n); self-balancing trees keep height logarithmic."
-            ),
-        },
-    ],
-    "3301": [
-        {
-            "external_id": "cs330-week2-dc",
-            "title": "Week 2 — Divide and conquer (Canvas)",
-            "content": (
-                "Divide and conquer splits a problem, solves subproblems, then combines.\n\n"
-                "Mergesort is the classic example: split, sort halves, merge.\n\n"
-                "Recurrence T(n) = 2T(n/2) + O(n) solves to O(n log n)."
-            ),
-        },
-    ],
+# Module-structured Canvas mirror keyed by canvas_course_id.
+# "2101" is intentionally NOT pre-seeded in the app DB: launching from that
+# Canvas course proves SaaS-style auto-provisioning of a brand-new tenant.
+LOCAL_CANVAS_COURSES: dict[str, dict[str, Any]] = {
+    "4001": {
+        "code": "CS 400",
+        "title": "Data Structures",
+        "term": "Spring 2026",
+        "modules": [
+            {
+                "name": "Module 4 — Hashing",
+                "items": [
+                    {
+                        "external_id": "cs400-week4-hashing",
+                        "title": "Week 4 — Hash tables (slides)",
+                        "content": (
+                            "Hash tables map keys to buckets using a hash function.\n\n"
+                            "Collisions are handled with chaining or open addressing.\n\n"
+                            "Chaining stores a linked list (or another structure) in each bucket.\n\n"
+                            "Open addressing probes for the next empty slot "
+                            "(linear, quadratic, or double hashing).\n\n"
+                            "Load factor affects lookup performance; rehash when it grows too high."
+                        ),
+                    },
+                ],
+            },
+            {
+                "name": "Module 5 — Trees",
+                "items": [
+                    {
+                        "external_id": "cs400-week5-bst",
+                        "title": "Week 5 — Binary search trees (slides)",
+                        "content": (
+                            "A binary search tree keeps left children smaller and right children larger.\n\n"
+                            "Search, insert, and delete depend on balanced shape.\n\n"
+                            "Unbalanced trees can degrade to O(n); self-balancing trees keep height logarithmic."
+                        ),
+                    },
+                ],
+            },
+        ],
+    },
+    "3301": {
+        "code": "CS 330",
+        "title": "Algorithms",
+        "term": "Spring 2026",
+        "modules": [
+            {
+                "name": "Module 2 — Divide & Conquer",
+                "items": [
+                    {
+                        "external_id": "cs330-week2-dc",
+                        "title": "Week 2 — Divide and conquer (slides)",
+                        "content": (
+                            "Divide and conquer splits a problem, solves subproblems, then combines.\n\n"
+                            "Mergesort is the classic example: split, sort halves, merge.\n\n"
+                            "Recurrence T(n) = 2T(n/2) + O(n) solves to O(n log n)."
+                        ),
+                    },
+                ],
+            },
+        ],
+    },
+    "2101": {
+        "code": "CS 210",
+        "title": "Operating Systems",
+        "term": "Spring 2026",
+        "modules": [
+            {
+                "name": "Module 1 — Processes",
+                "items": [
+                    {
+                        "external_id": "cs210-week1-processes",
+                        "title": "Week 1 — Processes and threads (slides)",
+                        "content": (
+                            "A process is a running program with its own address space.\n\n"
+                            "Threads share the process address space but have their own stacks.\n\n"
+                            "A context switch saves one process state and restores another; "
+                            "it is pure overhead, so schedulers try to minimize it."
+                        ),
+                    },
+                ],
+            },
+            {
+                "name": "Module 2 — Scheduling",
+                "items": [
+                    {
+                        "external_id": "cs210-week2-scheduling",
+                        "title": "Week 2 — CPU scheduling (slides)",
+                        "content": (
+                            "First-come first-served runs jobs in arrival order and suffers convoy effects.\n\n"
+                            "Shortest job first minimizes average waiting time but needs burst estimates.\n\n"
+                            "Round robin gives each process a time quantum; small quanta increase "
+                            "context-switch overhead, large quanta approach FCFS."
+                        ),
+                    },
+                ],
+            },
+        ],
+    },
 }
 
 
@@ -72,6 +141,7 @@ class CanvasFile:
     external_id: str
     title: str
     content: str
+    module: str = ""
     source: str = "canvas"
 
 
@@ -83,18 +153,55 @@ def canvas_mode() -> str:
     return (os.getenv("OFFICEHOURS_CANVAS_MODE") or "local").strip().lower() or "local"
 
 
-def canvas_status(course: Course) -> dict[str, Any]:
+def canvas_course_snapshot(canvas_course_id: str) -> dict[str, Any] | None:
+    """Course metadata used to auto-provision a tenant on first launch."""
+    if canvas_mode() == "live":
+        base = (os.getenv("CANVAS_BASE_URL") or "").rstrip("/") + "/"
+        token = (os.getenv("CANVAS_ACCESS_TOKEN") or "").strip()
+        detail = _canvas_get_single(
+            urljoin(base, f"api/v1/courses/{canvas_course_id}"),
+            {"Authorization": f"Bearer {token}", "Accept": "application/json"},
+        )
+        if detail:
+            return {
+                "code": str(detail.get("course_code") or f"CANVAS-{canvas_course_id}"),
+                "title": str(detail.get("name") or f"Canvas course {canvas_course_id}"),
+                "term": None,
+            }
+        return None
+    spec = LOCAL_CANVAS_COURSES.get(str(canvas_course_id))
+    if spec is None:
+        return None
+    return {"code": spec["code"], "title": spec["title"], "term": spec.get("term")}
+
+
+def canvas_status(db: Session, course: Course) -> dict[str, Any]:
     mode = canvas_mode()
     canvas_id = getattr(course, "canvas_course_id", None)
     files = list_course_files(course)
+    approved_chunks = (
+        db.query(KnowledgeEntry.id)
+        .filter(
+            KnowledgeEntry.course_id == course.id,
+            KnowledgeEntry.status == "approved",
+        )
+        .count()
+    )
     return {
         "mode": mode,
         "configured": mode == "live" or bool(canvas_id),
         "canvas_course_id": canvas_id,
         "course_id": course.id,
         "course_code": course.code,
+        "agent_ready": approved_chunks > 0,
+        "kb_chunks": approved_chunks,
         "available_files": [
-            {"external_id": item.external_id, "title": item.title, "source": item.source}
+            {
+                "external_id": item.external_id,
+                "title": item.title,
+                "module": item.module,
+                "source": item.source,
+            }
             for item in files
         ],
         "message": (
@@ -114,17 +221,28 @@ def list_course_files(course: Course) -> list[CanvasFile]:
     canvas_id = getattr(course, "canvas_course_id", None)
     if not canvas_id:
         return []
+    return list_canvas_files_by_id(str(canvas_id))
+
+
+def list_canvas_files_by_id(canvas_course_id: str) -> list[CanvasFile]:
     if canvas_mode() == "live":
-        return _list_live_canvas_files(str(canvas_id))
-    return [
-        CanvasFile(
-            external_id=item["external_id"],
-            title=item["title"],
-            content=item["content"],
-            source="canvas",
-        )
-        for item in LOCAL_CANVAS_FILES.get(str(canvas_id), [])
-    ]
+        return _list_live_canvas_files(canvas_course_id)
+    spec = LOCAL_CANVAS_COURSES.get(canvas_course_id)
+    if spec is None:
+        return []
+    files: list[CanvasFile] = []
+    for module in spec.get("modules", []):
+        for item in module.get("items", []):
+            files.append(
+                CanvasFile(
+                    external_id=item["external_id"],
+                    title=item["title"],
+                    content=item["content"],
+                    module=str(module.get("name") or ""),
+                    source="canvas",
+                )
+            )
+    return files
 
 
 def sync_course_materials(
@@ -153,9 +271,10 @@ def sync_course_materials(
         if _already_ingested(db, course.id, item.external_id):
             skipped.append(item.title)
             continue
+        title = f"{item.module} · {item.title}" if item.module else item.title
         entries = ingest_course_material(
             db,
-            title=item.title,
+            title=title,
             content=item.content,
             source="canvas",
             course_id=course.id,
@@ -202,7 +321,67 @@ def _list_live_canvas_files(canvas_course_id: str) -> list[CanvasFile]:
     headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
 
     files: list[CanvasFile] = []
-    # Pages (HTML → text)
+
+    # Preferred: module structure (what professors curate for students).
+    modules = _canvas_get_json(
+        urljoin(base, f"api/v1/courses/{canvas_course_id}/modules?per_page=50"),
+        headers,
+    )
+    for module in modules:
+        module_id = module.get("id")
+        module_name = str(module.get("name") or "")
+        if not module_id:
+            continue
+        for item in _canvas_get_json(
+            urljoin(
+                base,
+                f"api/v1/courses/{canvas_course_id}/modules/{module_id}/items?per_page=50",
+            ),
+            headers,
+        ):
+            kind = str(item.get("type") or "")
+            if kind == "Page" and item.get("page_url"):
+                detail = _canvas_get_single(
+                    urljoin(
+                        base,
+                        f"api/v1/courses/{canvas_course_id}/pages/{item['page_url']}",
+                    ),
+                    headers,
+                )
+                body = _strip_html(str((detail or {}).get("body") or ""))
+                if len(body) >= 20:
+                    files.append(
+                        CanvasFile(
+                            external_id=f"page-{item['page_url']}",
+                            title=str(item.get("title") or item["page_url"]),
+                            content=body,
+                            module=module_name,
+                        )
+                    )
+            elif kind == "File" and item.get("content_id"):
+                detail = _canvas_get_single(
+                    urljoin(base, f"api/v1/files/{item['content_id']}"),
+                    headers,
+                )
+                name = str(
+                    (detail or {}).get("display_name") or item.get("title") or "file"
+                )
+                url = (detail or {}).get("url")
+                if url and name.lower().endswith((".txt", ".md", ".html", ".htm")):
+                    content = _canvas_get_text(str(url), headers)
+                    if len(content) >= 20:
+                        files.append(
+                            CanvasFile(
+                                external_id=f"file-{item['content_id']}",
+                                title=name,
+                                content=content,
+                                module=module_name,
+                            )
+                        )
+    if files:
+        return files
+
+    # Fallback: bare pages + files listing for courses without modules.
     for page in _canvas_get_json(
         urljoin(base, f"api/v1/courses/{canvas_course_id}/pages?per_page=50"),
         headers,
@@ -210,45 +389,38 @@ def _list_live_canvas_files(canvas_course_id: str) -> list[CanvasFile]:
         url = page.get("url")
         if not url:
             continue
-        detail = _canvas_get_json(
+        detail = _canvas_get_single(
             urljoin(base, f"api/v1/courses/{canvas_course_id}/pages/{url}"),
             headers,
         )
-        body = _strip_html(str(detail.get("body") or ""))
-        if len(body) < 20:
-            continue
-        files.append(
-            CanvasFile(
-                external_id=f"page-{url}",
-                title=str(detail.get("title") or url),
-                content=body,
-                source="canvas",
+        body = _strip_html(str((detail or {}).get("body") or ""))
+        if len(body) >= 20:
+            files.append(
+                CanvasFile(
+                    external_id=f"page-{url}",
+                    title=str((detail or {}).get("title") or url),
+                    content=body,
+                )
             )
-        )
-
-    # Text-ish files with a download URL
     for item in _canvas_get_json(
         urljoin(base, f"api/v1/courses/{canvas_course_id}/files?per_page=50"),
         headers,
     ):
         name = str(item.get("display_name") or item.get("filename") or "Canvas file")
-        lower = name.lower()
-        if not lower.endswith((".txt", ".md", ".html", ".htm")):
+        if not name.lower().endswith((".txt", ".md", ".html", ".htm")):
             continue
         download_url = item.get("url")
         if not download_url:
             continue
         content = _canvas_get_text(str(download_url), headers)
-        if len(content) < 20:
-            continue
-        files.append(
-            CanvasFile(
-                external_id=f"file-{item.get('id')}",
-                title=name,
-                content=content,
-                source="canvas",
+        if len(content) >= 20:
+            files.append(
+                CanvasFile(
+                    external_id=f"file-{item.get('id')}",
+                    title=name,
+                    content=content,
+                )
             )
-        )
     return files
 
 
@@ -264,6 +436,18 @@ def _canvas_get_json(url: str, headers: dict[str, str]) -> list[dict[str, Any]]:
     if isinstance(payload, list):
         return [item for item in payload if isinstance(item, dict)]
     return []
+
+
+def _canvas_get_single(url: str, headers: dict[str, str]) -> dict[str, Any] | None:
+    try:
+        request = Request(url, headers=headers)
+        with urlopen(request, timeout=20) as response:
+            import json
+
+            payload = json.loads(response.read().decode("utf-8"))
+    except (HTTPError, URLError, TimeoutError, ValueError):
+        return None
+    return payload if isinstance(payload, dict) else None
 
 
 def _canvas_get_text(url: str, headers: dict[str, str]) -> str:

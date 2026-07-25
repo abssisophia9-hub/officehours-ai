@@ -235,13 +235,12 @@ def search_approved_entries(
         # Prefer matching material content as well as the title/question.
         haystack = f"{entry.question_text}\n{entry.answer_draft}"
         similarity = cosine_similarity(query_embedding, embed_text(haystack))
-        # Lexical backend can underscore long docs; also accept token overlap.
+        # Long slides dilute symmetric overlap, so fall back to containment:
+        # what fraction of the question's content words appear in the doc.
         if similarity < similarity_threshold:
-            from app.ai.clustering import _jaccard_similarity, _tokenize
-
             similarity = max(
                 similarity,
-                _jaccard_similarity(_tokenize(question), _tokenize(haystack)),
+                _question_containment(question, haystack),
             )
         if similarity >= similarity_threshold:
             scored.append((entry, similarity))
@@ -299,6 +298,23 @@ def _chunk_material(content: str, *, max_chars: int = 900) -> list[str]:
     if current:
         chunks.append(current)
     return chunks
+
+
+_CONTAINMENT_STOPWORDS = {
+    "a", "an", "and", "are", "can", "do", "does", "for", "how", "i", "in",
+    "is", "it", "my", "of", "on", "or", "the", "to", "what", "when", "where",
+    "which", "why", "with", "you",
+}
+
+
+def _question_containment(question: str, haystack: str) -> float:
+    from app.ai.clustering import _tokenize
+
+    question_tokens = _tokenize(question) - _CONTAINMENT_STOPWORDS
+    if not question_tokens:
+        return 0.0
+    doc_tokens = _tokenize(haystack)
+    return len(question_tokens & doc_tokens) / len(question_tokens)
 
 
 def _serialize_tags(tags: list[str]) -> str:
