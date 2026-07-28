@@ -30,6 +30,7 @@ def build_request_status(
         "category": request.category,
         "submitted_at": request.created_at,
         "anonymous_submission": request.anonymous,
+        "help_mode": getattr(request, "help_mode", None) or "message",
         "student_hint": getattr(request, "student_hint", None),
         "assigned_ta": getattr(request, "assigned_ta", None),
         "estimated_wait_minutes": getattr(request, "estimated_wait_minutes", None),
@@ -40,6 +41,18 @@ def build_request_status(
         payload["recommended_next_step"] = latest_decision.action_title
         if action_plan.get("agenda_item"):
             payload["agenda_hint"] = action_plan["agenda_item"]["suggested_window"]
+    else:
+        help_mode = str(getattr(request, "help_mode", None) or "message")
+        if help_mode == "face_to_face":
+            payload["recommended_next_step"] = (
+                "You asked for a face-to-face meeting — keep your request code and "
+                "check campus office-hours times for your course."
+            )
+        elif help_mode == "online_meeting":
+            payload["recommended_next_step"] = (
+                "You asked for an online meeting — staff will share a link once a "
+                "slot is offered."
+            )
 
     return payload
 

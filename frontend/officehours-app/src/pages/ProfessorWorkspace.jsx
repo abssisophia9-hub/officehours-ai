@@ -531,6 +531,7 @@ export default function ProfessorWorkspace() {
                 <th>#</th>
                 <th>Question</th>
                 <th>From</th>
+                <th>Help</th>
                 <th>Category</th>
                 <th>Flags</th>
               </tr>
@@ -545,7 +546,14 @@ export default function ProfessorWorkspace() {
                   <td>
                     {request.anonymous
                       ? "Anonymous"
-                      : request.student_name || request.assigned_ta || "—"}
+                      : request.student_name || request.student_id || "—"}
+                  </td>
+                  <td>
+                    {request.help_mode === "face_to_face"
+                      ? "In person"
+                      : request.help_mode === "online_meeting"
+                        ? "Online"
+                        : "Message"}
                   </td>
                   <td>{request.category || "n/a"}</td>
                   <td>

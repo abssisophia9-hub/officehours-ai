@@ -50,6 +50,39 @@ courses** per term.
    - approve pending FAQ/KB drafts
 6. Switch courses with the course picker to see multi-course behavior
 
+## How courses appear on login
+
+Courses are **not typed in by hand each session**. They come from
+`course_memberships` attached to the signed-in user:
+
+| Source | When | What happens |
+| --- | --- | --- |
+| **Demo seed** (current local default) | App startup / login | `ensure_demo_accounts()` creates AUI-style users + courses + memberships (`docs` table above) |
+| **Canvas launch** (intended SaaS path) | Student/TA/professor clicks **Open OfficeHours AI** inside a Canvas course | `POST /canvas/launch` auto-provisions the course + membership from Canvas role, then mints a session |
+| **Live Canvas materials** | Professor syncs | `CANVAS_BASE_URL` + `CANVAS_ACCESS_TOKEN` pull modules into the course KB; without credentials the **local AUI Canvas mirror** is used |
+
+There is **no AUI portal / JICS / SIS integration yet**. Emails look like AUI
+(`Initial.Lastname@aui.ma`) for realism, but enrollments are membership rows —
+not pulled live from the AUI portal. Roadmap: Canvas LTI + campus SSO, then
+optional SIS roster sync.
+
+## Asking for help (identity + meeting preference)
+
+Students choose:
+
+1. **Quiet ask (anonymous)** — no name/ID stored; staff see a request code only  
+2. **Identify me** — uses the logged-in display name + student ID so staff can
+   follow up directly  
+
+And separately:
+
+- **Message / async** — answer in the queue / FAQ  
+- **Face-to-face meeting** — request an in-person office-hours slot  
+- **Online meeting** — request Zoom/Teams  
+
+TA and professor queues show who asked (or Anonymous) and the help mode so staff
+know whether to reply in writing or schedule a meeting.
+
 ## Packaging note
 
 Today the deliverable is a **single web application package** (one frontend +

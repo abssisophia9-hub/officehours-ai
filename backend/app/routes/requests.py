@@ -10,7 +10,13 @@ from sqlalchemy.orm import Session
 from app.ai.clustering import assign_cluster_id
 from app.database.session import get_db
 from app.models.action import RecommendationDecision
-from app.models.request import Request, RequestCreate, RequestOut, RequestStatusOut
+from app.models.request import (
+    HELP_MODES,
+    Request,
+    RequestCreate,
+    RequestOut,
+    RequestStatusOut,
+)
 from app.realtime.hub import hub
 from app.services.analytics_service import is_sensitive_category
 from app.services.knowledge_service import create_pending_entry_from_request
@@ -24,15 +30,47 @@ from app.services.request_status_service import build_request_status
 
 router = APIRouter(prefix="/requests", tags=["requests"])
 
+HELP_MODE_ACTIONS = {
+    "face_to_face": (
+        "Schedule or offer a face-to-face office-hours meeting "
+        "(campus location / walk-in slot)."
+    ),
+    "online_meeting": (
+        "Offer an online meeting (Zoom / Teams) — share a link and time window."
+    ),
+}
+
 
 @router.post("/", response_model=RequestOut, status_code=status.HTTP_201_CREATED)
 async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
     request_data = payload.model_dump()
 
+    help_mode = str(request_data.get("help_mode") or "message").strip().lower()
+    if help_mode not in HELP_MODES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"help_mode must be one of: {', '.join(HELP_MODES)}",
+        )
+    request_data["help_mode"] = help_mode
+
     # Quiet / low-exposure asks never persist identity even if the client sent it.
     if request_data.get("anonymous"):
         request_data["student_id"] = None
         request_data["student_name"] = None
+    else:
+        # Identified asks should carry a name (and ideally a student ID).
+        name = (request_data.get("student_name") or "").strip() or None
+        sid = (request_data.get("student_id") or "").strip() or None
+        if not name and not sid:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    "Identified asks require student_name or student_id. "
+                    "Use Quiet ask (anonymous) if you prefer not to share identity."
+                ),
+            )
+        request_data["student_name"] = name
+        request_data["student_id"] = sid
 
     oracle = run_oracle_pipeline(
         db,
@@ -58,6 +96,10 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
     if not request_data.get("recommended_action"):
         request_data["recommended_action"] = classification.get("recommended_action")
 
+    # Meeting preference overrides the default action when student asked for a meeting.
+    if help_mode in {"face_to_face", "online_meeting"}:
+        request_data["recommended_action"] = HELP_MODE_ACTIONS[help_mode]
+
     category = request_data.get("category")
     sensitive = bool(request_data.get("sensitive")) or is_sensitive_category(category)
     request_data["sensitive"] = sensitive
@@ -65,6 +107,14 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
         request_data["recommended_action"] = (
             "Private 1:1 / admin route — do not discuss in a public group review"
         )
+        if help_mode == "face_to_face":
+            request_data["recommended_action"] = (
+                "Private face-to-face follow-up — do not discuss in a public group review"
+            )
+        elif help_mode == "online_meeting":
+            request_data["recommended_action"] = (
+                "Private online 1:1 follow-up — do not discuss in a public group review"
+            )
 
     if request_data.get("cluster_id") is None:
         existing_query = db.query(Request).order_by(Request.id)
@@ -81,6 +131,23 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
     db.refresh(db_request)
 
     db_request = apply_oracle_to_request(db, db_request, oracle)
+
+    # Oracle classification can overwrite recommended_action; keep meeting preference.
+    if help_mode in {"face_to_face", "online_meeting"}:
+        if db_request.sensitive:
+            if help_mode == "face_to_face":
+                db_request.recommended_action = (
+                    "Private face-to-face follow-up — do not discuss in a public group review"
+                )
+            else:
+                db_request.recommended_action = (
+                    "Private online 1:1 follow-up — do not discuss in a public group review"
+                )
+        else:
+            db_request.recommended_action = HELP_MODE_ACTIONS[help_mode]
+        db.add(db_request)
+        db.commit()
+        db.refresh(db_request)
 
     entry = create_pending_entry_from_request(
         db,

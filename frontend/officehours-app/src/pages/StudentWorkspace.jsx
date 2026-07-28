@@ -35,6 +35,7 @@ export default function StudentWorkspace() {
   const [text, setText] = useState("");
   const [codeSnippet, setCodeSnippet] = useState("");
   const [anonymous, setAnonymous] = useState(true);
+  const [helpMode, setHelpMode] = useState("message");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -77,6 +78,11 @@ export default function StudentWorkspace() {
     setBusy(true);
     setError("");
     try {
+      if (!anonymous && !user.student_id && !user.display_name) {
+        setError("Identified asks need your name or student ID on the account.");
+        setBusy(false);
+        return;
+      }
       const created = await api("/requests/", {
         method: "POST",
         token,
@@ -88,6 +94,7 @@ export default function StudentWorkspace() {
           course: activeCourse.code,
           course_id: activeCourse.id,
           code_snippet: codeSnippet || null,
+          help_mode: helpMode,
         },
       });
       setResult(created);
@@ -159,26 +166,103 @@ export default function StudentWorkspace() {
             <h2>Ask for Help</h2>
           </div>
           <p className="bh-card-note">
-            Anonymous asks never store your name or ID — staff only see the
-            question and a request code.
+            Choose whether staff see your name, and how you want to meet —
+            message only, face-to-face, or online.
           </p>
           <form onSubmit={submitQuestion} className="mt-4">
-            <label className="clay-blob clay-blob-mint flex w-full cursor-pointer items-start gap-3 px-4 py-3">
-              <input
-                type="checkbox"
-                className="mt-1 h-4 w-4 accent-aui-forest"
-                checked={anonymous}
-                onChange={(event) => setAnonymous(event.target.checked)}
-              />
-              <span>
-                <span className="block text-sm font-semibold text-aui-ink">
-                  Quiet ask (anonymous)
+            <fieldset className="space-y-2">
+              <legend className="text-xs font-semibold uppercase tracking-wide text-aui-deep/60">
+                Identity
+              </legend>
+              <label className="clay-blob clay-blob-mint flex w-full cursor-pointer items-start gap-3 px-4 py-3">
+                <input
+                  type="radio"
+                  name="identity"
+                  className="mt-1 h-4 w-4 accent-aui-forest"
+                  checked={anonymous}
+                  onChange={() => setAnonymous(true)}
+                />
+                <span>
+                  <span className="block text-sm font-semibold text-aui-ink">
+                    Quiet ask (anonymous)
+                  </span>
+                  <span className="mt-0.5 block text-xs font-medium text-aui-deep/70">
+                    Staff only see the question and your request code — no name
+                    or student ID is stored.
+                  </span>
                 </span>
-                <span className="mt-0.5 block text-xs font-medium text-aui-deep/70">
-                  Keep your request code and check status later.
+              </label>
+              <label className="clay-blob flex w-full cursor-pointer items-start gap-3 px-4 py-3">
+                <input
+                  type="radio"
+                  name="identity"
+                  className="mt-1 h-4 w-4 accent-aui-forest"
+                  checked={!anonymous}
+                  onChange={() => setAnonymous(false)}
+                />
+                <span>
+                  <span className="block text-sm font-semibold text-aui-ink">
+                    Identify me
+                  </span>
+                  <span className="mt-0.5 block text-xs font-medium text-aui-deep/70">
+                    Share{" "}
+                    <strong>{user.display_name || "your name"}</strong>
+                    {user.student_id ? (
+                      <>
+                        {" "}
+                        · ID <strong>{user.student_id}</strong>
+                      </>
+                    ) : null}{" "}
+                    so staff can follow up with you directly.
+                  </span>
                 </span>
-              </span>
-            </label>
+              </label>
+            </fieldset>
+
+            <fieldset className="mt-4 space-y-2">
+              <legend className="text-xs font-semibold uppercase tracking-wide text-aui-deep/60">
+                How do you want help?
+              </legend>
+              {[
+                {
+                  value: "message",
+                  title: "Message / async",
+                  note: "Answer in the queue or FAQ — no live meeting required.",
+                },
+                {
+                  value: "face_to_face",
+                  title: "Face-to-face meeting",
+                  note: "Request an in-person office-hours slot on campus.",
+                },
+                {
+                  value: "online_meeting",
+                  title: "Online meeting",
+                  note: "Request a Zoom / Teams call with a TA or professor.",
+                },
+              ].map((option) => (
+                <label
+                  key={option.value}
+                  className="clay-blob flex w-full cursor-pointer items-start gap-3 px-4 py-3"
+                >
+                  <input
+                    type="radio"
+                    name="help_mode"
+                    className="mt-1 h-4 w-4 accent-aui-forest"
+                    checked={helpMode === option.value}
+                    onChange={() => setHelpMode(option.value)}
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-aui-ink">
+                      {option.title}
+                    </span>
+                    <span className="mt-0.5 block text-xs font-medium text-aui-deep/70">
+                      {option.note}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+
             <textarea
               className="field-glass mt-3 min-h-32 px-4 py-3 text-sm"
               placeholder="Describe what you're stuck on…"
@@ -194,15 +278,27 @@ export default function StudentWorkspace() {
             />
             {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
             <button type="submit" disabled={busy} className="btn-primary mt-4 px-5 py-2.5 text-sm">
-              {busy ? "Running Oracle…" : anonymous ? "Submit anonymously" : "Submit to office hours"}
+              {busy
+                ? "Running Oracle…"
+                : anonymous
+                  ? "Submit anonymously"
+                  : "Submit as me"}
             </button>
           </form>
 
           {result ? (
             <div className="soft-stat mt-5 text-sm">
               <p className="font-semibold text-aui-ink">
-                {result.anonymous ? "Submitted quietly" : "Submitted"} · request{" "}
-                <span className="bh-pill bh-pill-green">#{result.id}</span>
+                {result.anonymous ? "Submitted quietly" : "Submitted as you"} ·
+                request <span className="bh-pill bh-pill-green">#{result.id}</span>
+              </p>
+              <p className="mt-1 text-xs text-aui-deep/75">
+                Help mode:{" "}
+                {result.help_mode === "face_to_face"
+                  ? "face-to-face meeting"
+                  : result.help_mode === "online_meeting"
+                    ? "online meeting"
+                    : "message / async"}
               </p>
               {result.sensitive ? (
                 <p className="mt-2 rounded-lg bg-amber-50 p-2.5 text-xs text-amber-900">
