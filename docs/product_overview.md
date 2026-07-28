@@ -57,6 +57,11 @@ API) with authentication. It can later be wrapped as a desktop installer
 (Electron) or deployed behind AUI SSO. The important product rule is already
 true: **one login, role + course context, not three naked URLs**.
 
+## Agent performance backlog
+
+See [`docs/agent_performance.md`](agent_performance.md) for what limits Analyzer /
+Matcher / Synthesizer / KB quality today and the ranked upgrade plan.
+
 ## Canvas / course materials
 
 Each course has a `canvas_course_id`. Professors sync LMS content with
