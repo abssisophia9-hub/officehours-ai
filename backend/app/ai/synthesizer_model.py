@@ -38,11 +38,22 @@ def build_ranker() -> LogisticRegression:
 
 
 def load_teaching_bank(path: Path | None = None) -> list[dict[str, str]]:
-    bank_path = path or Path(os.getenv("OFFICEHOURS_TEACHING_BANK", DEFAULT_BANK_PATH))
-    if not bank_path.exists():
-        return []
-    with bank_path.open(newline="", encoding="utf-8") as handle:
-        return list(csv.DictReader(handle))
+    """Load curated teaching banks (base + optional CSC topic supplement)."""
+    primary = path or Path(os.getenv("OFFICEHOURS_TEACHING_BANK", DEFAULT_BANK_PATH))
+    banks = [primary]
+    csc_bank = Path(os.getenv("OFFICEHOURS_TEACHING_BANK_CSC", DEFAULT_BANK_PATH)).parent / (
+        "synthesizer_teaching_bank_csc.csv"
+    )
+    if path is None and csc_bank.exists() and csc_bank != primary:
+        banks.append(csc_bank)
+
+    rows: list[dict[str, str]] = []
+    for bank_path in banks:
+        if not bank_path.exists():
+            continue
+        with bank_path.open(newline="", encoding="utf-8") as handle:
+            rows.extend(list(csv.DictReader(handle)))
+    return rows
 
 
 def train_synthesizer_ranker(
@@ -213,11 +224,19 @@ def synthesize_with_model(
 
 
 def _fingerprint_bank() -> str:
-    path = Path(os.getenv("OFFICEHOURS_TEACHING_BANK", DEFAULT_BANK_PATH))
-    if not path.exists():
-        return "missing"
-    stat = path.stat()
-    return f"{path}:{stat.st_mtime_ns}:{stat.st_size}"
+    paths = [
+        Path(os.getenv("OFFICEHOURS_TEACHING_BANK", DEFAULT_BANK_PATH)),
+        Path(os.getenv("OFFICEHOURS_TEACHING_BANK", DEFAULT_BANK_PATH)).parent
+        / "synthesizer_teaching_bank_csc.csv",
+    ]
+    parts: list[str] = []
+    for path in paths:
+        if not path.exists():
+            parts.append(f"{path}:missing")
+            continue
+        stat = path.stat()
+        parts.append(f"{path}:{stat.st_mtime_ns}:{stat.st_size}")
+    return "|".join(parts)
 
 
 def draft_kb_with_model(

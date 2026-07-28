@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 /**
  * Stand-in for Canvas LMS (we have no AUI Canvas credentials in dev).

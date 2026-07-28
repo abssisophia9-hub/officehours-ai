@@ -1,5 +1,7 @@
-"""
-TA roster for Oracle Matcher agent.
+"""Default TA roster for Oracle Matcher — keep in sync with data/ta_roster_seed.csv.
+
+Category tags (conceptual_question, exam_logistics, …) matter: Matcher silver
+labels and runtime expertise-overlap both rely on them.
 """
 
 from __future__ import annotations
@@ -16,22 +18,53 @@ from app.database.session import Base
 DEFAULT_TA_ROSTER = [
     {
         "name": "Alice Chen",
-        "expertise_tags": ["trees", "red-black", "deletion", "rotations", "bst"],
+        "expertise_tags": [
+            "trees",
+            "red-black",
+            "deletion",
+            "rotations",
+            "bst",
+            "conceptual_question",
+        ],
         "queue_depth": 1,
     },
     {
         "name": "Bob Martinez",
-        "expertise_tags": ["recursion", "dp", "memoization", "algorithms"],
+        "expertise_tags": [
+            "recursion",
+            "dp",
+            "memoization",
+            "algorithms",
+            "conceptual_question",
+        ],
         "queue_depth": 2,
     },
     {
         "name": "Priya Nair",
-        "expertise_tags": ["hashing", "arrays", "search", "systems"],
+        "expertise_tags": [
+            "hashing",
+            "arrays",
+            "search",
+            "systems",
+            "exam_logistics",
+            "project_submission",
+        ],
         "queue_depth": 1,
     },
     {
         "name": "Sam Ortiz",
-        "expertise_tags": ["pointers", "memory", "c", "debugging"],
+        "expertise_tags": [
+            "pointers",
+            "memory",
+            "c",
+            "debugging",
+            "grading_dispute",
+            "emotional_stress",
+            "retake_request",
+            "accessibility_accommodation",
+            "academic_integrity",
+            "office_hours_access",
+        ],
         "queue_depth": 0,
     },
 ]

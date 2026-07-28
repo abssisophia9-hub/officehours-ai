@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 // AUI emails are Initial.Lastname@aui.ma — role comes from course membership, not email.

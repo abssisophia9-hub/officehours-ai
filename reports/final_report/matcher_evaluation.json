@@ -1,0 +1,17 @@
+{
+  "model_path": "/workspace/backend/models/matcher_classifier.joblib",
+  "train_n": 109,
+  "test_n": 26,
+  "labels": [
+    "Alice Chen",
+    "Bob Martinez",
+    "Priya Nair",
+    "Sam Ortiz"
+  ],
+  "metrics": {
+    "n": 26,
+    "accuracy": 0.8846,
+    "macro_f1": 0.6616,
+    "label_note": "silver_or_csc_supplement \u2014 not gold TA judgments"
+  }
+}

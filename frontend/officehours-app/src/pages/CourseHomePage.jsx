@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 const ROLE_PATH = {

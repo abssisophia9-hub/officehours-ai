@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate } from "react-router";
 import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
