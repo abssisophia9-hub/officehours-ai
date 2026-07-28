@@ -111,21 +111,28 @@ DEMO_USERS = [
         ],
     },
     {
+        # TAs are also students: Alice TAs CSC 2302 and takes other courses.
         "email": "a.chen@aui.ma",
         "display_name": "Alice Chen",
-        "student_id": None,
+        "student_id": "118110",
         "memberships": [
             _membership("CSC 2302", "ta"),
+            _membership("CSC 3323", "student"),
+            _membership("MTH 1304", "student"),
+            _membership("COM 1301", "student"),
         ],
     },
     {
+        # Bob TAs three CSC courses and is enrolled as a student elsewhere.
         "email": "b.martinez@aui.ma",
         "display_name": "Bob Martinez",
-        "student_id": None,
+        "student_id": "118210",
         "memberships": [
             _membership("CSC 2302", "ta"),
             _membership("CSC 3323", "ta"),
             _membership("CSC 3374", "ta"),
+            _membership("MTH 1304", "student"),
+            _membership("COM 1301", "student"),
         ],
     },
     {

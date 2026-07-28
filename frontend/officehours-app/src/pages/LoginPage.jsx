@@ -11,8 +11,8 @@ const DEMO_ACCOUNTS = [
   },
   {
     email: "a.chen@aui.ma",
-    role: "TA",
-    note: "CSC 2302",
+    role: "TA + student",
+    note: "TAs CSC 2302 · takes 3323 / MTH / COM",
   },
   {
     email: "a.benali@aui.ma",
@@ -81,8 +81,8 @@ export default function LoginPage() {
             OfficeHours AI
           </h1>
           <p className="mt-3 max-w-md text-base font-medium text-aui-deep/70">
-            Sign in with your AUI email (Initial.Lastname@aui.ma). Your role in
-            each course comes from membership — not from the email itself.
+            Sign in with your AUI email (Initial.Lastname@aui.ma). Your role is
+            per course — a TA can also be a student in other courses.
           </p>
 
           <label className="mt-8 block text-xs font-semibold uppercase tracking-wide text-aui-deep/55">

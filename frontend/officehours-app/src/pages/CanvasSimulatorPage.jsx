@@ -22,12 +22,15 @@ const PERSONAS = [
     ],
   },
   {
+    // TAs are also students: Karim TAs OS and takes Data Structures as a student.
     id: "karim",
-    label: "Karim Bennis (TA)",
+    label: "Karim Bennis (TA + student)",
     email: "k.bennis@aui.ma",
     display_name: "Karim Bennis",
+    student_id: "118310",
     enrollments: [
       { canvas_course_id: "2101", canvas_role: "TaEnrollment" },
+      { canvas_course_id: "4001", canvas_role: "StudentEnrollment" },
     ],
   },
   {
@@ -128,8 +131,8 @@ export default function CanvasSimulatorPage() {
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="mt-1 text-sm text-[#2d3b45]/70">
           In real Canvas you are already signed in — the switcher above stands
-          in for that. You only see courses you are enrolled in, and your role
-          in each course is set by the enrollment, not by any button.
+          in for that. You only see courses you are enrolled in. Role is per
+          course (a TA can also be a student elsewhere).
         </p>
 
         {persona.enrollments.map((enrollment) => {

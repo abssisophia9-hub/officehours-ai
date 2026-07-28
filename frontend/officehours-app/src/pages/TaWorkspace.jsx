@@ -151,6 +151,8 @@ export default function TaWorkspace() {
               <tr>
                 <th>#</th>
                 <th>Question</th>
+                <th>From</th>
+                <th>Help</th>
                 <th>Category</th>
                 <th>Urgency</th>
                 <th>Wait</th>
@@ -161,6 +163,7 @@ export default function TaWorkspace() {
               {queue.map((item) => {
                 const request = item.request;
                 const urgency = (request.urgency || "n/a").toLowerCase();
+                const helpMode = request.help_mode || "message";
                 return (
                   <tr
                     key={request.id}
@@ -172,8 +175,30 @@ export default function TaWorkspace() {
                     }}
                   >
                     <td className="font-semibold">#{request.id}</td>
-                    <td className="max-w-[26rem]">
+                    <td className="max-w-[22rem]">
                       <span className="line-clamp-2">{request.text}</span>
+                    </td>
+                    <td>
+                      {request.anonymous
+                        ? "Anonymous"
+                        : request.student_name || request.student_id || "Identified"}
+                    </td>
+                    <td>
+                      <span
+                        className={`bh-pill ${
+                          helpMode === "face_to_face"
+                            ? "bh-pill-amber"
+                            : helpMode === "online_meeting"
+                              ? "bh-pill-blue"
+                              : "bh-pill-gray"
+                        }`}
+                      >
+                        {helpMode === "face_to_face"
+                          ? "in person"
+                          : helpMode === "online_meeting"
+                            ? "online"
+                            : "message"}
+                      </span>
                     </td>
                     <td>{request.oracle_category || request.category || "n/a"}</td>
                     <td>
@@ -212,6 +237,35 @@ export default function TaWorkspace() {
             </span>
           </div>
           <p className="bh-card-note">{selected.request.text}</p>
+          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+            <span className="bh-pill bh-pill-gray">
+              {selected.request.anonymous
+                ? "Anonymous"
+                : selected.request.student_name ||
+                  selected.request.student_id ||
+                  "Identified"}
+            </span>
+            <span
+              className={`bh-pill ${
+                selected.request.help_mode === "face_to_face"
+                  ? "bh-pill-amber"
+                  : selected.request.help_mode === "online_meeting"
+                    ? "bh-pill-blue"
+                    : "bh-pill-gray"
+              }`}
+            >
+              {selected.request.help_mode === "face_to_face"
+                ? "Wants face-to-face"
+                : selected.request.help_mode === "online_meeting"
+                  ? "Wants online meeting"
+                  : "Message / async"}
+            </span>
+          </div>
+          {selected.request.recommended_action ? (
+            <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-950">
+              <strong>Suggested action:</strong> {selected.request.recommended_action}
+            </p>
+          ) : null}
           {selected.request.code_snippet ? (
             <pre className="soft-stat mt-3 overflow-x-auto font-mono text-xs">
               {selected.request.code_snippet}

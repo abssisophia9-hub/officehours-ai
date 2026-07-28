@@ -1,14 +1,17 @@
 # Diagrams
 
-Generated visuals for the **custom-trained Oracle** upgrade:
+Generated visuals for the **unified product + Canvas** era. Narrative:
+[`docs/project_journey.md`](../docs/project_journey.md).
 
 | File | Description |
 | --- | --- |
-| `architecture.png` | Three browser apps + FastAPI + Analyzer/Matcher/Synthesizer + curation gate |
-| `workflow.png` | End-to-end submit → Oracle → TA → professor → student KB |
-| `oracle_agents.png` | Per-agent models, training sizes, artifacts |
-| `product_deployment.png` | What the final product is / is not |
-| `database_erd.png` | SQLite ERD including KB, TA roster, Oracle fields |
+| `architecture.png` | Product app + FastAPI + Canvas + Analyzer/Matcher/Synthesizer + curation |
+| `workflow.png` | Identity + help mode → Oracle → TA → professor → KB / meetings |
+| `oracle_agents.png` | Per-agent models, training notes, artifacts |
+| `product_deployment.png` | Canvas-first community deploy vs portal / manual |
+| `database_erd.png` | Auth, memberships, requests (`help_mode`), KB, roster |
+| `canvas_enrollment.png` | JIT Canvas launch + dual-role (TA + student) |
+| `project_journey.png` | Phase timeline from proposal to this upgrade |
 
 Regenerate:
 
@@ -16,9 +19,11 @@ Regenerate:
 backend/venv/bin/python scripts/generate_architecture_diagrams.py
 ```
 
-Narrative docs:
+Related docs:
 
 - `docs/system_architecture.md`
 - `docs/product_overview.md`
+- `docs/project_journey.md`
 - `docs/training_data.md`
 - `docs/ai_nlp_design.md`
+- `docs/agent_performance.md`

@@ -17,10 +17,20 @@ During final exam periods, faculty face a surge of repeated, overlapping, and ur
 - AI/NLP classification and clustering pipeline
 - Evaluation via simulated finals-week scenario
 
-## Out of Scope (for this phase)
-- Full production deployment
-- Integration with university LMS/SIS systems
+## Out of Scope (for the original proposal phase)
+
+- Full production deployment at day 1
 - Multi-language support (future work)
+
+## Updated scope note (this upgrade)
+
+**LMS path is now in scope for community deploy:** Canvas LTI as the enrollment
+and launch source of truth (demo stub exists; production needs signed LTI 1.3).
+AUI portal / SIS sync remains deferred. Manual course entry is support-only.
+
+See [`project_journey.md`](project_journey.md) and
+[`product_overview.md`](product_overview.md).
 
 ## Timeline
 See `reports/mid_report` and `reports/final_report` for milestone tracking.
+See [`project_journey.md`](project_journey.md) for the day-1 → current upgrade map.

@@ -38,11 +38,16 @@ class Request(Base):
     student_hint: Mapped[str | None] = mapped_column(Text, nullable=True)
     oracle_trace_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     sensitive: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # How the student wants to be helped: async message, face-to-face, or online call.
+    help_mode: Mapped[str] = mapped_column(String, nullable=False, default="message")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
     )
+
+
+HELP_MODES = ("message", "face_to_face", "online_meeting")
 
 
 class RequestCreate(BaseModel):
@@ -59,6 +64,7 @@ class RequestCreate(BaseModel):
     cluster_id: int | None = None
     recommended_action: str | None = None
     sensitive: bool | None = None
+    help_mode: str = "message"
 
 
 class OracleAnalyzerOut(BaseModel):
@@ -102,6 +108,7 @@ class RequestOut(RequestCreate):
     id: int
     created_at: datetime
     sensitive: bool = False
+    help_mode: str = "message"
     oracle_category: str | None = None
     oracle_difficulty: str | None = None
     oracle_estimated_minutes: int | None = None
@@ -123,6 +130,7 @@ class RequestStatusOut(BaseModel):
     category: str | None = None
     submitted_at: datetime
     anonymous_submission: bool
+    help_mode: str | None = None
     recommended_next_step: str | None = None
     agenda_hint: str | None = None
     student_hint: str | None = None

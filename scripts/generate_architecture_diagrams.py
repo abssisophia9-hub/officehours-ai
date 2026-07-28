@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate OfficeHours AI architecture diagrams (custom-trained Oracle era)."""
+"""Generate OfficeHours AI architecture diagrams (unified product + Canvas era)."""
 
 from __future__ import annotations
 
@@ -90,50 +90,62 @@ def save(img: Image.Image, name: str) -> None:
 
 def draw_header(draw, w, title, subtitle, fill="#0A4F34"):
     draw.rectangle((0, 0, w, 132), fill=fill)
-    draw.text((48, 28), "OfficeHours AI · Al Akhawayn University", fill="#A7F3D0", font=font(18, bold=True))
-    draw.text((48, 60), title, fill="#F8FAFC", font=font(36, bold=True))
+    draw.text(
+        (48, 28),
+        "OfficeHours AI · Al Akhawayn University",
+        fill="#A7F3D0",
+        font=font(18, bold=True),
+    )
+    draw.text((48, 60), title, fill="#F8FAFC", font=font(34, bold=True))
     draw.text((48, 104), subtitle, fill="#D1FAE5", font=font(16))
 
 
 def draw_architecture() -> None:
-    w, h = 1700, 1100
+    w, h = 1800, 1180
     img = Image.new("RGB", (w, h), "#ECFDF5")
     draw = ImageDraw.Draw(img)
     draw_header(
         draw,
         w,
-        "System Architecture (Custom-Trained Oracle)",
-        "Three browser apps + FastAPI + local ML agents · no prompted Claude on the FYP path",
+        "System Architecture (unified product)",
+        "One login app · role per course · Canvas launch · custom Oracle · professor KB gate",
     )
 
     boxes = [
         (
-            (50, 170, 350, 360),
+            (50, 170, 560, 370),
             "#FEF3C7",
             "#B45309",
-            ["Student Kiosk", "Port 5173", "Check-in / submit", "Status lookup", "KB agent chat"],
+            [
+                "officehours-app :5180",
+                "Login · course picker",
+                "Student / TA / Professor workspaces",
+                "Quiet ask · Identify me · meetings",
+                "Canvas simulator /launch",
+            ],
         ),
         (
-            (390, 170, 690, 360),
+            (600, 170, 1140, 370),
             "#DBEAFE",
             "#1D4ED8",
-            ["Professor Dashboard", "Port 5174", "Triage + curation", "Heatmap / escalations", "Office hours"],
+            [
+                "FastAPI :8000",
+                "Auth sessions · memberships",
+                "/requests · /ta · /knowledge · /agent",
+                "/canvas/launch · WebSocket /ws",
+                "SQLite (Postgres-ready)",
+            ],
         ),
         (
-            (730, 170, 1030, 360),
-            "#FFEDD5",
-            "#C2410C",
-            ["TA Dashboard", "Port 5175", "Live queue", "Edit teaching draft", "Resolve → pending"],
-        ),
-        (
-            (1070, 170, 1650, 360),
+            (1180, 170, 1750, 370),
             "#E0E7FF",
             "#4338CA",
             [
-                "Backend API (FastAPI :8000)",
-                "SQLite + SQLAlchemy",
-                "REST + WebSocket /ws (live push)",
-                "/requests /ta /knowledge /agent /analytics",
+                "Canvas LMS (AUI)",
+                "Course + role source of truth",
+                "LTI launch (prod) / demo stub",
+                "Materials sync → course KB",
+                "Not AUI portal scraping",
             ],
         ),
         (
@@ -142,53 +154,53 @@ def draw_architecture() -> None:
             "#047857",
             [
                 "Oracle Analyzer",
-                "Fine-tuned embedding + LogReg",
+                "Embeddings + LogReg",
+                "Category · urgency · tags",
                 "request_classifier.joblib",
-                "Category · urgency · tags · ETA",
             ],
         ),
         (
-            (600, 420, 1110, 680),
+            (600, 420, 1140, 680),
             "#A7F3D0",
             "#0F766E",
             [
                 "Oracle Matcher",
-                "Embedding + LogReg TA assigner",
+                "TA assigner + queue blend",
+                "Primary / alt TA · wait",
                 "matcher_classifier.joblib",
-                "+ queue-depth penalty",
             ],
         ),
         (
-            (1150, 420, 1650, 680),
+            (1180, 420, 1750, 680),
             "#99F6E4",
             "#0F766E",
             [
                 "Oracle Synthesizer",
-                "Teaching-bank / approved-KB RAG",
-                "synthesizer_ranker.joblib",
-                "Hint + teaching approach (no LLM)",
+                "Approved-KB RAG + teaching bank",
+                "Hint · teaching approach",
+                "Weak hit → seek Quiet ask",
             ],
         ),
         (
-            (50, 730, 820, 930),
+            (50, 730, 900, 960),
             "#FFF7ED",
             "#EA580C",
             [
-                "Professor-in-the-loop gate",
-                "TA resolve → pending_review KB entry",
-                "Professor approve / edit / reject",
-                "Only approved answers reach student KB agent",
+                "Professor-in-the-loop",
+                "TA resolve → pending_review",
+                "Approve / edit / reject KB",
+                "Only approved answers → /agent/ask",
             ],
         ),
         (
-            (860, 730, 1650, 930),
+            (940, 730, 1750, 960),
             "#FFFFFF",
             "#0F172A",
             [
-                "Training data & models",
-                "120 labeled Analyzer examples · 40 learning-style labels",
-                "120 Matcher silver labels · 50 Synthesizer teaching-bank rows",
-                "sentence-transformers all-MiniLM-L6-v2 + scikit-learn",
+                "Identity model",
+                "users · courses · course_memberships",
+                "Role is per course (TA can also be student)",
+                "help_mode: message | face_to_face | online_meeting",
             ],
         ),
     ]
@@ -197,87 +209,88 @@ def draw_architecture() -> None:
         rounded_box(draw, box, fill, outline, radius=20, width=3)
         center_text(draw, box, lines, title_size=20, body_size=14)
 
-    # frontends → API
-    for x in (200, 540, 880):
-        arrow(draw, (x, 360), (x, 390), "#334155", 3)
-    draw.line([(200, 390), (1360, 390)], fill="#334155", width=3)
-    arrow(draw, (1360, 390), (1360, 360), "#334155", 3)
-
-    # API → agents
-    arrow(draw, (1200, 360), (300, 420), "#047857", 3)
-    arrow(draw, (1300, 360), (850, 420), "#0F766E", 3)
-    arrow(draw, (1400, 360), (1400, 420), "#0F766E", 3)
-
-    # agents → gate
+    arrow(draw, (560, 270), (600, 270), "#334155", 3)
+    arrow(draw, (1140, 270), (1180, 270), "#334155", 3)
+    arrow(draw, (870, 370), (300, 420), "#047857", 3)
+    arrow(draw, (870, 370), (870, 420), "#0F766E", 3)
+    arrow(draw, (870, 370), (1450, 420), "#0F766E", 3)
     arrow(draw, (300, 680), (300, 730), "#EA580C", 3)
-    arrow(draw, (850, 680), (500, 730), "#EA580C", 3)
-    arrow(draw, (1400, 680), (700, 730), "#EA580C", 3)
+    arrow(draw, (870, 680), (500, 730), "#EA580C", 3)
+    arrow(draw, (1450, 680), (700, 730), "#EA580C", 3)
 
     draw.text(
-        (50, 970),
-        "Deployment: browser web apps (campus Wi‑Fi / localhost demo). Not a native desktop installer. Auth is demo-mode (no login yet).",
+        (50, 1000),
+        "Legacy ports 5173–5175 (kiosk / professor / TA) remain for hardware experiments — product testing uses :5180.",
         fill="#065F46",
         font=font(16, bold=True),
     )
     draw.text(
-        (50, 1005),
+        (50, 1040),
         "FYP constraint: OFFICEHOURS_ALLOW_EXTERNAL_LLM=false — Analyzer / Matcher / Synthesizer are custom-trained local models.",
         fill="#334155",
         font=font(15),
+    )
+    draw.text(
+        (50, 1075),
+        "Community deploy recommendation: Canvas LTI as enrollment + auth entry; admin manual fix only as escape hatch.",
+        fill="#1E3A8A",
+        font=font(15, bold=True),
     )
     save(img, "architecture.png")
 
 
 def draw_workflow() -> None:
-    w, h = 1800, 1020
+    w, h = 1860, 1080
     img = Image.new("RGB", (w, h), "#ECFDF5")
     draw = ImageDraw.Draw(img)
     draw_header(
         draw,
         w,
-        "End-to-End Oracle Workflow",
-        "Submit → Analyzer → Matcher → Synthesizer → TA → Professor curation → Student KB",
+        "End-to-End Product Workflow",
+        "Identity + help mode → Oracle → TA → professor curation → student KB / meetings",
         fill="#0F766E",
     )
 
     steps = [
-        (40, 170, "1. Check-in", "Scan ID or stay\nanonymous (kiosk)"),
-        (270, 170, "2. Submit", "Question (+ optional\ncode) POST /requests"),
-        (500, 170, "3. Analyzer", "ML classifier\ncategory / difficulty"),
-        (730, 170, "4. Matcher", "Custom TA model\n+ wait estimate"),
-        (960, 170, "5. Synthesizer", "RAG teaching bank\n+ style ranker"),
-        (1190, 170, "6. Live push", "WebSocket events\nto dashboards"),
-        (1420, 170, "7. Cluster", "Semantic cluster_id\nfor triage groups"),
-        (100, 430, "8. TA queue", "TA edits draft &\nmarks resolved"),
-        (400, 430, "9. Pending KB", "Entry stays\npending_review"),
-        (700, 430, "10. Professor", "Approve / edit /\nreject curation"),
-        (1000, 430, "11. Approved KB", "Student agent may\nretrieve answer"),
-        (1300, 430, "12. Status", "Student looks up\nrequest code"),
-        (1550, 430, "13. Actions", "Agenda / .ics /\nlifetime confusion"),
+        (40, 170, "1. Enter", "Login or Canvas\nlaunch into course"),
+        (270, 170, "2. Ask", "Quiet ask OR\nIdentify me"),
+        (500, 170, "3. Help mode", "Message · face-to-\nface · online"),
+        (730, 170, "4. Analyzer", "Category / urgency\n/ difficulty"),
+        (960, 170, "5. Matcher", "Assign TA +\nwait estimate"),
+        (1190, 170, "6. Synthesizer", "Hint + teaching\ndraft (or seek help)"),
+        (1420, 170, "7. Live push", "WebSocket to\nTA + professor"),
+        (1650, 170, "8. Cluster", "Similar topics\nfor group review"),
+        (100, 430, "9. TA queue", "See From + Help\nedit draft / resolve"),
+        (400, 430, "10. Pending KB", "Entry stays\npending_review"),
+        (700, 430, "11. Professor", "Approve / edit /\nreject + Canvas sync"),
+        (1000, 430, "12. Approved KB", "Student agent may\nanswer from materials"),
+        (1300, 430, "13. Meetings", "Face-to-face / online\nflag for scheduling"),
+        (1600, 430, "14. Status", "Student looks up\nrequest code"),
     ]
 
     for x, y, title, body in steps:
-        box = (x, y, x + 210, y + 150)
+        box = (x, y, x + 200, y + 150)
         rounded_box(draw, box, "#FFFFFF", "#065F46", radius=16, width=2)
-        center_text(draw, box, [title, *body.split("\n")], title_size=17, body_size=13)
+        center_text(draw, box, [title, *body.split("\n")], title_size=16, body_size=12)
 
-    for x in (250, 480, 710, 940, 1170, 1400):
-        arrow(draw, (x, 245), (x + 20, 245), "#047857")
-    draw.line([(1525, 320), (1525, 380), (205, 380), (205, 430)], fill="#047857", width=3)
-    arrow(draw, (205, 415), (205, 430), "#047857")
-    for x in (310, 610, 910, 1210, 1510):
-        arrow(draw, (x, 505), (x + 20, 505), "#0F766E")
+    for x in (240, 470, 700, 930, 1160, 1390, 1620):
+        arrow(draw, (x, 245), (x + 30, 245), "#047857")
+    draw.line([(1750, 320), (1750, 380), (200, 380), (200, 430)], fill="#047857", width=3)
+    arrow(draw, (200, 415), (200, 430), "#047857")
+    for x in (300, 600, 900, 1200, 1500):
+        arrow(draw, (x, 505), (x + 30, 505), "#0F766E")
 
-    note = (40, 650, 1760, 940)
+    note = (40, 660, 1820, 1000)
     rounded_box(draw, note, "#FEF3C7", "#B45309", radius=20, width=3)
     center_text(
         draw,
         note,
         [
-            "What ships as the final product?",
-            "A campus web system (not a single App Store desktop app): shared student kiosk URL/device,",
-            "professor browser dashboard, TA browser dashboard, all talking to one FastAPI backend.",
-            "AI drafts help — professors still approve what students can see. No Claude / no mock-LLM on the assessed FYP path.",
+            "Product rules baked into this flow",
+            "Role comes from the active course membership — a TA in CSC 2302 can switch to student mode in MTH 1304.",
+            "Anonymous asks never store name/ID. Identified asks require at least one identity field.",
+            "Meeting modes override recommended_action so staff know to schedule, not only reply asynchronously.",
+            "AI drafts help — professors still approve what the student KB agent can retrieve.",
         ],
         title_size=22,
         body_size=16,
@@ -308,7 +321,7 @@ def draw_oracle_agents() -> None:
                 "Analyzer",
                 "Input: question (+ code)",
                 "Model: embeddings + LogReg",
-                "Train: 120 labeled requests",
+                "CSC topic overlays",
                 "Out: category, urgency,",
                 "difficulty, tags, ETA",
                 "Artifact: request_classifier.joblib",
@@ -322,7 +335,7 @@ def draw_oracle_agents() -> None:
                 "Matcher",
                 "Input: Analyzer + TA roster",
                 "Model: embeddings + LogReg",
-                "Train: 120 silver TA labels",
+                "Expertise / queue blend",
                 "Out: assigned_ta, alt TA,",
                 "wait minutes, rationale",
                 "Artifact: matcher_classifier.joblib",
@@ -336,9 +349,9 @@ def draw_oracle_agents() -> None:
                 "Synthesizer",
                 "Input: Q + style + KB hits",
                 "Model: RAG + style ranker",
-                "Train: 50 teaching-bank rows",
+                "CSC teaching-bank rows",
                 "Out: student_hint,",
-                "teaching_approach",
+                "teaching_approach / seek-help",
                 "Artifact: synthesizer_ranker.joblib",
             ],
         ),
@@ -357,9 +370,9 @@ def draw_oracle_agents() -> None:
         bottom,
         [
             "Embeddings backbone: sentence-transformers all-MiniLM-L6-v2 (shared)",
-            "Extra: learning_style_classifier.joblib trained on 40 style-labeled texts",
-            "All labels are synthetic / silver / curated for the FYP — not real private student transcripts",
-            "Runtime default: OFFICEHOURS_ALLOW_EXTERNAL_LLM=false (Claude path gated off)",
+            "Learning-style classifier defaults to ML; tests may use lexical clustering",
+            "Labels are synthetic / silver / curated for the FYP — not private student transcripts",
+            "Quality ceiling = course KB coverage + labeled CSC topics (see docs/agent_performance.md)",
         ],
         title_size=20,
         body_size=16,
@@ -368,166 +381,191 @@ def draw_oracle_agents() -> None:
 
 
 def draw_product_deployment() -> None:
-    w, h = 1600, 980
+    w, h = 1700, 1080
     img = Image.new("RGB", (w, h), "#FFFBEB")
     draw = ImageDraw.Draw(img)
     draw_header(
         draw,
         w,
-        "Final Product & Deployment Model",
-        "What you demo / submit — and what it is not",
+        "Community Deployment Model",
+        "What to ship for AUI — and what not to build first",
         fill="#92400E",
     )
 
     boxes = [
         (
-            (60, 180, 520, 460),
-            "#FEF3C7",
-            "#B45309",
-            [
-                "Student experience",
-                "Shared hallway kiosk OR",
-                "laptop/tablet browser URL",
-                "Optional barcode scan",
-                "Anonymous OK",
-                "No student login accounts yet",
-            ],
-        ),
-        (
-            (560, 180, 1040, 460),
-            "#DBEAFE",
-            "#1D4ED8",
-            [
-                "Staff experience",
-                "Professor opens dashboard",
-                "in desktop Chrome/Edge",
-                "TA opens TA dashboard",
-                "Live WebSocket updates",
-                "Demo: pick TA name in UI",
-            ],
-        ),
-        (
-            (1080, 180, 1540, 460),
-            "#D1FAE5",
-            "#047857",
-            [
-                "Backend",
-                "One FastAPI process",
-                "SQLite file by default",
-                "Can swap to Postgres",
-                "Campus server / laptop",
-                "for the FYP demo day",
-            ],
-        ),
-        (
-            (60, 520, 780, 880),
-            "#FEE2E2",
-            "#B91C1C",
-            [
-                "Not (yet) this",
-                "Not an App Store / Play Store app",
-                "Not a native Windows/Mac installer",
-                "Not SSO/AUI login (future work)",
-                "Not auto-publishing answers to students",
-            ],
-        ),
-        (
-            (840, 520, 1540, 880),
+            (60, 180, 560, 480),
             "#DCFCE7",
             "#15803D",
             [
-                "FYP deliverable",
-                "Working multi-agent triage demo",
-                "Custom-trained models + metrics",
-                "Professor-in-the-loop KB curation",
-                "Architecture diagrams + evaluation",
+                "Optimal: Canvas LTI",
+                "Open from Canvas course",
+                "JIT account + membership",
+                "Role from Canvas enrollment",
+                "Materials via Canvas API",
+                "TA can also be student",
+            ],
+        ),
+        (
+            (600, 180, 1100, 480),
+            "#FEE2E2",
+            "#B91C1C",
+            [
+                "Not primary: AUI portal",
+                "No JICS/SIS code today",
+                "Slow campus IT projects",
+                "Canvas already mirrors",
+                "enrollments for teaching",
+                "Defer unless IT requires",
+            ],
+        ),
+        (
+            (1140, 180, 1640, 480),
+            "#FEF3C7",
+            "#B45309",
+            [
+                "Support only: manual",
+                "Admin fix for bad rows",
+                "Not how the community",
+                "enrolls day-to-day",
+                "No public self-serve",
+                "course typing at login",
+            ],
+        ),
+        (
+            (60, 530, 820, 980),
+            "#DBEAFE",
+            "#1D4ED8",
+            [
+                "What ships in the FYP package",
+                "Unified web app + FastAPI",
+                "Demo seed (aui-demo) for local tests",
+                "Canvas launch simulator + stub",
+                "Quiet ask / Identify / meetings",
+                "Custom Oracle + KB gate",
+                "Next: real LTI 1.3 signatures",
+            ],
+        ),
+        (
+            (880, 530, 1640, 980),
+            "#FFEDD5",
+            "#C2410C",
+            [
+                "Still not (and OK for now)",
+                "Not App Store / Play Store",
+                "Not native desktop installer",
+                "Not auto-publish unapproved FAQ",
+                "Demo launch is unsigned (unsafe",
+                "until LTI lands for production)",
             ],
         ),
     ]
     for box, fill, outline, lines in boxes:
         rounded_box(draw, box, fill, outline, radius=20, width=3)
-        center_text(draw, box, lines, title_size=22, body_size=15)
+        center_text(draw, box, lines, title_size=20, body_size=15)
     save(img, "product_deployment.png")
 
 
 def draw_erd() -> None:
-    w, h = 1700, 1100
+    w, h = 1800, 1180
     img = Image.new("RGB", (w, h), "#F8FAFC")
     draw = ImageDraw.Draw(img)
     draw_header(
         draw,
         w,
         "Database Entity-Relationship Diagram",
-        "SQLite (officehours.db) · Oracle + KB + TA roster tables",
+        "Auth · memberships · requests (help_mode) · KB · Oracle · TA roster",
         fill="#1E3A8A",
     )
 
     entities = [
         (
-            (40, 170, 420, 520),
+            (40, 170, 360, 420),
             "#FEF3C7",
             "#B45309",
             [
-                "requests",
+                "users",
                 "id PK",
-                "text / anonymous / student_id",
-                "category / urgency / style",
-                "cluster_id / recommended_action",
-                "oracle_* / assigned_ta",
-                "student_hint / oracle_trace_json",
-                "created_at",
+                "email UNIQUE",
+                "password_hash",
+                "display_name",
+                "student_id",
+                "is_active",
             ],
         ),
         (
-            (460, 170, 840, 430),
+            (400, 170, 720, 400),
             "#DBEAFE",
             "#1D4ED8",
             [
-                "knowledge_entries",
+                "courses",
                 "id PK",
-                "question_text / answer_draft",
-                "student_hint / status",
-                "drafter_backend / style",
-                "source_request_id FK",
-                "reviewed_at",
+                "code / title / term",
+                "canvas_course_id",
+                "is_active",
             ],
         ),
         (
-            (880, 170, 1240, 390),
+            (760, 170, 1140, 430),
             "#D1FAE5",
             "#047857",
             [
-                "ta_roster",
+                "course_memberships",
                 "id PK",
+                "course_id FK",
+                "user_id FK",
+                "role: student|ta|professor",
+                "UNIQUE(course, user)",
+            ],
+        ),
+        (
+            (1180, 170, 1760, 520),
+            "#FFEDD5",
+            "#C2410C",
+            [
+                "requests",
+                "id PK · text · anonymous",
+                "student_id / student_name",
+                "help_mode (message|f2f|online)",
+                "category / urgency / style",
+                "cluster_id / recommended_action",
+                "oracle_* / assigned_ta",
+                "course_id FK · created_at",
+            ],
+        ),
+        (
+            (40, 480, 400, 740),
+            "#E0E7FF",
+            "#4338CA",
+            [
+                "knowledge_entries",
+                "id PK · status",
+                "question / answer_draft",
+                "student_hint · course_id",
+                "source_request_id FK",
+            ],
+        ),
+        (
+            (440, 480, 760, 700),
+            "#FCE7F3",
+            "#BE185D",
+            [
+                "ta_roster",
                 "name UNIQUE",
-                "expertise_tags JSON",
+                "expertise_tags",
                 "queue_depth",
                 "is_available",
             ],
         ),
         (
-            (1280, 170, 1660, 430),
-            "#E0E7FF",
-            "#4338CA",
+            (800, 500, 1140, 720),
+            "#ECFEFF",
+            "#0891B2",
             [
-                "recommendation_decisions",
-                "id PK",
-                "card_id / action_kind",
-                "status / cluster_id",
-                "request_ids JSON",
-                "action_plan JSON",
-            ],
-        ),
-        (
-            (460, 500, 840, 720),
-            "#FFEDD5",
-            "#C2410C",
-            [
-                "office_hours_windows",
-                "id PK",
-                "day / start / end",
-                "location",
-                "created_at",
+                "auth_sessions",
+                "token UNIQUE",
+                "user_id FK",
+                "expires_at",
             ],
         ),
     ]
@@ -542,23 +580,23 @@ def draw_erd() -> None:
             draw.text((x0 + 18, y), line, fill="#111827", font=font(15))
             y += 26
 
-    arrow(draw, (420, 300), (460, 300), "#1D4ED8")
-    draw.text((425, 260), "creates", fill="#1E3A8A", font=font(14, bold=True))
-    arrow(draw, (300, 520), (300, 620), "#047857")
-    draw.line([(300, 620), (880, 280)], fill="#047857", width=2)
-    arrow(draw, (860, 280), (880, 280), "#047857")
-    draw.text((310, 560), "Matcher reads roster", fill="#065F46", font=font(14, bold=True))
+    arrow(draw, (360, 280), (400, 280), "#1D4ED8")
+    arrow(draw, (720, 280), (760, 280), "#047857")
+    draw.text((370, 240), "N:M via", fill="#1E3A8A", font=font(14, bold=True))
+    arrow(draw, (950, 430), (1300, 520), "#C2410C")
+    draw.text((980, 450), "asks in course", fill="#9A3412", font=font(14, bold=True))
 
-    note = (40, 780, 1660, 1040)
+    note = (40, 800, 1760, 1100)
     rounded_box(draw, note, "#ECFEFF", "#0891B2", radius=18, width=3)
     center_text(
         draw,
         note,
         [
             "Key runtime paths",
-            "POST /requests → Oracle agents → persist Request + pending KnowledgeEntry + WS broadcast",
-            "POST /ta/resolve → update teaching notes; status remains pending_review until professor PATCH /knowledge/{id}",
-            "POST /agent/ask → semantic search over approved knowledge_entries only",
+            "Login / Canvas launch → memberships decide workspace role for the active course",
+            "POST /requests → Oracle → Request + pending KnowledgeEntry + WS broadcast (help_mode preserved)",
+            "POST /ta/resolve → notes; professor PATCH /knowledge/{id} publishes to /agent/ask",
+            "Same user may hold ta in one course and student in another — never two roles in one course",
         ],
         title_size=20,
         body_size=15,
@@ -567,9 +605,123 @@ def draw_erd() -> None:
     save(img, "database_erd.png")
 
 
+def draw_canvas_enrollment() -> None:
+    w, h = 1700, 1000
+    img = Image.new("RGB", (w, h), "#EFF6FF")
+    draw = ImageDraw.Draw(img)
+    draw_header(
+        draw,
+        w,
+        "Canvas Enrollment & Dual Roles",
+        "One person · many courses · one role per course · JIT provision",
+        fill="#1D4ED8",
+    )
+
+    steps = [
+        (60, 180, "Canvas course", "User already enrolled\nin LMS as student/TA/\nteacher"),
+        (380, 180, "Open tool", "Click OfficeHours AI\n(LTI in prod; /canvas-\ndemo locally)"),
+        (700, 180, "Launch payload", "email · canvas_course_id\n· Canvas role"),
+        (1020, 180, "Upsert", "User + Course +\nmembership.role"),
+        (1340, 180, "Workspace", "Land in student / TA /\nprofessor for THAT course"),
+    ]
+    for x, y, title, body in steps:
+        box = (x, y, x + 280, y + 180)
+        rounded_box(draw, box, "#FFFFFF", "#1D4ED8", radius=16, width=2)
+        center_text(draw, box, [title, *body.split("\n")], title_size=18, body_size=13)
+    for x in (340, 660, 980, 1300):
+        arrow(draw, (x, 270), (x + 40, 270), "#1D4ED8")
+
+    left = (60, 420, 820, 900)
+    right = (880, 420, 1640, 900)
+    rounded_box(draw, left, "#D1FAE5", "#047857", radius=20, width=3)
+    center_text(
+        draw,
+        left,
+        [
+            "Example: Alice / Karim",
+            "CSC 2302 → role = ta",
+            "CSC 3323 → role = student",
+            "MTH 1304 → role = student",
+            "",
+            "Course picker switches workspace",
+            "with the membership role",
+        ],
+        title_size=22,
+        body_size=16,
+        title_color="#065F46",
+    )
+    rounded_box(draw, right, "#FEF3C7", "#B45309", radius=20, width=3)
+    center_text(
+        draw,
+        right,
+        [
+            "Why not portal / manual?",
+            "Canvas already has the roster",
+            "and teaching materials",
+            "",
+            "Portal sync = slow IT project",
+            "Manual entry ≠ community scale",
+            "",
+            "Admin tools = exception handling",
+        ],
+        title_size=22,
+        body_size=16,
+        title_color="#92400E",
+    )
+    save(img, "canvas_enrollment.png")
+
+
+def draw_project_journey() -> None:
+    w, h = 1800, 980
+    img = Image.new("RGB", (w, h), "#F8FAFC")
+    draw = ImageDraw.Draw(img)
+    draw_header(
+        draw,
+        w,
+        "Project Journey — Day 1 → This Upgrade",
+        "From proposal kiosk to Canvas-ready multi-role campus product",
+        fill="#0F172A",
+    )
+
+    phases = [
+        (50, 180, "#FEF3C7", "#B45309", "0 Proposal", "Problem + scope\nkiosk idea"),
+        (300, 180, "#DBEAFE", "#1D4ED8", "1 API + kiosk", "FastAPI CRUD\nstudent submit"),
+        (550, 180, "#E0E7FF", "#4338CA", "2 Professor AI", "Classify · cluster\ncards · actions"),
+        (800, 180, "#D1FAE5", "#047857", "3 Oracle + TA", "3 agents · KB gate\nWebSocket live"),
+        (1050, 180, "#A7F3D0", "#0F766E", "4 One app", "Login · courses\nrole per course"),
+        (1300, 180, "#99F6E4", "#0F766E", "5 AUI + Canvas", "Catalog codes\nlaunch · materials"),
+        (1550, 180, "#FFEDD5", "#C2410C", "6 This upgrade", "Identity · meetings\nTA+student · docs"),
+    ]
+    for x, y, fill, outline, title, body in phases:
+        box = (x, y, x + 220, y + 200)
+        rounded_box(draw, box, fill, outline, radius=16, width=3)
+        center_text(draw, box, [title, *body.split("\n")], title_size=17, body_size=13)
+    for x in (270, 520, 770, 1020, 1270, 1520):
+        arrow(draw, (x, 280), (x + 30, 280), "#334155")
+
+    bottom = (50, 440, 1750, 900)
+    rounded_box(draw, bottom, "#FFFFFF", "#0F172A", radius=20, width=3)
+    center_text(
+        draw,
+        bottom,
+        [
+            "Where we are now",
+            "Packaged multi-role web product for AUI demos and FYP evaluation",
+            "Community path locked: Canvas LTI (finish signatures) — not portal, not manual enrollment",
+            "Agents next: more CSC-covered labels + richer course KB (see docs/agent_performance.md)",
+            "Full narrative: docs/project_journey.md",
+        ],
+        title_size=24,
+        body_size=17,
+    )
+    save(img, "project_journey.png")
+
+
 if __name__ == "__main__":
     draw_architecture()
     draw_workflow()
     draw_oracle_agents()
     draw_product_deployment()
     draw_erd()
+    draw_canvas_enrollment()
+    draw_project_journey()

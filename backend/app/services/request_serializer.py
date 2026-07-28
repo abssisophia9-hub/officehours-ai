@@ -45,6 +45,7 @@ def to_request_out(request: Request, oracle: dict | None = None) -> RequestOut:
         cluster_id=request.cluster_id,
         recommended_action=request.recommended_action,
         sensitive=bool(getattr(request, "sensitive", False)),
+        help_mode=str(getattr(request, "help_mode", None) or "message"),
         created_at=request.created_at,
         oracle_category=request.oracle_category,
         oracle_difficulty=request.oracle_difficulty,

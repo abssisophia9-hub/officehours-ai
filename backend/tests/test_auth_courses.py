@@ -57,22 +57,46 @@ def test_login_returns_courses_for_roles():
 def test_email_does_not_encode_role():
     """AUI emails are Initial.Last@aui.ma for every role."""
     with TestClient(app) as client:
-        for email, expected_role in (
-            ("a.benali@aui.ma", "professor"),
-            ("a.chen@aui.ma", "ta"),
-            ("s.elidrissi@aui.ma", "student"),
+        for email, expected_roles in (
+            ("a.benali@aui.ma", {"professor"}),
+            # Alice is a TA and a student (different courses).
+            ("a.chen@aui.ma", {"ta", "student"}),
+            ("s.elidrissi@aui.ma", {"student"}),
         ):
             payload = client.post(
                 "/auth/login",
                 json={"email": email, "password": DEMO_PASSWORD},
             ).json()
-            assert all(c["role"] == expected_role for c in payload["user"]["courses"])
+            roles = {c["role"] for c in payload["user"]["courses"]}
+            assert roles == expected_roles
             assert "@aui.ma" in payload["user"]["email"]
             local = payload["user"]["email"].split("@", 1)[0]
             assert "." in local
             assert not local.startswith("ta.")
             assert not local.startswith("professor")
             assert not local.startswith("student")
+
+
+def test_ta_is_also_student_across_courses():
+    """Campus reality: one person can TA one course and take others as a student."""
+    with TestClient(app) as client:
+        alice = client.post(
+            "/auth/login",
+            json={"email": "a.chen@aui.ma", "password": DEMO_PASSWORD},
+        ).json()["user"]
+        by_code = {c["code"]: c["role"] for c in alice["courses"]}
+        assert by_code["CSC 2302"] == "ta"
+        assert by_code["CSC 3323"] == "student"
+        assert by_code["MTH 1304"] == "student"
+        assert alice["student_id"] == "118110"
+
+        bob = client.post(
+            "/auth/login",
+            json={"email": "b.martinez@aui.ma", "password": DEMO_PASSWORD},
+        ).json()["user"]
+        bob_roles = {c["code"]: c["role"] for c in bob["courses"]}
+        assert bob_roles["CSC 3374"] == "ta"
+        assert bob_roles["COM 1301"] == "student"
 
 
 def test_invalid_login_rejected():
