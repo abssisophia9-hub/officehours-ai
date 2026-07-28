@@ -30,7 +30,7 @@ def test_analyzer_uses_ml_classifier_by_default(tmp_path, monkeypatch):
             "Rotation isn't balancing properly."
         ),
         code_snippet="def delete_fixup(self, node): ...",
-        course="CS 400",
+        course="CSC 2302",
     )
 
     assert result["backend"] == "ml_classifier"

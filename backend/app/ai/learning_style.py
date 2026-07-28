@@ -2,8 +2,8 @@
 Infer how a student prefers to understand a topic from their question text.
 
 Backends:
-- rules (default): keyword/cue heuristics
-- ml: embedding + logistic regression trained on labeled learning-style data
+- ml (default): embedding + logistic regression trained on labeled learning-style data
+- rules: keyword/cue heuristics
 """
 
 from __future__ import annotations
@@ -85,7 +85,8 @@ class LearningStyleResult:
 
 
 def infer_learning_style(text: str) -> dict[str, object]:
-    backend = os.getenv("OFFICEHOURS_LEARNING_STYLE_BACKEND", "rules").strip().lower()
+    # Default to the trained style model so Synthesizer RAG can boost by style.
+    backend = os.getenv("OFFICEHOURS_LEARNING_STYLE_BACKEND", "ml").strip().lower()
     if backend == "ml":
         from app.ai.ml_learning_style import classify_learning_style_ml
 

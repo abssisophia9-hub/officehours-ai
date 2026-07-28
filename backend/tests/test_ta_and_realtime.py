@@ -68,8 +68,14 @@ def test_ta_resolve_keeps_entry_pending_review():
         assert resolved.status_code == 200
         payload = resolved.json()
         assert payload["knowledge_entry"]["status"] == "pending_review"
+        assert payload["knowledge_entry"]["ta_resolution"] == "resolved"
         assert "Alice Chen" in (payload["knowledge_entry"]["professor_note"] or "")
         assert "invariant" in payload["knowledge_entry"]["answer_draft"].lower()
+
+        # A TA-resolved item leaves the active queue immediately — it is
+        # waiting on the professor, not on another TA.
+        queue_mid = client.get("/ta/queue/").json()
+        assert all(item["request"]["id"] != created["id"] for item in queue_mid)
 
         agent = client.post(
             "/agent/ask",

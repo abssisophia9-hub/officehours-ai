@@ -12,7 +12,6 @@ Usage (from backend/):
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import sys
 from pathlib import Path
@@ -24,15 +23,11 @@ if str(ROOT) not in sys.path:
 from app.ai.synthesizer_model import (  # noqa: E402
     DEFAULT_MODEL_PATH,
     load_synthesizer,
+    load_teaching_bank,
     save_synthesizer,
     train_synthesizer_ranker,
 )
 from app.ai.ml_classifier import _load_embedder  # noqa: E402
-
-
-def load_bank(path: Path) -> list[dict[str, str]]:
-    with path.open(encoding="utf-8", newline="") as handle:
-        return list(csv.DictReader(handle))
 
 
 def main() -> int:
@@ -40,12 +35,13 @@ def main() -> int:
     parser.add_argument(
         "--data",
         type=Path,
-        default=ROOT.parent / "data" / "synthesizer_teaching_bank.csv",
+        default=None,
+        help="Optional single bank CSV (default: base + CSC supplement)",
     )
     parser.add_argument("--out", type=Path, default=DEFAULT_MODEL_PATH)
     args = parser.parse_args()
 
-    rows = load_bank(args.data)
+    rows = load_teaching_bank(args.data)
     if len(rows) < 8:
         raise SystemExit(f"Need at least 8 teaching-bank entries, found {len(rows)}")
 
@@ -67,6 +63,7 @@ def main() -> int:
                 "bank_n": len(rows),
                 "styles": sorted(set(styles)),
                 "categories": sorted({row.get("category", "").strip() for row in rows}),
+                "topics_sample": sorted({row.get("topic", "").strip() for row in rows})[:12],
             },
             indent=2,
         )

@@ -1,7 +1,34 @@
-import { useCallback, useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
-import { api } from "../api/client.js";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Navigate } from "react-router";
+import { api, apiUpload } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
+
+const ICONS = {
+  doc: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6" />
+    </svg>
+  ),
+  clusters: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <circle cx="6" cy="6" r="3" />
+      <circle cx="18" cy="8" r="3" />
+      <circle cx="12" cy="18" r="3" />
+    </svg>
+  ),
+  alert: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+      <path d="M12 9v4M12 17h.01" />
+    </svg>
+  ),
+  shield: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  ),
+};
 
 export default function ProfessorWorkspace() {
   const { token, activeCourse } = useAuth();
@@ -10,19 +37,22 @@ export default function ProfessorWorkspace() {
   const [commandCenter, setCommandCenter] = useState(null);
   const [materialTitle, setMaterialTitle] = useState("");
   const [materialContent, setMaterialContent] = useState("");
+  const [canvasInfo, setCanvasInfo] = useState(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const fileInputRef = useRef(null);
 
   const load = useCallback(async () => {
     try {
-      const [req, kb, clusters] = await Promise.all([
+      const [req, kb, clusters, canvas] = await Promise.all([
         api("/requests/", { token }),
         api(`/knowledge/?status=pending_review&course_id=${activeCourse.id}`, { token }),
         api(
           `/analytics/clusters?course_id=${activeCourse.id}&course=${encodeURIComponent(activeCourse.code)}`,
           { token },
         ),
+        api(`/knowledge/canvas/status?course_id=${activeCourse.id}`, { token }),
       ]);
       setRequests(
         req.filter((item) => !item.course || item.course === activeCourse.code),
@@ -35,6 +65,7 @@ export default function ProfessorWorkspace() {
         }),
       );
       setCommandCenter(clusters);
+      setCanvasInfo(canvas);
     } catch (err) {
       setError(err.message);
     }
@@ -121,6 +152,7 @@ export default function ProfessorWorkspace() {
     event.preventDefault();
     setBusy(true);
     setError("");
+    setMessage("");
     try {
       const result = await api("/knowledge/materials", {
         method: "POST",
@@ -145,55 +177,115 @@ export default function ProfessorWorkspace() {
     }
   }
 
+  async function uploadFiles(event) {
+    event.preventDefault();
+    const files = Array.from(fileInputRef.current?.files || []);
+    if (files.length === 0) {
+      setError("Choose at least one file to upload.");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    setMessage("");
+    const summaries = [];
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("course_id", String(activeCourse.id));
+        formData.append("auto_approve", "true");
+        formData.append("file", file);
+        const result = await apiUpload("/knowledge/materials/upload", {
+          token,
+          formData,
+        });
+        summaries.push(`${file.name}: ${result.chunks_created} chunk(s)`);
+      }
+      setMessage(`Uploaded to ${activeCourse.code} KB — ${summaries.join(" · ")}`);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      await load();
+    } catch (err) {
+      setError(
+        summaries.length
+          ? `${err.message} (already uploaded: ${summaries.join(" · ")})`
+          : err.message,
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function syncCanvas() {
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const result = await api("/knowledge/canvas/sync", {
+        method: "POST",
+        token,
+        body: {
+          course_id: activeCourse.id,
+          auto_approve: true,
+        },
+      });
+      setMessage(result.message);
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const sensitiveCount = requests.filter((item) => item.sensitive).length;
   const anonCount = requests.filter((item) => item.anonymous).length;
 
   return (
-    <div className="fade-up space-y-6">
-      <section className="glass-panel p-6">
-        <p className="glass-chip mb-3">Professor · {activeCourse.code}</p>
-        <h1 className="font-display max-w-[18ch] text-3xl font-semibold sm:text-4xl">
-          Office-hours command center
-        </h1>
-        <p className="mt-2 max-w-2xl font-medium text-aui-deep/70">
-          Group repeats, draft FAQs, flag sensitive cases, and ground the KB agent
-          in your course materials.
-        </p>
-        {error ? (
-          <p className="clay-blob clay-blob-coral mt-3 block w-full px-4 py-2 text-sm font-semibold">
-            {error}
-          </p>
-        ) : null}
-        {message ? (
-          <p className="clay-blob clay-blob-mint mt-3 block w-full px-4 py-2 text-sm font-semibold">
-            {message}
-          </p>
-        ) : null}
-        <div className="mt-6 grid gap-3 sm:grid-cols-4">
-          <article className="soft-stat">
-            <p className="text-sm font-medium text-aui-deep/60">Requests</p>
-            <p className="font-display text-3xl font-semibold">{requests.length}</p>
-          </article>
-          <article className="soft-stat">
-            <p className="text-sm font-medium text-aui-deep/60">Topic clusters</p>
-            <p className="font-display text-3xl font-semibold">
-              {commandCenter?.clusters?.length || 0}
-            </p>
-          </article>
-          <article className="soft-stat">
-            <p className="text-sm font-medium text-aui-deep/60">Sensitive flags</p>
-            <p className="font-display text-3xl font-semibold">{sensitiveCount}</p>
-          </article>
-          <article className="soft-stat">
-            <p className="text-sm font-medium text-aui-deep/60">Anonymous asks</p>
-            <p className="font-display text-3xl font-semibold">{anonCount}</p>
-          </article>
-        </div>
-      </section>
+    <div className="fade-up">
+      <h1 className="bh-page-title">Professor Dashboard</h1>
+      <p className="bh-page-subtitle">
+        Group repeats, curate knowledge, and ground the study agent in your
+        Canvas materials · {activeCourse.code} — {activeCourse.title}
+      </p>
 
-      <section className="glass-panel p-6">
-        <h2 className="font-display text-2xl font-semibold">Repeated topics</h2>
-        <p className="mt-1 text-sm text-aui-deep/65">
+      {error ? (
+        <p className="clay-blob clay-blob-coral mt-4 block w-full px-4 py-2.5 text-sm font-semibold">
+          {error}
+        </p>
+      ) : null}
+      {message ? (
+        <p className="clay-blob clay-blob-mint mt-4 block w-full px-4 py-2.5 text-sm font-semibold">
+          {message}
+        </p>
+      ) : null}
+
+      <div className="bh-stats">
+        <article className="bh-stat-card">
+          <div className="bh-stat-head">Requests {ICONS.doc}</div>
+          <p className="bh-stat-value">{requests.length}</p>
+          <p className="bh-stat-note">All asks in {activeCourse.code}</p>
+        </article>
+        <article className="bh-stat-card">
+          <div className="bh-stat-head">Topic Clusters {ICONS.clusters}</div>
+          <p className="bh-stat-value">{commandCenter?.clusters?.length || 0}</p>
+          <p className="bh-stat-note">Repeated struggles grouped</p>
+        </article>
+        <article className="bh-stat-card">
+          <div className="bh-stat-head">Sensitive Flags {ICONS.shield}</div>
+          <p className="bh-stat-value">{sensitiveCount}</p>
+          <p className="bh-stat-note">Kept private, never grouped</p>
+        </article>
+        <article className="bh-stat-card">
+          <div className="bh-stat-head">Anonymous Asks {ICONS.alert}</div>
+          <p className="bh-stat-value">{anonCount}</p>
+          <p className="bh-stat-note">Identity never stored</p>
+        </article>
+      </div>
+
+      <section id="clusters" className="bh-card scroll-mt-6">
+        <div className="bh-card-title">
+          <h2>Repeated Topics</h2>
+        </div>
+        <p className="bh-card-note">
           {commandCenter?.message ||
             "Similar questions are clustered so you can FAQ or group-review once."}
         </p>
@@ -201,16 +293,20 @@ export default function ProfessorWorkspace() {
           {(commandCenter?.clusters || []).map((cluster) => (
             <li
               key={cluster.cluster_id}
-              className="rounded-2xl border border-white/60 bg-white/45 px-4 py-4"
+              className="rounded-xl border border-[#e3e8e4] bg-[#fafcfa] px-4 py-4"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-aui-deep/55">
+                  <p className="text-xs font-semibold text-aui-deep/55">
                     Cluster {cluster.cluster_id} · {cluster.request_count} asks ·{" "}
                     {cluster.suggested_action.replaceAll("_", " ")}
                   </p>
-                  <h3 className="font-display mt-1 text-xl font-semibold">{cluster.title}</h3>
-                  <p className="mt-1 text-sm text-aui-deep/75">{cluster.suggestion_reason}</p>
+                  <h3 className="font-display mt-1 text-lg font-semibold">
+                    {cluster.title}
+                  </h3>
+                  <p className="mt-1 text-sm text-aui-deep/75">
+                    {cluster.suggestion_reason}
+                  </p>
                   {cluster.sensitive_count > 0 ? (
                     <p className="mt-2 text-sm font-semibold text-red-700">
                       {cluster.sensitive_count} sensitive — keep private
@@ -239,9 +335,9 @@ export default function ProfessorWorkspace() {
                 </div>
               </div>
               <ul className="mt-3 space-y-1 text-sm text-aui-deep/80">
-                {cluster.sample_texts.map((text) => (
-                  <li key={text} className="line-clamp-2">
-                    • {text}
+                {cluster.sample_texts.map((sample) => (
+                  <li key={sample} className="line-clamp-2">
+                    • {sample}
                   </li>
                 ))}
               </ul>
@@ -255,17 +351,19 @@ export default function ProfessorWorkspace() {
         </ul>
       </section>
 
-      <section className="glass-panel p-6">
-        <h2 className="font-display text-2xl font-semibold">Urgent & sensitive</h2>
-        <ul className="mt-4 space-y-2">
+      <section className="bh-card">
+        <div className="bh-card-title">
+          <h2>Urgent &amp; Sensitive</h2>
+        </div>
+        <ul className="mt-3 space-y-2">
           {(commandCenter?.escalations || []).map((item) => (
             <li
               key={item.request_id}
-              className={`rounded-2xl px-4 py-3 text-sm ${
-                item.sensitive ? "bg-red-50/90" : "bg-orange-50/80"
+              className={`rounded-xl px-4 py-3 text-sm ${
+                item.sensitive ? "bg-red-50" : "bg-orange-50"
               }`}
             >
-              <p className="font-bold">
+              <p className="font-semibold">
                 #{item.request_id}
                 {item.sensitive ? " · private" : ""} · {item.urgency || "n/a"}
               </p>
@@ -279,76 +377,191 @@ export default function ProfessorWorkspace() {
         </ul>
       </section>
 
-      <section className="glass-panel p-6">
-        <h2 className="font-display text-2xl font-semibold">Course materials → KB agent</h2>
-        <p className="mt-1 text-sm text-aui-deep/65">
-          Paste slide notes or a Canvas page export. Chunks are approved into the KB so
-          the student agent can answer from your materials (Canvas OAuth can reuse this
-          ingest later).
+      <section id="knowledge" className="bh-card scroll-mt-6">
+        <div className="bh-card-title">
+          <h2>Pending Knowledge Curation</h2>
+          <span className="bh-pill bh-pill-amber">{entries.length} pending</span>
+        </div>
+        <p className="bh-card-note">
+          Nothing reaches students until you approve it.
         </p>
-        <form onSubmit={ingestMaterials} className="mt-4 space-y-3">
+        {entries.length === 0 ? (
+          <p className="bh-card-note mt-3">No pending drafts for this course.</p>
+        ) : (
+          <table className="bh-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Question</th>
+                <th>Draft</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((entry) => (
+                <tr key={entry.id}>
+                  <td className="font-semibold">#{entry.id}</td>
+                  <td className="max-w-[18rem]">
+                    <span className="line-clamp-2 font-medium">
+                      {entry.question_text}
+                    </span>
+                  </td>
+                  <td className="max-w-[22rem]">
+                    <span className="line-clamp-2 text-aui-deep/75">
+                      {entry.answer_draft}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      className="btn-primary px-3.5 py-1.5 text-xs"
+                      onClick={() => approve(entry.id)}
+                    >
+                      Approve for student KB
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      <section id="materials" className="bh-card scroll-mt-6">
+        <div className="bh-card-title">
+          <h2>Canvas LMS → Course KB</h2>
+          <span
+            className={`bh-pill ${canvasInfo?.agent_ready ? "bh-pill-green" : "bh-pill-gray"}`}
+          >
+            agent {canvasInfo?.agent_ready ? "ready" : "pending"} ·{" "}
+            {canvasInfo?.kb_chunks ?? 0} chunks
+          </span>
+        </div>
+        <p className="bh-card-note">
+          Sync pulls module slides/pages from this course&apos;s Canvas link into
+          the same approved KB the study agent searches. Live mode uses{" "}
+          <code className="text-xs">CANVAS_BASE_URL</code> +{" "}
+          <code className="text-xs">CANVAS_ACCESS_TOKEN</code>; otherwise the
+          local AUI mirror is used for demos.
+        </p>
+        <div className="soft-stat mt-4 text-sm">
+          <p className="font-medium">
+            Mode: <strong>{canvasInfo?.mode || "…"}</strong>
+            {canvasInfo?.canvas_course_id
+              ? ` · Canvas course ${canvasInfo.canvas_course_id}`
+              : ""}
+          </p>
+          <p className="mt-1 text-aui-deep/65">{canvasInfo?.message}</p>
+          {(canvasInfo?.available_files || []).length > 0 ? (
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-aui-deep/75">
+              {canvasInfo.available_files.map((file) => (
+                <li key={file.external_id}>
+                  {file.module ? `${file.module} · ` : ""}
+                  {file.title}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          disabled={busy}
+          className="btn-primary mt-4 px-5 py-2.5 text-sm"
+          onClick={syncCanvas}
+        >
+          {busy ? "Syncing…" : "Sync Canvas materials into KB"}
+        </button>
+
+        <h3 className="font-display mt-7 text-lg font-semibold">
+          Upload files directly
+        </h3>
+        <p className="bh-card-note">
+          PDF slides, DOCX/TXT/MD notes, or lecture-video transcripts
+          (.vtt/.srt captions). Text is extracted, chunked, and made available
+          to the course agent immediately.
+        </p>
+        <form onSubmit={uploadFiles} className="mt-3 flex flex-wrap items-center gap-3">
           <input
-            className="field-glass w-full px-4 py-3"
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".pdf,.docx,.txt,.md,.vtt,.srt"
+            className="field-glass max-w-md px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-aui-mist file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-aui-deep"
+          />
+          <button type="submit" disabled={busy} className="btn-primary px-5 py-2.5 text-sm">
+            {busy ? "Uploading…" : "Upload to course KB"}
+          </button>
+        </form>
+
+        <h3 className="font-display mt-7 text-lg font-semibold">
+          Or paste slides / notes
+        </h3>
+        <form onSubmit={ingestMaterials} className="mt-3 space-y-3">
+          <input
+            className="field-glass w-full px-4 py-2.5 text-sm"
             placeholder="Material title (e.g. Week 4 — Hashing slides)"
             value={materialTitle}
             onChange={(event) => setMaterialTitle(event.target.value)}
             required
           />
           <textarea
-            className="field-glass min-h-40 w-full px-4 py-3 text-sm"
-            placeholder="Paste slide text / notes / Canvas export…"
+            className="field-glass min-h-32 w-full px-4 py-2.5 text-sm"
+            placeholder="Paste slide text / notes…"
             value={materialContent}
             onChange={(event) => setMaterialContent(event.target.value)}
             required
             minLength={20}
           />
-          <button type="submit" disabled={busy} className="btn-primary px-5 py-3 text-sm">
-            {busy ? "Ingesting…" : "Add to course KB"}
+          <button type="submit" disabled={busy} className="btn-ghost px-5 py-2.5 text-sm">
+            {busy ? "Ingesting…" : "Add pasted material to course KB"}
           </button>
         </form>
       </section>
 
-      <section className="glass-panel p-6">
-        <h2 className="font-display text-2xl font-semibold">Pending knowledge curation</h2>
-        <ul className="mt-4 space-y-3">
-          {entries.map((entry) => (
-            <li
-              key={entry.id}
-              className="rounded-2xl border border-white/60 bg-white/45 px-4 py-3"
-            >
-              <p className="text-sm font-bold text-aui-deep/60">#{entry.id}</p>
-              <p className="mt-1 font-medium">{entry.question_text}</p>
-              <p className="mt-2 line-clamp-3 text-sm text-aui-deep/75">
-                {entry.answer_draft}
-              </p>
-              <button
-                type="button"
-                className="btn-primary mt-3 px-4 py-2 text-sm"
-                onClick={() => approve(entry.id)}
-              >
-                Approve for student KB
-              </button>
-            </li>
-          ))}
-          {entries.length === 0 ? (
-            <p className="text-sm text-aui-deep/60">No pending drafts for this course.</p>
-          ) : null}
-        </ul>
-      </section>
-
-      <section className="glass-panel p-6">
-        <h2 className="font-display text-2xl font-semibold">Recent requests</h2>
-        <ul className="mt-4 space-y-2">
-          {requests.slice(0, 12).map((request) => (
-            <li key={request.id} className="rounded-2xl bg-white/45 px-4 py-3 text-sm">
-              <span className="font-bold">#{request.id}</span> ·{" "}
-              {request.anonymous ? "Anonymous" : request.assigned_ta || "Unassigned"} ·{" "}
-              {request.category || "n/a"}
-              {request.sensitive ? " · sensitive" : ""}
-              <p className="mt-1 text-aui-deep/80">{request.text}</p>
-            </li>
-          ))}
-        </ul>
+      <section id="requests" className="bh-card scroll-mt-6">
+        <div className="bh-card-title">
+          <h2>Recent Requests</h2>
+        </div>
+        {requests.length === 0 ? (
+          <p className="bh-card-note mt-3">No requests yet for this course.</p>
+        ) : (
+          <table className="bh-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Question</th>
+                <th>From</th>
+                <th>Category</th>
+                <th>Flags</th>
+              </tr>
+            </thead>
+            <tbody>
+              {requests.slice(0, 12).map((request) => (
+                <tr key={request.id}>
+                  <td className="font-semibold">#{request.id}</td>
+                  <td className="max-w-[26rem]">
+                    <span className="line-clamp-2">{request.text}</span>
+                  </td>
+                  <td>
+                    {request.anonymous
+                      ? "Anonymous"
+                      : request.student_name || request.assigned_ta || "—"}
+                  </td>
+                  <td>{request.category || "n/a"}</td>
+                  <td>
+                    {request.sensitive ? (
+                      <span className="bh-pill bh-pill-red">sensitive</span>
+                    ) : request.anonymous ? (
+                      <span className="bh-pill bh-pill-gray">anonymous</span>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
     </div>
   );

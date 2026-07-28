@@ -27,9 +27,11 @@ def test_evaluate_classifier_meets_accuracy_target():
 
     metrics = evaluate_classifier(rows)
 
-    assert metrics["dataset_size"] == 120
+    assert metrics["dataset_size"] >= 120
+    assert metrics["dataset_size"] == len(rows)
     assert metrics["accuracy"] >= 0.8
     assert metrics["macro_f1"] >= 0.75
+    assert "data/labeled_requests_csc.csv" in metrics["source_files"]
 
 
 def test_ml_classifier_trains_and_predicts():

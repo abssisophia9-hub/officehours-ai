@@ -40,6 +40,8 @@ class KnowledgeEntry(Base):
     cluster_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     course_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     material_source: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Set when a TA hands the draft to curation: resolved | needs_professor.
+    ta_resolution: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     professor_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -71,6 +73,7 @@ class KnowledgeEntryOut(BaseModel):
     cluster_id: int | None = None
     course_id: int | None = None
     material_source: str | None = None
+    ta_resolution: str | None = None
     professor_note: str | None = None
     created_at: datetime
     updated_at: datetime
@@ -84,11 +87,11 @@ class CourseMaterialIngest(BaseModel):
 
     title: str = Field(min_length=2, max_length=200)
     content: str = Field(min_length=20, max_length=100_000)
-    course_id: int | None = None
+    course_id: int = Field(ge=1)
     course: str | None = None
     source: str = Field(
         default="slides",
-        description="slides | notes | canvas_export | syllabus",
+        description="slides | notes | canvas | canvas_export | syllabus",
     )
     auto_approve: bool = True
 
@@ -98,6 +101,22 @@ class CourseMaterialIngestOut(BaseModel):
     source: str
     chunks_created: int
     entry_ids: list[int]
+    message: str
+
+
+class CanvasSyncRequest(BaseModel):
+    course_id: int = Field(ge=1)
+    auto_approve: bool = True
+
+
+class CanvasSyncOut(BaseModel):
+    course_id: int
+    canvas_course_id: str | None = None
+    mode: str
+    files_seen: int
+    chunks_created: int
+    entry_ids: list[int]
+    skipped: list[str] = Field(default_factory=list)
     message: str
 
 
@@ -170,6 +189,8 @@ class AgentAskResponse(BaseModel):
     matched_count: int
     sources: list[KnowledgeSearchHit]
     used_approved_kb_only: bool = True
+    # True when the KB cannot help — UI should push Quiet ask / TA outreach.
+    should_seek_help: bool = False
 
 
 class StruggleHeatmapCell(BaseModel):

@@ -128,11 +128,18 @@ def ingest_course_material(
     course_id: int | None = None,
     course: str | None = None,
     auto_approve: bool = True,
+    external_id: str | None = None,
 ) -> list[KnowledgeEntry]:
     chunks = _chunk_material(content)
+    if not chunks:
+        return []
     entries: list[KnowledgeEntry] = []
     status = "approved" if auto_approve else "pending_review"
     now = datetime.now(timezone.utc)
+    note_bits = [f"{course or ''} material ingest: {title}".strip()]
+    if external_id:
+        note_bits.append(f"canvas:{external_id}")
+    professor_note = " | ".join(bit for bit in note_bits if bit)
     for index, chunk in enumerate(chunks, start=1):
         question = f"{title} — part {index}"
         entry = KnowledgeEntry(
@@ -146,13 +153,15 @@ def ingest_course_material(
             urgency="low",
             difficulty="medium",
             learning_style="unknown",
-            drafter_backend="course_material_ingest",
+            drafter_backend=(
+                "canvas_sync" if source == "canvas" else "course_material_ingest"
+            ),
             status=status,
             source_request_id=None,
             cluster_id=None,
             course_id=course_id,
             material_source=source,
-            professor_note=f"{course or ''} material ingest: {title}".strip(),
+            professor_note=professor_note,
             reviewed_at=now if auto_approve else None,
         )
         db.add(entry)
@@ -173,9 +182,8 @@ def list_entries(
     if status_filter:
         query = query.filter(KnowledgeEntry.status == status_filter)
     if course_id is not None:
-        query = query.filter(
-            (KnowledgeEntry.course_id == course_id) | (KnowledgeEntry.course_id.is_(None))
-        )
+        # Strict course scope — do not leak other courses' materials.
+        query = query.filter(KnowledgeEntry.course_id == course_id)
     return query.order_by(KnowledgeEntry.id.desc()).all()
 
 
@@ -215,10 +223,8 @@ def search_approved_entries(
 ) -> list[tuple[KnowledgeEntry, float]]:
     query = db.query(KnowledgeEntry).filter(KnowledgeEntry.status == "approved")
     if course_id is not None:
-        # Prefer course-scoped materials/FAQs, but still allow global approved entries.
-        query = query.filter(
-            (KnowledgeEntry.course_id == course_id) | (KnowledgeEntry.course_id.is_(None))
-        )
+        # Strict course scope so CSC 3323 slides never answer CSC 2302 students.
+        query = query.filter(KnowledgeEntry.course_id == course_id)
     approved = query.order_by(KnowledgeEntry.id).all()
     if not approved:
         return []
@@ -229,13 +235,12 @@ def search_approved_entries(
         # Prefer matching material content as well as the title/question.
         haystack = f"{entry.question_text}\n{entry.answer_draft}"
         similarity = cosine_similarity(query_embedding, embed_text(haystack))
-        # Lexical backend can underscore long docs; also accept token overlap.
+        # Long slides dilute symmetric overlap, so fall back to containment:
+        # what fraction of the question's content words appear in the doc.
         if similarity < similarity_threshold:
-            from app.ai.clustering import _jaccard_similarity, _tokenize
-
             similarity = max(
                 similarity,
-                _jaccard_similarity(_tokenize(question), _tokenize(haystack)),
+                _question_containment(question, haystack),
             )
         if similarity >= similarity_threshold:
             scored.append((entry, similarity))
@@ -261,6 +266,7 @@ def to_out(entry: KnowledgeEntry) -> KnowledgeEntryOut:
         cluster_id=entry.cluster_id,
         course_id=getattr(entry, "course_id", None),
         material_source=getattr(entry, "material_source", None),
+        ta_resolution=getattr(entry, "ta_resolution", None),
         professor_note=entry.professor_note,
         created_at=entry.created_at,
         updated_at=entry.updated_at,
@@ -293,6 +299,23 @@ def _chunk_material(content: str, *, max_chars: int = 900) -> list[str]:
     if current:
         chunks.append(current)
     return chunks
+
+
+_CONTAINMENT_STOPWORDS = {
+    "a", "an", "and", "are", "can", "do", "does", "for", "how", "i", "in",
+    "is", "it", "my", "of", "on", "or", "the", "to", "what", "when", "where",
+    "which", "why", "with", "you",
+}
+
+
+def _question_containment(question: str, haystack: str) -> float:
+    from app.ai.clustering import _tokenize
+
+    question_tokens = _tokenize(question) - _CONTAINMENT_STOPWORDS
+    if not question_tokens:
+        return 0.0
+    doc_tokens = _tokenize(haystack)
+    return len(question_tokens & doc_tokens) / len(question_tokens)
 
 
 def _serialize_tags(tags: list[str]) -> str:

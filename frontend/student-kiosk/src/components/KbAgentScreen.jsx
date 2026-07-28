@@ -32,9 +32,9 @@ export default function KbAgentScreen({ onBack }) {
           ? `\n\nMatched ${result.matched_count} approved entr${
               result.matched_count === 1 ? "y" : "ies"
             } (${Math.round(result.confidence * 100)}% confidence).`
-          : "";
+          : "\n\nNo approved match — don't keep guessing. Use Quiet ask or reach out to a TA.";
       const hint = result.student_hint
-        ? `\n\nHint while you wait: ${result.student_hint}`
+        ? `\n\n${result.matched_count > 0 ? "Hint: " : ""}${result.student_hint}`
         : "";
       setMessages((current) => [
         ...current,

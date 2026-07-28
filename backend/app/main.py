@@ -21,6 +21,7 @@ from app.models import auth as _auth_model  # noqa: F401
 from app.realtime.hub import set_main_loop
 from app.routes.actions import router as actions_router
 from app.routes.auth import courses_router, router as auth_router
+from app.routes.canvas import router as canvas_router
 from app.routes.knowledge import router as knowledge_router
 from app.routes.office_hours import router as office_hours_router
 from app.routes.realtime import router as realtime_router
@@ -77,5 +78,6 @@ app.include_router(requests_router)
 app.include_router(actions_router)
 app.include_router(office_hours_router)
 app.include_router(knowledge_router)
+app.include_router(canvas_router)
 app.include_router(ta_router)
 app.include_router(realtime_router)

@@ -11,7 +11,8 @@ npm run dev
 ```
 
 Demo password: `aui-demo`  
-Accounts: `student@aui.ma`, `ta.alice@aui.ma`, `professor@aui.ma`
+Accounts: `s.elidrissi@aui.ma`, `a.chen@aui.ma`, `a.benali@aui.ma`  
+(AUI email shape: `Initial.Lastname@aui.ma` — role is from membership, not email.)
 
 ## Legacy specialized apps (optional)
 

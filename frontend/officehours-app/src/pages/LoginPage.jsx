@@ -1,29 +1,30 @@
 import { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router";
 import { useAuth } from "../auth/AuthContext.jsx";
 
+// AUI emails are Initial.Lastname@aui.ma — role comes from course membership, not email.
 const DEMO_ACCOUNTS = [
   {
-    email: "student@aui.ma",
+    email: "s.elidrissi@aui.ma",
     role: "Student",
-    note: "CS 400 + CS 330",
+    note: "7 courses · CSC 2302…",
   },
   {
-    email: "ta.alice@aui.ma",
+    email: "a.chen@aui.ma",
     role: "TA",
-    note: "CS 400",
+    note: "CSC 2302",
   },
   {
-    email: "professor@aui.ma",
+    email: "a.benali@aui.ma",
     role: "Professor",
-    note: "CS 400 + CS 330",
+    note: "CSC 2302 · 3323 · 3374",
   },
 ];
 
 export default function LoginPage() {
   const { user, login, loading } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("student@aui.ma");
+  const [email, setEmail] = useState("s.elidrissi@aui.ma");
   const [password, setPassword] = useState("aui-demo");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -80,8 +81,8 @@ export default function LoginPage() {
             OfficeHours AI
           </h1>
           <p className="mt-3 max-w-md text-base font-medium text-aui-deep/70">
-            One platform for students, TAs, and professors — course-scoped
-            workspaces with a calmer way to ask for help.
+            Sign in with your AUI email (Initial.Lastname@aui.ma). Your role in
+            each course comes from membership — not from the email itself.
           </p>
 
           <label className="mt-8 block text-xs font-semibold uppercase tracking-wide text-aui-deep/55">
@@ -91,6 +92,7 @@ export default function LoginPage() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               autoComplete="username"
+              placeholder="S.Abssi@aui.ma"
             />
           </label>
           <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-aui-deep/55">
@@ -117,6 +119,13 @@ export default function LoginPage() {
           >
             {busy ? "Signing in…" : "Sign in"}
           </button>
+
+          <p className="mt-4 text-center text-sm font-medium text-aui-deep/60">
+            Coming from your LMS?{" "}
+            <a href="/canvas-demo" className="font-semibold text-aui-forest underline">
+              Open from Canvas (one-click demo)
+            </a>
+          </p>
         </form>
 
         <aside className="glass-panel glass-panel-deep p-8">
@@ -127,7 +136,7 @@ export default function LoginPage() {
             Password: aui-demo
           </h2>
           <p className="mt-2 text-sm font-medium text-emerald-50/80">
-            Tap a role to fill the form.
+            Same email shape for every role. Tap to fill the form.
           </p>
           <ul className="mt-6 space-y-3">
             {DEMO_ACCOUNTS.map((account) => (

@@ -21,7 +21,7 @@ python3 scripts/train_synthesizer.py
 python3 scripts/train_learning_style.py
 ```
 
-## Analyzer data — 120 labeled requests
+## Analyzer data — labeled requests
 
 Union of:
 
@@ -30,6 +30,8 @@ Union of:
 | `data/labeled_requests.csv` | 40 | `synthetic_finals_week` |
 | `data/labeled_requests_extended.csv` | 40 | `synthetic_finals_week_v2` |
 | `data/labeled_requests_extra.csv` | 40 | `synthetic_finals_week_v3` |
+| `data/labeled_requests_csc.csv` | 15 | `synthetic_csc_topics` (AUI CSC demos) |
+| `data/analyzer_training_export.csv` | optional | professor-approved KB export |
 
 **Columns:** `request_id`, `text`, `category`, `urgency`, `label_source`
 
@@ -37,19 +39,20 @@ Union of:
 `retake_request`, `grading_dispute`, `emotional_stress`, `accessibility_accommodation`,
 `office_hours_access`, `academic_integrity`, `uncategorized`
 
-These are handwritten finals-week style questions designed to stress office-hours
-triage (concepts, logistics, stress, integrity, etc.).
+CSC supplement covers hashing, red-black trees, mergesort, scheduling, distributed RPC,
+and related triage for demo courses (`CSC 2302`, `3323`, `3351`, `3374`, …).
 
-## Matcher data — 120 silver TA labels
+## Matcher data — silver TA labels
 
 | File | Rows | Provenance |
 | --- | --- | --- |
 | `data/matcher_training.csv` | 120 | `silver_label_from_expertise_overlap` |
+| `data/matcher_training_csc.csv` | 15 | `silver_csc_topics` |
 
 **Columns:** `text`, `category`, `assigned_ta`, `alternative_ta`, `source`
 
-Silver labels were produced by aligning question text / category with TA expertise
-tags from `data/ta_roster_seed.csv`:
+Silver labels align question text / category with TA expertise tags from
+`data/ta_roster_seed.csv` (kept in sync with `DEFAULT_TA_ROSTER`):
 
 | TA | Example expertise tags |
 | --- | --- |
@@ -58,27 +61,21 @@ tags from `data/ta_roster_seed.csv`:
 | Priya Nair | hashing, arrays, search, exam logistics, projects |
 | Sam Ortiz | debugging, grading, stress, accommodations, integrity, access |
 
-Holdout from `train_matcher.py` (last run): ~96% accuracy / ~0.94 macro-F1 on a
-stratified-ish 20% holdout (synthetic silver labels — treat as demo metrics).
+`train_matcher.py` writes holdout metrics to `reports/final_report/matcher_evaluation.json`.
+Treat silver holdout as **demo metrics**, not gold TA judgment.
 
-## Synthesizer data — 50 teaching-bank rows
+## Synthesizer data — teaching banks
 
 | File | Rows | Provenance |
 | --- | --- | --- |
-| `data/synthesizer_teaching_bank.csv` | 50 | `curated_training_bank` |
+| `data/synthesizer_teaching_bank.csv` | 50 | `curated_training_bank` (category × style) |
+| `data/synthesizer_teaching_bank_csc.csv` | 8 | `curated_csc_bank` (topic-specific) |
 
 **Columns:** `entry_id`, `category`, `learning_style`, `topic`, `student_hint`,
 `teaching_approach`, `source`
 
-Balanced across 10 categories × 5 learning styles
-(`example_driven`, `step_by_step`, `visual_structural`, `conceptual`, `unknown`).
-
-At runtime the Synthesizer:
-
-1. Prefer **professor-approved KB** hits (true RAG over curated course knowledge)
-2. Else retrieve nearest teaching-bank entries by embedding similarity + style/category boost
-3. Compose non-spoiler `student_hint` + numbered `teaching_approach`
-4. Uses the style ranker when the student style is unknown
+Runtime loads both banks. Prefer professor-approved KB RAG first; weak matches
+steer students to Quiet ask instead of hallucinating.
 
 ## Learning-style data — 40 labels
 
@@ -86,7 +83,12 @@ At runtime the Synthesizer:
 | --- | --- |
 | `data/labeled_learning_styles.csv` | 40 (8 per style) |
 
-Used so drafts adapt teaching approach language to how the student asked.
+Default backend is **`ml`** (`OFFICEHOURS_LEARNING_STYLE_BACKEND`).
+
+## Performance backlog
+
+See [`docs/agent_performance.md`](agent_performance.md) for ranked upgrades and
+honest ceilings.
 
 ## What was intentionally removed
 

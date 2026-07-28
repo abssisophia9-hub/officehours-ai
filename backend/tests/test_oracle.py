@@ -29,7 +29,7 @@ def test_oracle_pipeline_on_red_black_submission():
                 "anonymous": False,
                 "student_id": "117400",
                 "student_name": "Alex Smith",
-                "course": "CS 400",
+                "course": "CSC 2302",
                 "code_snippet": (
                     "def delete_fixup(self, node):\n"
                     "    while node != self.root and node.color == BLACK:\n"
@@ -41,7 +41,7 @@ def test_oracle_pipeline_on_red_black_submission():
         assert response.status_code == 201
         data = response.json()
         assert data["student_name"] == "Alex Smith"
-        assert data["course"] == "CS 400"
+        assert data["course"] == "CSC 2302"
         assert data["code_snippet"]
         assert data["oracle"] is not None
         assert "Red-Black" in data["oracle"]["analyzer"]["category"]
@@ -89,7 +89,7 @@ def test_lifetime_confusion_uses_approved_kb_only():
             json={
                 "text": "Please explain red-black tree rotations after deletion.",
                 "anonymous": True,
-                "course": "CS 400",
+                "course": "CSC 2302",
             },
         ).json()
         entries = client.get("/knowledge/?status=pending_review").json()

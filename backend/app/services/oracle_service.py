@@ -25,20 +25,29 @@ from app.services.knowledge_service import search_approved_entries
 
 
 def ensure_default_roster(db: Session) -> list[TaRoster]:
-    existing = db.query(TaRoster).order_by(TaRoster.id).all()
-    if existing:
-        return existing
-
+    """Seed or refresh the demo TA roster so expertise tags stay current."""
+    by_name = {row.name: row for row in db.query(TaRoster).all()}
+    changed = False
     for item in DEFAULT_TA_ROSTER:
-        db.add(
-            TaRoster(
-                name=item["name"],
-                expertise_tags=json.dumps(item["expertise_tags"]),
-                queue_depth=int(item["queue_depth"]),
-                is_available=True,
+        tags_json = json.dumps(item["expertise_tags"])
+        existing = by_name.get(item["name"])
+        if existing is None:
+            db.add(
+                TaRoster(
+                    name=item["name"],
+                    expertise_tags=tags_json,
+                    queue_depth=int(item["queue_depth"]),
+                    is_available=True,
+                )
             )
-        )
-    db.commit()
+            changed = True
+            continue
+        if existing.expertise_tags != tags_json:
+            existing.expertise_tags = tags_json
+            db.add(existing)
+            changed = True
+    if changed:
+        db.commit()
     return db.query(TaRoster).order_by(TaRoster.id).all()
 
 

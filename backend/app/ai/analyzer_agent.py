@@ -61,6 +61,16 @@ TOPIC_OVERLAYS: list[tuple[tuple[str, ...], str, list[str]]] = [
         ["trees", "red-black", "deletion", "rotations"],
     ),
     (
+        ("binary search tree", " bst ", "bst insert", "bst delete"),
+        "Binary Search Trees",
+        ["trees", "bst", "search"],
+    ),
+    (
+        ("hash table", "hashing", "collision", "open addressing", "chaining"),
+        "Hash Tables",
+        ["hashing", "arrays", "search"],
+    ),
+    (
         ("binary search", "sorted array"),
         "Binary Search",
         ["search", "arrays", "invariants"],
@@ -74,6 +84,26 @@ TOPIC_OVERLAYS: list[tuple[tuple[str, ...], str, list[str]]] = [
         ("dynamic programming", "memoization", " dp "),
         "Dynamic Programming",
         ["dp", "memoization", "subproblems"],
+    ),
+    (
+        ("mergesort", "merge sort", "divide and conquer", "divide & conquer"),
+        "Divide and Conquer",
+        ["algorithms", "recursion", "sorting"],
+    ),
+    (
+        ("round robin", "time quantum", "cpu scheduling", "context switch"),
+        "CPU Scheduling",
+        ["systems", "scheduling", "processes"],
+    ),
+    (
+        ("message passing", "rpc", "distributed", "partial failure"),
+        "Distributed Programming",
+        ["distributed", "systems", "networking"],
+    ),
+    (
+        ("sql join", "normalization", "foreign key", "transaction"),
+        "Database Systems",
+        ["databases", "sql", "transactions"],
     ),
 ]
 

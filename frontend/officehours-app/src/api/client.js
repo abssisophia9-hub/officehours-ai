@@ -30,4 +30,29 @@ export async function api(path, { method = "GET", token, body } = {}) {
   return data;
 }
 
+export async function apiUpload(path, { token, formData }) {
+  const headers = { Accept: "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+  const text = await response.text();
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = { detail: text };
+  }
+  if (!response.ok) {
+    const detail = data?.detail;
+    const message = Array.isArray(detail)
+      ? detail.map((item) => item.msg || JSON.stringify(item)).join("; ")
+      : detail || `Upload failed (${response.status})`;
+    throw new Error(typeof message === "string" ? message : JSON.stringify(message));
+  }
+  return data;
+}
+
 export { API_BASE };

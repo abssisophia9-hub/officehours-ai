@@ -3,6 +3,10 @@ Student-facing knowledge-base agent.
 
 Answers only from professor-approved KB entries using semantic retrieval.
 Never exposes pending_review or rejected drafts to students.
+
+When the course KB has no useful match, the agent stops guessing and steers
+the student toward Quiet ask / TA / professor help — spinning on incomplete
+materials wastes time.
 """
 
 from __future__ import annotations
@@ -11,6 +15,22 @@ from sqlalchemy.orm import Session
 
 from app.models.knowledge import AgentAskResponse, KnowledgeSearchHit
 from app.services.knowledge_service import search_approved_entries, to_out
+
+# Below this similarity we treat a hit as too weak to answer from.
+WEAK_MATCH_CONFIDENCE = 0.42
+
+NO_MATCH_ANSWER = (
+    "I don't have professor-approved course material that answers this yet — "
+    "guessing would waste your time.\n\n"
+    "Don't keep rephrasing into this agent. Use Quiet ask (anonymous) or reach "
+    "out to your TA / professor in office hours. Once they help and the "
+    "professor approves the FAQ, the next student gets the answer instantly."
+)
+
+NO_MATCH_HINT = (
+    "Submit a Quiet ask with the smallest example that shows where you're stuck. "
+    "Staff will help — you do not need to wait on incomplete course materials."
+)
 
 
 def answer_from_knowledge_base(
@@ -26,21 +46,15 @@ def answer_from_knowledge_base(
         for entry, similarity in matches
     ]
 
-    if not sources:
+    if not sources or sources[0].similarity < WEAK_MATCH_CONFIDENCE:
         return AgentAskResponse(
-            answer=(
-                "I do not have a professor-approved answer for that yet. "
-                "Submit a help request so a TA or the professor can review it, "
-                "and it may be added to the course knowledge base after approval."
-            ),
-            student_hint=(
-                "Write the smallest example that shows where you get stuck — "
-                "that makes office-hours help much faster."
-            ),
-            confidence=0.0,
+            answer=NO_MATCH_ANSWER,
+            student_hint=NO_MATCH_HINT,
+            confidence=round(sources[0].similarity, 4) if sources else 0.0,
             matched_count=0,
             sources=[],
             used_approved_kb_only=True,
+            should_seek_help=True,
         )
 
     best = sources[0]
@@ -63,4 +77,5 @@ def answer_from_knowledge_base(
         matched_count=len(sources),
         sources=sources,
         used_approved_kb_only=True,
+        should_seek_help=False,
     )

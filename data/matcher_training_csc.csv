@@ -1,0 +1,16 @@
+text,category,assigned_ta,alternative_ta,source
+"In CSC 2302 I am stuck on red-black tree deletion fixup after deleting a black leaf — which rotations restore the black-height?",conceptual_question,Alice Chen,Bob Martinez,silver_csc_topics
+"Can you explain hash table chaining vs open addressing for collisions in CSC 2302?",conceptual_question,Priya Nair,Alice Chen,silver_csc_topics
+"My BST insert keeps unbalancing — how do rotations keep height logarithmic in Data Structures?",conceptual_question,Alice Chen,Bob Martinez,silver_csc_topics
+"Walk through mergesort recurrence T(n)=2T(n/2)+O(n) for CSC 3323 Analysis of Algorithms.",conceptual_question,Bob Martinez,Priya Nair,silver_csc_topics
+"In CSC 3351 Operating Systems what does round robin do with a small time quantum vs FCFS?",conceptual_question,Priya Nair,Sam Ortiz,silver_csc_topics
+"CSC 3374 distributed RPC: why must handlers be idempotent under retries and partial failure?",conceptual_question,Priya Nair,Sam Ortiz,silver_csc_topics
+"How do I think about dynamic programming memoization overlapping subproblems for the knapsack lab?",conceptual_question,Bob Martinez,Alice Chen,silver_csc_topics
+"Binary search fails on the last array element — is my high bound off-by-one?",conceptual_question,Priya Nair,Alice Chen,silver_csc_topics
+"When do we rehash a hash table and how does load factor affect lookup time?",conceptual_question,Priya Nair,Alice Chen,silver_csc_topics
+"Explain context switches and why schedulers try to minimize them in Operating Systems.",conceptual_question,Priya Nair,Sam Ortiz,silver_csc_topics
+"What is the midterm room and allowed materials for CSC 2302 next week?",exam_logistics,Priya Nair,Sam Ortiz,silver_csc_topics
+"I need an extension on the CSC 3326 database project because Canvas upload failed.",project_submission,Priya Nair,Sam Ortiz,silver_csc_topics
+"I am panicking about failing CSC 2302 and need private support before the final.",emotional_stress,Sam Ortiz,Priya Nair,silver_csc_topics
+"Can I retake the CSC 3323 quiz I missed for a documented medical appointment?",retake_request,Sam Ortiz,Priya Nair,silver_csc_topics
+"I think my CSC 2302 lab was graded incorrectly on the AVL rotation cases.",grading_dispute,Sam Ortiz,Alice Chen,silver_csc_topics

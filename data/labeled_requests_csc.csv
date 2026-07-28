@@ -1,0 +1,16 @@
+request_id,text,category,urgency,label_source
+CSC001,"In CSC 2302 I am stuck on red-black tree deletion fixup after deleting a black leaf — which rotations restore the black-height?",conceptual_question,high,synthetic_csc_topics
+CSC002,"Can you explain hash table chaining vs open addressing for collisions in CSC 2302?",conceptual_question,medium,synthetic_csc_topics
+CSC003,"My BST insert keeps unbalancing — how do rotations keep height logarithmic in Data Structures?",conceptual_question,medium,synthetic_csc_topics
+CSC004,"Walk through mergesort recurrence T(n)=2T(n/2)+O(n) for CSC 3323 Analysis of Algorithms.",conceptual_question,medium,synthetic_csc_topics
+CSC005,"In CSC 3351 Operating Systems what does round robin do with a small time quantum vs FCFS?",conceptual_question,medium,synthetic_csc_topics
+CSC006,"CSC 3374 distributed RPC: why must handlers be idempotent under retries and partial failure?",conceptual_question,high,synthetic_csc_topics
+CSC007,"How do I think about dynamic programming memoization overlapping subproblems for the knapsack lab?",conceptual_question,medium,synthetic_csc_topics
+CSC008,"Binary search fails on the last array element — is my high bound off-by-one?",conceptual_question,medium,synthetic_csc_topics
+CSC009,"When do we rehash a hash table and how does load factor affect lookup time?",conceptual_question,low,synthetic_csc_topics
+CSC010,"Explain context switches and why schedulers try to minimize them in Operating Systems.",conceptual_question,medium,synthetic_csc_topics
+CSC011,"What is the midterm room and allowed materials for CSC 2302 next week?",exam_logistics,high,synthetic_csc_topics
+CSC012,"I need an extension on the CSC 3326 database project because Canvas upload failed.",project_submission,high,synthetic_csc_topics
+CSC013,"I am panicking about failing CSC 2302 and need private support before the final.",emotional_stress,urgent,synthetic_csc_topics
+CSC014,"Can I retake the CSC 3323 quiz I missed for a documented medical appointment?",retake_request,high,synthetic_csc_topics
+CSC015,"I think my CSC 2302 lab was graded incorrectly on the AVL rotation cases.",grading_dispute,medium,synthetic_csc_topics

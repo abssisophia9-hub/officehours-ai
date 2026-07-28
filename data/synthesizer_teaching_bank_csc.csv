@@ -1,0 +1,41 @@
+entry_id,category,learning_style,topic,student_hint,teaching_approach,source
+CSC-TB01,conceptual_question,example_driven,red-black deletion,"Build the smallest red-black tree where deleting a black leaf breaks black-height — what must fixup restore?","Teaching approach (red-black deletion, example-driven):
+1. Draw a tiny RB tree and delete one black leaf.
+2. Check black-height on every path.
+3. Apply the matching fixup case (recolor / rotate) once.
+4. Ask the student which invariant was restored.",curated_csc_bank
+CSC-TB02,conceptual_question,visual_structural,hash collisions,"Sketch two buckets: one with chaining, one with open addressing — where does the next key go?","Teaching approach (hash collisions, visual):
+1. Draw the table and hash a colliding key.
+2. Show chaining (list in bucket) vs probing (next empty slot).
+3. Mark load factor and when rehash is needed.
+4. Have them place one more key on the sketch.",curated_csc_bank
+CSC-TB03,conceptual_question,step_by_step,mergesort recurrence,"Write T(n)=2T(n/2)+O(n) and expand three levels — what pattern appears?","Teaching approach (mergesort recurrence, step-by-step):
+1. Write the recurrence.
+2. Expand two or three levels together.
+3. Sum the work per level.
+4. Conclude O(n log n) and tie it to split/merge.",curated_csc_bank
+CSC-TB04,conceptual_question,conceptual,round robin quantum,"In one sentence: what tradeoff does a smaller time quantum buy vs context-switch cost?","Teaching approach (CPU scheduling, conceptual):
+1. Define quantum and context switch.
+2. Contrast small vs large quantum with FCFS.
+3. Name the fairness vs overhead tradeoff.
+4. Ask them to restate it without jargon.",curated_csc_bank
+CSC-TB05,conceptual_question,example_driven,distributed rpc retries,"Invent one failed RPC that gets retried — what goes wrong if the handler is not idempotent?","Teaching approach (distributed RPC, example-driven):
+1. Walk one request that times out after server success.
+2. Show a duplicate retry effect without idempotency.
+3. Redesign the handler to be safe under retry.
+4. List timeout + idempotency as a pair.",curated_csc_bank
+CSC-TB06,conceptual_question,step_by_step,dp memoization,"List the subproblems you would cache for your knapsack case — which ones overlap?","Teaching approach (DP memoization, step-by-step):
+1. Name the state (what changes between calls).
+2. Write the recurrence once.
+3. Mark overlapping subproblems on a tiny input.
+4. Fill the memo table in dependency order.",curated_csc_bank
+CSC-TB07,conceptual_question,example_driven,binary search bounds,"Trace high/low on [1,3,5] searching for 5 — where does high land if exclusive?","Teaching approach (binary search bounds, example-driven):
+1. Trace one search for the last element.
+2. Check inclusive vs exclusive high.
+3. Fix the off-by-one on that trace only.
+4. Re-run on an empty range to confirm termination.",curated_csc_bank
+CSC-TB08,exam_logistics,step_by_step,exam logistics csc,"List what you still need confirmed: room, time, materials, makeup policy.","Teaching approach (exam logistics, step-by-step):
+1. Capture the missing logistics facts.
+2. Point to syllabus / Canvas announcement first.
+3. Escalate only unresolved items to staff.
+4. Confirm the student has a written plan.",curated_csc_bank

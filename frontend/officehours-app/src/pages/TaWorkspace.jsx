@@ -1,7 +1,32 @@
 import { useCallback, useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate } from "react-router";
 import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
+
+const ICONS = {
+  queue: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+    </svg>
+  ),
+  check: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8.5 12.5l2.5 2.5 5-5.5" />
+    </svg>
+  ),
+  flame: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M12 2s5 4.5 5 10a5 5 0 0 1-10 0c0-2 1-3.8 2-5 0 2 1 3 2 3 0-3 1-6.5 1-8z" />
+    </svg>
+  ),
+  clock: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 3" />
+    </svg>
+  ),
+};
 
 export default function TaWorkspace() {
   const { token, user, activeCourse } = useAuth();
@@ -11,6 +36,7 @@ export default function TaWorkspace() {
   const [hint, setHint] = useState("");
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
+  const [resolvedCount, setResolvedCount] = useState(0);
 
   const loadQueue = useCallback(async () => {
     try {
@@ -42,6 +68,15 @@ export default function TaWorkspace() {
   }
 
   const selected = queue.find((item) => item.request.id === selectedId) || null;
+  const urgentCount = queue.filter((item) =>
+    ["high", "urgent"].includes((item.request.urgency || "").toLowerCase()),
+  ).length;
+  const waits = queue
+    .map((item) => item.request.estimated_wait_minutes)
+    .filter((value) => typeof value === "number");
+  const avgWait = waits.length
+    ? Math.round(waits.reduce((total, value) => total + value, 0) / waits.length)
+    : null;
 
   async function resolve(status) {
     if (!selected) return;
@@ -59,6 +94,7 @@ export default function TaWorkspace() {
         },
       });
       setToast(result.message || "Saved for professor review");
+      setResolvedCount((count) => count + 1);
       setSelectedId(null);
       setNotes("");
       setHint("");
@@ -69,94 +105,160 @@ export default function TaWorkspace() {
   }
 
   return (
-    <div className="fade-up grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-      <section className="glass-panel p-4">
-        <p className="glass-chip mb-3">TA · {activeCourse.code}</p>
-        <h1 className="font-display text-2xl font-semibold sm:text-3xl">Open queue</h1>
+    <div className="fade-up">
+      <h1 className="bh-page-title">TA Dashboard</h1>
+      <p className="bh-page-subtitle">
+        Work the live queue and prepare teaching drafts for professor curation ·{" "}
+        {activeCourse.code} — {activeCourse.title}
+      </p>
+
+      <div className="bh-stats">
+        <article className="bh-stat-card">
+          <div className="bh-stat-head">Open Queue {ICONS.queue}</div>
+          <p className="bh-stat-value">{queue.length}</p>
+          <p className="bh-stat-note">Requests waiting in {activeCourse.code}</p>
+        </article>
+        <article className="bh-stat-card">
+          <div className="bh-stat-head">Urgent {ICONS.flame}</div>
+          <p className="bh-stat-value">{urgentCount}</p>
+          <p className="bh-stat-note">High-urgency asks to take first</p>
+        </article>
+        <article className="bh-stat-card">
+          <div className="bh-stat-head">Avg Wait {ICONS.clock}</div>
+          <p className="bh-stat-value">{avgWait === null ? "—" : `${avgWait}m`}</p>
+          <p className="bh-stat-note">Oracle wait estimate</p>
+        </article>
+        <article className="bh-stat-card">
+          <div className="bh-stat-head">Resolved {ICONS.check}</div>
+          <p className="bh-stat-value">{resolvedCount}</p>
+          <p className="bh-stat-note">Sent to curation this session</p>
+        </article>
+      </div>
+
+      <section id="queue" className="bh-card scroll-mt-6">
+        <div className="bh-card-title">
+          <h2>Live Queue</h2>
+          <span className="bh-pill bh-pill-green live-pulse">live</span>
+        </div>
         {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
         {toast ? <p className="mt-2 text-sm text-emerald-700">{toast}</p> : null}
-        <ul className="mt-4 space-y-2">
-          {queue.map((item) => (
-            <li key={item.request.id}>
-              <button
-                type="button"
-                className={`clay-blob w-full px-3 py-3 text-left ${
-                  selectedId === item.request.id
-                    ? "clay-blob-mint"
-                    : "clay-blob-sky"
-                }`}
-                onClick={() => {
-                  setSelectedId(item.request.id);
-                  setNotes(item.knowledge_entry?.answer_draft || "");
-                  setHint(item.knowledge_entry?.student_hint || "");
-                }}
-              >
-                <p className="text-xs font-semibold text-aui-deep/55">
-                  #{item.request.id}
-                  {item.request.assigned_ta
-                    ? ` · ${item.request.assigned_ta}`
-                    : ""}
-                </p>
-                <p className="line-clamp-3 text-sm font-medium">{item.request.text}</p>
-              </button>
-            </li>
-          ))}
-          {queue.length === 0 ? (
-            <p className="rounded-xl bg-aui-mist/60 px-3 py-6 text-center text-sm text-aui-deep/60">
-              No open requests for this course.
-            </p>
-          ) : null}
-        </ul>
-      </section>
 
-      <section className="glass-panel p-6">
-        {!selected ? (
-          <p className="text-aui-deep/70">Select a request to edit the teaching draft.</p>
+        {queue.length === 0 ? (
+          <p className="bh-card-note mt-4">No open requests for this course.</p>
         ) : (
-          <div className="space-y-4">
-            <h2 className="font-display text-2xl font-semibold">{selected.request.text}</h2>
-            {selected.request.oracle_category || selected.request.student_hint ? (
-              <div className="grid gap-2 sm:grid-cols-2">
-                <div className="soft-stat text-sm font-medium">
-                  <strong>Oracle:</strong>{" "}
-                  {selected.request.oracle_category || "n/a"} ·{" "}
-                  {selected.request.oracle_difficulty || "n/a"}
-                </div>
-                <div className="soft-stat text-sm font-medium">
-                  <strong>Wait:</strong> ~
-                  {selected.request.estimated_wait_minutes ?? "?"} min ·{" "}
-                  {selected.request.assigned_ta || "Unassigned"}
-                </div>
-              </div>
-            ) : null}
-            <label className="block text-xs font-extrabold uppercase tracking-wide text-aui-deep/60">
-              Teaching draft
-              <textarea
-                className="field-glass mt-1 min-h-48 w-full px-3 py-2 text-sm font-semibold"
-                value={notes}
-                onChange={(event) => setNotes(event.target.value)}
-              />
-            </label>
-            <label className="block text-xs font-extrabold uppercase tracking-wide text-aui-deep/60">
-              Student hint
-              <textarea
-                className="field-glass mt-1 min-h-24 w-full px-3 py-2 text-sm font-semibold"
-                value={hint}
-                onChange={(event) => setHint(event.target.value)}
-                placeholder="Student hint"
-              />
-            </label>
-            <div className="flex flex-wrap gap-2">
-              <button type="button" className="btn-primary px-4 py-2 text-sm" onClick={() => resolve("resolved")}>
-                Mark resolved → professor curation
-              </button>
-              <button type="button" className="btn-ghost px-4 py-2 text-sm" onClick={() => resolve("needs_professor")}>
-                Needs professor
-              </button>
-            </div>
-          </div>
+          <table className="bh-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Question</th>
+                <th>Category</th>
+                <th>Urgency</th>
+                <th>Wait</th>
+                <th>Assigned</th>
+              </tr>
+            </thead>
+            <tbody>
+              {queue.map((item) => {
+                const request = item.request;
+                const urgency = (request.urgency || "n/a").toLowerCase();
+                return (
+                  <tr
+                    key={request.id}
+                    className={`bh-row-click${selectedId === request.id ? " bh-row-active" : ""}`}
+                    onClick={() => {
+                      setSelectedId(request.id);
+                      setNotes(item.knowledge_entry?.answer_draft || "");
+                      setHint(item.knowledge_entry?.student_hint || "");
+                    }}
+                  >
+                    <td className="font-semibold">#{request.id}</td>
+                    <td className="max-w-[26rem]">
+                      <span className="line-clamp-2">{request.text}</span>
+                    </td>
+                    <td>{request.oracle_category || request.category || "n/a"}</td>
+                    <td>
+                      <span
+                        className={`bh-pill ${
+                          ["high", "urgent"].includes(urgency)
+                            ? "bh-pill-red"
+                            : urgency === "medium"
+                              ? "bh-pill-amber"
+                              : "bh-pill-gray"
+                        }`}
+                      >
+                        {urgency}
+                      </span>
+                    </td>
+                    <td>
+                      {request.estimated_wait_minutes != null
+                        ? `~${request.estimated_wait_minutes}m`
+                        : "—"}
+                    </td>
+                    <td>{request.assigned_ta || "Unassigned"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </section>
+
+      {selected ? (
+        <section className="bh-card">
+          <div className="bh-card-title">
+            <h2>Teaching Draft · #{selected.request.id}</h2>
+            <span className="bh-pill bh-pill-blue">
+              {selected.request.oracle_category || "uncategorized"}
+            </span>
+          </div>
+          <p className="bh-card-note">{selected.request.text}</p>
+          {selected.request.code_snippet ? (
+            <pre className="soft-stat mt-3 overflow-x-auto font-mono text-xs">
+              {selected.request.code_snippet}
+            </pre>
+          ) : null}
+
+          <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-aui-deep/60">
+            Teaching draft
+            <textarea
+              className="field-glass mt-1.5 min-h-40 w-full px-3 py-2.5 text-sm"
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+            />
+          </label>
+          <label className="mt-3 block text-xs font-semibold uppercase tracking-wide text-aui-deep/60">
+            Student hint
+            <textarea
+              className="field-glass mt-1.5 min-h-20 w-full px-3 py-2.5 text-sm"
+              value={hint}
+              onChange={(event) => setHint(event.target.value)}
+              placeholder="Student hint"
+            />
+          </label>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="btn-primary px-4 py-2 text-sm"
+              onClick={() => resolve("resolved")}
+            >
+              Mark resolved → professor curation
+            </button>
+            <button
+              type="button"
+              className="btn-ghost px-4 py-2 text-sm"
+              onClick={() => resolve("needs_professor")}
+            >
+              Needs professor
+            </button>
+          </div>
+        </section>
+      ) : (
+        <section className="bh-card">
+          <p className="bh-card-note">
+            Select a request in the queue to edit its teaching draft.
+          </p>
+        </section>
+      )}
     </div>
   );
 }

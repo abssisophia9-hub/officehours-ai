@@ -79,6 +79,26 @@ export function AuthProvider({ children }) {
     if (course) localStorage.setItem(COURSE_KEY, String(course.id));
   }
 
+  // Adopt a session minted by a Canvas launch (no password login).
+  async function adoptSession(newToken, activeCourseId) {
+    localStorage.setItem(TOKEN_KEY, newToken);
+    if (activeCourseId) {
+      localStorage.setItem(COURSE_KEY, String(activeCourseId));
+    } else {
+      localStorage.removeItem(COURSE_KEY);
+    }
+    const me = await api("/auth/me", { token: newToken });
+    setToken(newToken);
+    setUser(me);
+    const active =
+      me.courses.find((course) => course.id === activeCourseId) ||
+      me.courses[0] ||
+      null;
+    setActiveCourseState(active);
+    if (active) localStorage.setItem(COURSE_KEY, String(active.id));
+    return { user: me, activeCourse: active };
+  }
+
   const value = useMemo(
     () => ({
       token,
@@ -90,6 +110,7 @@ export function AuthProvider({ children }) {
       login,
       logout,
       setActiveCourse,
+      adoptSession,
     }),
     [token, user, activeCourse, loading, error],
   );

@@ -32,6 +32,7 @@ echo "OfficeHours AI product is starting:"
 echo "  Backend API : http://127.0.0.1:8000"
 echo "  Product app : http://127.0.0.1:5180"
 echo "  Demo password: aui-demo"
-echo "  Logins: student@aui.ma | ta.alice@aui.ma | professor@aui.ma"
+echo "  Logins: s.elidrissi@aui.ma | a.chen@aui.ma | a.benali@aui.ma"
+echo "  (AUI emails: Initial.Last@aui.ma — role from course membership)"
 echo ""
 wait

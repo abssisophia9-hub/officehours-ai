@@ -40,13 +40,25 @@ def load_labeled_rows(data_dir: Path = DATA_DIR) -> list[dict[str, str]]:
         "labeled_requests.csv",
         "labeled_requests_extended.csv",
         "labeled_requests_extra.csv",
+        "labeled_requests_csc.csv",
+        # Optional professor-approved export (scripts/export_analyzer_training_data.py).
+        "analyzer_training_export.csv",
     ):
         path = data_dir / filename
         if not path.exists():
             continue
         with path.open(newline="") as handle:
             rows.extend(list(csv.DictReader(handle)))
-    return rows
+    # De-duplicate by request_id when present, else by text.
+    deduped: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for row in rows:
+        key = (row.get("request_id") or "").strip() or row.get("text", "").strip()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        deduped.append(row)
+    return deduped
 
 
 def evaluate_classifier(rows: list[dict[str, str]]) -> dict[str, object]:
@@ -87,8 +99,11 @@ def evaluate_classifier(rows: list[dict[str, str]]) -> dict[str, object]:
             "data/labeled_requests.csv",
             "data/labeled_requests_extended.csv",
             "data/labeled_requests_extra.csv",
+            "data/labeled_requests_csc.csv",
+            "data/analyzer_training_export.csv (optional)",
         ],
         "feature_backend": "sentence-transformer-embeddings + logistic regression",
+        "dataset_note": "Includes AUI CSC topic supplement when present",
     }
 
 

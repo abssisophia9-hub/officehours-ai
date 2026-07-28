@@ -36,6 +36,23 @@ def load_csv(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
+def load_matcher_rows(data_path: Path) -> list[dict[str, str]]:
+    """Load matcher CSV plus optional CSC topic supplement beside it."""
+    rows = load_csv(data_path)
+    csc = data_path.parent / "matcher_training_csc.csv"
+    if csc.exists() and csc != data_path:
+        rows.extend(load_csv(csc))
+    deduped: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for row in rows:
+        key = row.get("text", "").strip()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        deduped.append(row)
+    return deduped
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Train OfficeHours Matcher model")
     parser.add_argument(
@@ -47,7 +64,7 @@ def main() -> int:
     parser.add_argument("--holdout", type=float, default=0.2)
     args = parser.parse_args()
 
-    rows = load_csv(args.data)
+    rows = load_matcher_rows(args.data)
     if len(rows) < 8:
         raise SystemExit(f"Need at least 8 labeled examples, found {len(rows)}")
 
@@ -91,20 +108,22 @@ def main() -> int:
                 float(f1_score(labels, preds, average="macro", zero_division=0)),
                 4,
             ),
+            "label_note": "silver_or_csc_supplement — not gold TA judgments",
         }
 
-    print(
-        json.dumps(
-            {
-                "model_path": str(path),
-                "train_n": len(train_rows),
-                "test_n": len(test_rows),
-                "labels": sorted({row["assigned_ta"].strip() for row in rows}),
-                "metrics": metrics,
-            },
-            indent=2,
-        )
-    )
+    report = {
+        "model_path": str(path),
+        "train_n": len(train_rows),
+        "test_n": len(test_rows),
+        "labels": sorted({row["assigned_ta"].strip() for row in rows}),
+        "metrics": metrics,
+    }
+    report_dir = ROOT.parent / "reports" / "final_report"
+    report_dir.mkdir(parents=True, exist_ok=True)
+    report_path = report_dir / "matcher_evaluation.json"
+    report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(report, indent=2))
+    print(f"Wrote {report_path}")
     return 0
 
 

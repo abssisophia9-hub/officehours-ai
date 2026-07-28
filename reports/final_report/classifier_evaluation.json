@@ -1,5 +1,5 @@
 {
-  "dataset_size": 120,
+  "dataset_size": 135,
   "labels": [
     "academic_integrity",
     "accessibility_accommodation",
@@ -13,9 +13,9 @@
     "uncategorized"
   ],
   "cv_folds": 5,
-  "accuracy": 0.8917,
-  "macro_f1": 0.8961,
-  "weighted_f1": 0.8896,
+  "accuracy": 0.8741,
+  "macro_f1": 0.8697,
+  "weighted_f1": 0.8735,
   "classification_report": {
     "academic_integrity": {
       "precision": 1.0,
@@ -24,34 +24,34 @@
       "support": 7.0
     },
     "accessibility_accommodation": {
-      "precision": 0.9,
-      "recall": 1.0,
-      "f1-score": 0.9473684210526315,
+      "precision": 1.0,
+      "recall": 0.8888888888888888,
+      "f1-score": 0.9411764705882353,
       "support": 9.0
     },
     "conceptual_question": {
-      "precision": 0.9523809523809523,
+      "precision": 0.9375,
       "recall": 1.0,
-      "f1-score": 0.975609756097561,
-      "support": 20.0
+      "f1-score": 0.967741935483871,
+      "support": 30.0
     },
     "emotional_stress": {
-      "precision": 0.9090909090909091,
-      "recall": 0.9090909090909091,
-      "f1-score": 0.9090909090909091,
-      "support": 11.0
+      "precision": 1.0,
+      "recall": 0.9166666666666666,
+      "f1-score": 0.9565217391304348,
+      "support": 12.0
     },
     "exam_logistics": {
-      "precision": 0.875,
-      "recall": 0.7777777777777778,
-      "f1-score": 0.8235294117647058,
-      "support": 18.0
+      "precision": 0.8888888888888888,
+      "recall": 0.8421052631578947,
+      "f1-score": 0.8648648648648649,
+      "support": 19.0
     },
     "grading_dispute": {
-      "precision": 0.8888888888888888,
-      "recall": 0.7272727272727273,
-      "f1-score": 0.8,
-      "support": 11.0
+      "precision": 0.75,
+      "recall": 0.75,
+      "f1-score": 0.75,
+      "support": 12.0
     },
     "office_hours_access": {
       "precision": 0.9,
@@ -60,35 +60,35 @@
       "support": 9.0
     },
     "project_submission": {
-      "precision": 0.8,
-      "recall": 0.8,
-      "f1-score": 0.8,
-      "support": 15.0
+      "precision": 0.75,
+      "recall": 0.75,
+      "f1-score": 0.75,
+      "support": 16.0
     },
     "retake_request": {
-      "precision": 0.8333333333333334,
-      "recall": 0.9090909090909091,
-      "f1-score": 0.8695652173913043,
-      "support": 11.0
+      "precision": 0.7142857142857143,
+      "recall": 0.8333333333333334,
+      "f1-score": 0.7692307692307693,
+      "support": 12.0
     },
     "uncategorized": {
-      "precision": 0.8888888888888888,
-      "recall": 0.8888888888888888,
-      "f1-score": 0.8888888888888888,
+      "precision": 0.8571428571428571,
+      "recall": 0.6666666666666666,
+      "f1-score": 0.75,
       "support": 9.0
     },
-    "accuracy": 0.8916666666666667,
+    "accuracy": 0.8740740740740741,
     "macro avg": {
-      "precision": 0.8947582972582973,
-      "recall": 0.9012121212121211,
-      "f1-score": 0.8961421025338632,
-      "support": 120.0
+      "precision": 0.8797817460317461,
+      "recall": 0.864766081871345,
+      "f1-score": 0.8696904200350808,
+      "support": 135.0
     },
     "weighted avg": {
-      "precision": 0.8911838624338625,
-      "recall": 0.8916666666666667,
-      "f1-score": 0.8896131125330636,
-      "support": 120.0
+      "precision": 0.8770340975896531,
+      "recall": 0.8740740740740741,
+      "f1-score": 0.8734861083114874,
+      "support": 135.0
     }
   },
   "confusion_matrix": {
@@ -119,8 +119,20 @@
       ],
       [
         0,
-        9,
+        8,
         0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        30,
         0,
         0,
         0,
@@ -132,24 +144,12 @@
       [
         0,
         0,
-        20,
+        0,
+        11,
         0,
         0,
         0,
-        0,
-        0,
-        0,
-        0
-      ],
-      [
-        0,
-        0,
-        0,
-        10,
         1,
-        0,
-        0,
-        0,
         0,
         0
       ],
@@ -157,8 +157,8 @@
         0,
         0,
         1,
-        1,
-        14,
+        0,
+        16,
         0,
         1,
         0,
@@ -171,7 +171,7 @@
         0,
         0,
         0,
-        8,
+        9,
         0,
         2,
         1,
@@ -195,10 +195,10 @@
         0,
         0,
         1,
-        1,
+        3,
         0,
         12,
-        1,
+        0,
         0
       ],
       [
@@ -206,7 +206,7 @@
         0,
         0,
         0,
-        0,
+        1,
         0,
         0,
         1,
@@ -215,22 +215,25 @@
       ],
       [
         0,
+        0,
         1,
         0,
         0,
         0,
         0,
         0,
-        0,
-        0,
-        8
+        2,
+        6
       ]
     ]
   },
   "source_files": [
     "data/labeled_requests.csv",
     "data/labeled_requests_extended.csv",
-    "data/labeled_requests_extra.csv"
+    "data/labeled_requests_extra.csv",
+    "data/labeled_requests_csc.csv",
+    "data/analyzer_training_export.csv (optional)"
   ],
-  "feature_backend": "sentence-transformer-embeddings + logistic regression"
+  "feature_backend": "sentence-transformer-embeddings + logistic regression",
+  "dataset_note": "Includes AUI CSC topic supplement when present"
 }
