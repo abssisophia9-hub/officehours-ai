@@ -19,7 +19,7 @@ def setup_function():
     Base.metadata.create_all(bind=engine)
 
 
-def _post(text, *, course="CS 400", course_id=1, anonymous=True, **extra):
+def _post(text, *, course="CSC 2302", course_id=1, anonymous=True, **extra):
     payload = {
         "text": text,
         "anonymous": anonymous,
@@ -37,25 +37,25 @@ def test_course_scoped_clustering_groups_repeats():
     second = _post("Binary search fails on the last array element — high bound wrong?")
     other_course = _post(
         "Binary search fails on the last array element — high bound wrong?",
-        course="CS 330",
+        course="CSC 3323",
         course_id=2,
     )
     assert first["cluster_id"] == second["cluster_id"]
-    # Same wording in another course should not join CS 400 cluster space for new IDs
+    # Same wording in another course should not join CSC 2302 cluster space for new IDs
     # (may share numeric id by coincidence if both start at 1 — verify via analytics)
-    cs400 = client.get("/analytics/clusters?course_id=1&course=CS%20400")
-    assert cs400.status_code == 200
-    body = cs400.json()
+    cs2302 = client.get("/analytics/clusters?course_id=1&course=CSC%202302")
+    assert cs2302.status_code == 200
+    body = cs2302.json()
     assert body["total_requests"] == 2
     assert any(cluster["request_count"] >= 2 for cluster in body["clusters"])
-    assert other_course["course"] == "CS 330"
+    assert other_course["course"] == "CSC 3323"
 
 
 def test_faq_from_cluster_and_group_suggestion():
     _post("How do hash tables handle collisions with chaining?")
     _post("Hash table collisions and chaining explanation please")
     _post("Hash tables collisions chaining — what happens in each bucket?")
-    clusters = client.get("/analytics/clusters?course=CS%20400").json()["clusters"]
+    clusters = client.get("/analytics/clusters?course=CSC%202302").json()["clusters"]
     assert clusters
     target = max(clusters, key=lambda item: item["request_count"])
     assert target["request_count"] >= 2
@@ -63,7 +63,7 @@ def test_faq_from_cluster_and_group_suggestion():
 
     faq = client.post(
         "/knowledge/from-cluster",
-        json={"cluster_id": target["cluster_id"], "course": "CS 400", "course_id": 1},
+        json={"cluster_id": target["cluster_id"], "course": "CSC 2302", "course_id": 1},
     )
     assert faq.status_code == 201
     data = faq.json()
@@ -82,7 +82,7 @@ def test_course_material_ingest_feeds_kb_agent():
     assert login.status_code == 200
     token = login.json()["token"]
     course_id = next(
-        c["id"] for c in login.json()["user"]["courses"] if c["code"] == "CS 400"
+        c["id"] for c in login.json()["user"]["courses"] if c["code"] == "CSC 2302"
     )
 
     ingest = client.post(
@@ -96,7 +96,7 @@ def test_course_material_ingest_feeds_kb_agent():
                 "Chaining stores a linked list in each bucket."
             ),
             "course_id": course_id,
-            "course": "CS 400",
+            "course": "CSC 2302",
             "source": "slides",
             "auto_approve": True,
         },
@@ -130,5 +130,5 @@ def test_anonymous_strips_identity_and_sensitive_flags():
     assert created["sensitive"] is True
     assert "private" in (created["recommended_action"] or "").lower()
 
-    escalations = client.get("/analytics/escalations?course=CS%20400").json()
+    escalations = client.get("/analytics/escalations?course=CSC%202302").json()
     assert any(item["sensitive"] for item in escalations)

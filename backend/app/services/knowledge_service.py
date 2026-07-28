@@ -223,7 +223,7 @@ def search_approved_entries(
 ) -> list[tuple[KnowledgeEntry, float]]:
     query = db.query(KnowledgeEntry).filter(KnowledgeEntry.status == "approved")
     if course_id is not None:
-        # Strict course scope so CS 330 slides never answer CS 400 students.
+        # Strict course scope so CSC 3323 slides never answer CSC 2302 students.
         query = query.filter(KnowledgeEntry.course_id == course_id)
     approved = query.order_by(KnowledgeEntry.id).all()
     if not approved:

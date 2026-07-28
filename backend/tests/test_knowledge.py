@@ -54,7 +54,9 @@ def test_agent_only_uses_approved_entries():
         json={"question": "How does recursion work with binary search?"},
     ).json()
     assert blocked["matched_count"] == 0
-    assert "do not have a professor-approved answer" in blocked["answer"].lower()
+    assert blocked["should_seek_help"] is True
+    assert "quiet ask" in blocked["answer"].lower()
+    assert "waste" in blocked["answer"].lower()
 
     approved = client.patch(
         f"/knowledge/{entry_id}",
@@ -78,9 +80,25 @@ def test_agent_only_uses_approved_entries():
     ).json()
     assert answered["matched_count"] >= 1
     assert answered["used_approved_kb_only"] is True
+    assert answered["should_seek_help"] is False
     assert "base case" in answered["answer"].lower()
     assert answered["sources"][0]["entry"]["id"] == entry_id
     assert answered["student_hint"]
+
+
+def test_kb_miss_encourages_quiet_ask_not_guessing():
+    response = client.post(
+        "/agent/ask",
+        json={"question": "What is the midterm date for quantum blockchain yoga?"},
+    ).json()
+    assert response["matched_count"] == 0
+    assert response["should_seek_help"] is True
+    assert "quiet ask" in response["answer"].lower()
+    assert "reach out" in response["answer"].lower() or "ta" in response["answer"].lower()
+    assert response["student_hint"]
+    assert "stuck" in (response["student_hint"] or "").lower() or "help" in (
+        response["student_hint"] or ""
+    ).lower()
 
 
 def test_reject_keeps_entry_out_of_agent():

@@ -8,7 +8,7 @@ const CODE_MAX = 4000;
 export default function RequestForm({ checkIn, onSubmitted }) {
   const [text, setText] = useState("");
   const [studentName, setStudentName] = useState("");
-  const [course, setCourse] = useState("CS 400");
+  const [course, setCourse] = useState("CSC 2302");
   const [codeSnippet, setCodeSnippet] = useState("");
   const [anonymous, setAnonymous] = useState(!checkIn?.studentId);
   const [studentId, setStudentId] = useState(checkIn?.studentId || "");
@@ -100,7 +100,7 @@ export default function RequestForm({ checkIn, onSubmitted }) {
           <input
             value={course}
             onChange={(event) => setCourse(event.target.value)}
-            placeholder="CS 400"
+            placeholder="CSC 2302"
             className="field-glass px-5 py-4 text-lg"
           />
         </label>

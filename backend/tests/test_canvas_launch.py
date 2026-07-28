@@ -40,7 +40,7 @@ def test_student_click_provisions_course_user_and_agent():
     assert result["provisioned_course"] is True
     assert result["provisioned_user"] is True
     assert result["role"] == "student"
-    assert result["course_code"] == "CS 210"
+    assert result["course_code"] == "CSC 3351"
     assert result["course_title"] == "Operating Systems"
     assert result["synced"] is True
     assert result["agent_ready"] is True
@@ -129,7 +129,7 @@ def test_ta_launch_maps_ta_role():
 def test_full_community_loop_ask_ta_professor_agent():
     """The problem this product solves: one student's question, answered once
     by a human, becomes instant approved knowledge for the whole course."""
-    student = _launch()  # Omar, CS 210
+    student = _launch()  # Omar, CSC 3351
     course_id = student["course_id"]
 
     question = "Why does my scheduler starve long processes when I use priorities?"
@@ -213,7 +213,7 @@ def test_full_community_loop_ask_ta_professor_agent():
 
 
 def test_launch_into_existing_course_joins_without_reprovision():
-    """Launching from CS 400 (already seeded by demo accounts) just joins."""
+    """Launching from CSC 2302 (already seeded by demo accounts) just joins."""
     # Trigger demo seed via a login-dependent endpoint.
     from app.services.demo_accounts import DEMO_PASSWORD
 
@@ -233,7 +233,7 @@ def test_launch_into_existing_course_joins_without_reprovision():
     assert result["provisioned_course"] is False
     assert result["provisioned_user"] is True
     assert result["role"] == "student"
-    assert result["course_code"] == "CS 400"
+    assert result["course_code"] == "CSC 2302"
 
     # Agent was provisioned on this first launch (no canvas chunks existed).
     assert result["agent_ready"] is True
@@ -248,7 +248,7 @@ def test_launch_into_existing_course_joins_without_reprovision():
 
 
 def test_course_agents_stay_isolated_across_launches():
-    os_launch = _launch()  # CS 210
+    os_launch = _launch()  # CSC 3351
     ds_launch = _launch(
         canvas_course_id="4001",
         email="s.elidrissi@aui.ma",
@@ -257,7 +257,7 @@ def test_course_agents_stay_isolated_across_launches():
         student_id="117400",
     )
 
-    # CS 210 agent knows scheduling; CS 400 agent does not.
+    # CSC 3351 agent knows scheduling; CSC 2302 agent does not.
     scheduling_in_ds = client.post(
         "/agent/ask",
         json={

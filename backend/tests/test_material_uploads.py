@@ -26,7 +26,7 @@ def _professor():
     assert login.status_code == 200
     token = login.json()["token"]
     course_id = next(
-        c["id"] for c in login.json()["user"]["courses"] if c["code"] == "CS 400"
+        c["id"] for c in login.json()["user"]["courses"] if c["code"] == "CSC 2302"
     )
     return {"Authorization": f"Bearer {token}"}, course_id
 
@@ -190,7 +190,7 @@ def test_upload_scoped_to_course():
         "/auth/login",
         json={"email": "a.benali@aui.ma", "password": DEMO_PASSWORD},
     ).json()
-    other = next(c["id"] for c in login["user"]["courses"] if c["code"] == "CS 330")
+    other = next(c["id"] for c in login["user"]["courses"] if c["code"] == "CSC 3323")
     miss = client.post(
         "/agent/ask",
         json={"question": "How do AVL rotations rebalance the tree?", "course_id": other},

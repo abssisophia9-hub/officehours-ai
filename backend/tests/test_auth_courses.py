@@ -27,8 +27,9 @@ def test_login_returns_courses_for_roles():
         assert payload["token"]
         assert payload["user"]["display_name"]
         codes = {c["code"] for c in payload["user"]["courses"]}
-        assert "CS 400" in codes
-        assert "CS 330" in codes
+        assert "CSC 2302" in codes
+        assert "CSC 3323" in codes
+        assert "CSC 3374" in codes
         assert {c["role"] for c in payload["user"]["courses"]} == {"professor"}
         assert all(c.get("canvas_course_id") for c in payload["user"]["courses"])
 
@@ -37,6 +38,11 @@ def test_login_returns_courses_for_roles():
             json={"email": "S.Elidrissi@aui.ma", "password": DEMO_PASSWORD},
         ).json()
         assert student["user"]["student_id"] == "117400"
+        student_codes = {c["code"] for c in student["user"]["courses"]}
+        assert len(student_codes) == 7
+        assert "CSC 3374" in student_codes
+        assert "COM 1301" in student_codes
+        assert "MTH 1304" in student_codes
         roles = {c["role"] for c in student["user"]["courses"]}
         assert roles == {"student"}
 

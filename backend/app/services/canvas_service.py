@@ -34,11 +34,12 @@ from app.models.knowledge import KnowledgeEntry
 from app.services.knowledge_service import ingest_course_material
 
 # Module-structured Canvas mirror keyed by canvas_course_id.
-# "2101" is intentionally NOT pre-seeded in the app DB: launching from that
-# Canvas course proves SaaS-style auto-provisioning of a brand-new tenant.
+# "2101" (CSC 3351 Operating Systems) is intentionally NOT pre-seeded in demo
+# accounts: launching from that Canvas course proves SaaS-style auto-provisioning.
+# Canvas course IDs stay stable for demos; codes/titles match AUI catalog.
 LOCAL_CANVAS_COURSES: dict[str, dict[str, Any]] = {
     "4001": {
-        "code": "CS 400",
+        "code": "CSC 2302",
         "title": "Data Structures",
         "term": "Spring 2026",
         "modules": [
@@ -46,7 +47,7 @@ LOCAL_CANVAS_COURSES: dict[str, dict[str, Any]] = {
                 "name": "Module 4 — Hashing",
                 "items": [
                     {
-                        "external_id": "cs400-week4-hashing",
+                        "external_id": "csc2302-week4-hashing",
                         "title": "Week 4 — Hash tables (slides)",
                         "content": (
                             "Hash tables map keys to buckets using a hash function.\n\n"
@@ -63,7 +64,7 @@ LOCAL_CANVAS_COURSES: dict[str, dict[str, Any]] = {
                 "name": "Module 5 — Trees",
                 "items": [
                     {
-                        "external_id": "cs400-week5-bst",
+                        "external_id": "csc2302-week5-bst",
                         "title": "Week 5 — Binary search trees (slides)",
                         "content": (
                             "A binary search tree keeps left children smaller and right children larger.\n\n"
@@ -76,15 +77,15 @@ LOCAL_CANVAS_COURSES: dict[str, dict[str, Any]] = {
         ],
     },
     "3301": {
-        "code": "CS 330",
-        "title": "Algorithms",
+        "code": "CSC 3323",
+        "title": "Analysis of Algorithms",
         "term": "Spring 2026",
         "modules": [
             {
                 "name": "Module 2 — Divide & Conquer",
                 "items": [
                     {
-                        "external_id": "cs330-week2-dc",
+                        "external_id": "csc3323-week2-dc",
                         "title": "Week 2 — Divide and conquer (slides)",
                         "content": (
                             "Divide and conquer splits a problem, solves subproblems, then combines.\n\n"
@@ -97,7 +98,7 @@ LOCAL_CANVAS_COURSES: dict[str, dict[str, Any]] = {
         ],
     },
     "2101": {
-        "code": "CS 210",
+        "code": "CSC 3351",
         "title": "Operating Systems",
         "term": "Spring 2026",
         "modules": [
@@ -105,7 +106,7 @@ LOCAL_CANVAS_COURSES: dict[str, dict[str, Any]] = {
                 "name": "Module 1 — Processes",
                 "items": [
                     {
-                        "external_id": "cs210-week1-processes",
+                        "external_id": "csc3351-week1-processes",
                         "title": "Week 1 — Processes and threads (slides)",
                         "content": (
                             "A process is a running program with its own address space.\n\n"
@@ -120,13 +121,34 @@ LOCAL_CANVAS_COURSES: dict[str, dict[str, Any]] = {
                 "name": "Module 2 — Scheduling",
                 "items": [
                     {
-                        "external_id": "cs210-week2-scheduling",
+                        "external_id": "csc3351-week2-scheduling",
                         "title": "Week 2 — CPU scheduling (slides)",
                         "content": (
                             "First-come first-served runs jobs in arrival order and suffers convoy effects.\n\n"
                             "Shortest job first minimizes average waiting time but needs burst estimates.\n\n"
                             "Round robin gives each process a time quantum; small quanta increase "
                             "context-switch overhead, large quanta approach FCFS."
+                        ),
+                    },
+                ],
+            },
+        ],
+    },
+    "3374": {
+        "code": "CSC 3374",
+        "title": "Adv. Distributed Programming Paradigms",
+        "term": "Spring 2026",
+        "modules": [
+            {
+                "name": "Module 1 — Message Passing",
+                "items": [
+                    {
+                        "external_id": "csc3374-week1-mpi",
+                        "title": "Week 1 — Message-passing and RPC (slides)",
+                        "content": (
+                            "Distributed programs coordinate across machines with message passing or RPC.\n\n"
+                            "Synchronous RPC blocks until a reply; asynchronous messaging decouples senders.\n\n"
+                            "Partial failure is normal: design for timeouts, retries, and idempotent handlers."
                         ),
                     },
                 ],

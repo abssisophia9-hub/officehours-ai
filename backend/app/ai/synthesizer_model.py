@@ -187,7 +187,11 @@ def synthesize_with_model(
             score += 0.12
         ranked.append((score, row))
     ranked.sort(key=lambda item: item[0], reverse=True)
-    best_row = ranked[0][1]
+    best_score, best_row = ranked[0]
+    # Weak bank match → do not pretend we solved it; push human help.
+    if best_score < 0.38:
+        return _seek_help_fallback(topic, style, tags, question_text, code_snippet, backend)
+
     teaching = best_row["teaching_approach"]
     if code_snippet:
         teaching += (
@@ -247,6 +251,40 @@ def draft_kb_with_model(
     }
 
 
+def _seek_help_fallback(
+    topic: str,
+    style: str,
+    tags: list[str],
+    question_text: str,
+    code_snippet: str | None,
+    backend: str,
+) -> dict[str, Any]:
+    """When RAG has nothing solid, steer the student to humans — don't stall."""
+    focus = tags[0] if tags else topic
+    teaching = (
+        f"No strong approved FAQ or teaching-bank match for {topic}.\n"
+        "1. Do not keep rephrasing into the study agent — materials may not cover this yet.\n"
+        "2. Use Quiet ask (anonymous) or reach out to the assigned TA / professor.\n"
+        f"3. Bring one minimal example around `{focus}` that shows the stuck point.\n"
+        f"Original question: {question_text.strip()}"
+    )
+    if code_snippet:
+        teaching += "\n\nInclude the failing snippet so office hours can start immediately."
+    return {
+        "student_hint": (
+            "Seek help now via Quiet ask — waiting on incomplete course materials "
+            "wastes time. Staff will unblock you faster than guessing."
+        ),
+        "teaching_approach": teaching,
+        "similar_count": 0,
+        "similar_questions": [],
+        "kb_insight": "Weak RAG match; synthesizer encouraged human outreach.",
+        "learning_style": style,
+        "backend": backend + "_seek_help",
+        "should_seek_help": True,
+    }
+
+
 def _template_fallback(
     topic: str,
     style: str,
@@ -255,26 +293,6 @@ def _template_fallback(
     code_snippet: str | None,
     backend: str,
 ) -> dict[str, Any]:
-    teaching = (
-        f"Teaching approach for {topic} ({style}):\n"
-        "1. Diagnose the exact stuck point.\n"
-        "2. Rebuild the key invariant or definition.\n"
-        "3. Trace one minimal example.\n"
-        "4. Ask the student to restate the takeaway.\n"
-        f"Original question: {question_text.strip()}"
+    return _seek_help_fallback(
+        topic, style, tags, question_text, code_snippet, backend + "_template"
     )
-    if code_snippet:
-        teaching += "\n\nCode focus: verify updates on the failing branch."
-    hint = (
-        f"Focus on {(tags[0] if tags else topic)} — what must remain true "
-        "before and after the operation?"
-    )
-    return {
-        "student_hint": hint,
-        "teaching_approach": teaching,
-        "similar_count": 0,
-        "similar_questions": [],
-        "kb_insight": "Teaching bank unavailable; used local template fallback.",
-        "learning_style": style,
-        "backend": backend + "_template",
-    }

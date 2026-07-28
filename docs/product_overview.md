@@ -25,13 +25,17 @@ Password for all: `aui-demo`
 AUI emails look like `S.Abssi@aui.ma` (first initial + `.` + last name).
 **Role is never encoded in the email** — it comes from `course_memberships`.
 
+AUI is an English-language, American-style liberal-arts university (Ifrane).
+SSE course codes look like **CSC 3374**; a typical undergrad load is **~6–7
+courses** per term.
+
 | Email | Role (via membership) | Courses |
 | --- | --- | --- |
-| `s.elidrissi@aui.ma` | student | CS 400, CS 330 |
-| `y.amrani@aui.ma` | student | CS 330 |
-| `a.chen@aui.ma` | TA | CS 400 |
-| `b.martinez@aui.ma` | TA | CS 400, CS 330 |
-| `a.benali@aui.ma` | professor | CS 400, CS 330 |
+| `s.elidrissi@aui.ma` | student | CSC 2302, 3323, 3374, 3326, 3324 + MTH 1304 + COM 1301 (7) |
+| `y.amrani@aui.ma` | student | CSC 3323, 3374 + MTH 1304 |
+| `a.chen@aui.ma` | TA | CSC 2302 |
+| `b.martinez@aui.ma` | TA | CSC 2302, 3323, 3374 |
+| `a.benali@aui.ma` | professor | CSC 2302, 3323, 3374 |
 
 ## What a supervisor does
 

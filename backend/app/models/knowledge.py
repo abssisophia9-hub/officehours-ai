@@ -189,6 +189,8 @@ class AgentAskResponse(BaseModel):
     matched_count: int
     sources: list[KnowledgeSearchHit]
     used_approved_kb_only: bool = True
+    # True when the KB cannot help — UI should push Quiet ask / TA outreach.
+    should_seek_help: bool = False
 
 
 class StruggleHeatmapCell(BaseModel):

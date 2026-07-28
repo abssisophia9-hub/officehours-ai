@@ -7,17 +7,17 @@ const DEMO_ACCOUNTS = [
   {
     email: "s.elidrissi@aui.ma",
     role: "Student",
-    note: "CS 400 + CS 330",
+    note: "7 courses · CSC 2302…",
   },
   {
     email: "a.chen@aui.ma",
     role: "TA",
-    note: "CS 400",
+    note: "CSC 2302",
   },
   {
     email: "a.benali@aui.ma",
     role: "Professor",
-    note: "CS 400 + CS 330",
+    note: "CSC 2302 · 3323 · 3374",
   },
 ];
 

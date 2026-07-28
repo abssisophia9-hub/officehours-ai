@@ -27,7 +27,7 @@ def _professor_client():
     assert login.status_code == 200
     token = login.json()["token"]
     course_id = next(
-        c["id"] for c in login.json()["user"]["courses"] if c["code"] == "CS 400"
+        c["id"] for c in login.json()["user"]["courses"] if c["code"] == "CSC 2302"
     )
     return client, token, course_id
 
@@ -105,7 +105,7 @@ def test_materials_require_professor_auth_and_strict_course_scope():
                 "Chaining stores a linked list in each bucket."
             ),
             "course_id": course_id,
-            "course": "CS 400",
+            "course": "CSC 2302",
             "source": "slides",
             "auto_approve": True,
         },
@@ -113,11 +113,11 @@ def test_materials_require_professor_auth_and_strict_course_scope():
     assert ingest.status_code == 201
     assert ingest.json()["chunks_created"] >= 1
 
-    # Other course should not see CS 400 materials when scoped.
+    # Other course should not see CSC 2302 materials when scoped.
     other = next(
         c["id"]
         for c in client.get("/auth/me", headers=headers).json()["courses"]
-        if c["code"] == "CS 330"
+        if c["code"] == "CSC 3323"
     )
     miss = client.post(
         "/agent/ask",

@@ -110,15 +110,20 @@ def match_with_model(
         ta = roster_by_name.get(name)
         if ta is None or not ta.get("is_available", True):
             continue
+        overlap = _tag_overlap(analyzer, ta)
+        # Blend classifier score with expertise overlap so topic overlays
+        # (hashing, scheduling, …) steer assignment when the model is flat.
         queue_penalty = 0.03 * float(ta.get("queue_depth") or 0)
-        scored.append((float(probabilities[index]) - queue_penalty, ta))
+        scored.append(
+            (float(probabilities[index]) + 0.06 * overlap - queue_penalty, ta)
+        )
 
-    # Include roster TAs unseen in training with tiny prior from tag overlap.
+    # Include roster TAs unseen in training with prior from tag overlap.
     for ta in roster:
         if ta["name"] in classes:
             continue
         overlap = _tag_overlap(analyzer, ta)
-        scored.append((0.01 * overlap - 0.03 * float(ta.get("queue_depth") or 0), ta))
+        scored.append((0.05 * overlap - 0.03 * float(ta.get("queue_depth") or 0), ta))
 
     if not scored:
         return _heuristic_match(analyzer, roster)
@@ -130,13 +135,15 @@ def match_with_model(
         int(analyzer.get("estimated_minutes") or 15),
         int(analyzer.get("estimated_minutes") or 15) * max(int(primary.get("queue_depth") or 0), 1),
     )
+    overlap_note = _tag_overlap(analyzer, primary)
     return {
         "assigned_ta": primary["name"],
         "alternative_ta": alternative["name"] if alternative else None,
         "estimated_wait_minutes": wait,
         "rationale": (
             f"Custom Matcher assigned {primary['name']} "
-            f"(trained embedding classifier + queue penalty)."
+            f"(trained embedding classifier + expertise overlap {overlap_note} "
+            f"+ queue penalty)."
         ),
         "backend": "custom_matcher",
         "confidence": round(float(scored[0][0]), 3),

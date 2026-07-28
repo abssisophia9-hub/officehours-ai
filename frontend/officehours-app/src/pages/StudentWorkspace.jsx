@@ -40,6 +40,7 @@ export default function StudentWorkspace() {
   const [busy, setBusy] = useState(false);
   const [agentQ, setAgentQ] = useState("");
   const [agentA, setAgentA] = useState("");
+  const [agentSeekHelp, setAgentSeekHelp] = useState(false);
   const [stats, setStats] = useState({ open: 0, anonymous: 0, approved: 0 });
 
   const loadStats = useCallback(async () => {
@@ -103,15 +104,19 @@ export default function StudentWorkspace() {
   async function askAgent(event) {
     event.preventDefault();
     setAgentA("");
+    setAgentSeekHelp(false);
     try {
       const answer = await api("/agent/ask", {
         method: "POST",
         token,
         body: { question: agentQ, course_id: activeCourse.id },
       });
-      setAgentA(answer.answer || JSON.stringify(answer));
+      const hint = answer.student_hint ? `\n\n${answer.student_hint}` : "";
+      setAgentA(`${answer.answer || ""}${hint}`);
+      setAgentSeekHelp(Boolean(answer.should_seek_help || answer.matched_count === 0));
     } catch (err) {
       setAgentA(err.message);
+      setAgentSeekHelp(true);
     }
   }
 
@@ -229,7 +234,8 @@ export default function StudentWorkspace() {
           </div>
           <p className="bh-card-note">
             Answers only from professor-approved FAQs and Canvas course materials
-            for {activeCourse.code}.
+            for {activeCourse.code}. If nothing matches, stop guessing — Quiet ask
+            a TA instead.
           </p>
           <form onSubmit={askAgent} className="mt-4">
             <input
@@ -244,6 +250,18 @@ export default function StudentWorkspace() {
           </form>
           {agentA ? (
             <p className="soft-stat mt-4 whitespace-pre-wrap text-sm">{agentA}</p>
+          ) : null}
+          {agentSeekHelp ? (
+            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+              <p className="font-semibold">No approved answer yet — seek help.</p>
+              <p className="mt-1 text-xs leading-5">
+                Don&apos;t keep spinning on the agent. Use Quiet ask on the left so a
+                TA or professor can unblock you.
+              </p>
+              <a href="#ask" className="btn-primary mt-3 inline-flex px-4 py-2 text-xs">
+                Go to Quiet ask
+              </a>
+            </div>
           ) : null}
         </section>
       </div>

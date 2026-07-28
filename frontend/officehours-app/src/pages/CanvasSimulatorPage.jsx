@@ -47,20 +47,32 @@ const PERSONAS = [
     student_id: "117400",
     enrollments: [
       { canvas_course_id: "4001", canvas_role: "StudentEnrollment" },
+      { canvas_course_id: "3301", canvas_role: "StudentEnrollment" },
+      { canvas_course_id: "3374", canvas_role: "StudentEnrollment" },
     ],
   },
 ];
 
 const COURSES = {
   2101: {
-    code: "CS 210",
+    code: "CSC 3351",
     title: "Operating Systems",
     modules: ["Module 1 — Processes", "Module 2 — Scheduling"],
   },
   4001: {
-    code: "CS 400",
+    code: "CSC 2302",
     title: "Data Structures",
     modules: ["Module 4 — Hashing", "Module 5 — Trees"],
+  },
+  3301: {
+    code: "CSC 3323",
+    title: "Analysis of Algorithms",
+    modules: ["Module 2 — Divide & Conquer"],
+  },
+  3374: {
+    code: "CSC 3374",
+    title: "Adv. Distributed Programming Paradigms",
+    modules: ["Module 1 — Message Passing"],
   },
 };
 

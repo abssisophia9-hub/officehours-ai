@@ -35,10 +35,10 @@ AUI format: `Initial.Lastname@aui.ma` — role comes from course membership.
 
 | Email | Role | Courses |
 | --- | --- | --- |
-| `s.elidrissi@aui.ma` | student | CS 400, CS 330 |
-| `a.chen@aui.ma` | TA | CS 400 |
-| `b.martinez@aui.ma` | TA | CS 400, CS 330 |
-| `a.benali@aui.ma` | professor | CS 400, CS 330 |
+| `s.elidrissi@aui.ma` | student | 7 courses (CSC 2302… + MTH 1304 + COM 1301) |
+| `a.chen@aui.ma` | TA | CSC 2302 |
+| `b.martinez@aui.ma` | TA | CSC 2302, 3323, 3374 |
+| `a.benali@aui.ma` | professor | CSC 2302, 3323, 3374 |
 
 ## Env
 

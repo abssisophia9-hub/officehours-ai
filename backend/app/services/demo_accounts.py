@@ -3,6 +3,11 @@
 AUI emails look like ``S.Abssi@aui.ma`` (first initial + '.' + last name).
 They do **not** encode role — student / TA / professor comes only from
 ``course_memberships.role``.
+
+Course codes follow the real AUI catalog style (``CSC 3374``, ``MTH 1304``):
+English-language, American-style liberal-arts curriculum at the School of
+Science & Engineering (SSE). A typical full-time undergrad load is about
+6–7 courses per term.
 """
 
 from __future__ import annotations
@@ -23,26 +28,86 @@ EMAIL_MIGRATIONS = {
     "student2@aui.ma": "y.amrani@aui.ma",
 }
 
+# Fake US-style codes → real AUI catalog codes (same term).
+COURSE_CODE_MIGRATIONS = {
+    "CS 400": {
+        "code": "CSC 2302",
+        "title": "Data Structures",
+        "canvas_course_id": "4001",
+    },
+    "CS 330": {
+        "code": "CSC 3323",
+        "title": "Analysis of Algorithms",
+        "canvas_course_id": "3301",
+    },
+    "CS 210": {
+        "code": "CSC 3351",
+        "title": "Operating Systems",
+        "canvas_course_id": "2101",
+    },
+}
+
+# Catalog-accurate AUI courses used across demos / Canvas mirror.
+DEMO_COURSES = {
+    "CSC 2302": {
+        "title": "Data Structures",
+        "term": "Spring 2026",
+        "canvas_course_id": "4001",
+    },
+    "CSC 3323": {
+        "title": "Analysis of Algorithms",
+        "term": "Spring 2026",
+        "canvas_course_id": "3301",
+    },
+    "CSC 3374": {
+        "title": "Adv. Distributed Programming Paradigms",
+        "term": "Spring 2026",
+        "canvas_course_id": "3374",
+    },
+    "CSC 3326": {
+        "title": "Database Systems",
+        "term": "Spring 2026",
+        "canvas_course_id": "3326",
+    },
+    "CSC 3324": {
+        "title": "Software Engineering I",
+        "term": "Spring 2026",
+        "canvas_course_id": "3324",
+    },
+    "MTH 1304": {
+        "title": "Discrete Mathematics for Engineers",
+        "term": "Spring 2026",
+        "canvas_course_id": "1304",
+    },
+    # Liberal-arts core (AUI American curriculum); not Canvas-mirrored for demos.
+    "COM 1301": {
+        "title": "Public Speaking",
+        "term": "Spring 2026",
+        "canvas_course_id": None,
+    },
+}
+
+
+def _membership(code: str, role: str) -> dict:
+    meta = DEMO_COURSES[code]
+    return {
+        "code": code,
+        "title": meta["title"],
+        "term": meta["term"],
+        "role": role,
+        "canvas_course_id": meta.get("canvas_course_id"),
+    }
+
+
 DEMO_USERS = [
     {
         "email": "a.benali@aui.ma",
         "display_name": "Prof. Amine Benali",
         "student_id": None,
         "memberships": [
-            {
-                "code": "CS 400",
-                "title": "Data Structures",
-                "term": "Spring 2026",
-                "role": "professor",
-                "canvas_course_id": "4001",
-            },
-            {
-                "code": "CS 330",
-                "title": "Algorithms",
-                "term": "Spring 2026",
-                "role": "professor",
-                "canvas_course_id": "3301",
-            },
+            _membership("CSC 2302", "professor"),
+            _membership("CSC 3323", "professor"),
+            _membership("CSC 3374", "professor"),
         ],
     },
     {
@@ -50,13 +115,7 @@ DEMO_USERS = [
         "display_name": "Alice Chen",
         "student_id": None,
         "memberships": [
-            {
-                "code": "CS 400",
-                "title": "Data Structures",
-                "term": "Spring 2026",
-                "role": "ta",
-                "canvas_course_id": "4001",
-            },
+            _membership("CSC 2302", "ta"),
         ],
     },
     {
@@ -64,41 +123,25 @@ DEMO_USERS = [
         "display_name": "Bob Martinez",
         "student_id": None,
         "memberships": [
-            {
-                "code": "CS 400",
-                "title": "Data Structures",
-                "term": "Spring 2026",
-                "role": "ta",
-                "canvas_course_id": "4001",
-            },
-            {
-                "code": "CS 330",
-                "title": "Algorithms",
-                "term": "Spring 2026",
-                "role": "ta",
-                "canvas_course_id": "3301",
-            },
+            _membership("CSC 2302", "ta"),
+            _membership("CSC 3323", "ta"),
+            _membership("CSC 3374", "ta"),
         ],
     },
     {
         "email": "s.elidrissi@aui.ma",
         "display_name": "Sara El Idrissi",
         "student_id": "117400",
+        # Typical AUI undergrad load: ~6–7 courses / term (SSE + MTH + liberal arts).
+        # CSC 3351 (OS) is intentionally left for Canvas auto-provision demos only.
         "memberships": [
-            {
-                "code": "CS 400",
-                "title": "Data Structures",
-                "term": "Spring 2026",
-                "role": "student",
-                "canvas_course_id": "4001",
-            },
-            {
-                "code": "CS 330",
-                "title": "Algorithms",
-                "term": "Spring 2026",
-                "role": "student",
-                "canvas_course_id": "3301",
-            },
+            _membership("CSC 2302", "student"),
+            _membership("CSC 3323", "student"),
+            _membership("CSC 3374", "student"),
+            _membership("CSC 3326", "student"),
+            _membership("CSC 3324", "student"),
+            _membership("MTH 1304", "student"),
+            _membership("COM 1301", "student"),
         ],
     },
     {
@@ -106,21 +149,18 @@ DEMO_USERS = [
         "display_name": "Youssef Amrani",
         "student_id": "117401",
         "memberships": [
-            {
-                "code": "CS 330",
-                "title": "Algorithms",
-                "term": "Spring 2026",
-                "role": "student",
-                "canvas_course_id": "3301",
-            },
+            _membership("CSC 3323", "student"),
+            _membership("CSC 3374", "student"),
+            _membership("MTH 1304", "student"),
         ],
     },
 ]
 
 
 def ensure_demo_accounts(db: Session) -> None:
-    """Create or repair demo users/courses (idempotent, migrates old emails)."""
+    """Create or repair demo users/courses (idempotent, migrates old emails/codes)."""
     _migrate_legacy_emails(db)
+    _migrate_legacy_course_codes(db)
 
     courses_by_code: dict[str, Course] = {}
     for spec in DEMO_USERS:
@@ -144,10 +184,11 @@ def ensure_demo_accounts(db: Session) -> None:
                 db.add(course)
                 db.flush()
             else:
+                course.title = membership["title"]
                 canvas_id = membership.get("canvas_course_id")
-                if canvas_id and not getattr(course, "canvas_course_id", None):
+                if canvas_id:
                     course.canvas_course_id = canvas_id
-                    db.add(course)
+                db.add(course)
             courses_by_code[code] = course
 
         user = db.query(User).filter(User.email == spec["email"]).one_or_none()
@@ -202,4 +243,23 @@ def _migrate_legacy_emails(db: Session) -> None:
             old.email = new_email
             db.add(old)
         # If both exist, leave them; new seed path will keep the AUI-format user.
+    db.flush()
+
+
+def _migrate_legacy_course_codes(db: Session) -> None:
+    for old_code, meta in COURSE_CODE_MIGRATIONS.items():
+        rows = db.query(Course).filter(Course.code == old_code).all()
+        for course in rows:
+            # Prefer renaming in place when the target code is free for this term.
+            conflict = (
+                db.query(Course)
+                .filter(Course.code == meta["code"], Course.term == course.term)
+                .one_or_none()
+            )
+            if conflict is None or conflict.id == course.id:
+                course.code = meta["code"]
+                course.title = meta["title"]
+                if meta.get("canvas_course_id"):
+                    course.canvas_course_id = meta["canvas_course_id"]
+                db.add(course)
     db.flush()
