@@ -2,7 +2,16 @@
 Routes for knowledge-base curation and the student-facing KB agent.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    UploadFile,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
@@ -33,6 +42,7 @@ from app.services.analytics_service import (
 )
 from app.services.canvas_service import canvas_status, sync_course_materials
 from app.services.kb_agent_service import answer_from_knowledge_base
+from app.services.material_extract import extract_material_text
 from app.services.knowledge_service import (
     create_faq_from_cluster,
     ingest_course_material,
@@ -186,6 +196,74 @@ async def upload_course_materials(
             f"Ingested {len(entries)} material chunk(s) into {course.code} KB "
             f"({'approved' if payload.auto_approve else 'pending_review'}). "
             "Students asking in this course can now match against this content."
+        ),
+    )
+
+
+@router.post(
+    "/knowledge/materials/upload",
+    response_model=CourseMaterialIngestOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def upload_course_material_file(
+    course_id: int = Form(...),
+    title: str | None = Form(default=None),
+    auto_approve: bool = Form(default=True),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Upload PDF slides, DOCX/TXT/MD notes, or a video transcript (.vtt/.srt)."""
+    course, _membership = require_course_role(
+        db, user, course_id, roles={"professor"}
+    )
+    data = await file.read()
+    if len(data) > 20_000_000:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File too large (20 MB max).",
+        )
+    try:
+        content, material_source = extract_material_text(file.filename or "", data)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
+
+    material_title = (title or "").strip() or (file.filename or "Uploaded material")
+    entries = ingest_course_material(
+        db,
+        title=material_title,
+        content=content,
+        source=material_source,
+        course_id=course.id,
+        course=course.code,
+        auto_approve=auto_approve,
+    )
+    if not entries:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No usable text could be extracted from that file.",
+        )
+    for entry in entries:
+        await hub.broadcast(
+            "knowledge.created",
+            {
+                "id": entry.id,
+                "status": entry.status,
+                "material_source": entry.material_source,
+                "course_id": entry.course_id,
+            },
+        )
+    return CourseMaterialIngestOut(
+        title=material_title,
+        source=material_source,
+        chunks_created=len(entries),
+        entry_ids=[entry.id for entry in entries],
+        message=(
+            f"Extracted {file.filename} ({material_source}) into {len(entries)} "
+            f"KB chunk(s) for {course.code} — the course agent can use it "
+            f"{'now' if auto_approve else 'after your approval'}."
         ),
     )
 

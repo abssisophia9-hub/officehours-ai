@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { api } from "../api/client.js";
+import { api, apiUpload } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 const ICONS = {
@@ -41,6 +41,7 @@ export default function ProfessorWorkspace() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const fileInputRef = useRef(null);
 
   const load = useCallback(async () => {
     try {
@@ -171,6 +172,43 @@ export default function ProfessorWorkspace() {
       await load();
     } catch (err) {
       setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function uploadFiles(event) {
+    event.preventDefault();
+    const files = Array.from(fileInputRef.current?.files || []);
+    if (files.length === 0) {
+      setError("Choose at least one file to upload.");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    setMessage("");
+    const summaries = [];
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("course_id", String(activeCourse.id));
+        formData.append("auto_approve", "true");
+        formData.append("file", file);
+        const result = await apiUpload("/knowledge/materials/upload", {
+          token,
+          formData,
+        });
+        summaries.push(`${file.name}: ${result.chunks_created} chunk(s)`);
+      }
+      setMessage(`Uploaded to ${activeCourse.code} KB — ${summaries.join(" · ")}`);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      await load();
+    } catch (err) {
+      setError(
+        summaries.length
+          ? `${err.message} (already uploaded: ${summaries.join(" · ")})`
+          : err.message,
+      );
     } finally {
       setBusy(false);
     }
@@ -433,6 +471,27 @@ export default function ProfessorWorkspace() {
         >
           {busy ? "Syncing…" : "Sync Canvas materials into KB"}
         </button>
+
+        <h3 className="font-display mt-7 text-lg font-semibold">
+          Upload files directly
+        </h3>
+        <p className="bh-card-note">
+          PDF slides, DOCX/TXT/MD notes, or lecture-video transcripts
+          (.vtt/.srt captions). Text is extracted, chunked, and made available
+          to the course agent immediately.
+        </p>
+        <form onSubmit={uploadFiles} className="mt-3 flex flex-wrap items-center gap-3">
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".pdf,.docx,.txt,.md,.vtt,.srt"
+            className="field-glass max-w-md px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-aui-mist file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-aui-deep"
+          />
+          <button type="submit" disabled={busy} className="btn-primary px-5 py-2.5 text-sm">
+            {busy ? "Uploading…" : "Upload to course KB"}
+          </button>
+        </form>
 
         <h3 className="font-display mt-7 text-lg font-semibold">
           Or paste slides / notes
