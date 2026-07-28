@@ -40,6 +40,8 @@ class KnowledgeEntry(Base):
     cluster_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     course_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     material_source: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Set when a TA hands the draft to curation: resolved | needs_professor.
+    ta_resolution: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     professor_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -71,6 +73,7 @@ class KnowledgeEntryOut(BaseModel):
     cluster_id: int | None = None
     course_id: int | None = None
     material_source: str | None = None
+    ta_resolution: str | None = None
     professor_note: str | None = None
     created_at: datetime
     updated_at: datetime

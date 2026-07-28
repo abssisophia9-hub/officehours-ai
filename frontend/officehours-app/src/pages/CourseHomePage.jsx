@@ -8,7 +8,7 @@ const ROLE_PATH = {
 };
 
 const ROLE_COPY = {
-  student: "Ask quietly, check status, and use the approved KB agent.",
+  student: "Ask quietly, check status, and use the approved study agent.",
   ta: "Work the live queue and prepare teaching drafts for curation.",
   professor: "Triage repeats, draft FAQs, and approve knowledge for students.",
 };
@@ -25,18 +25,13 @@ export default function CourseHomePage() {
 
   return (
     <section className="fade-up">
-      <div className="mb-8 max-w-2xl">
-        <p className="glass-chip mb-4">Your courses</p>
-        <h1 className="font-display text-4xl font-semibold sm:text-5xl">
-          Welcome, {user.display_name.split(" ")[0]}
-        </h1>
-        <p className="mt-3 text-base font-medium text-aui-deep/70">
-          Choose a course workspace. Your role can differ by course — for
-          example a student in CS 330 and a TA elsewhere.
-        </p>
-      </div>
+      <h1 className="bh-page-title">My Courses</h1>
+      <p className="bh-page-subtitle">
+        Choose a course workspace, {user.display_name.split(" ")[0]} — your role
+        can differ by course.
+      </p>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
         {user.courses.map((course) => (
           <button
             key={`${course.id}-${course.role}`}
@@ -47,9 +42,7 @@ export default function CourseHomePage() {
               navigate(ROLE_PATH[course.role] || "/");
             }}
           >
-            <p
-              className={`role-pill ${ROLE_PILL[course.role] || "role-pill-student"}`}
-            >
+            <p className={`role-pill ${ROLE_PILL[course.role] || "role-pill-student"}`}>
               {course.role}
             </p>
             <h2 className="font-display mt-4 text-3xl font-semibold">

@@ -266,6 +266,7 @@ def to_out(entry: KnowledgeEntry) -> KnowledgeEntryOut:
         cluster_id=entry.cluster_id,
         course_id=getattr(entry, "course_id", None),
         material_source=getattr(entry, "material_source", None),
+        ta_resolution=getattr(entry, "ta_resolution", None),
         professor_note=entry.professor_note,
         created_at=entry.created_at,
         updated_at=entry.updated_at,

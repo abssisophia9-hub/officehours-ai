@@ -37,8 +37,11 @@ def list_ta_queue(db: Session = Depends(get_db)):
     items: list[TaQueueItem] = []
     for request in requests:
         entry = entries.get(request.id)
-        # Hide fully approved/rejected items from the active TA queue.
-        if entry is not None and entry.status in {"approved", "rejected"}:
+        # Hide items a TA already handed to curation, plus approved/rejected.
+        if entry is not None and (
+            entry.status in {"approved", "rejected"}
+            or getattr(entry, "ta_resolution", None)
+        ):
             continue
         items.append(
             TaQueueItem(
@@ -77,6 +80,7 @@ async def resolve_for_curation(payload: TaResolveRequest, db: Session = Depends(
     if payload.student_hint:
         entry.student_hint = payload.student_hint.strip()
     entry.status = "pending_review"
+    entry.ta_resolution = payload.resolution_status
     entry.reviewed_at = None
     existing_note = entry.professor_note or ""
     resolution_line = (
