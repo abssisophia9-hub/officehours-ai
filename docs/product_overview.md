@@ -79,13 +79,15 @@ source:
 **Community recommendation:** Canvas LTI as primary. Not AUI portal scraping.
 Manual admin entry only as a rare support escape hatch.
 
-## Asking for help (identity + meeting preference)
+## Asking for help (who + identity + meeting)
 
 Students choose:
 
-1. **Quiet ask (anonymous)** — no name/ID stored; staff see a request code only  
-2. **Identify me** — uses the logged-in display name + student ID so staff can
-   follow up directly  
+1. **Who to ask** — a **TA**, the **professor**, or either  
+2. **Quiet ask (anonymous)** — no name/ID stored; the TA/professor see a request
+   code only  
+3. **Identify me** — uses the logged-in display name + student ID so the TA or
+   professor can follow up directly  
 
 And separately:
 
@@ -93,8 +95,12 @@ And separately:
 - **Face-to-face meeting** — request an in-person office-hours slot  
 - **Online meeting** — request Zoom/Teams  
 
-TA and professor queues show who asked (or Anonymous) and the help mode so staff
-know whether to reply in writing or schedule a meeting.
+TA and professor queues show who the student asked for, who asked (or Anonymous),
+and the help mode so the right person knows whether to reply in writing or
+schedule a meeting.
+
+**Study agent knowledge** is professor-trained (approved FAQs / Canvas materials).
+Students ask the agent — they do not approve knowledge.
 
 ## Packaging note
 

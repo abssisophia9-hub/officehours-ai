@@ -105,3 +105,76 @@ def test_invalid_help_mode_rejected():
         },
     )
     assert response.status_code == 422
+
+
+def test_ask_ta_preferred_helper():
+    created = client.post(
+        "/requests/",
+        json={
+            "text": "Can a TA walk me through open addressing?",
+            "anonymous": True,
+            "help_mode": "message",
+            "preferred_helper": "ta",
+        },
+    ).json()
+    assert created["preferred_helper"] == "ta"
+    assert "ta" in (created["recommended_action"] or "").lower()
+
+    status = client.get(f"/requests/{created['id']}/status").json()
+    assert status["preferred_helper"] == "ta"
+    assert "ta" in (status["recommended_next_step"] or "").lower()
+
+
+def test_ask_professor_preferred_helper():
+    created = client.post(
+        "/requests/",
+        json={
+            "text": "I need the professor on this grading concern.",
+            "anonymous": False,
+            "student_name": "Sara El Idrissi",
+            "help_mode": "message",
+            "preferred_helper": "professor",
+        },
+    ).json()
+    assert created["preferred_helper"] == "professor"
+    assert "professor" in (created["recommended_action"] or "").lower()
+
+
+def test_preferred_helper_defaults_to_either():
+    created = client.post(
+        "/requests/",
+        json={
+            "text": "Default helper preference please",
+            "anonymous": True,
+            "help_mode": "message",
+        },
+    ).json()
+    assert created["preferred_helper"] == "either"
+
+
+def test_invalid_preferred_helper_rejected():
+    response = client.post(
+        "/requests/",
+        json={
+            "text": "Bad helper",
+            "anonymous": True,
+            "preferred_helper": "dean",
+        },
+    )
+    assert response.status_code == 422
+
+
+def test_online_meeting_with_professor_copy():
+    created = client.post(
+        "/requests/",
+        json={
+            "text": "Zoom with the professor on midterm logistics",
+            "anonymous": True,
+            "help_mode": "online_meeting",
+            "preferred_helper": "professor",
+        },
+    ).json()
+    assert created["preferred_helper"] == "professor"
+    status = client.get(f"/requests/{created['id']}/status").json()
+    assert "professor" in (status["recommended_next_step"] or "").lower()
+    assert "staff" not in (status["recommended_next_step"] or "").lower()

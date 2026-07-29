@@ -177,6 +177,7 @@ export default function TaWorkspace() {
                 <th>#</th>
                 <th>Question</th>
                 <th>From</th>
+                <th>Ask</th>
                 <th>Help</th>
                 <th>Category</th>
                 <th>Urgency</th>
@@ -190,6 +191,7 @@ export default function TaWorkspace() {
                 const request = item.request;
                 const urgency = (request.urgency || "n/a").toLowerCase();
                 const helpMode = request.help_mode || "message";
+                const preferred = request.preferred_helper || "either";
                 return (
                   <tr
                     key={request.id}
@@ -208,6 +210,23 @@ export default function TaWorkspace() {
                       {request.anonymous
                         ? "Anonymous"
                         : request.student_name || request.student_id || "Identified"}
+                    </td>
+                    <td>
+                      <span
+                        className={`bh-pill ${
+                          preferred === "professor"
+                            ? "bh-pill-amber"
+                            : preferred === "ta"
+                              ? "bh-pill-green"
+                              : "bh-pill-gray"
+                        }`}
+                      >
+                        {preferred === "professor"
+                          ? "professor"
+                          : preferred === "ta"
+                            ? "TA"
+                            : "either"}
+                      </span>
                     </td>
                     <td>
                       <span
@@ -271,6 +290,21 @@ export default function TaWorkspace() {
                 : selected.request.student_name ||
                   selected.request.student_id ||
                   "Identified"}
+            </span>
+            <span
+              className={`bh-pill ${
+                selected.request.preferred_helper === "professor"
+                  ? "bh-pill-amber"
+                  : selected.request.preferred_helper === "ta"
+                    ? "bh-pill-green"
+                    : "bh-pill-gray"
+              }`}
+            >
+              {selected.request.preferred_helper === "professor"
+                ? "Asked for professor"
+                : selected.request.preferred_helper === "ta"
+                  ? "Asked for a TA"
+                  : "Either TA or professor"}
             </span>
             <span
               className={`bh-pill ${

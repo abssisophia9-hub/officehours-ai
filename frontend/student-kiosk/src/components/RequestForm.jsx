@@ -43,7 +43,7 @@ export default function RequestForm({ checkIn, onSubmitted }) {
       onSubmitted(result);
     } catch (err) {
       setError(
-        "We couldn't reach the server. Please try again or ask a staff member.",
+        "We couldn't reach the server. Please try again or ask a TA or the professor.",
       );
     } finally {
       setSubmitting(false);

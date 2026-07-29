@@ -28,7 +28,7 @@ def list_ta_roster(db: Session = Depends(get_db)):
 
 @router.get("/load/")
 def course_ta_load(course_id: int = Query(..., ge=1), db: Session = Depends(get_db)):
-    """Professor / staff dual-TA load for one course."""
+    """Professor dual-TA load for one course."""
     ensure_default_roster(db)
     return build_course_ta_load(db, course_id=course_id)
 

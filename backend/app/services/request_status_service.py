@@ -31,6 +31,7 @@ def build_request_status(
         "submitted_at": request.created_at,
         "anonymous_submission": request.anonymous,
         "help_mode": getattr(request, "help_mode", None) or "message",
+        "preferred_helper": getattr(request, "preferred_helper", None) or "either",
         "student_hint": getattr(request, "student_hint", None),
         "assigned_ta": getattr(request, "assigned_ta", None),
         "estimated_wait_minutes": getattr(request, "estimated_wait_minutes", None),
@@ -43,15 +44,40 @@ def build_request_status(
             payload["agenda_hint"] = action_plan["agenda_item"]["suggested_window"]
     else:
         help_mode = str(getattr(request, "help_mode", None) or "message")
+        preferred = str(getattr(request, "preferred_helper", None) or "either")
         if help_mode == "face_to_face":
+            who = (
+                "the professor"
+                if preferred == "professor"
+                else "a TA"
+                if preferred == "ta"
+                else "a TA or the professor"
+            )
             payload["recommended_next_step"] = (
-                "You asked for a face-to-face meeting — keep your request code and "
-                "check campus office-hours times for your course."
+                f"You asked for a face-to-face meeting with {who} — keep your "
+                "request code and check campus office-hours times for your course."
             )
         elif help_mode == "online_meeting":
+            who = (
+                "the professor"
+                if preferred == "professor"
+                else "a TA"
+                if preferred == "ta"
+                else "a TA or the professor"
+            )
             payload["recommended_next_step"] = (
-                "You asked for an online meeting — staff will share a link once a "
-                "slot is offered."
+                f"You asked for an online meeting with {who} — they will share a "
+                "link once a slot is offered."
+            )
+        elif preferred == "professor":
+            payload["recommended_next_step"] = (
+                "You asked for the professor — keep your request code and check "
+                "back after they review the queue."
+            )
+        elif preferred == "ta":
+            payload["recommended_next_step"] = (
+                "You asked for a TA — keep your request code and check back after "
+                "they pick up your question."
             )
 
     return payload

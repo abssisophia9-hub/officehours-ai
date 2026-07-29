@@ -51,7 +51,8 @@ to ask for help.
 ## Solution highlights
 
 - Anonymous or identified asks
-- Face-to-face / online meeting preference for staff scheduling
+- Face-to-face / online meeting preference for TA / professor scheduling
+- Students pick who to ask: TA, professor, or either
 - Live WebSocket queues (TA + professor)
 - Custom-trained multi-agent triage
 - Professor-approved knowledge base + student KB agent

@@ -35,6 +35,7 @@ export default function StudentWorkspace() {
   const [text, setText] = useState("");
   const [codeSnippet, setCodeSnippet] = useState("");
   const [anonymous, setAnonymous] = useState(true);
+  const [preferredHelper, setPreferredHelper] = useState("either");
   const [helpMode, setHelpMode] = useState("message");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -97,6 +98,7 @@ export default function StudentWorkspace() {
           course_id: activeCourse.id,
           code_snippet: codeSnippet || null,
           help_mode: helpMode,
+          preferred_helper: preferredHelper,
         },
       });
       setResult(created);
@@ -175,9 +177,11 @@ export default function StudentWorkspace() {
           <p className="bh-stat-note">Asked anonymously — no names stored</p>
         </article>
         <article className="bh-stat-card">
-          <div className="bh-stat-head">Approved Knowledge {ICONS.book}</div>
+          <div className="bh-stat-head">Course study materials {ICONS.book}</div>
           <p className="bh-stat-value">{stats.approved}</p>
-          <p className="bh-stat-note">Entries your study agent can use</p>
+          <p className="bh-stat-note">
+            Professor-trained FAQs the study agent may answer from
+          </p>
         </article>
         <article className="bh-stat-card">
           <div className="bh-stat-head">My Submission {ICONS.doc}</div>
@@ -194,16 +198,69 @@ export default function StudentWorkspace() {
             <h2>Ask for Help</h2>
           </div>
           <p className="bh-card-note">
-            Choose whether staff see your name, and how you want to meet —
-            message only, face-to-face, or online.
+            Pick who you want to ask (TA or professor), whether they see your
+            name, and how you want to meet.
           </p>
           <form onSubmit={submitQuestion} className="mt-4">
             <div className="rounded-xl border border-aui-forest/25 bg-[#f3faf5] p-3 sm:p-4">
               <p className="text-sm font-semibold text-aui-ink">
-                Who should staff see?
+                Who do you want to ask?
               </p>
               <p className="mt-1 text-xs text-aui-deep/70">
-                Pick one — Quiet ask hides your name; Identify me shares it.
+                Your choice is shown on the TA and professor queues.
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                {[
+                  {
+                    value: "ta",
+                    title: "Ask a TA",
+                    note: "Primary or backup TA for this course.",
+                  },
+                  {
+                    value: "professor",
+                    title: "Ask the professor",
+                    note: "Professor should take this question.",
+                  },
+                  {
+                    value: "either",
+                    title: "Either is fine",
+                    note: "TA or professor — whoever can help first.",
+                  },
+                ].map((option) => (
+                  <label
+                    key={option.value}
+                    className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-3 transition ${
+                      preferredHelper === option.value
+                        ? "border-aui-forest bg-white shadow-sm"
+                        : "border-[#d7e0d9] bg-white/70"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="preferred_helper"
+                      className="mt-1 h-4 w-4 accent-aui-forest"
+                      checked={preferredHelper === option.value}
+                      onChange={() => setPreferredHelper(option.value)}
+                    />
+                    <span>
+                      <span className="block text-sm font-semibold text-aui-ink">
+                        {option.title}
+                      </span>
+                      <span className="mt-0.5 block text-xs font-medium text-aui-deep/70">
+                        {option.note}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-aui-forest/25 bg-[#f3faf5] p-3 sm:p-4">
+              <p className="text-sm font-semibold text-aui-ink">
+                Should the TA or professor see your name?
+              </p>
+              <p className="mt-1 text-xs text-aui-deep/70">
+                Quiet ask hides your name; Identify me shares it.
               </p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <label
@@ -336,7 +393,13 @@ export default function StudentWorkspace() {
                 request <span className="bh-pill bh-pill-green">#{result.id}</span>
               </p>
               <p className="mt-1 text-xs text-aui-deep/75">
-                Help mode:{" "}
+                Asking:{" "}
+                {result.preferred_helper === "professor"
+                  ? "the professor"
+                  : result.preferred_helper === "ta"
+                    ? "a TA"
+                    : "TA or professor"}
+                {" · "}
                 {result.help_mode === "face_to_face"
                   ? "face-to-face meeting"
                   : result.help_mode === "online_meeting"
@@ -399,14 +462,14 @@ export default function StudentWorkspace() {
             <h2>Course Study Agent</h2>
           </div>
           <p className="bh-card-note">
-            Answers only from professor-approved FAQs and Canvas course materials
-            for {activeCourse.code}. If nothing matches, stop guessing — Quiet ask
-            a TA instead.
+            The professor trains this agent by approving FAQs and Canvas materials
+            for {activeCourse.code}. Students only ask — they do not approve
+            knowledge. If nothing matches, ask a TA or the professor on the left.
           </p>
           <form onSubmit={askAgent} className="mt-4">
             <input
               className="field-glass px-4 py-3 text-sm"
-              placeholder="Ask from approved answers / slides…"
+              placeholder="Ask from professor-trained FAQs / slides…"
               value={agentQ}
               onChange={(event) => setAgentQ(event.target.value)}
             />
@@ -419,13 +482,15 @@ export default function StudentWorkspace() {
           ) : null}
           {agentSeekHelp ? (
             <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
-              <p className="font-semibold">No approved answer yet — seek help.</p>
+              <p className="font-semibold">
+                No professor-approved answer yet — ask a human.
+              </p>
               <p className="mt-1 text-xs leading-5">
-                Don&apos;t keep spinning on the agent. Use Quiet ask on the left so a
-                TA or professor can unblock you.
+                Don&apos;t keep spinning on the agent. Use Ask for Help on the left
+                and pick a TA or the professor.
               </p>
               <a href="#ask" className="btn-primary mt-3 inline-flex px-4 py-2 text-xs">
-                Go to Quiet ask
+                Ask a TA or professor
               </a>
             </div>
           ) : null}

@@ -12,6 +12,7 @@ from app.database.session import get_db
 from app.models.action import RecommendationDecision
 from app.models.request import (
     HELP_MODES,
+    PREFERRED_HELPERS,
     Request,
     RequestCreate,
     RequestOut,
@@ -46,6 +47,15 @@ HELP_MODE_ACTIONS = {
     ),
 }
 
+PREFERRED_HELPER_ACTIONS = {
+    "ta": "Student asked for a TA — route to the primary / backup TA for this course.",
+    "professor": (
+        "Student asked for the professor — do not leave this on the TA queue alone; "
+        "professor should take or explicitly hand off."
+    ),
+    "either": "Student is fine with either a TA or the professor.",
+}
+
 
 @router.post("/", response_model=RequestOut, status_code=status.HTTP_201_CREATED)
 async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
@@ -58,6 +68,16 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
             detail=f"help_mode must be one of: {', '.join(HELP_MODES)}",
         )
     request_data["help_mode"] = help_mode
+
+    preferred_helper = str(
+        request_data.get("preferred_helper") or "either"
+    ).strip().lower()
+    if preferred_helper not in PREFERRED_HELPERS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"preferred_helper must be one of: {', '.join(PREFERRED_HELPERS)}",
+        )
+    request_data["preferred_helper"] = preferred_helper
 
     # Quiet / low-exposure asks never persist identity even if the client sent it.
     if request_data.get("anonymous"):
@@ -106,6 +126,8 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
     # Meeting preference overrides the default action when student asked for a meeting.
     if help_mode in {"face_to_face", "online_meeting"}:
         request_data["recommended_action"] = HELP_MODE_ACTIONS[help_mode]
+    elif preferred_helper in {"ta", "professor"}:
+        request_data["recommended_action"] = PREFERRED_HELPER_ACTIONS[preferred_helper]
 
     category = request_data.get("category")
     sensitive = bool(request_data.get("sensitive")) or is_sensitive_category(category)
@@ -121,6 +143,14 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
         elif help_mode == "online_meeting":
             request_data["recommended_action"] = (
                 "Private online 1:1 follow-up — do not discuss in a public group review"
+            )
+        elif preferred_helper == "professor":
+            request_data["recommended_action"] = (
+                "Private professor follow-up — do not discuss in a public group review"
+            )
+        elif preferred_helper == "ta":
+            request_data["recommended_action"] = (
+                "Private TA follow-up — do not discuss in a public group review"
             )
 
     if request_data.get("cluster_id") is None:
@@ -139,7 +169,7 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
 
     db_request = apply_oracle_to_request(db, db_request, oracle)
 
-    # Oracle classification can overwrite recommended_action; keep meeting preference.
+    # Oracle classification can overwrite recommended_action; keep student preferences.
     if help_mode in {"face_to_face", "online_meeting"}:
         if db_request.sensitive:
             if help_mode == "face_to_face":
@@ -151,7 +181,29 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
                     "Private online 1:1 follow-up — do not discuss in a public group review"
                 )
         else:
-            db_request.recommended_action = HELP_MODE_ACTIONS[help_mode]
+            action = HELP_MODE_ACTIONS[help_mode]
+            if preferred_helper == "professor":
+                action = f"{action} Student asked for the professor."
+            elif preferred_helper == "ta":
+                action = f"{action} Student asked for a TA."
+            db_request.recommended_action = action
+        db.add(db_request)
+        db.commit()
+        db.refresh(db_request)
+    elif preferred_helper in {"ta", "professor"} and not db_request.sensitive:
+        db_request.recommended_action = PREFERRED_HELPER_ACTIONS[preferred_helper]
+        db.add(db_request)
+        db.commit()
+        db.refresh(db_request)
+    elif preferred_helper in {"ta", "professor"} and db_request.sensitive:
+        if preferred_helper == "professor":
+            db_request.recommended_action = (
+                "Private professor follow-up — do not discuss in a public group review"
+            )
+        else:
+            db_request.recommended_action = (
+                "Private TA follow-up — do not discuss in a public group review"
+            )
         db.add(db_request)
         db.commit()
         db.refresh(db_request)

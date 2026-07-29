@@ -60,6 +60,7 @@ def to_request_out(
         recommended_action=request.recommended_action,
         sensitive=bool(getattr(request, "sensitive", False)),
         help_mode=str(getattr(request, "help_mode", None) or "message"),
+        preferred_helper=str(getattr(request, "preferred_helper", None) or "either"),
         created_at=request.created_at,
         oracle_category=request.oracle_category,
         oracle_difficulty=request.oracle_difficulty,

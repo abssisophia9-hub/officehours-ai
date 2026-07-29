@@ -35,6 +35,7 @@ def ensure_schema(engine: Engine) -> None:
             ("course_id", "INTEGER"),
             ("sensitive", "BOOLEAN"),
             ("help_mode", "VARCHAR"),
+            ("preferred_helper", "VARCHAR"),
         ):
             _add_column_if_missing(engine, "requests", columns, column_name, column_type)
 

@@ -130,7 +130,7 @@ def get_study_buddy_status(db: Session, request: Request) -> StudyBuddyStatusOut
         buddy_msg = (
             f"You're opted in. {peer_count} other student"
             f"{'s' if peer_count != 1 else ''} in this topic also opted in "
-            f"(identities stay private until staff schedules a group review)."
+            f"(identities stay private until a TA or the professor schedules a group review)."
         )
     elif similar >= 1:
         buddy_msg = (

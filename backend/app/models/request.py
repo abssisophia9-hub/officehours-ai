@@ -40,6 +40,8 @@ class Request(Base):
     sensitive: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     # How the student wants to be helped: async message, face-to-face, or online call.
     help_mode: Mapped[str] = mapped_column(String, nullable=False, default="message")
+    # Who the student wants to ask: a TA, the professor, or either.
+    preferred_helper: Mapped[str] = mapped_column(String, nullable=False, default="either")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -48,6 +50,7 @@ class Request(Base):
 
 
 HELP_MODES = ("message", "face_to_face", "online_meeting")
+PREFERRED_HELPERS = ("ta", "professor", "either")
 
 
 class RequestCreate(BaseModel):
@@ -65,6 +68,7 @@ class RequestCreate(BaseModel):
     recommended_action: str | None = None
     sensitive: bool | None = None
     help_mode: str = "message"
+    preferred_helper: str = "either"
 
 
 class OracleAnalyzerOut(BaseModel):
@@ -109,6 +113,7 @@ class RequestOut(RequestCreate):
     created_at: datetime
     sensitive: bool = False
     help_mode: str = "message"
+    preferred_helper: str = "either"
     oracle_category: str | None = None
     oracle_difficulty: str | None = None
     oracle_estimated_minutes: int | None = None
@@ -135,6 +140,7 @@ class RequestStatusOut(BaseModel):
     submitted_at: datetime
     anonymous_submission: bool
     help_mode: str | None = None
+    preferred_helper: str | None = None
     recommended_next_step: str | None = None
     agenda_hint: str | None = None
     student_hint: str | None = None

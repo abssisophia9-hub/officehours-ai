@@ -286,7 +286,7 @@ export default function ProfessorWorkspace() {
 
       <section id="ta-load" className="bh-card scroll-mt-6">
         <div className="bh-card-title">
-          <h2>TA load (dual staffing)</h2>
+          <h2>TA load (dual TAs)</h2>
         </div>
         <p className="bh-card-note">
           {taLoad?.message ||
@@ -568,6 +568,7 @@ export default function ProfessorWorkspace() {
                 <th>#</th>
                 <th>Question</th>
                 <th>From</th>
+                <th>Ask</th>
                 <th>Help</th>
                 <th>Category</th>
                 <th>Flags</th>
@@ -584,6 +585,13 @@ export default function ProfessorWorkspace() {
                     {request.anonymous
                       ? "Anonymous"
                       : request.student_name || request.student_id || "—"}
+                  </td>
+                  <td>
+                    {request.preferred_helper === "professor"
+                      ? "Professor"
+                      : request.preferred_helper === "ta"
+                        ? "TA"
+                        : "Either"}
                   </td>
                   <td>
                     {request.help_mode === "face_to_face"
