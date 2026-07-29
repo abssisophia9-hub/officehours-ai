@@ -118,6 +118,10 @@ class RequestOut(RequestCreate):
     estimated_wait_minutes: int | None = None
     student_hint: str | None = None
     oracle: OracleResultOut | None = None
+    # Anonymous solidarity (non-sensitive only in messaging).
+    similar_asks_this_week: int = 0
+    solidarity_message: str | None = None
+    study_buddy_eligible: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

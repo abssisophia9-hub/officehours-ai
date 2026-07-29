@@ -19,6 +19,7 @@ from app.models import knowledge as _knowledge_model  # noqa: F401
 from app.models import ta_roster as _ta_roster_model  # noqa: F401
 from app.models import auth as _auth_model  # noqa: F401
 from app.models import agent_metrics as _agent_metrics_model  # noqa: F401
+from app.models import social as _social_model  # noqa: F401
 from app.realtime.hub import set_main_loop
 from app.routes.actions import router as actions_router
 from app.routes.auth import courses_router, router as auth_router

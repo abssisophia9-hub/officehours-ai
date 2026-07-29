@@ -21,6 +21,7 @@ from app.models.knowledge import KnowledgeEntry
 from app.models.request import Request
 from app.models.ta_roster import DEFAULT_TA_ROSTER, TaRoster
 from app.services.classification_service import classify_and_recommend
+from app.services.course_ta_service import build_course_matcher_roster
 from app.services.knowledge_service import search_approved_entries
 
 
@@ -57,6 +58,7 @@ def run_oracle_pipeline(
     question_text: str,
     code_snippet: str | None = None,
     course: str | None = None,
+    course_id: int | None = None,
     learning_style: str | None = None,
 ) -> dict[str, Any]:
     started = time.perf_counter()
@@ -102,20 +104,17 @@ def run_oracle_pipeline(
         }
     )
 
-    roster_rows = ensure_default_roster(db)
-    roster = [
-        {
-            "id": row.id,
-            "name": row.name,
-            "expertise_tags": json.loads(row.expertise_tags or "[]"),
-            "queue_depth": row.queue_depth,
-        }
-        for row in roster_rows
-        if row.is_available
-    ]
+    ensure_default_roster(db)
+    roster = build_course_matcher_roster(db, course_id=course_id)
 
     t1 = time.perf_counter()
     matcher = match_ta(analyzer, roster, question_text=question_text)
+    if roster and all(row.get("course_scoped") for row in roster):
+        matcher["rationale"] = (
+            f"{matcher.get('rationale') or ''} "
+            f"[course-scoped: {len(roster)} TA(s) on this course; "
+            f"primary + backup with queue-depth load balance]."
+        ).strip()
     steps.append(
         {
             "agent": "matcher",

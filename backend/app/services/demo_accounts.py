@@ -136,6 +136,28 @@ DEMO_USERS = [
         ],
     },
     {
+        # Second TA on Algorithms + Databases — dual-TA sections.
+        "email": "p.nair@aui.ma",
+        "display_name": "Priya Nair",
+        "student_id": "118310",
+        "memberships": [
+            _membership("CSC 3323", "ta"),
+            _membership("CSC 3326", "ta"),
+            _membership("MTH 1304", "student"),
+        ],
+    },
+    {
+        # Second TA on Distributed + sensitive-topic specialist.
+        "email": "s.ortiz@aui.ma",
+        "display_name": "Sam Ortiz",
+        "student_id": "118410",
+        "memberships": [
+            _membership("CSC 3374", "ta"),
+            _membership("CSC 3324", "ta"),
+            _membership("COM 1301", "student"),
+        ],
+    },
+    {
         "email": "s.elidrissi@aui.ma",
         "display_name": "Sara El Idrissi",
         "student_id": "117400",

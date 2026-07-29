@@ -6,9 +6,15 @@ import json
 
 from app.models.request import OracleResultOut, Request, RequestOut
 from app.services.oracle_service import build_oracle_public_payload
+from app.services.study_buddy_service import solidarity_payload_for_request
 
 
-def to_request_out(request: Request, oracle: dict | None = None) -> RequestOut:
+def to_request_out(
+    request: Request,
+    oracle: dict | None = None,
+    *,
+    db=None,
+) -> RequestOut:
     tags: list[str] = []
     if request.oracle_tags:
         try:
@@ -29,6 +35,14 @@ def to_request_out(request: Request, oracle: dict | None = None) -> RequestOut:
             )
         except Exception:
             oracle_payload = None
+
+    solidarity = {
+        "similar_asks_this_week": 0,
+        "solidarity_message": None,
+        "study_buddy_eligible": False,
+    }
+    if db is not None:
+        solidarity = solidarity_payload_for_request(db, request)
 
     return RequestOut(
         id=request.id,
@@ -56,4 +70,7 @@ def to_request_out(request: Request, oracle: dict | None = None) -> RequestOut:
         estimated_wait_minutes=request.estimated_wait_minutes,
         student_hint=request.student_hint,
         oracle=oracle_payload,
+        similar_asks_this_week=int(solidarity.get("similar_asks_this_week") or 0),
+        solidarity_message=solidarity.get("solidarity_message"),
+        study_buddy_eligible=bool(solidarity.get("study_buddy_eligible")),
     )

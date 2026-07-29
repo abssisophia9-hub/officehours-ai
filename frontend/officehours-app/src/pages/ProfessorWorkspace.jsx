@@ -35,6 +35,7 @@ export default function ProfessorWorkspace() {
   const [requests, setRequests] = useState([]);
   const [entries, setEntries] = useState([]);
   const [commandCenter, setCommandCenter] = useState(null);
+  const [taLoad, setTaLoad] = useState(null);
   const [materialTitle, setMaterialTitle] = useState("");
   const [materialContent, setMaterialContent] = useState("");
   const [canvasInfo, setCanvasInfo] = useState(null);
@@ -45,7 +46,7 @@ export default function ProfessorWorkspace() {
 
   const load = useCallback(async () => {
     try {
-      const [req, kb, clusters, canvas] = await Promise.all([
+      const [req, kb, clusters, canvas, load] = await Promise.all([
         api("/requests/", { token }),
         api(`/knowledge/?status=pending_review&course_id=${activeCourse.id}`, { token }),
         api(
@@ -53,6 +54,7 @@ export default function ProfessorWorkspace() {
           { token },
         ),
         api(`/knowledge/canvas/status?course_id=${activeCourse.id}`, { token }),
+        api(`/ta/load/?course_id=${activeCourse.id}`, { token }),
       ]);
       setRequests(
         req.filter((item) => !item.course || item.course === activeCourse.code),
@@ -66,6 +68,7 @@ export default function ProfessorWorkspace() {
       );
       setCommandCenter(clusters);
       setCanvasInfo(canvas);
+      setTaLoad(load);
     } catch (err) {
       setError(err.message);
     }
@@ -280,6 +283,40 @@ export default function ProfessorWorkspace() {
           <p className="bh-stat-note">Identity never stored</p>
         </article>
       </div>
+
+      <section id="ta-load" className="bh-card scroll-mt-6">
+        <div className="bh-card-title">
+          <h2>TA load (dual staffing)</h2>
+        </div>
+        <p className="bh-card-note">
+          {taLoad?.message ||
+            "Typical AUI sections use up to two TAs. Matcher assigns primary + backup from this course."}
+        </p>
+        {(taLoad?.tas || []).length === 0 ? (
+          <p className="mt-3 text-sm text-aui-deep/70">No TAs enrolled on this course yet.</p>
+        ) : (
+          <table className="bh-table mt-3">
+            <thead>
+              <tr>
+                <th>TA</th>
+                <th>Primary</th>
+                <th>Backup</th>
+                <th>Queue depth</th>
+              </tr>
+            </thead>
+            <tbody>
+              {taLoad.tas.map((ta) => (
+                <tr key={ta.user_id}>
+                  <td className="font-semibold">{ta.name}</td>
+                  <td>{ta.primary_assignments}</td>
+                  <td>{ta.backup_assignments}</td>
+                  <td>{ta.queue_depth}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
 
       <section id="clusters" className="bh-card scroll-mt-6">
         <div className="bh-card-title">

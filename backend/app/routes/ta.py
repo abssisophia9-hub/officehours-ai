@@ -4,7 +4,7 @@ TA queue routes. Resolutions update the shared KB curation queue (pending_review
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
@@ -13,6 +13,7 @@ from app.models.request import Request
 from app.models.ta import TaQueueItem, TaResolveRequest, TaResolveResponse
 from app.models.ta_roster import TaRoster, TaRosterOut
 from app.realtime.hub import hub
+from app.services.course_ta_service import build_course_ta_load
 from app.services.knowledge_service import to_out
 from app.services.oracle_service import ensure_default_roster
 from app.services.request_serializer import to_request_out
@@ -25,27 +26,63 @@ def list_ta_roster(db: Session = Depends(get_db)):
     return [TaRosterOut.from_orm_row(row) for row in ensure_default_roster(db)]
 
 
+@router.get("/load/")
+def course_ta_load(course_id: int = Query(..., ge=1), db: Session = Depends(get_db)):
+    """Professor / staff dual-TA load for one course."""
+    ensure_default_roster(db)
+    return build_course_ta_load(db, course_id=course_id)
+
+
 @router.get("/queue/", response_model=list[TaQueueItem])
-def list_ta_queue(db: Session = Depends(get_db)):
-    requests = db.query(Request).order_by(Request.created_at.desc()).all()
+def list_ta_queue(
+    db: Session = Depends(get_db),
+    course_id: int | None = Query(default=None),
+    course: str | None = Query(default=None),
+    assignment: str | None = Query(
+        default=None,
+        description="mine | backup | unassigned | all",
+    ),
+    ta_name: str | None = Query(default=None),
+):
+    query = db.query(Request).order_by(Request.created_at.desc())
+    if course_id is not None:
+        query = query.filter(Request.course_id == course_id)
+    elif course:
+        query = query.filter(Request.course == course)
+    requests = query.all()
     entries = {
         entry.source_request_id: entry
         for entry in db.query(KnowledgeEntry).all()
         if entry.source_request_id is not None
     }
 
+    mode = (assignment or "all").strip().lower()
+    name = (ta_name or "").strip()
+
     items: list[TaQueueItem] = []
     for request in requests:
         entry = entries.get(request.id)
-        # Hide items a TA already handed to curation, plus approved/rejected.
         if entry is not None and (
             entry.status in {"approved", "rejected"}
             or getattr(entry, "ta_resolution", None)
         ):
             continue
+
+        assigned = (request.assigned_ta or "").strip()
+        backup = (request.alternative_ta or "").strip()
+        if mode == "mine":
+            if not name or assigned != name:
+                continue
+        elif mode == "backup":
+            if not name or backup != name:
+                continue
+        elif mode == "unassigned":
+            if assigned and assigned != "Unassigned":
+                continue
+
         items.append(
             TaQueueItem(
-                request=to_request_out(request),
+                request=to_request_out(request, db=db),
                 knowledge_entry=to_out(entry) if entry else None,
                 learning_style=request.learning_style,
                 urgency=request.urgency,
@@ -92,6 +129,16 @@ async def resolve_for_curation(payload: TaResolveRequest, db: Session = Depends(
         if existing_note
         else resolution_line
     )
+
+    if payload.ta_name.strip() == (request.assigned_ta or "").strip():
+        roster_row = (
+            db.query(TaRoster)
+            .filter(TaRoster.name == payload.ta_name.strip())
+            .one_or_none()
+        )
+        if roster_row is not None and int(roster_row.queue_depth or 0) > 0:
+            roster_row.queue_depth = int(roster_row.queue_depth or 0) - 1
+            db.add(roster_row)
 
     db.add(entry)
     db.commit()

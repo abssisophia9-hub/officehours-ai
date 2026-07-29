@@ -27,6 +27,12 @@ from app.services.oracle_service import (
 )
 from app.services.request_serializer import to_request_out
 from app.services.request_status_service import build_request_status
+from app.services.study_buddy_service import (
+    StudyBuddyOptInCreate,
+    StudyBuddyStatusOut,
+    get_study_buddy_status,
+    opt_in_study_buddy,
+)
 
 router = APIRouter(prefix="/requests", tags=["requests"])
 
@@ -77,6 +83,7 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
         question_text=payload.text,
         code_snippet=payload.code_snippet,
         course=payload.course,
+        course_id=payload.course_id,
         learning_style=payload.learning_style,
     )
     classification = oracle["classification"]
@@ -220,12 +227,15 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
             },
         )
 
-    return to_request_out(db_request, oracle=public_oracle)
+    return to_request_out(db_request, oracle=public_oracle, db=db)
 
 
 @router.get("/", response_model=list[RequestOut])
 def list_requests(db: Session = Depends(get_db)):
-    return [to_request_out(item) for item in db.query(Request).order_by(Request.id).all()]
+    return [
+        to_request_out(item, db=db)
+        for item in db.query(Request).order_by(Request.id).all()
+    ]
 
 
 @router.get("/{request_id}/status", response_model=RequestStatusOut)
@@ -249,4 +259,31 @@ def get_request(request_id: int, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Request not found",
         )
-    return to_request_out(db_request)
+    return to_request_out(db_request, db=db)
+
+
+@router.get("/{request_id}/study-buddy", response_model=StudyBuddyStatusOut)
+def study_buddy_status(request_id: int, db: Session = Depends(get_db)):
+    db_request = db.get(Request, request_id)
+    if db_request is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Request not found",
+        )
+    return get_study_buddy_status(db, db_request)
+
+
+@router.post("/{request_id}/study-buddy", response_model=StudyBuddyStatusOut)
+def study_buddy_opt_in(
+    request_id: int,
+    payload: StudyBuddyOptInCreate | None = None,
+    db: Session = Depends(get_db),
+):
+    db_request = db.get(Request, request_id)
+    if db_request is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Request not found",
+        )
+    label = payload.display_label if payload else None
+    return opt_in_study_buddy(db, db_request, display_label=label)
