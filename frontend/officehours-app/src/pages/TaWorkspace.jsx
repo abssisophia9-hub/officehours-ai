@@ -37,19 +37,21 @@ export default function TaWorkspace() {
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const [resolvedCount, setResolvedCount] = useState(0);
+  const [assignmentFilter, setAssignmentFilter] = useState("mine");
 
   const loadQueue = useCallback(async () => {
     try {
-      const data = await api("/ta/queue/", { token });
-      const filtered = data.filter((item) => {
-        const course = item.request.course;
-        return !course || course === activeCourse.code;
+      const params = new URLSearchParams({
+        course_id: String(activeCourse.id),
+        assignment: assignmentFilter,
+        ta_name: user.display_name,
       });
-      setQueue(filtered);
+      const data = await api(`/ta/queue/?${params.toString()}`, { token });
+      setQueue(data);
     } catch (err) {
       setError(err.message);
     }
-  }, [token, activeCourse]);
+  }, [token, activeCourse, assignmentFilter, user.display_name]);
 
   useEffect(() => {
     loadQueue();
@@ -140,6 +142,29 @@ export default function TaWorkspace() {
           <h2>Live Queue</h2>
           <span className="bh-pill bh-pill-green live-pulse">live</span>
         </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {[
+            ["mine", "Assigned to me"],
+            ["backup", "I'm backup"],
+            ["unassigned", "Unassigned"],
+            ["all", "All course asks"],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={`btn-ghost px-3 py-1.5 text-xs ${
+                assignmentFilter === value ? "ring-2 ring-aui-deep/30" : ""
+              }`}
+              onClick={() => setAssignmentFilter(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <p className="bh-card-note mt-2">
+          Dual-TA courses: primary and backup are set by the Matcher using this
+          course&apos;s TA roster and queue depth.
+        </p>
         {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
         {toast ? <p className="mt-2 text-sm text-emerald-700">{toast}</p> : null}
 
@@ -156,7 +181,8 @@ export default function TaWorkspace() {
                 <th>Category</th>
                 <th>Urgency</th>
                 <th>Wait</th>
-                <th>Assigned</th>
+                <th>Primary</th>
+                <th>Backup</th>
               </tr>
             </thead>
             <tbody>
@@ -220,6 +246,7 @@ export default function TaWorkspace() {
                         : "—"}
                     </td>
                     <td>{request.assigned_ta || "Unassigned"}</td>
+                    <td>{request.alternative_ta || "—"}</td>
                   </tr>
                 );
               })}

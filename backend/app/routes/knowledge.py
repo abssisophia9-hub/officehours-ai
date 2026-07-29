@@ -16,6 +16,11 @@ from sqlalchemy.orm import Session
 
 from app.database.session import get_db
 from app.models.auth import User
+from app.models.agent_metrics import (
+    GoldLabelCreate,
+    GoldLabelOut,
+    KbHitRateReport,
+)
 from app.models.knowledge import (
     AgentAskRequest,
     AgentAskResponse,
@@ -34,6 +39,12 @@ from app.models.knowledge import (
 from app.realtime.hub import hub
 from app.routes.auth import get_current_user
 from app.services.access_control import require_course_role
+from app.services.agent_metrics_service import (
+    build_kb_hit_rate_report,
+    create_gold_label,
+    list_gold_labels,
+    record_kb_ask_event,
+)
 from app.services.analytics_service import (
     build_cluster_command_center,
     build_escalation_feed,
@@ -299,12 +310,19 @@ async def sync_canvas_materials(
 
 @router.post("/agent/ask", response_model=AgentAskResponse)
 def ask_kb_agent(payload: AgentAskRequest, db: Session = Depends(get_db)):
-    return answer_from_knowledge_base(
+    response = answer_from_knowledge_base(
         db,
         payload.question,
         top_k=payload.top_k,
         course_id=payload.course_id,
     )
+    record_kb_ask_event(
+        db,
+        question=payload.question,
+        course_id=payload.course_id,
+        response=response,
+    )
+    return response
 
 
 @router.get("/analytics/struggle-heatmap", response_model=StruggleHeatmapOut)
@@ -333,6 +351,34 @@ def cluster_command_center(
 @router.get("/analytics/oracle-metrics")
 def oracle_metrics(db: Session = Depends(get_db)):
     return build_oracle_metrics(db)
+
+
+@router.get("/analytics/kb-hit-rate", response_model=KbHitRateReport)
+def kb_hit_rate(
+    course_id: int | None = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    """Per-course KB agent hit-rate (hit = answered from approved materials)."""
+    return build_kb_hit_rate_report(db, course_id=course_id)
+
+
+@router.post(
+    "/analytics/gold-labels",
+    response_model=GoldLabelOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def submit_gold_label(payload: GoldLabelCreate, db: Session = Depends(get_db)):
+    """Store a human gold judgment for Analyzer / Matcher evaluation."""
+    return create_gold_label(db, payload)
+
+
+@router.get("/analytics/gold-labels", response_model=list[GoldLabelOut])
+def get_gold_labels(
+    department: str | None = Query(default=None),
+    limit: int = Query(default=200, ge=1, le=1000),
+    db: Session = Depends(get_db),
+):
+    return list_gold_labels(db, department=department, limit=limit)
 
 
 @router.get("/analytics/lifetime-confusion")

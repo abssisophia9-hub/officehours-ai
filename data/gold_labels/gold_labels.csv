@@ -1,0 +1,13 @@
+label_id,text,gold_category,gold_assigned_ta,gold_hint_useful,department,course_code,labeled_by,label_source,notes
+GOLD001,"In MTH 1304 how do I set up a proof by induction for a simple summation formula?",conceptual_question,Alice Chen,1,MTH,MTH 1304,ta_seed,human_gold_seed,Seed gold — replace with real TA judgments
+GOLD002,"What calculator is allowed on the MTH 1304 midterm?",exam_logistics,Priya Nair,1,MTH,MTH 1304,ta_seed,human_gold_seed,
+GOLD003,"I keep freezing when I start my COM 1301 speech — can someone help me privately?",emotional_stress,Sam Ortiz,1,COM,COM 1301,ta_seed,human_gold_seed,Sensitive — private route
+GOLD004,"How should I organize attention getter and thesis in my persuasive speech intro?",conceptual_question,Alice Chen,1,COM,COM 1301,ta_seed,human_gold_seed,
+GOLD005,"I need documentation guidance for quiz time accommodations.",accessibility_accommodation,Sam Ortiz,1,GEN,,ta_seed,human_gold_seed,
+GOLD006,"On a price ceiling below equilibrium, why is there a shortage?",conceptual_question,Bob Martinez,1,ECO,,ta_seed,human_gold_seed,
+GOLD007,"Is a formula sheet allowed on the ECO midterm?",exam_logistics,Priya Nair,1,ECO,,ta_seed,human_gold_seed,
+GOLD008,"My ENG thesis is too vague — how do I make it arguable?",conceptual_question,Alice Chen,1,ENG,,ta_seed,human_gold_seed,
+GOLD009,"When is the ENG research paper due on Canvas?",project_submission,Priya Nair,1,ENG,,ta_seed,human_gold_seed,
+GOLD010,"I am drowning in deadlines across five classes and cannot sleep.",emotional_stress,Sam Ortiz,1,GEN,,ta_seed,human_gold_seed,
+GOLD011,"Red-black deletion fixup after deleting a black leaf — which rotations?",conceptual_question,Alice Chen,1,CSC,CSC 2302,ta_seed,human_gold_seed,Keep some CSC gold for SSE demos
+GOLD012,"I think my lab grade on AVL rotations is wrong.",grading_dispute,Sam Ortiz,1,CSC,CSC 2302,ta_seed,human_gold_seed,

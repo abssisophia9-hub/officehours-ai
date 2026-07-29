@@ -1,0 +1,51 @@
+entry_id,category,learning_style,topic,student_hint,teaching_approach,source,department
+MD-TB01,conceptual_question,step_by_step,induction proof,"Write base case as one sentence, then state 'assume P(k)' before proving P(k+1).","Teaching approach (induction, step-by-step):
+1. Separate base case from inductive step on the board.
+2. Have them write the inductive hypothesis explicitly.
+3. Use it once in the P(k+1) argument.
+4. Check that nothing assumed the conclusion early.",curated_multidept_bank,MTH
+MD-TB02,conceptual_question,example_driven,contradiction vs contrapositive,"Pick one homework 'if P then Q' claim and try both proof styles on the same claim.","Teaching approach (proof styles, example-driven):
+1. Restate the claim as P → Q.
+2. Draft contrapositive (¬Q → ¬P) in one line.
+3. Draft contradiction (assume P and ¬Q).
+4. Ask which draft felt shorter for this claim.",curated_multidept_bank,MTH
+MD-TB03,conceptual_question,visual_structural,inclusion-exclusion,"Draw two overlapping circles and label |A|, |B|, |A∩B| before plugging into the formula.","Teaching approach (counting, visual):
+1. Sketch the Venn regions.
+2. Fill counts for A-only, B-only, overlap.
+3. Derive |A∪B| = |A|+|B|-|A∩B| from the sketch.
+4. Add a third set only after the two-set case is solid.",curated_multidept_bank,MTH
+MD-TB04,conceptual_question,example_driven,speech introduction,"Write a 20-second intro: hook → thesis → three preview points — then time it aloud.","Teaching approach (public speaking intro, example-driven):
+1. Draft a concrete hook (story/stat/question).
+2. State the thesis in one sentence.
+3. Preview three points.
+4. Rehearse once and cut fluff.",curated_multidept_bank,COM
+MD-TB05,conceptual_question,step_by_step,oral citations,"For each source, plan a spoken tag: author + year + one credibility cue.","Teaching approach (oral citations, step-by-step):
+1. List sources used in the speech.
+2. Write a one-breath spoken citation for each.
+3. Place it where the evidence appears.
+4. Practice so it sounds natural, not read.",curated_multidept_bank,COM
+MD-TB06,emotional_stress,conceptual,speech anxiety,"Name one coping step you will use 10 minutes before speaking (breathing, walk, water).","Teaching approach (speech anxiety, conceptual):
+1. Normalize nerves as energy, not failure.
+2. Separate content prep from delivery nerves.
+3. Pick one grounding ritual before the speech.
+4. Offer Quiet ask / counseling referral if panic persists.",curated_multidept_bank,COM
+MD-TB07,exam_logistics,step_by_step,syllabus late policy,"Open the syllabus PDF and quote the late-work sentence before asking staff.","Teaching approach (logistics, step-by-step):
+1. Locate the policy section together.
+2. Quote the exact rule.
+3. Check Canvas announcement overrides.
+4. Only then escalate with the quote attached.",curated_multidept_bank,GEN
+MD-TB08,accessibility_accommodation,step_by_step,timed quiz accommodations,"List documentation you already have and the office that handles accommodations on campus.","Teaching approach (accommodations, step-by-step):
+1. Affirm the request is legitimate and private.
+2. Point to the campus accessibility office path.
+3. Note what professors need once approved.
+4. Do not discuss details in a public group review.",curated_multidept_bank,GEN
+MD-TB09,conceptual_question,visual_structural,supply demand ceiling,"Sketch demand and supply, mark equilibrium, then draw the ceiling below it and shade shortage.","Teaching approach (price ceiling, visual):
+1. Draw S and D crossing.
+2. Place ceiling below equilibrium.
+3. Read Qd and Qs at that price.
+4. Label the shortage gap.",curated_multidept_bank,ECO
+MD-TB10,conceptual_question,example_driven,essay thesis specificity,"Rewrite your thesis so a skeptical classmate could disagree with it in one sentence.","Teaching approach (essay thesis, example-driven):
+1. Write the current thesis.
+2. Ask: can someone reasonably disagree?
+3. Add the literary text + claim + stakes.
+4. Cut vague words (interesting, important).",curated_multidept_bank,ENG

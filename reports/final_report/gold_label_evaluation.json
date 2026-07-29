@@ -1,0 +1,26 @@
+{
+  "n_labels": 12,
+  "by_department": {
+    "MTH": 2,
+    "COM": 2,
+    "GEN": 2,
+    "ECO": 2,
+    "ENG": 2,
+    "CSC": 2
+  },
+  "analyzer": {
+    "n": 12,
+    "accuracy": 1.0,
+    "macro_f1": 1.0,
+    "errors_sample": []
+  },
+  "matcher": {
+    "n": 12,
+    "accuracy": 1.0,
+    "macro_f1": 1.0,
+    "errors_sample": [],
+    "label_note": "Compared against human gold_assigned_ta \u2014 not silver holdout"
+  },
+  "source": "data/gold_labels/gold_labels.csv (+ optional DB)",
+  "note": "Seed gold is illustrative. Replace with real TA judgments before claiming production agent quality."
+}

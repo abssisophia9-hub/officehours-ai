@@ -41,20 +41,28 @@ courses** per term.
 | `y.amrani@aui.ma` | student | CSC 3323, 3374 + MTH 1304 |
 | `a.chen@aui.ma` | **TA + student** | TA: CSC 2302 · Student: CSC 3323, MTH 1304, COM 1301 |
 | `b.martinez@aui.ma` | **TA + student** | TA: CSC 2302, 3323, 3374 · Student: MTH 1304, COM 1301 |
+| `p.nair@aui.ma` | **TA + student** | TA: CSC 3323, 3326 · Student: MTH 1304 |
+| `s.ortiz@aui.ma` | **TA + student** | TA: CSC 3374, 3324 · Student: COM 1301 |
 | `a.benali@aui.ma` | professor | CSC 2302, 3323, 3374 |
+
+Dual-TA sections (primary + backup Matcher): CSC 2302 (Alice/Bob), CSC 3323
+(Bob/Priya), CSC 3374 (Bob/Sam).
 
 ## What a supervisor does
 
 1. Run `./scripts/run_product.sh` (or start backend + `officehours-app`)
 2. Open **http://127.0.0.1:5180**
 3. Sign in as student → **Quiet ask** or **Identify me** → pick message / face-to-face / online
-4. Sign in as Alice (`a.chen@aui.ma`) → TA queue on CSC 2302 → switch course picker to a **student** course
-5. Sign in as professor (`a.benali@aui.ma`) → **Office-hours command center**:
+4. Sign in as Alice (`a.chen@aui.ma`) → TA queue filters **Assigned to me** /
+   **I'm backup** / **All** → switch course picker to a **student** course
+5. Sign in as professor (`a.benali@aui.ma`) → **TA load** panel + command center:
+   - dual-TA primary/backup counts
    - repeated topic clusters (group review vs FAQ)
    - urgent/sensitive flags
    - **Sync Canvas materials into KB** (or paste slides)
    - approve pending FAQ/KB drafts
-6. Optional: open **`/canvas-demo`** and launch as Karim (TA in OS, student in Data Structures)
+6. After two similar conceptual asks, student sees solidarity (“you're not alone”)
+   and can **opt in to study-buddy** (never for stress/sensitive)
 
 ## How courses appear on login
 
@@ -97,8 +105,12 @@ role + course context, not three naked URLs**.
 
 ## Agent performance backlog
 
-See [`docs/agent_performance.md`](agent_performance.md) for what limits Analyzer /
-Matcher / Synthesizer / KB quality today and the ranked upgrade plan.
+See [`docs/agent_performance.md`](agent_performance.md) for metrics and upgrades:
+
+- Offline CV / silver holdout reports
+- **Human gold labels** (`data/gold_labels/` + `evaluate_gold_labels.py`)
+- **Per-course KB hit-rate** (`GET /analytics/kb-hit-rate`)
+- Multi-department training (MTH / COM / ECO / ENG / GEN — not CSC-only)
 
 ## Canvas / course materials
 

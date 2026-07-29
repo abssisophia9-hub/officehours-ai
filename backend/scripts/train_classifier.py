@@ -41,6 +41,7 @@ def load_labeled_rows(data_dir: Path = DATA_DIR) -> list[dict[str, str]]:
         "labeled_requests_extended.csv",
         "labeled_requests_extra.csv",
         "labeled_requests_csc.csv",
+        "labeled_requests_multidept.csv",
         # Optional professor-approved export (scripts/export_analyzer_training_data.py).
         "analyzer_training_export.csv",
     ):
@@ -100,10 +101,11 @@ def evaluate_classifier(rows: list[dict[str, str]]) -> dict[str, object]:
             "data/labeled_requests_extended.csv",
             "data/labeled_requests_extra.csv",
             "data/labeled_requests_csc.csv",
+            "data/labeled_requests_multidept.csv",
             "data/analyzer_training_export.csv (optional)",
         ],
         "feature_backend": "sentence-transformer-embeddings + logistic regression",
-        "dataset_note": "Includes AUI CSC topic supplement when present",
+        "dataset_note": "Campus-wide categories; CSC + multi-department (MTH/COM/ECO/ENG/GEN) supplements",
     }
 
 

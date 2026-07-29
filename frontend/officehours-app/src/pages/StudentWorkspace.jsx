@@ -43,6 +43,8 @@ export default function StudentWorkspace() {
   const [agentA, setAgentA] = useState("");
   const [agentSeekHelp, setAgentSeekHelp] = useState(false);
   const [stats, setStats] = useState({ open: 0, anonymous: 0, approved: 0 });
+  const [buddyStatus, setBuddyStatus] = useState(null);
+  const [buddyBusy, setBuddyBusy] = useState(false);
 
   const loadStats = useCallback(async () => {
     if (!activeCourse) return;
@@ -98,13 +100,39 @@ export default function StudentWorkspace() {
         },
       });
       setResult(created);
+      setBuddyStatus(null);
       setText("");
       setCodeSnippet("");
       await loadStats();
+      if (created?.id) {
+        try {
+          const status = await api(`/requests/${created.id}/study-buddy`, { token });
+          setBuddyStatus(status);
+        } catch {
+          setBuddyStatus(null);
+        }
+      }
     } catch (err) {
       setError(err.message);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function optInStudyBuddy() {
+    if (!result?.id) return;
+    setBuddyBusy(true);
+    try {
+      const status = await api(`/requests/${result.id}/study-buddy`, {
+        method: "POST",
+        token,
+        body: { request_id: result.id },
+      });
+      setBuddyStatus(status);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBuddyBusy(false);
     }
   }
 
@@ -303,6 +331,12 @@ export default function StudentWorkspace() {
               {result.sensitive ? (
                 <p className="mt-2 rounded-lg bg-amber-50 p-2.5 text-xs text-amber-900">
                   This looks private — it will be routed for confidential follow-up.
+                  Peer matching is disabled for sensitive asks.
+                </p>
+              ) : null}
+              {result.solidarity_message ? (
+                <p className="mt-2 rounded-lg bg-sky-50 p-2.5 text-xs text-sky-950">
+                  {result.solidarity_message}
                 </p>
               ) : null}
               {result.oracle ? (
@@ -312,13 +346,34 @@ export default function StudentWorkspace() {
                     {result.oracle.analyzer.difficulty}
                   </li>
                   <li>
-                    <strong>Matcher:</strong> {result.oracle.matcher.assigned_ta} · wait ~
-                    {result.oracle.matcher.estimated_wait_minutes} min
+                    <strong>Matcher:</strong> {result.oracle.matcher.assigned_ta}
+                    {result.oracle.matcher.alternative_ta
+                      ? ` (backup: ${result.oracle.matcher.alternative_ta})`
+                      : ""}{" "}
+                    · wait ~{result.oracle.matcher.estimated_wait_minutes} min
                   </li>
                   <li>
                     <strong>Hint:</strong> {result.oracle.synthesizer.student_hint}
                   </li>
                 </ul>
+              ) : null}
+              {buddyStatus?.eligible && !buddyStatus.opted_in ? (
+                <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-950">
+                  <p>{buddyStatus.study_buddy_message}</p>
+                  <button
+                    type="button"
+                    disabled={buddyBusy}
+                    className="btn-primary mt-2 px-3 py-1.5 text-xs"
+                    onClick={optInStudyBuddy}
+                  >
+                    {buddyBusy ? "Saving…" : "Opt in to study-buddy group"}
+                  </button>
+                </div>
+              ) : null}
+              {buddyStatus?.opted_in ? (
+                <p className="mt-3 rounded-lg bg-emerald-50 p-2.5 text-xs text-emerald-950">
+                  {buddyStatus.study_buddy_message}
+                </p>
               ) : null}
             </div>
           ) : null}

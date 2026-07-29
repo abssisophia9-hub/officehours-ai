@@ -1,0 +1,22 @@
+request_id,text,category,urgency,label_source,department
+MTH001,"In MTH 1304 I keep mixing up proof by induction base case vs inductive step — how do I structure the write-up?",conceptual_question,medium,synthetic_multidept,MTH
+MTH002,"Discrete math: when do I use contradiction versus contrapositive for 'if P then Q' proofs?",conceptual_question,medium,synthetic_multidept,MTH
+MTH003,"Can you walk through counting with inclusion-exclusion for the homework on overlapping sets?",conceptual_question,medium,synthetic_multidept,MTH
+MTH004,"What is the midterm room and calculator policy for MTH 1304?",exam_logistics,high,synthetic_multidept,MTH
+MTH005,"I need an extension on the discrete math problem set because of a documented medical appointment.",project_submission,high,synthetic_multidept,MTH
+MTH006,"I think my induction proof was graded incorrectly on the inductive hypothesis step.",grading_dispute,medium,synthetic_multidept,MTH
+COM001,"In COM 1301 Public Speaking how should I structure the introduction — attention, thesis, preview?",conceptual_question,medium,synthetic_multidept,COM
+COM002,"How do I cite sources orally during a persuasive speech without sounding robotic?",conceptual_question,low,synthetic_multidept,COM
+COM003,"What are the time limits and visual-aid rules for the COM 1301 final speech?",exam_logistics,high,synthetic_multidept,COM
+COM004,"I am extremely anxious about speaking in front of the class and need private support before my speech day.",emotional_stress,urgent,synthetic_multidept,COM
+COM005,"Can I reschedule my graded speech because of a documented conflict with another exam?",retake_request,high,synthetic_multidept,COM
+COM006,"I believe my speech delivery rubric was scored incorrectly on eye contact and organization.",grading_dispute,medium,synthetic_multidept,COM
+GEN001,"Where do I find the syllabus late-work policy that applies across my courses this term?",exam_logistics,medium,synthetic_multidept,GEN
+GEN002,"I need accessibility accommodations for timed quizzes — who do I contact and what documentation is needed?",accessibility_accommodation,high,synthetic_multidept,GEN
+GEN003,"I am overwhelmed managing deadlines across five courses and feel like I am falling apart.",emotional_stress,urgent,synthetic_multidept,GEN
+GEN004,"How do I dispute a plagiarism flag I believe is a false positive on my essay submission?",academic_integrity,high,synthetic_multidept,GEN
+GEN005,"Can I get a makeup for a quiz I missed while traveling for a university event?",retake_request,medium,synthetic_multidept,GEN
+ECO001,"For intro microeconomics: how do I shift supply vs demand on a price ceiling graph?",conceptual_question,medium,synthetic_multidept,ECO
+ECO002,"What is allowed on the ECO midterm — formula sheet, calculator, both?",exam_logistics,high,synthetic_multidept,ECO
+ENG001,"I am stuck outlining my ENG literature essay thesis — how specific should the claim be?",conceptual_question,medium,synthetic_multidept,ENG
+ENG002,"When is the research paper due on Canvas and is late upload accepted?",project_submission,high,synthetic_multidept,ENG

@@ -38,14 +38,18 @@ def build_ranker() -> LogisticRegression:
 
 
 def load_teaching_bank(path: Path | None = None) -> list[dict[str, str]]:
-    """Load curated teaching banks (base + optional CSC topic supplement)."""
+    """Load curated teaching banks (base + CSC + multi-department supplements)."""
     primary = path or Path(os.getenv("OFFICEHOURS_TEACHING_BANK", DEFAULT_BANK_PATH))
     banks = [primary]
-    csc_bank = Path(os.getenv("OFFICEHOURS_TEACHING_BANK_CSC", DEFAULT_BANK_PATH)).parent / (
-        "synthesizer_teaching_bank_csc.csv"
-    )
-    if path is None and csc_bank.exists() and csc_bank != primary:
-        banks.append(csc_bank)
+    bank_dir = Path(os.getenv("OFFICEHOURS_TEACHING_BANK_CSC", DEFAULT_BANK_PATH)).parent
+    if path is None:
+        for name in (
+            "synthesizer_teaching_bank_csc.csv",
+            "synthesizer_teaching_bank_multidept.csv",
+        ):
+            extra = bank_dir / name
+            if extra.exists() and extra != primary:
+                banks.append(extra)
 
     rows: list[dict[str, str]] = []
     for bank_path in banks:
@@ -228,6 +232,8 @@ def _fingerprint_bank() -> str:
         Path(os.getenv("OFFICEHOURS_TEACHING_BANK", DEFAULT_BANK_PATH)),
         Path(os.getenv("OFFICEHOURS_TEACHING_BANK", DEFAULT_BANK_PATH)).parent
         / "synthesizer_teaching_bank_csc.csv",
+        Path(os.getenv("OFFICEHOURS_TEACHING_BANK", DEFAULT_BANK_PATH)).parent
+        / "synthesizer_teaching_bank_multidept.csv",
     ]
     parts: list[str] = []
     for path in paths:

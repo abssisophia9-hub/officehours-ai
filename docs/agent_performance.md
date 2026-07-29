@@ -1,7 +1,10 @@
 # Agent performance — analysis & upgrade plan
 
-Status after AUI demo conformance work. Use this as the backlog for making
+Status after multi-department metrics work. Use this as the backlog for making
 Analyzer / Matcher / Synthesizer / KB agent **actually better**, not just louder.
+
+**Scope:** the platform serves **any AUI course** (MTH, COM, ECO, ENG, CSC, …).
+CSC supplements are demo enrichment for SSE walkthroughs — not the product boundary.
 
 ## What runs today (FYP path)
 
@@ -10,46 +13,57 @@ POST /requests
   → classify_and_recommend (ML category + learning-style ML by default)
   → Analyzer (embedding LogReg + topic overlays)
   → Matcher (embedding LogReg + expertise/queue blend on DEFAULT_TA_ROSTER)
-  → Synthesizer (approved KB RAG → CSC/base teaching bank → seek-help)
+  → Synthesizer (approved KB RAG → teaching bank → seek-help)
   → pending KB draft (professor gate)
 POST /agent/ask
   → approved KB only; weak/no match → should_seek_help (Quiet ask)
+  → logged to kb_ask_events for per-course hit-rate
 ```
 
 No prompted Claude on the default path. Models live in `backend/models/*.joblib`.
 
+## How to measure performance
+
+| Signal | Command / endpoint | Notes |
+| --- | --- | --- |
+| Analyzer CV | `scripts/train_classifier.py` → `reports/final_report/classifier_evaluation.*` | Includes multi-dept + CSC CSVs |
+| Matcher holdout | `scripts/train_matcher.py` → `matcher_evaluation.json` | Silver labels — not gold |
+| **Human gold** | `scripts/evaluate_gold_labels.py` → `gold_label_evaluation.json` | Real quality bar |
+| Submit gold | `POST /analytics/gold-labels` | Stored in DB; `--include-db` on eval |
+| **KB hit-rate** | `GET /analytics/kb-hit-rate` | Per-course hits vs seek-help |
+| Golden smoke | `tests/test_agent_quality.py` | CSC + multi-dept behavior locks |
+| Human surveys | `docs/evaluation_plan.md` / `docs/surveys/` | Comfort / workload |
+
+```bash
+# Gold-label evaluation (from backend/)
+OFFICEHOURS_CLUSTERING_BACKEND=lexical \
+  venv/bin/python scripts/evaluate_gold_labels.py
+
+# Optional: include API-submitted labels
+OFFICEHOURS_CLUSTERING_BACKEND=lexical \
+  venv/bin/python scripts/evaluate_gold_labels.py --include-db
+```
+
+Grow gold labels: `data/gold_labels/README.md`.
+
 ## Bottlenecks (ranked)
 
-1. **Training text does not match demos** — older fixtures lean finals-week triage;
-   demos need CSC 2302 hashing/RB-trees, CSC 3351 scheduling, CSC 3374 RPC.
-2. **Matcher labels are silver** — expertise heuristics, not TA gold judgments;
-   Bob is under-represented; holdout ~96% is self-consistency.
-3. **Teaching bank was templated** — same hints reused across categories;
-   CSC supplement rows now exist (`data/synthesizer_teaching_bank_csc.csv`).
-4. **KB quality = professor content** — agent cannot invent; empty course KB
-   correctly steers to Quiet ask.
-5. **Almost no quality CI** beyond Analyzer CV + smoke tests.
+1. **Gold set is still small / seeded** — replace `human_gold_seed` with real TA judgments.
+2. **Matcher silver labels** — holdout self-consistency ≠ gold agreement.
+3. **KB coverage varies by course** — hit-rate is the honest ceiling for `/agent/ask`.
+4. **Teaching bank** — base + CSC + multi-dept; still needs professor-approved KB per course.
+5. **Quality CI** — CV + gold script + smoke tests; not live online learning.
 
-## Done in this pass
+## Training data (campus-wide)
 
-- Align `DEFAULT_TA_ROSTER` with `data/ta_roster_seed.csv` (incl. category tags);
-  roster refresh on startup.
-- Default `OFFICEHOURS_LEARNING_STYLE_BACKEND=ml`.
-- CSC topic labeled sets for Analyzer + Matcher; CSC teaching-bank supplement.
-- `train_classifier.py` loads CSC + optional `analyzer_training_export.csv`.
-- `train_matcher.py` loads CSC supplement and writes `reports/final_report/matcher_evaluation.json`.
-- Frontend CI audits fixed (postcss; product app → `react-router@8.3.0`).
-
-## Next (needs retrain / data)
-
-| Priority | Action | How we know it worked |
-| --- | --- | --- |
-| P0 | Retrain Analyzer + Matcher + Synthesizer with new CSC rows | CV/holdout reports + golden tests green |
-| P1 | Collect gold Matcher labels from TAs (even 40) | Holdout on gold set, not silver |
-| P1 | Grow approved KB per course from Canvas sync | `/agent/ask` hit-rate on real module questions |
-| P2 | Joint urgency head or second classifier | Confusion matrix on urgent/sensitive |
-| P2 | Human ratings of synthesizer hints | Preference win-rate vs template baseline |
-| P3 | Course-conditioned retrieval index | Latency + isolation metrics |
+| File | Role |
+| --- | --- |
+| `labeled_requests*.csv` | Analyzer base finals-week labels |
+| `labeled_requests_csc.csv` | SSE topic supplement |
+| `labeled_requests_multidept.csv` | **MTH / COM / ECO / ENG / GEN** |
+| `matcher_training*.csv` (+ csc + multidept) | Matcher silver labels |
+| `synthesizer_teaching_bank*.csv` (+ csc + multidept) | Teaching-bank RAG |
+| `gold_labels/gold_labels.csv` | Human evaluation set |
 
 ## Retrain (from `backend/`)
 
@@ -58,10 +72,21 @@ venv/bin/python scripts/train_classifier.py
 venv/bin/python scripts/train_matcher.py
 venv/bin/python scripts/train_synthesizer.py
 OFFICEHOURS_CLUSTERING_BACKEND=lexical venv/bin/python scripts/train_learning_style.py
+OFFICEHOURS_CLUSTERING_BACKEND=lexical venv/bin/python scripts/evaluate_gold_labels.py
 ```
+
+## Next
+
+| Priority | Action | How we know it worked |
+| --- | --- | --- |
+| P0 | Collect ≥40 real TA gold labels across departments | Gold accuracy/F1 in report; errors sampled |
+| P0 | Watch `GET /analytics/kb-hit-rate` per course after Canvas sync | Hit-rate rises when materials are approved |
+| P1 | Retrain after adding department-specific labeled asks | CV + gold both move (not just silver holdout) |
+| P2 | Preference ratings on synthesizer hints (`gold_hint_useful`) | Win-rate vs template baseline |
+| P3 | Course-conditioned retrieval index | Latency + isolation metrics |
 
 ## Honest ceiling
 
-More prompt-like copy will not move accuracy. Gains come from **topic-covered labels**,
-**non-templated teaching/KB content**, and **gold Matcher feedback**. The seek-help
-path is intentional: when materials are empty, human office hours beat hallucinated help.
+More prompt-like copy will not move accuracy. Gains come from **multi-department
+labeled text**, **gold TA judgments**, and **approved course KB**. Empty KB
+correctly steers to Quiet ask — that is a feature, not a bug.
