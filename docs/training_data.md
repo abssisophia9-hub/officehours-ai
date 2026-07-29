@@ -72,7 +72,7 @@ Treat silver holdout as **demo metrics**, not gold TA judgment.
 | File | Role |
 | --- | --- |
 | `data/gold_labels/gold_labels.csv` | Seed human judgments (multi-dept + some CSC) |
-| `POST /analytics/gold-labels` | Runtime capture from staff |
+| `POST /analytics/gold-labels` | Runtime capture from TA / professor |
 | `scripts/evaluate_gold_labels.py` | Analyzer/Matcher accuracy vs gold → `gold_label_evaluation.json` |
 
 See `data/gold_labels/README.md`. Replace seed rows with real TA labels before claiming quality.
