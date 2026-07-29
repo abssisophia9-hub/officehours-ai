@@ -55,7 +55,14 @@ Summarize with `backend/scripts/analyze_survey_responses.py`.
 ## `labeled_requests*.csv` / Matcher / Synthesizer banks
 
 See [`docs/training_data.md`](../docs/training_data.md) for the full custom-trained
-Oracle dataset inventory (Analyzer 120, Matcher 120, Synthesizer 50, learning-style 40).
+Oracle dataset inventory.
+
+Campus-wide supplements (not CSC-only):
+
+- `labeled_requests_multidept.csv` — MTH / COM / ECO / ENG / GEN
+- `matcher_training_multidept.csv`
+- `synthesizer_teaching_bank_multidept.csv`
+- `gold_labels/gold_labels.csv` — human evaluation set
 
 ## `labeled_requests_extended.csv` / `labeled_requests_extra.csv`
 

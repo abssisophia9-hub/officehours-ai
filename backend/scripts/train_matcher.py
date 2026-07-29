@@ -37,11 +37,12 @@ def load_csv(path: Path) -> list[dict[str, str]]:
 
 
 def load_matcher_rows(data_path: Path) -> list[dict[str, str]]:
-    """Load matcher CSV plus optional CSC topic supplement beside it."""
+    """Load matcher CSV plus CSC and multi-department supplements beside it."""
     rows = load_csv(data_path)
-    csc = data_path.parent / "matcher_training_csc.csv"
-    if csc.exists() and csc != data_path:
-        rows.extend(load_csv(csc))
+    for name in ("matcher_training_csc.csv", "matcher_training_multidept.csv"):
+        extra = data_path.parent / name
+        if extra.exists() and extra != data_path:
+            rows.extend(load_csv(extra))
     deduped: list[dict[str, str]] = []
     seen: set[str] = set()
     for row in rows:
@@ -108,7 +109,7 @@ def main() -> int:
                 float(f1_score(labels, preds, average="macro", zero_division=0)),
                 4,
             ),
-            "label_note": "silver_or_csc_supplement — not gold TA judgments",
+            "label_note": "silver_or_csc_or_multidept_supplement — not gold TA judgments",
         }
 
     report = {

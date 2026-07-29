@@ -31,16 +31,18 @@ Union of:
 | `data/labeled_requests_extended.csv` | 40 | `synthetic_finals_week_v2` |
 | `data/labeled_requests_extra.csv` | 40 | `synthetic_finals_week_v3` |
 | `data/labeled_requests_csc.csv` | 15 | `synthetic_csc_topics` (AUI CSC demos) |
+| `data/labeled_requests_multidept.csv` | 21 | `synthetic_multidept` (MTH/COM/ECO/ENG/GEN) |
 | `data/analyzer_training_export.csv` | optional | professor-approved KB export |
 
-**Columns:** `request_id`, `text`, `category`, `urgency`, `label_source`
+**Columns:** `request_id`, `text`, `category`, `urgency`, `label_source` (+ `department` on multidept)
 
 **Categories covered:** `conceptual_question`, `exam_logistics`, `project_submission`,
 `retake_request`, `grading_dispute`, `emotional_stress`, `accessibility_accommodation`,
 `office_hours_access`, `academic_integrity`, `uncategorized`
 
-CSC supplement covers hashing, red-black trees, mergesort, scheduling, distributed RPC,
-and related triage for demo courses (`CSC 2302`, `3323`, `3351`, `3374`, …).
+CSC supplement covers hashing, red-black trees, mergesort, scheduling, distributed RPC.
+Multi-dept supplement covers induction/proofs, public speaking, economics graphs,
+essay theses, and campus-wide logistics/stress/accommodations — same category schema.
 
 ## Matcher data — silver TA labels
 
@@ -48,8 +50,9 @@ and related triage for demo courses (`CSC 2302`, `3323`, `3351`, `3374`, …).
 | --- | --- | --- |
 | `data/matcher_training.csv` | 120 | `silver_label_from_expertise_overlap` |
 | `data/matcher_training_csc.csv` | 15 | `silver_csc_topics` |
+| `data/matcher_training_multidept.csv` | 20 | `silver_multidept` |
 
-**Columns:** `text`, `category`, `assigned_ta`, `alternative_ta`, `source`
+**Columns:** `text`, `category`, `assigned_ta`, `alternative_ta`, `source` (+ `department` on multidept)
 
 Silver labels align question text / category with TA expertise tags from
 `data/ta_roster_seed.csv` (kept in sync with `DEFAULT_TA_ROSTER`):
@@ -64,18 +67,35 @@ Silver labels align question text / category with TA expertise tags from
 `train_matcher.py` writes holdout metrics to `reports/final_report/matcher_evaluation.json`.
 Treat silver holdout as **demo metrics**, not gold TA judgment.
 
+## Human gold labels (evaluation)
+
+| File | Role |
+| --- | --- |
+| `data/gold_labels/gold_labels.csv` | Seed human judgments (multi-dept + some CSC) |
+| `POST /analytics/gold-labels` | Runtime capture from staff |
+| `scripts/evaluate_gold_labels.py` | Analyzer/Matcher accuracy vs gold → `gold_label_evaluation.json` |
+
+See `data/gold_labels/README.md`. Replace seed rows with real TA labels before claiming quality.
+
 ## Synthesizer data — teaching banks
 
 | File | Rows | Provenance |
 | --- | --- | --- |
 | `data/synthesizer_teaching_bank.csv` | 50 | `curated_training_bank` (category × style) |
 | `data/synthesizer_teaching_bank_csc.csv` | 8 | `curated_csc_bank` (topic-specific) |
+| `data/synthesizer_teaching_bank_multidept.csv` | 10 | `curated_multidept_bank` (MTH/COM/ECO/ENG/GEN) |
 
 **Columns:** `entry_id`, `category`, `learning_style`, `topic`, `student_hint`,
-`teaching_approach`, `source`
+`teaching_approach`, `source` (+ `department` on multidept)
 
-Runtime loads both banks. Prefer professor-approved KB RAG first; weak matches
-steer students to Quiet ask instead of hallucinating.
+Runtime loads base + CSC + multi-dept banks. Prefer professor-approved KB RAG first;
+weak matches steer students to Quiet ask instead of hallucinating.
+
+## KB hit-rate (runtime)
+
+Every `POST /agent/ask` is logged to `kb_ask_events`. Inspect with
+`GET /analytics/kb-hit-rate` (overall + per `course_id`). A **hit** means the
+agent answered from approved materials; a **miss** means `should_seek_help`.
 
 ## Learning-style data — 40 labels
 

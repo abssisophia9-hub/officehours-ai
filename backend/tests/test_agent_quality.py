@@ -85,6 +85,35 @@ def test_kb_miss_sets_should_seek_help():
     assert "quiet ask" in response["answer"].lower()
 
 
+def test_analyzer_covers_multidepartment_topics():
+    """Campus-wide asks (not CSC-only) should still get a usable category."""
+    induction = analyze_with_classifier(
+        question_text=(
+            "In MTH 1304 I keep mixing up proof by induction base case vs "
+            "inductive step — how do I structure the write-up?"
+        )
+    )
+    assert induction["ml_category"] in {
+        "conceptual_question",
+        "exam_logistics",
+        "project_submission",
+        "grading_dispute",
+        "emotional_stress",
+        "retake_request",
+        "accessibility_accommodation",
+        "academic_integrity",
+    } or "conceptual" in str(induction.get("category", "")).lower()
+
+    speech = analyze_with_classifier(
+        question_text=(
+            "I am extremely anxious about speaking in front of the COM 1301 "
+            "class and need private support before my speech day."
+        )
+    )
+    cat = str(speech.get("ml_category") or speech.get("category") or "").lower()
+    assert "stress" in cat or "emotional" in cat or cat == "emotional_stress"
+
+
 def test_roster_seed_includes_category_tags():
     login = client.post(
         "/auth/login",

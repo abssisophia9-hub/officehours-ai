@@ -1,0 +1,21 @@
+text,category,assigned_ta,alternative_ta,source,department
+"In MTH 1304 I keep mixing up proof by induction base case vs inductive step — how do I structure the write-up?",conceptual_question,Alice Chen,Bob Martinez,silver_multidept,MTH
+"Discrete math: when do I use contradiction versus contrapositive for 'if P then Q' proofs?",conceptual_question,Bob Martinez,Alice Chen,silver_multidept,MTH
+"Can you walk through counting with inclusion-exclusion for the homework on overlapping sets?",conceptual_question,Alice Chen,Priya Nair,silver_multidept,MTH
+"What is the midterm room and calculator policy for MTH 1304?",exam_logistics,Priya Nair,Sam Ortiz,silver_multidept,MTH
+"I need an extension on the discrete math problem set because of a documented medical appointment.",project_submission,Priya Nair,Sam Ortiz,silver_multidept,MTH
+"I think my induction proof was graded incorrectly on the inductive hypothesis step.",grading_dispute,Sam Ortiz,Alice Chen,silver_multidept,MTH
+"In COM 1301 Public Speaking how should I structure the introduction — attention, thesis, preview?",conceptual_question,Alice Chen,Priya Nair,silver_multidept,COM
+"How do I cite sources orally during a persuasive speech without sounding robotic?",conceptual_question,Priya Nair,Alice Chen,silver_multidept,COM
+"What are the time limits and visual-aid rules for the COM 1301 final speech?",exam_logistics,Priya Nair,Sam Ortiz,silver_multidept,COM
+"I am extremely anxious about speaking in front of the class and need private support before my speech day.",emotional_stress,Sam Ortiz,Priya Nair,silver_multidept,COM
+"Can I reschedule my graded speech because of a documented conflict with another exam?",retake_request,Sam Ortiz,Priya Nair,silver_multidept,COM
+"I believe my speech delivery rubric was scored incorrectly on eye contact and organization.",grading_dispute,Sam Ortiz,Alice Chen,silver_multidept,COM
+"Where do I find the syllabus late-work policy that applies across my courses this term?",exam_logistics,Priya Nair,Sam Ortiz,silver_multidept,GEN
+"I need accessibility accommodations for timed quizzes — who do I contact and what documentation is needed?",accessibility_accommodation,Sam Ortiz,Priya Nair,silver_multidept,GEN
+"I am overwhelmed managing deadlines across five courses and feel like I am falling apart.",emotional_stress,Sam Ortiz,Priya Nair,silver_multidept,GEN
+"How do I dispute a plagiarism flag I believe is a false positive on my essay submission?",academic_integrity,Sam Ortiz,Priya Nair,silver_multidept,GEN
+"For intro microeconomics: how do I shift supply vs demand on a price ceiling graph?",conceptual_question,Bob Martinez,Alice Chen,silver_multidept,ECO
+"What is allowed on the ECO midterm — formula sheet, calculator, both?",exam_logistics,Priya Nair,Bob Martinez,silver_multidept,ECO
+"I am stuck outlining my ENG literature essay thesis — how specific should the claim be?",conceptual_question,Alice Chen,Priya Nair,silver_multidept,ENG
+"When is the research paper due on Canvas and is late upload accepted?",project_submission,Priya Nair,Sam Ortiz,silver_multidept,ENG

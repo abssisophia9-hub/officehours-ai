@@ -97,8 +97,12 @@ role + course context, not three naked URLs**.
 
 ## Agent performance backlog
 
-See [`docs/agent_performance.md`](agent_performance.md) for what limits Analyzer /
-Matcher / Synthesizer / KB quality today and the ranked upgrade plan.
+See [`docs/agent_performance.md`](agent_performance.md) for metrics and upgrades:
+
+- Offline CV / silver holdout reports
+- **Human gold labels** (`data/gold_labels/` + `evaluate_gold_labels.py`)
+- **Per-course KB hit-rate** (`GET /analytics/kb-hit-rate`)
+- Multi-department training (MTH / COM / ECO / ENG / GEN — not CSC-only)
 
 ## Canvas / course materials
 
