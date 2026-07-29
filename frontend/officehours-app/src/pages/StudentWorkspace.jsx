@@ -198,54 +198,69 @@ export default function StudentWorkspace() {
             message only, face-to-face, or online.
           </p>
           <form onSubmit={submitQuestion} className="mt-4">
-            <fieldset className="space-y-2">
-              <legend className="text-xs font-semibold uppercase tracking-wide text-aui-deep/60">
-                Identity
-              </legend>
-              <label className="clay-blob clay-blob-mint flex w-full cursor-pointer items-start gap-3 px-4 py-3">
-                <input
-                  type="radio"
-                  name="identity"
-                  className="mt-1 h-4 w-4 accent-aui-forest"
-                  checked={anonymous}
-                  onChange={() => setAnonymous(true)}
-                />
-                <span>
-                  <span className="block text-sm font-semibold text-aui-ink">
-                    Quiet ask (anonymous)
+            <div className="rounded-xl border border-aui-forest/25 bg-[#f3faf5] p-3 sm:p-4">
+              <p className="text-sm font-semibold text-aui-ink">
+                Who should staff see?
+              </p>
+              <p className="mt-1 text-xs text-aui-deep/70">
+                Pick one — Quiet ask hides your name; Identify me shares it.
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <label
+                  className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-3 transition ${
+                    anonymous
+                      ? "border-aui-forest bg-white shadow-sm"
+                      : "border-[#d7e0d9] bg-white/70"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="identity"
+                    className="mt-1 h-4 w-4 accent-aui-forest"
+                    checked={anonymous}
+                    onChange={() => setAnonymous(true)}
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-aui-ink">
+                      Quiet ask
+                    </span>
+                    <span className="mt-0.5 block text-xs font-medium text-aui-deep/70">
+                      Anonymous — no name or student ID stored.
+                    </span>
                   </span>
-                  <span className="mt-0.5 block text-xs font-medium text-aui-deep/70">
-                    Staff only see the question and your request code — no name
-                    or student ID is stored.
+                </label>
+                <label
+                  className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-3 transition ${
+                    !anonymous
+                      ? "border-aui-forest bg-white shadow-sm"
+                      : "border-[#d7e0d9] bg-white/70"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="identity"
+                    className="mt-1 h-4 w-4 accent-aui-forest"
+                    checked={!anonymous}
+                    onChange={() => setAnonymous(false)}
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-aui-ink">
+                      Identify me
+                    </span>
+                    <span className="mt-0.5 block text-xs font-medium text-aui-deep/70">
+                      Share <strong>{user.display_name || "your name"}</strong>
+                      {user.student_id ? (
+                        <>
+                          {" "}
+                          · ID <strong>{user.student_id}</strong>
+                        </>
+                      ) : null}
+                      .
+                    </span>
                   </span>
-                </span>
-              </label>
-              <label className="clay-blob flex w-full cursor-pointer items-start gap-3 px-4 py-3">
-                <input
-                  type="radio"
-                  name="identity"
-                  className="mt-1 h-4 w-4 accent-aui-forest"
-                  checked={!anonymous}
-                  onChange={() => setAnonymous(false)}
-                />
-                <span>
-                  <span className="block text-sm font-semibold text-aui-ink">
-                    Identify me
-                  </span>
-                  <span className="mt-0.5 block text-xs font-medium text-aui-deep/70">
-                    Share{" "}
-                    <strong>{user.display_name || "your name"}</strong>
-                    {user.student_id ? (
-                      <>
-                        {" "}
-                        · ID <strong>{user.student_id}</strong>
-                      </>
-                    ) : null}{" "}
-                    so staff can follow up with you directly.
-                  </span>
-                </span>
-              </label>
-            </fieldset>
+                </label>
+              </div>
+            </div>
 
             <fieldset className="mt-4 space-y-2">
               <legend className="text-xs font-semibold uppercase tracking-wide text-aui-deep/60">
