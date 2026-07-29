@@ -27,6 +27,13 @@ const ICONS = {
       <path d="M12 7V4M8 12h.01M16 12h.01M9 16h6" />
     </svg>
   ),
+  notes: (
+    <svg className="bh-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M4 4h12v16H4z" />
+      <path d="M16 8h4v12H8" />
+      <path d="M7 9h6M7 13h6M7 17h4" />
+    </svg>
+  ),
   queue: (
     <svg className="bh-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
@@ -63,6 +70,7 @@ const SECTION_NAV = {
   student: [
     { id: "ask", label: "Ask for Help", icon: "ask" },
     { id: "agent", label: "Study Agent", icon: "agent" },
+    { id: "peer-notes", label: "Classmate Notes", icon: "notes" },
   ],
   ta: [
     { id: "queue", label: "Live Queue", icon: "queue" },

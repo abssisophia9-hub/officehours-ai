@@ -96,6 +96,21 @@ And separately:
 TA and professor queues show who asked (or Anonymous) and the help mode so staff
 know whether to reply in writing or schedule a meeting.
 
+## Classmate notes (peer study feed)
+
+Under **Study Agent**, students get a course-scoped **Classmate notes** feed:
+
+1. Enter a **title** and **what the notes are about** (required before upload)
+2. Optional caption + quiet post (hide name as “Classmate”)
+3. Upload PDF / DOCX / TXT / MD / images
+4. Classmates can **like**, **comment**, and **download** for their own use
+
+This is peer sharing — it does **not** train the study agent. Professor-approved
+KB stays separate.
+
+API: `GET|POST /peer-notes/`, like/comment/download under `/peer-notes/{id}/…`
+(auth + course membership required).
+
 ## Packaging note
 
 Today the deliverable is a **single web application package** (one frontend +
