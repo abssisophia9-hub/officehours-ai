@@ -103,12 +103,6 @@ Table~\ref{tab:features} lists major features at project completion.
     \toprule
     Component & Feature \\
     \midrule
-<<<<<<< HEAD
-    Student kiosk & Optional typed ID check-in, anonymous/identified submission \\
-    Student kiosk & Confirmation screen and anonymous status lookup \\
-    Backend & Request CRUD, classification, clustering \\
-    Backend & Recommendation decisions and action plans \\
-=======
     Product app & Login, course switcher, dual-role TA+student \\
     Student workspace & Quiet ask / Identify me, help modes, status lookup \\
     Student workspace & Study Agent + classmate peer notes \\
@@ -116,7 +110,6 @@ Table~\ref{tab:features} lists major features at project completion.
     TA / professor & Shared group meetings for request clusters \\
     Professor & Clusters, recommendation cards, KB gate, Canvas sync \\
     Backend & Ask Triage, clustering, auth, WebSockets, analytics \\
->>>>>>> origin/cursor/fyp-evidence-harden-54c7
     Backend & Office-hours persistence and \texttt{.ics} export \\
     DevOps & GitHub Actions CI, \texttt{run\_product.sh}, seed script \\
     Evaluation & Classifier / matcher / gold / survey artifacts under \path{reports/final\_report/} \\
@@ -217,10 +210,7 @@ target was an average of $\geq 4.0$ on core usability and workload questions.
 \subsection{Qualitative themes}
 \textbf{Students} emphasized clear anonymous/identified labeling, the value of
 request-code status lookup, and willingness to use the tool during finals week.
-<<<<<<< HEAD
 Minor UI suggestions included larger form text.
-=======
->>>>>>> origin/cursor/fyp-evidence-harden-54c7
 
 \textbf{Professors} valued group-review recommendation cards and human-in-the-loop
 control. They flagged grading/admin routes as needing caution when urgent and
@@ -237,23 +227,17 @@ simulator suitable for demos only.
 
 \section{Limitations and future work}
 \begin{itemize}[noitemsep]
-<<<<<<< HEAD
-  \item Classifier is rule-based and tuned to synthetic labels.
-  \item Pilot survey sample is small and collected in a demo setting.
-  \item No production LMS LTI signatures yet (Canvas launch is a demo simulator).
-  \item ML classifier training and larger-scale user studies remain future work.
-=======
   \item Training and CV metrics use synthetic / silver / curated labels --- not
         real private student email corpora.
   \item Seed gold labels are too small and too easy; real held-out TA gold is next.
   \item Pilot survey $n$ is small and UI-mismatched to the current product app.
   \item Canvas LTI 1.3 signatures and campus-hardened ACLs remain future work
         (launch is intentionally a demo stub).
+  \item Physical kiosk / barcode / NFC hardware is out of scope (software product).
   \item Some list endpoints remain open for local demos; production needs tighter
         authorization.
   \item Clustering silhouette / longitudinal KB hit-rate tables are evaluation
         backlog items (\path{docs/evaluation_plan.md}, \path{docs/fyp_evidence.md}).
->>>>>>> origin/cursor/fyp-evidence-harden-54c7
 \end{itemize}
 
 \section{Conclusion}
