@@ -161,13 +161,16 @@ def test_full_community_loop_ask_ta_professor_agent():
         student_id=None,
     )
     assert ta["role"] == "ta"
-    queue = client.get("/ta/queue/").json()
+    queue = client.get(
+        f"/ta/queue/?course_id={course_id}&assignment=all",
+        headers={"Authorization": f"Bearer {ta['token']}"},
+    ).json()
     assert any(item["request"]["id"] == request_id for item in queue)
     resolved = client.post(
         "/ta/resolve/",
+        headers={"Authorization": f"Bearer {ta['token']}"},
         json={
             "request_id": request_id,
-            "ta_name": "Karim Bennis",
             "teaching_notes": (
                 "Priority scheduling starves long low-priority processes because "
                 "new higher-priority arrivals always preempt them. Fix it with "

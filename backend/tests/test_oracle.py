@@ -18,6 +18,22 @@ def setup_function():
 
 def test_oracle_pipeline_on_red_black_submission():
     with TestClient(app) as client:
+        from app.database.session import SessionLocal
+        from app.services.demo_accounts import ensure_demo_accounts
+
+        db = SessionLocal()
+        try:
+            ensure_demo_accounts(db)
+        finally:
+            db.close()
+
+        alice = client.post(
+            "/auth/login",
+            json={"email": "a.chen@aui.ma", "password": "aui-demo"},
+        ).json()
+        course_id = next(
+            c["id"] for c in alice["user"]["courses"] if c["code"] == "CSC 2302"
+        )
         response = client.post(
             "/requests/",
             json={
@@ -30,6 +46,7 @@ def test_oracle_pipeline_on_red_black_submission():
                 "student_id": "117400",
                 "student_name": "Alex Smith",
                 "course": "CSC 2302",
+                "course_id": course_id,
                 "code_snippet": (
                     "def delete_fixup(self, node):\n"
                     "    while node != self.root and node.color == BLACK:\n"
@@ -66,7 +83,10 @@ def test_oracle_pipeline_on_red_black_submission():
             "uncategorized",
         }
 
-        queue = client.get("/ta/queue/").json()
+        queue = client.get(
+            f"/ta/queue/?course_id={course_id}&assignment=all",
+            headers={"Authorization": f"Bearer {alice['token']}"},
+        ).json()
         assert any(item["request"]["id"] == data["id"] for item in queue)
         item = next(item for item in queue if item["request"]["id"] == data["id"])
         assert item["request"]["assigned_ta"] == "Alice Chen"
@@ -78,7 +98,10 @@ def test_oracle_pipeline_on_red_black_submission():
         assert metrics["matched_assignments"] >= 1
         assert metrics["time_saved_minutes"] >= 0
 
-        roster = client.get("/ta/roster/").json()
+        roster = client.get(
+            "/ta/roster/",
+            headers={"Authorization": f"Bearer {alice['token']}"},
+        ).json()
         assert any(ta["name"] == "Alice Chen" for ta in roster)
 
 

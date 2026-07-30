@@ -40,22 +40,47 @@ def test_create_request_infers_learning_style_and_drafts():
 
 def test_ta_resolve_keeps_entry_pending_review():
     with TestClient(app) as client:
+        from app.database.session import SessionLocal
+        from app.services.demo_accounts import ensure_demo_accounts
+
+        db = SessionLocal()
+        try:
+            ensure_demo_accounts(db)
+        finally:
+            db.close()
+
+        student = client.post(
+            "/auth/login",
+            json={"email": "s.elidrissi@aui.ma", "password": "aui-demo"},
+        ).json()
+        alice = client.post(
+            "/auth/login",
+            json={"email": "a.chen@aui.ma", "password": "aui-demo"},
+        ).json()
+        course_id = next(
+            c["id"] for c in student["user"]["courses"] if c["code"] == "CSC 2302"
+        )
         created = client.post(
             "/requests/",
             json={
                 "text": "Please walk me through the steps of binary search.",
                 "anonymous": True,
+                "course": "CSC 2302",
+                "course_id": course_id,
             },
         ).json()
 
-        queue = client.get("/ta/queue/").json()
+        queue = client.get(
+            f"/ta/queue/?course_id={course_id}&assignment=all",
+            headers={"Authorization": f"Bearer {alice['token']}"},
+        ).json()
         assert any(item["request"]["id"] == created["id"] for item in queue)
 
         resolved = client.post(
             "/ta/resolve/",
+            headers={"Authorization": f"Bearer {alice['token']}"},
             json={
                 "request_id": created["id"],
-                "ta_name": "Alice Chen",
                 "teaching_notes": (
                     "1. Restate the search invariant.\n"
                     "2. Trace mid updates on a 7-element array.\n"
@@ -65,21 +90,25 @@ def test_ta_resolve_keeps_entry_pending_review():
                 "resolution_status": "resolved",
             },
         )
-        assert resolved.status_code == 200
+        assert resolved.status_code == 200, resolved.text
         payload = resolved.json()
         assert payload["knowledge_entry"]["status"] == "pending_review"
         assert payload["knowledge_entry"]["ta_resolution"] == "resolved"
         assert "Alice Chen" in (payload["knowledge_entry"]["professor_note"] or "")
         assert "invariant" in payload["knowledge_entry"]["answer_draft"].lower()
 
-        # A TA-resolved item leaves the active queue immediately — it is
-        # waiting on the professor, not on another TA.
-        queue_mid = client.get("/ta/queue/").json()
+        queue_mid = client.get(
+            f"/ta/queue/?course_id={course_id}&assignment=all",
+            headers={"Authorization": f"Bearer {alice['token']}"},
+        ).json()
         assert all(item["request"]["id"] != created["id"] for item in queue_mid)
 
         agent = client.post(
             "/agent/ask",
-            json={"question": "How do I think about binary search steps?"},
+            json={
+                "question": "How do I think about binary search steps?",
+                "course_id": course_id,
+            },
         ).json()
         assert agent["matched_count"] == 0
 
@@ -91,7 +120,10 @@ def test_ta_resolve_keeps_entry_pending_review():
         assert approved.status_code == 200
         assert approved.json()["status"] == "approved"
 
-        queue_after = client.get("/ta/queue/").json()
+        queue_after = client.get(
+            f"/ta/queue/?course_id={course_id}&assignment=all",
+            headers={"Authorization": f"Bearer {alice['token']}"},
+        ).json()
         assert all(item["request"]["id"] != created["id"] for item in queue_after)
 
 
