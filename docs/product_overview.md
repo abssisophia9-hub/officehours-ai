@@ -111,6 +111,20 @@ KB stays separate.
 API: `GET|POST /peer-notes/`, like/comment/download under `/peer-notes/{id}/…`
 (auth + course membership required).
 
+## TA staffing loop
+
+TAs own a real office-hours loop — not only curation drafts:
+
+1. **Claim** an ask  
+2. **Start helping** (`in_progress`)  
+3. **Reply to student** (message mode — visible on request status immediately)  
+4. **Done helping** or **Take as primary** (backup handoff)  
+5. **Send teaching draft** to professor curation  
+
+Oracle teaching context (difficulty, learning style, tags, sensitive, matcher)
+is shown on the selected ask. Queue + load APIs require auth and TA/professor
+membership for the course.
+
 ## Packaging note
 
 Today the deliverable is a **single web application package** (one frontend +
