@@ -46,6 +46,9 @@ export default function StudentWorkspace() {
   const [stats, setStats] = useState({ open: 0, anonymous: 0, approved: 0 });
   const [buddyStatus, setBuddyStatus] = useState(null);
   const [buddyBusy, setBuddyBusy] = useState(false);
+  const [statusCode, setStatusCode] = useState("");
+  const [statusResult, setStatusResult] = useState(null);
+  const [statusBusy, setStatusBusy] = useState(false);
 
   const loadStats = useCallback(async () => {
     if (!activeCourse) return;
@@ -102,6 +105,8 @@ export default function StudentWorkspace() {
       });
       setResult(created);
       setBuddyStatus(null);
+      setStatusCode(created?.id ? String(created.id) : "");
+      setStatusResult(null);
       setText("");
       setCodeSnippet("");
       await loadStats();
@@ -117,6 +122,26 @@ export default function StudentWorkspace() {
       setError(err.message);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function checkRequestStatus(event) {
+    event.preventDefault();
+    const code = statusCode.trim();
+    if (!code) {
+      setError("Enter your request code to check status.");
+      return;
+    }
+    setStatusBusy(true);
+    setError("");
+    try {
+      const status = await api(`/requests/${code}/status`, { token });
+      setStatusResult(status);
+    } catch (err) {
+      setStatusResult(null);
+      setError(err.message);
+    } finally {
+      setStatusBusy(false);
     }
   }
 
@@ -393,6 +418,62 @@ export default function StudentWorkspace() {
               ) : null}
             </div>
           ) : null}
+
+          <div className="mt-5 rounded-xl border border-[#e3e8e4] bg-[#fafcfa] p-3">
+            <p className="text-sm font-semibold text-aui-ink">Check request status</p>
+            <p className="mt-1 text-xs text-aui-deep/70">
+              See TA replies or a shared group meeting time/place for your request code.
+            </p>
+            <form onSubmit={checkRequestStatus} className="mt-3 flex flex-wrap gap-2">
+              <input
+                className="field-glass min-w-[8rem] flex-1 px-3 py-2 text-sm"
+                value={statusCode}
+                onChange={(event) => setStatusCode(event.target.value)}
+                placeholder="Request code"
+                inputMode="numeric"
+              />
+              <button
+                type="submit"
+                disabled={statusBusy}
+                className="btn-ghost px-4 py-2 text-sm"
+              >
+                {statusBusy ? "Checking…" : "Look up"}
+              </button>
+            </form>
+            {statusResult ? (
+              <div className="mt-3 rounded-lg bg-white p-3 text-xs text-aui-deep">
+                <p className="font-semibold text-aui-ink">
+                  #{statusResult.request_code} · {statusResult.headline}
+                </p>
+                <p className="mt-1">{statusResult.message}</p>
+                {statusResult.meeting_title ||
+                statusResult.meeting_when ||
+                statusResult.meeting_place ? (
+                  <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2.5 text-emerald-950">
+                    <p className="font-semibold">Shared group meeting</p>
+                    {statusResult.meeting_title ? (
+                      <p className="mt-1">{statusResult.meeting_title}</p>
+                    ) : null}
+                    {statusResult.meeting_when ? (
+                      <p className="mt-1">
+                        <strong>When:</strong> {statusResult.meeting_when}
+                      </p>
+                    ) : null}
+                    {statusResult.meeting_place ? (
+                      <p className="mt-1">
+                        <strong>Where:</strong> {statusResult.meeting_place}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+                {statusResult.ta_reply ? (
+                  <p className="mt-2">
+                    <strong>TA reply:</strong> {statusResult.ta_reply}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         </section>
 
         <section id="agent" className="bh-card scroll-mt-6">

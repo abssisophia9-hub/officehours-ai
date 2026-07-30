@@ -45,6 +45,18 @@ class RecommendationDecisionCreate(BaseModel):
     cluster_id: int | None = None
     professor_note: str | None = None
     request_ids: list[int]
+    # Optional concrete group meeting (shared across all request_ids).
+    meeting_title: str | None = Field(default=None, max_length=240)
+    meeting_when: str | None = Field(
+        default=None,
+        max_length=240,
+        description="Human-readable time window, e.g. 'Thu 4:00–4:30 PM'.",
+    )
+    meeting_place: str | None = Field(
+        default=None,
+        max_length=240,
+        description="Campus room or online meeting link.",
+    )
 
 
 class RecommendationDecisionOut(BaseModel):

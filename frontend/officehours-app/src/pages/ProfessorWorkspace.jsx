@@ -42,7 +42,29 @@ export default function ProfessorWorkspace() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [meetingDrafts, setMeetingDrafts] = useState({});
   const fileInputRef = useRef(null);
+
+  function meetingDraft(clusterId) {
+    return (
+      meetingDrafts[clusterId] || {
+        title: "",
+        when: "",
+        place: "",
+        open: false,
+      }
+    );
+  }
+
+  function patchMeetingDraft(clusterId, patch) {
+    setMeetingDrafts((prev) => ({
+      ...prev,
+      [clusterId]: {
+        ...(prev[clusterId] || { title: "", when: "", place: "", open: false }),
+        ...patch,
+      },
+    }));
+  }
 
   const load = useCallback(async () => {
     try {
@@ -123,6 +145,15 @@ export default function ProfessorWorkspace() {
   }
 
   async function approveGroupReview(cluster) {
+    const draft = meetingDraft(cluster.cluster_id);
+    const title = (draft.title || `Group review: ${cluster.title}`).trim();
+    const when = (draft.when || "").trim();
+    const place = (draft.place || "").trim();
+    if (!when || !place) {
+      setError("Add a shared time and place (or meeting link) before scheduling.");
+      patchMeetingDraft(cluster.cluster_id, { open: true });
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -132,18 +163,21 @@ export default function ProfessorWorkspace() {
         body: {
           card_id: `group-cluster-${cluster.cluster_id}`,
           action_kind: "group_session",
-          action_title: `Group review: ${cluster.title}`,
+          action_title: title,
           status: "approved",
           cluster_id: cluster.cluster_id,
           request_ids: cluster.request_ids,
           professor_note: cluster.suggestion_reason,
+          meeting_title: title,
+          meeting_when: when,
+          meeting_place: place,
         },
       });
       setMessage(
-        decision.action_plan?.title
-          ? `Scheduled plan: ${decision.action_plan.title}`
-          : "Group review recommendation saved",
+        `Group meeting set for ${cluster.request_ids.length} asks · ${when} · ${place}`,
       );
+      patchMeetingDraft(cluster.cluster_id, { open: false });
+      void decision;
     } catch (err) {
       setError(err.message);
     } finally {
@@ -356,9 +390,18 @@ export default function ProfessorWorkspace() {
                       type="button"
                       disabled={busy}
                       className="btn-primary px-4 py-2 text-sm"
-                      onClick={() => approveGroupReview(cluster)}
+                      onClick={() =>
+                        patchMeetingDraft(cluster.cluster_id, {
+                          open: !meetingDraft(cluster.cluster_id).open,
+                          title:
+                            meetingDraft(cluster.cluster_id).title ||
+                            `Group review: ${cluster.title}`,
+                        })
+                      }
                     >
-                      Plan group review
+                      {meetingDraft(cluster.cluster_id).open
+                        ? "Hide meeting form"
+                        : "Propose group meeting"}
                     </button>
                   ) : null}
                   <button
@@ -371,6 +414,66 @@ export default function ProfessorWorkspace() {
                   </button>
                 </div>
               </div>
+              {meetingDraft(cluster.cluster_id).open ? (
+                <div className="mt-3 rounded-xl border border-aui-forest/20 bg-white p-3">
+                  <p className="text-xs font-semibold text-aui-ink">
+                    Shared meeting for {cluster.request_count} asks
+                  </p>
+                  <p className="mt-1 text-[11px] text-aui-deep/65">
+                    Every student on this cluster will see the same time and place
+                    on request status.
+                  </p>
+                  <label className="mt-2 block text-[11px] font-semibold uppercase tracking-wide text-aui-deep/55">
+                    Title
+                    <input
+                      className="field-glass mt-1 w-full px-3 py-2 text-sm"
+                      value={meetingDraft(cluster.cluster_id).title}
+                      onChange={(event) =>
+                        patchMeetingDraft(cluster.cluster_id, {
+                          title: event.target.value,
+                        })
+                      }
+                      placeholder={`Group review: ${cluster.title}`}
+                    />
+                  </label>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    <label className="block text-[11px] font-semibold uppercase tracking-wide text-aui-deep/55">
+                      When
+                      <input
+                        className="field-glass mt-1 w-full px-3 py-2 text-sm"
+                        value={meetingDraft(cluster.cluster_id).when}
+                        onChange={(event) =>
+                          patchMeetingDraft(cluster.cluster_id, {
+                            when: event.target.value,
+                          })
+                        }
+                        placeholder="Thu 4:00–4:30 PM"
+                      />
+                    </label>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wide text-aui-deep/55">
+                      Where / link
+                      <input
+                        className="field-glass mt-1 w-full px-3 py-2 text-sm"
+                        value={meetingDraft(cluster.cluster_id).place}
+                        onChange={(event) =>
+                          patchMeetingDraft(cluster.cluster_id, {
+                            place: event.target.value,
+                          })
+                        }
+                        placeholder="Building 8 · Room 204 or Zoom link"
+                      />
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    className="btn-primary mt-3 px-4 py-2 text-sm"
+                    onClick={() => approveGroupReview(cluster)}
+                  >
+                    Schedule for all asks in cluster
+                  </button>
+                </div>
+              ) : null}
               <ul className="mt-3 space-y-1 text-sm text-aui-deep/80">
                 {cluster.sample_texts.map((sample) => (
                   <li key={sample} className="line-clamp-2">

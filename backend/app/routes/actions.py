@@ -16,6 +16,7 @@ from app.models.action import (
 )
 from app.models.office_hours import OfficeHoursWindow
 from app.models.request import Request
+from app.realtime.hub import hub
 from app.services.action_orchestration_service import build_action_plan
 from app.services.ics_calendar_service import (
     build_ics_calendar,
@@ -31,7 +32,7 @@ router = APIRouter(prefix="/actions", tags=["actions"])
     response_model=RecommendationDecisionOut,
     status_code=status.HTTP_201_CREATED,
 )
-def create_recommendation_decision(
+async def create_recommendation_decision(
     payload: RecommendationDecisionCreate,
     db: Session = Depends(get_db),
 ):
@@ -52,6 +53,23 @@ def create_recommendation_decision(
     db.add(decision)
     db.commit()
     db.refresh(decision)
+
+    meeting = action_plan.get("meeting") if isinstance(action_plan, dict) else None
+    if (
+        payload.status == "approved"
+        and payload.action_kind == "group_session"
+        and isinstance(meeting, dict)
+    ):
+        await hub.broadcast(
+            "group.meeting.scheduled",
+            {
+                "decision_id": decision.id,
+                "cluster_id": payload.cluster_id,
+                "request_ids": payload.request_ids,
+                "meeting": meeting,
+                "title": action_plan.get("title"),
+            },
+        )
 
     return _to_out(decision)
 

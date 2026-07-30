@@ -54,6 +54,12 @@ def build_ics_calendar(
     end = _combine_day_and_time(start.date(), window.end)
     summary = str(action_plan.get("title", decision.action_title))
     description = str(action_plan.get("summary", decision.action_title))
+    meeting = action_plan.get("meeting") if isinstance(action_plan.get("meeting"), dict) else {}
+    location = str(
+        meeting.get("place")
+        or (action_plan.get("agenda_item") or {}).get("place")
+        or window.location
+    )
     uid = f"officehours-decision-{decision.id}@officehours-ai"
 
     lines = [
@@ -69,7 +75,7 @@ def build_ics_calendar(
         f"DTEND:{_format_ics_datetime(end)}",
         f"SUMMARY:{_escape_ics_text(summary)}",
         f"DESCRIPTION:{_escape_ics_text(description)}",
-        f"LOCATION:{_escape_ics_text(window.location)}",
+        f"LOCATION:{_escape_ics_text(location)}",
         "END:VEVENT",
         "END:VCALENDAR",
     ]

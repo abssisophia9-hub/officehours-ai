@@ -5,6 +5,7 @@ Build privacy-safe request status responses for anonymous student lookup.
 from __future__ import annotations
 
 import json
+from typing import Any
 
 from app.models.action import RecommendationDecision
 from app.models.request import Request
@@ -44,13 +45,30 @@ def build_request_status(
         "student_hint": getattr(request, "student_hint", None),
         "assigned_ta": getattr(request, "assigned_ta", None),
         "estimated_wait_minutes": getattr(request, "estimated_wait_minutes", None),
+        "meeting_title": None,
+        "meeting_when": None,
+        "meeting_place": None,
+        "group_meeting": None,
     }
 
     if latest_decision and latest_decision.status == "approved":
         action_plan = json.loads(latest_decision.action_plan)
+        meeting = _extract_meeting(action_plan, latest_decision.action_title)
         payload["recommended_next_step"] = latest_decision.action_title
         if action_plan.get("agenda_item"):
-            payload["agenda_hint"] = action_plan["agenda_item"]["suggested_window"]
+            agenda = action_plan["agenda_item"] or {}
+            payload["agenda_hint"] = agenda.get("suggested_window")
+        if meeting:
+            payload["meeting_title"] = meeting.get("title")
+            payload["meeting_when"] = meeting.get("when")
+            payload["meeting_place"] = meeting.get("place")
+            payload["group_meeting"] = meeting
+            if not payload.get("agenda_hint") and meeting.get("when"):
+                payload["agenda_hint"] = meeting["when"]
+            payload["recommended_next_step"] = (
+                f"Join the shared group meeting"
+                f"{': ' + meeting['title'] if meeting.get('title') else ''}."
+            )
     elif ta_reply:
         payload["recommended_next_step"] = (
             "A TA sent you a reply — read it above and follow up in office hours "
@@ -84,6 +102,26 @@ def build_request_status(
             )
 
     return payload
+
+
+def _extract_meeting(
+    action_plan: dict[str, Any],
+    fallback_title: str | None = None,
+) -> dict[str, str] | None:
+    """Only explicit meeting proposals (title/when/place) become group_meeting."""
+    raw = action_plan.get("meeting")
+    if not isinstance(raw, dict):
+        return None
+    title = str(raw.get("title") or fallback_title or "").strip()
+    when = str(raw.get("when") or "").strip()
+    place = str(raw.get("place") or "").strip()
+    if not (title or when or place):
+        return None
+    return {
+        "title": title or "Group review",
+        "when": when,
+        "place": place,
+    }
 
 
 def _latest_decision_for_request(
@@ -144,6 +182,19 @@ def _status_copy(
     action_plan = json.loads(decision.action_plan)
 
     if decision.status == "approved":
+        meeting = _extract_meeting(action_plan, decision.action_title)
+        if meeting and (meeting.get("when") or meeting.get("place")):
+            headline = "Group meeting scheduled"
+            message = str(
+                action_plan.get("student_update")
+                or (
+                    f"Join {meeting.get('title') or 'the group meeting'}"
+                    f"{' · ' + meeting['when'] if meeting.get('when') else ''}"
+                    f"{' · ' + meeting['place'] if meeting.get('place') else ''}."
+                )
+            )
+            return STATUS_ACTION_PLANNED, headline, message
+
         student_update = str(
             action_plan.get(
                 "student_update",
