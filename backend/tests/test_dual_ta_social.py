@@ -30,8 +30,12 @@ def _login(email: str) -> dict:
 
 def test_course_has_two_tas_and_matcher_stays_in_course():
     student = _login("s.elidrissi@aui.ma")
+    alice = _login("a.chen@aui.ma")
     course = next(c for c in student["user"]["courses"] if c["code"] == "CSC 2302")
-    load = client.get(f"/ta/load/?course_id={course['id']}").json()
+    load = client.get(
+        f"/ta/load/?course_id={course['id']}",
+        headers={"Authorization": f"Bearer {alice['token']}"},
+    ).json()
     assert load["ta_count"] == 2
     names = {ta["name"] for ta in load["tas"]}
     assert names == {"Alice Chen", "Bob Martinez"}
@@ -56,6 +60,8 @@ def test_course_has_two_tas_and_matcher_stays_in_course():
 
 def test_ta_queue_mine_vs_backup_filters():
     student = _login("s.elidrissi@aui.ma")
+    alice = _login("a.chen@aui.ma")
+    bob = _login("b.martinez@aui.ma")
     course = next(c for c in student["user"]["courses"] if c["code"] == "CSC 2302")
     created = client.post(
         "/requests/",
@@ -69,14 +75,18 @@ def test_ta_queue_mine_vs_backup_filters():
     primary = created["assigned_ta"]
     backup = created["alternative_ta"]
 
+    primary_token = alice["token"] if primary == "Alice Chen" else bob["token"]
     mine = client.get(
-        f"/ta/queue/?course_id={course['id']}&assignment=mine&ta_name={primary}"
+        f"/ta/queue/?course_id={course['id']}&assignment=mine",
+        headers={"Authorization": f"Bearer {primary_token}"},
     ).json()
     assert any(item["request"]["id"] == created["id"] for item in mine)
 
     if backup:
+        backup_token = bob["token"] if backup == "Bob Martinez" else alice["token"]
         as_backup = client.get(
-            f"/ta/queue/?course_id={course['id']}&assignment=backup&ta_name={backup}"
+            f"/ta/queue/?course_id={course['id']}&assignment=backup",
+            headers={"Authorization": f"Bearer {backup_token}"},
         ).json()
         assert any(item["request"]["id"] == created["id"] for item in as_backup)
 

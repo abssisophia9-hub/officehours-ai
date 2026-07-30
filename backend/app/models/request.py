@@ -40,6 +40,16 @@ class Request(Base):
     sensitive: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     # How the student wants to be helped: async message, face-to-face, or online call.
     help_mode: Mapped[str] = mapped_column(String, nullable=False, default="message")
+    # TA staffing loop: open → claimed → in_progress → helped.
+    work_status: Mapped[str] = mapped_column(String, nullable=False, default="open")
+    claimed_by: Mapped[str | None] = mapped_column(String, nullable=True)
+    claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    helped_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Direct async reply from a TA (message mode) — visible on student status.
+    ta_reply: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ta_replied_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -48,6 +58,7 @@ class Request(Base):
 
 
 HELP_MODES = ("message", "face_to_face", "online_meeting")
+WORK_STATUSES = ("open", "claimed", "in_progress", "helped")
 
 
 class RequestCreate(BaseModel):
@@ -109,6 +120,12 @@ class RequestOut(RequestCreate):
     created_at: datetime
     sensitive: bool = False
     help_mode: str = "message"
+    work_status: str = "open"
+    claimed_by: str | None = None
+    claimed_at: datetime | None = None
+    helped_at: datetime | None = None
+    ta_reply: str | None = None
+    ta_replied_at: datetime | None = None
     oracle_category: str | None = None
     oracle_difficulty: str | None = None
     oracle_estimated_minutes: int | None = None
@@ -135,6 +152,9 @@ class RequestStatusOut(BaseModel):
     submitted_at: datetime
     anonymous_submission: bool
     help_mode: str | None = None
+    work_status: str | None = None
+    claimed_by: str | None = None
+    ta_reply: str | None = None
     recommended_next_step: str | None = None
     agenda_hint: str | None = None
     student_hint: str | None = None

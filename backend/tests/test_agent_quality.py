@@ -120,7 +120,10 @@ def test_roster_seed_includes_category_tags():
         json={"email": "a.chen@aui.ma", "password": DEMO_PASSWORD},
     )
     assert login.status_code == 200
-    roster = client.get("/ta/roster/").json()
+    roster = client.get(
+        "/ta/roster/",
+        headers={"Authorization": f"Bearer {login.json()['token']}"},
+    ).json()
     alice = next(row for row in roster if row["name"] == "Alice Chen")
     assert "conceptual_question" in alice["expertise_tags"]
     sam = next(row for row in roster if row["name"] == "Sam Ortiz")

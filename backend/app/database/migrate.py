@@ -35,6 +35,12 @@ def ensure_schema(engine: Engine) -> None:
             ("course_id", "INTEGER"),
             ("sensitive", "BOOLEAN"),
             ("help_mode", "VARCHAR"),
+            ("work_status", "VARCHAR"),
+            ("claimed_by", "VARCHAR"),
+            ("claimed_at", "DATETIME"),
+            ("helped_at", "DATETIME"),
+            ("ta_reply", "TEXT"),
+            ("ta_replied_at", "DATETIME"),
         ):
             _add_column_if_missing(engine, "requests", columns, column_name, column_type)
 
