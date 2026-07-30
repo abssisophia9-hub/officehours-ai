@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
+import AccountMenu from "../components/AccountMenu.jsx";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 const ICONS = {
@@ -84,7 +85,7 @@ const SECTION_NAV = {
 };
 
 export default function AppShell() {
-  const { user, activeCourse, setActiveCourse, logout } = useAuth();
+  const { user, activeCourse, setActiveCourse } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -92,12 +93,6 @@ export default function AppShell() {
   const roleHome =
     role === "professor" ? "/professor" : role === "ta" ? "/ta" : "/student";
   const sections = SECTION_NAV[role] || [];
-  const initials = (user.display_name || "?")
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0].toUpperCase())
-    .join("");
 
   function scrollToSection(id) {
     if (location.pathname !== roleHome) {
@@ -175,25 +170,7 @@ export default function AppShell() {
           </select>
         </nav>
 
-        <div className="bh-user">
-          <div className="bh-avatar">{initials}</div>
-          <div>
-            <p className="bh-user-name">{user.display_name}</p>
-            <p className="bh-user-role">
-              {activeCourse ? `${activeCourse.role} · ${activeCourse.code}` : "No course"}
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          className="bh-logout"
-          onClick={async () => {
-            await logout();
-            navigate("/login");
-          }}
-        >
-          Log out
-        </button>
+        <AccountMenu onScrollToSection={scrollToSection} />
       </aside>
 
       <main className="bh-main">
