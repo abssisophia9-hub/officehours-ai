@@ -13,7 +13,10 @@
 - Bias in AI classification across different phrasing/language styles
 
 ## Mitigations
-- Human-in-the-loop: professor approves all final actions
+- Human-in-the-loop: professors approve what enters the **Study Agent** knowledge
+  base; AI does not auto-schedule grades or publish unapproved FAQ answers
+- TA **Reply** can reach the student on request status before KB approval
+  (message help mode) — that is intentional async help, separate from Study Agent
 - Clear escalation path for flagged urgent/sensitive content
 - Regular review of classification accuracy across diverse phrasing (see `docs/evaluation_plan.md`)
 

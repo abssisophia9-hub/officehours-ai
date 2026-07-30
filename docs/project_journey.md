@@ -9,8 +9,11 @@ Use this with [`product_overview.md`](product_overview.md),
 
 **One campus web app** where a person signs in (or launches from Canvas), their
 **role is per course** (a TA can also be a student elsewhere), they ask quietly
-or identified, optionally request a face-to-face / online meeting, and custom
-Oracle agents triage help under a professor KB gate.
+or identified, optionally request a face-to-face / online meeting, and
+**Ask Triage** agents help under a professor KB gate — with **Help Coach** for
+TAs and **shared group meetings** for repeated concepts.
+
+Vocabulary: [`glossary.md`](glossary.md).
 
 ---
 
@@ -39,12 +42,12 @@ Oracle agents triage help under a professor KB gate.
 - Action orchestration + office-hours persistence + `.ics` export
 - Anonymous request status lookup
 
-### Phase 3 — TA queue + knowledge + Oracle agents
+### Phase 3 — TA queue + knowledge + Ask Triage agents
 
 - TA dashboard (live queue, draft edit, resolve)
 - Knowledge-base curation (professor approve / edit / reject)
 - Student KB agent over **approved** answers only
-- Custom-trained **Oracle**: Analyzer → Matcher → Synthesizer (no prompted Claude on the FYP path)
+- Custom-trained **Ask Triage**: Analyzer → Matcher → Synthesizer (no prompted Claude on the FYP path)
 - WebSocket live push across dashboards
 - Architecture diagrams + training-data docs
 
@@ -64,7 +67,7 @@ Oracle agents triage help under a professor KB gate.
 - Canvas launch simulator + `POST /canvas/launch` (JIT user/course/membership)
 - Office-hours command center for professors; agent performance backlog
 
-### Phase 6 — This upgrade (identity, meetings, deployment clarity)
+### Phase 6 — Identity, meetings, deployment clarity
 
 | Decision / feature | What we shipped |
 | --- | --- |
@@ -72,7 +75,17 @@ Oracle agents triage help under a professor KB gate.
 | **Help mode** | `message` · `face_to_face` · `online_meeting` → TA-facing recommended action |
 | **TA is also a student** | Demo + Canvas simulator: same person, different roles per course |
 | **Community deployment** | **Canvas LTI** is the recommended source of enrollments (not AUI portal scraping, not manual entry as the main path) |
-| Docs / diagrams / demo | This journey doc + regenerated diagrams + dual-role demo accounts |
+| Docs / diagrams / demo | Journey doc + diagrams + dual-role demo accounts |
+
+### Phase 7 — TA staffing, Help Coach, peer notes, shared meetings
+
+| Decision / feature | What we shipped |
+| --- | --- |
+| **TA staffing loop** | Claim → start helping → reply / done → backup handoff → curation |
+| **Help Coach** | `POST /ta/assist/` — similar opens, KB neighbors, Socratic, draft/rewrite |
+| **Shared group meetings** | One cluster meeting (title/when/place) on every linked request status |
+| **Classmate notes** | Peer upload/like/comment/download under Study Agent (not agent training) |
+| **Account menu** | Tour, report bug/issue (`POST /feedback/bugs`), log out |
 
 ---
 
@@ -125,9 +138,9 @@ Full account table: [`product_overview.md`](product_overview.md).
 
 | File | Story |
 | --- | --- |
-| `diagrams/architecture.png` | Unified product app + API + Oracle + Canvas + curation |
-| `diagrams/workflow.png` | Ask (identity + help mode) → Oracle → TA → professor → KB |
-| `diagrams/oracle_agents.png` | Analyzer / Matcher / Synthesizer artifacts |
+| `diagrams/architecture.png` | Unified product app + API + Ask Triage + Canvas + curation |
+| `diagrams/workflow.png` | Ask (identity + help mode) → Ask Triage → TA → professor → KB |
+| `diagrams/oracle_agents.png` | Ask Triage Analyzer / Matcher / Synthesizer artifacts (filename historical) |
 | `diagrams/product_deployment.png` | Canvas-first community deploy vs what we are not |
 | `diagrams/database_erd.png` | Auth + memberships + requests (`help_mode`) + KB |
 | `diagrams/canvas_enrollment.png` | JIT Canvas launch + dual-role (TA + student) |
@@ -157,5 +170,6 @@ backend/venv/bin/python scripts/generate_architecture_diagrams.py
 | Demo seed | `backend/app/services/demo_accounts.py` |
 | Canvas launch | `backend/app/services/canvas_launch_service.py` |
 | Ask + help mode | `backend/app/routes/requests.py` |
-| Oracle pipeline | `backend/app/services/oracle_service.py` |
+| Ask Triage (`oracle_service.py`) | `backend/app/services/oracle_service.py` |
+| Help Coach | `backend/app/services/help_coach_service.py` |
 | Run helper | `scripts/run_product.sh` |

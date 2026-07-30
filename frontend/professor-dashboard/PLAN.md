@@ -1,5 +1,9 @@
 # Professor Dashboard — Plan
 
+> **Legacy shell** (`:5174`). Primary product UI is `frontend/officehours-app`
+> (`:5180`). Many “next steps” below are already shipped in the unified app /
+> backend; treat this file as historical MVP notes.
+
 ## MVP built
 
 - Fetches incoming requests from the backend `GET /requests/` endpoint.

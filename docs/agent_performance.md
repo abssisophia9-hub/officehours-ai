@@ -1,7 +1,10 @@
 # Agent performance — analysis & upgrade plan
 
 Status after multi-department metrics work. Use this as the backlog for making
-Analyzer / Matcher / Synthesizer / KB agent **actually better**, not just louder.
+**Ask Triage** (Analyzer / Matcher / Synthesizer), **Help Coach**, and the
+**Study Agent** **actually better**, not just louder.
+
+Vocabulary: [`glossary.md`](glossary.md). Design: [`ai_nlp_design.md`](ai_nlp_design.md).
 
 **Scope:** the platform serves **any AUI course** (MTH, COM, ECO, ENG, CSC, …).
 CSC supplements are demo enrichment for SSE walkthroughs — not the product boundary.
@@ -9,13 +12,14 @@ CSC supplements are demo enrichment for SSE walkthroughs — not the product bou
 ## What runs today (FYP path)
 
 ```
-POST /requests
+POST /requests                    # Ask Triage (oracle_service.py)
   → classify_and_recommend (ML category + learning-style ML by default)
   → Analyzer (embedding LogReg + topic overlays)
   → Matcher (embedding LogReg + expertise/queue blend on DEFAULT_TA_ROSTER)
   → Synthesizer (approved KB RAG → teaching bank → seek-help)
   → pending KB draft (professor gate)
-POST /agent/ask
+POST /ta/assist/                  # Help Coach (while TA helping; same RAG stack)
+POST /agent/ask                   # Study Agent
   → approved KB only; weak/no match → should_seek_help (Quiet ask)
   → logged to kb_ask_events for per-course hit-rate
 ```

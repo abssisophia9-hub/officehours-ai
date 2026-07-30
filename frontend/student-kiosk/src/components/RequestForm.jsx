@@ -60,7 +60,7 @@ export default function RequestForm({ checkIn, onSubmitted }) {
           Ask for help
         </h1>
         <p className="mt-2 text-lg text-slate-500">
-          Oracle agents analyze your question, match a TA, and draft a teaching
+          Ask Triage agents analyze your question, match a TA, and draft a teaching
           plan — professor still approves what enters the student KB.
         </p>
       </div>
@@ -178,7 +178,7 @@ export default function RequestForm({ checkIn, onSubmitted }) {
         {submitting ? (
           <>
             <span className="h-6 w-6 animate-spin rounded-full border-[3px] border-white/40 border-t-white" />
-            Running Oracle agents…
+            Running Ask Triage…
           </>
         ) : (
           "Submit Question"

@@ -1,8 +1,10 @@
 """
-Office Hours Oracle orchestration.
+Ask Triage orchestration (historical module name: Oracle).
 
 Runs Analyzer → Matcher → Synthesizer, keeps professor curation in the loop,
 and records traces for metrics / lifetime confusion analytics.
+Product docs call this pipeline Ask Triage; fields/events often still use
+``oracle_*``.
 """
 
 from __future__ import annotations

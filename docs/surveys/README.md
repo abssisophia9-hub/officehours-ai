@@ -1,5 +1,10 @@
 # Evaluation Survey Forms
 
+> **Note:** these templates were written for mid-report demos that used the
+> **legacy** student kiosk + professor dashboard. Prefer demos on the unified
+> product app (`:5180`) today; keep or adapt questions for Ask Triage, Help Coach,
+> dual roles, and group meetings when you run a new eval round.
+
 This folder contains survey templates for evaluating the OfficeHours AI demo.
 
 ## Forms

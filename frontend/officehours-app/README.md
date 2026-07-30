@@ -5,6 +5,7 @@ This is the **packaged multi-role product** your supervisor should test:
 - one login screen
 - role detection from course membership (student / TA / professor)
 - course switcher (a user can belong to multiple courses with different roles)
+- **Ask Triage** on submit · **Help Coach** in the TA workspace · Study Agent + classmate notes
 
 Legacy separate kiosk/dashboard apps remain as optional web shells only
 (**no** physical hardware path), but **this app is the product**.
@@ -34,12 +35,15 @@ Or use the helper:
 
 AUI format: `Initial.Lastname@aui.ma` — role comes from course membership.
 
-| Email | Role | Courses |
+| Email | Roles | Courses (examples) |
 | --- | --- | --- |
-| `s.elidrissi@aui.ma` | student | 7 courses (CSC 2302… + MTH 1304 + COM 1301) |
-| `a.chen@aui.ma` | TA | CSC 2302 |
-| `b.martinez@aui.ma` | TA | CSC 2302, 3323, 3374 |
+| `s.elidrissi@aui.ma` | student | ~7 courses (CSC 2302… + MTH 1304 + COM 1301) |
+| `a.chen@aui.ma` | **TA + student** | TA of CSC 2302; student in other courses |
+| `b.martinez@aui.ma` | **TA + student** | TA of CSC 2302 / 3323 / 3374; student elsewhere |
 | `a.benali@aui.ma` | professor | CSC 2302, 3323, 3374 |
+
+Full table: [`docs/product_overview.md`](../../docs/product_overview.md).  
+Vocabulary: [`docs/glossary.md`](../../docs/glossary.md).
 
 ## Env
 

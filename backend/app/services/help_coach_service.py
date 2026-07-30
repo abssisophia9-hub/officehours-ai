@@ -2,6 +2,8 @@
 Help Coach — TA-facing AI co-pilot while helping a student.
 
 Ask Triage / Oracle (Analyzer → Matcher → Synthesizer) runs once at intake.
+Product name is **Ask Triage**; module/fields may still say `oracle_*`.
+Help Coach runs later while a TA is helping (`POST /ta/assist/`).
 Help Coach runs *during* the TA staffing loop: similar open asks, approved KB
 neighbors, teaching script, Socratic steps, and draft student replies.
 

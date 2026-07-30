@@ -3,9 +3,13 @@
 Campus office-hours triage system for **Al Akhawayn University** (FYP).
 
 Students, TAs, and professors use **one packaged web app**. Custom-trained
-**Oracle** agents (Analyzer → Matcher → Synthesizer) triage and draft help.
-The professor remains the gate for what students can retrieve from the
-knowledge base.
+**Ask Triage** agents (Analyzer → Matcher → Synthesizer) classify each ask at
+intake; **Help Coach** assists TAs while helping; the professor remains the
+gate for what students can retrieve from the knowledge base.
+
+> **Naming:** product docs say **Ask Triage**. Some API fields, DB columns, and
+> the service module still use the historical prefix `oracle_*` /
+> `oracle_service.py` — same pipeline.
 
 ## What is the final product?
 
@@ -21,7 +25,9 @@ enrollment as the main model).
 Start here:
 
 - [`docs/product_overview.md`](docs/product_overview.md) — how to demo
-- [`docs/project_journey.md`](docs/project_journey.md) — day 1 → this upgrade
+- [`docs/glossary.md`](docs/glossary.md) — Ask Triage · Help Coach · roles · status
+- [`docs/README.md`](docs/README.md) — full documentation index
+- [`docs/project_journey.md`](docs/project_journey.md) — day 1 → current product
 - [`docs/system_architecture.md`](docs/system_architecture.md) — components + diagrams
 - [`diagrams/`](diagrams/) — architecture / workflow / Canvas / journey PNGs
 
@@ -30,14 +36,19 @@ Start here:
 # → http://127.0.0.1:5180   password for seeded accounts: aui-demo
 ```
 
+## Agents (custom-trained)
 
-## Oracle agents (custom-trained)
-
-| Agent | Model | Training data |
+| Surface | When it runs | Agents / modes |
 | --- | --- | --- |
-| Analyzer | embeddings + LogReg | Labeled synthetic + CSC topic rows |
-| Matcher | embeddings + LogReg | Silver TA labels + CSC supplement |
-| Synthesizer | RAG + style ranker | Teaching-bank + CSC supplement |
+| **Ask Triage** | `POST /requests/` (intake) | Analyzer → Matcher → Synthesizer |
+| **Help Coach** | `POST /ta/assist/` (while helping) | draft reply · Socratic · refresh script · rewrite |
+| **Study Agent** | `POST /agent/ask` | Approved KB only (professor gate) |
+
+| Ask Triage agent | Model | Training data |
+| --- | --- | --- |
+| Analyzer | embeddings + LogReg | Labeled synthetic + CSC / multi-dept rows |
+| Matcher | embeddings + LogReg | Silver TA labels + supplements |
+| Synthesizer | RAG + style ranker | Teaching-bank + supplements |
 
 No prompted Claude / no `USE_MOCK_CLAUDE` on the assessed path. Details:
 [`docs/training_data.md`](docs/training_data.md),
@@ -50,16 +61,26 @@ to ask for help.
 
 ## Solution highlights
 
-- Anonymous or identified asks
-- Face-to-face / online meeting preference for staff scheduling
+- Anonymous or identified asks; message / face-to-face / online preference
 - Live WebSocket queues (TA + professor)
-- Custom-trained multi-agent triage
-- Professor-approved knowledge base + student KB agent
+- Ask Triage at intake + Help Coach while TAs help
+- TA staffing loop (claim → help → reply / group meeting → curation)
+- Shared **group meetings** for repeated clusters (same time/place on every
+  student’s request status)
+- Professor-approved knowledge base + student Study Agent
+- Classmate peer notes (study feed — does not train the agent)
+- Account menu: tour, report bug/issue (`POST /feedback/bugs`), log out
 - Canvas materials sync + launch provisioning (LTI hardening next)
 
 ## Tech stack
 
-- React + Tailwind — product app `5180` (legacy kiosk `5173`, professor `5174`, TA `5175`)
+- React + Tailwind — **product app `5180`** (legacy shells: kiosk `5173`,
+  professor `5174`, TA `5175`)
 - FastAPI + SQLAlchemy + SQLite
 - sentence-transformers + scikit-learn
 - WebSockets for live push
+
+## Cloud / agent operators
+
+See [`AGENTS.md`](AGENTS.md) for how to run backend tests and frontends in this
+environment (`OFFICEHOURS_CLUSTERING_BACKEND=lexical` for tests).
