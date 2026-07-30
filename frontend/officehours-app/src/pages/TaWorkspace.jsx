@@ -44,6 +44,8 @@ export default function TaWorkspace() {
   const [notes, setNotes] = useState("");
   const [hint, setHint] = useState("");
   const [reply, setReply] = useState("");
+  const [socraticSteps, setSocraticSteps] = useState([]);
+  const [coachBusy, setCoachBusy] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const [resolvedCount, setResolvedCount] = useState(0);
@@ -123,10 +125,56 @@ export default function TaWorkspace() {
 
   function selectItem(item) {
     setSelectedId(item.request.id);
-    setNotes(item.knowledge_entry?.answer_draft || "");
-    setHint(item.knowledge_entry?.student_hint || item.request.student_hint || "");
+    const coach = item.help_coach;
+    setNotes(
+      coach?.teaching_approach || item.knowledge_entry?.answer_draft || "",
+    );
+    setHint(
+      coach?.student_hint ||
+        item.knowledge_entry?.student_hint ||
+        item.request.student_hint ||
+        "",
+    );
     setReply(item.request.ta_reply || item.knowledge_entry?.student_hint || "");
+    setSocraticSteps(coach?.socratic_steps || []);
     setError("");
+  }
+
+  async function runHelpCoach(mode) {
+    if (!selected) return;
+    setCoachBusy(true);
+    setError("");
+    try {
+      const result = await api("/ta/assist/", {
+        method: "POST",
+        token,
+        body: {
+          request_id: selected.request.id,
+          mode,
+          current_reply: reply || null,
+        },
+      });
+      setToast(result.message || "Help Coach updated");
+      if (result.draft_reply) setReply(result.draft_reply);
+      if (result.teaching_approach) setNotes(result.teaching_approach);
+      if (result.student_hint) setHint(result.student_hint);
+      if (Array.isArray(result.socratic_steps)) {
+        setSocraticSteps(result.socratic_steps);
+      }
+      if (result.help_coach) {
+        setQueue((prev) =>
+          prev.map((item) =>
+            item.request.id === selected.request.id
+              ? { ...item, help_coach: result.help_coach }
+              : item,
+          ),
+        );
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCoachBusy(false);
+    }
   }
 
   async function runAction(path, body, { helpedBump = false } = {}) {
@@ -200,8 +248,8 @@ export default function TaWorkspace() {
     <div className="fade-up">
       <h1 className="bh-page-title">TA Dashboard</h1>
       <p className="bh-page-subtitle">
-        Claim asks, help students now, reply async, then send drafts for professor
-        curation · {activeCourse.code} — {activeCourse.title}
+        Claim asks, help with Help Coach, reply async, then send drafts for
+        professor curation · {activeCourse.code} — {activeCourse.title}
       </p>
 
       <div className="bh-stats">
@@ -306,6 +354,7 @@ export default function TaWorkspace() {
                 <th>Status</th>
                 <th>Help</th>
                 <th>Category</th>
+                <th>Similar</th>
                 <th>Urgency</th>
                 <th>Primary</th>
                 <th>Backup</th>
@@ -317,6 +366,7 @@ export default function TaWorkspace() {
                 const urgency = (request.urgency || "n/a").toLowerCase();
                 const helpMode = request.help_mode || "message";
                 const status = workPill(request.work_status);
+                const similarN = item.help_coach?.similar_open_count || 0;
                 return (
                   <tr
                     key={request.id}
@@ -354,6 +404,20 @@ export default function TaWorkspace() {
                     </td>
                     <td>{request.oracle_category || request.category || "n/a"}</td>
                     <td>
+                      {similarN > 0 ? (
+                        <span
+                          className={`bh-pill ${
+                            similarN >= 2 ? "bh-pill-amber" : "bh-pill-blue"
+                          }`}
+                          title="Similar open asks — consider group help"
+                        >
+                          {similarN} similar
+                        </span>
+                      ) : (
+                        <span className="text-aui-deep/45">—</span>
+                      )}
+                    </td>
+                    <td>
                       <span
                         className={`bh-pill ${
                           ["high", "urgent"].includes(urgency)
@@ -385,7 +449,7 @@ export default function TaWorkspace() {
           <p className="bh-card-note">{req.text}</p>
 
           <div className="mt-3 rounded-xl border border-aui-forest/20 bg-[#f3faf5] p-3 text-xs text-aui-deep">
-            <p className="font-semibold text-aui-ink">Oracle teaching context</p>
+            <p className="font-semibold text-aui-ink">Triage context</p>
             <ul className="mt-2 space-y-1">
               <li>
                 <strong>Category:</strong> {req.oracle_category || req.category || "n/a"}
@@ -419,13 +483,144 @@ export default function TaWorkspace() {
                   {req.alternative_ta ? ` (backup ${req.alternative_ta})` : ""}
                 </li>
               )}
-              {req.oracle?.synthesizer?.kb_insight ? (
+              {(selected.help_coach?.kb_insight ||
+                req.oracle?.synthesizer?.kb_insight) ? (
                 <li>
-                  <strong>KB insight:</strong> {req.oracle.synthesizer.kb_insight}
+                  <strong>KB insight:</strong>{" "}
+                  {selected.help_coach?.kb_insight ||
+                    req.oracle?.synthesizer?.kb_insight}
                 </li>
               ) : null}
             </ul>
           </div>
+
+          {(() => {
+            const coach = selected.help_coach;
+            if (!coach) return null;
+            return (
+              <div className="mt-3 rounded-xl border border-[#c5d9cc] bg-white p-3 text-xs text-aui-deep">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="font-semibold text-aui-ink">Help Coach</p>
+                    <p className="mt-0.5 text-[11px] text-aui-deep/65">
+                      Live co-pilot while you help ·{" "}
+                      {coach.coach_summary || "ready"}
+                    </p>
+                  </div>
+                  {coach.group_help_suggested ? (
+                    <span className="bh-pill bh-pill-amber">
+                      Group help · {coach.similar_open_count} similar open
+                    </span>
+                  ) : null}
+                </div>
+
+                {coach.similar_open_count > 0 ? (
+                  <div className="mt-3">
+                    <p className="font-semibold text-aui-ink">Similar open asks</p>
+                    <ul className="mt-1 space-y-1">
+                      {coach.similar_open.map((peer) => (
+                        <li key={peer.id} className="rounded-lg bg-[#f3faf5] px-2 py-1.5">
+                          <button
+                            type="button"
+                            className="text-left text-aui-forest underline-offset-2 hover:underline"
+                            onClick={() => {
+                              const peerItem = queue.find(
+                                (item) => item.request.id === peer.id,
+                              );
+                              if (peerItem) selectItem(peerItem);
+                            }}
+                          >
+                            #{peer.id}
+                          </button>
+                          {" · "}
+                          <span className="text-aui-deep/80">
+                            {(peer.text || "").slice(0, 90)}
+                            {(peer.text || "").length > 90 ? "…" : ""}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {coach.similar_kb?.length ? (
+                  <div className="mt-3">
+                    <p className="font-semibold text-aui-ink">Approved KB neighbors</p>
+                    <ul className="mt-1 space-y-1.5">
+                      {coach.similar_kb.map((hit) => (
+                        <li
+                          key={`${hit.id}-${hit.question_text}`}
+                          className="rounded-lg border border-[#e4ece6] px-2 py-1.5"
+                        >
+                          <p className="font-medium text-aui-ink">
+                            #{hit.id}{" "}
+                            {hit.similarity != null
+                              ? `(${Math.round(Number(hit.similarity) * 100)}%)`
+                              : ""}
+                          </p>
+                          <p className="text-aui-deep/80">
+                            {(hit.question_text || "").slice(0, 110)}
+                          </p>
+                          {hit.answer_preview ? (
+                            <p className="mt-1 text-aui-deep/70">
+                              {hit.answer_preview.slice(0, 160)}
+                              {hit.answer_preview.length > 160 ? "…" : ""}
+                            </p>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {socraticSteps.length ? (
+                  <div className="mt-3">
+                    <p className="font-semibold text-aui-ink">Socratic steps</p>
+                    <ol className="mt-1 list-decimal space-y-1 pl-4">
+                      {socraticSteps.map((step) => (
+                        <li key={step}>{step}</li>
+                      ))}
+                    </ol>
+                  </div>
+                ) : null}
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={busy || coachBusy}
+                    className="btn-primary px-3 py-1.5 text-xs"
+                    onClick={() => runHelpCoach("draft_reply")}
+                  >
+                    {coachBusy ? "Coaching…" : "Draft student reply"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy || coachBusy}
+                    className="btn-ghost px-3 py-1.5 text-xs"
+                    onClick={() => runHelpCoach("socratic")}
+                  >
+                    Socratic steps
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy || coachBusy}
+                    className="btn-ghost px-3 py-1.5 text-xs"
+                    onClick={() => runHelpCoach("refresh_teaching")}
+                  >
+                    Refresh teaching script
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy || coachBusy || reply.trim().length < 3}
+                    className="btn-ghost px-3 py-1.5 text-xs"
+                    onClick={() => runHelpCoach("rewrite_reply")}
+                  >
+                    Rewrite reply
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
 
           <div className="mt-2 flex flex-wrap gap-2 text-xs">
             <span className="bh-pill bh-pill-gray">
@@ -527,7 +722,7 @@ export default function TaWorkspace() {
               <p className="text-sm font-semibold text-aui-ink">Reply to student</p>
               <p className="mt-1 text-xs text-aui-deep/70">
                 Publishes on their request status immediately (does not wait for
-                professor KB approval).
+                professor KB approval). Use Help Coach to draft, then edit.
               </p>
               <textarea
                 className="field-glass mt-2 min-h-24 w-full px-3 py-2.5 text-sm"

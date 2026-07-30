@@ -117,13 +117,16 @@ TAs own a real office-hours loop — not only curation drafts:
 
 1. **Claim** an ask  
 2. **Start helping** (`in_progress`)  
-3. **Reply to student** (message mode — visible on request status immediately)  
-4. **Done helping** or **Take as primary** (backup handoff)  
-5. **Send teaching draft** to professor curation  
+3. **Help Coach** — similar open asks, approved KB neighbors, Socratic steps,
+   draft / rewrite student reply, refresh teaching script (`POST /ta/assist/`)  
+4. **Reply to student** (message mode — visible on request status immediately)  
+5. **Done helping** or **Take as primary** (backup handoff)  
+6. **Send teaching draft** to professor curation  
 
-Oracle teaching context (difficulty, learning style, tags, sensitive, matcher)
-is shown on the selected ask. Queue + load APIs require auth and TA/professor
-membership for the course.
+Triage context (difficulty, learning style, tags, sensitive, matcher) plus the
+Help Coach panel show on the selected ask. Queue items include a **similar**
+badge when classmates are stuck on the same cluster/category. Queue + load +
+assist APIs require auth and TA/professor membership for the course.
 
 ## Packaging note
 
