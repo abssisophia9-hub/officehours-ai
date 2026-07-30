@@ -171,6 +171,116 @@ body {
   margin-top: 0.9rem;
 }
 
+.bh-account {
+  position: relative;
+  margin-top: 0.9rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.bh-account-trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.7rem;
+  border: none;
+  border-radius: 0.7rem;
+  background: transparent;
+  color: #fff;
+  text-align: left;
+  padding: 0.45rem 0.45rem;
+  cursor: pointer;
+  transition: background 130ms ease;
+}
+
+.bh-account-trigger:hover,
+.bh-account-trigger.open {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.bh-account-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.bh-account-chevron {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.bh-account-menu {
+  position: absolute;
+  left: 0.2rem;
+  right: 0.2rem;
+  bottom: calc(100% + 0.45rem);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.4rem;
+  border-radius: 0.85rem;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(18, 42, 28, 0.22);
+  animation: bh-account-pop 160ms ease-out;
+}
+
+@keyframes bh-account-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bh-account-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  border: none;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: var(--aui-ink);
+  font-family: "Outfit", sans-serif;
+  font-size: 0.88rem;
+  font-weight: 560;
+  padding: 0.65rem 0.7rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms ease;
+}
+
+.bh-account-item:hover {
+  background: #eef5f0;
+}
+
+.bh-account-item-icon {
+  display: inline-flex;
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+  color: var(--aui-deep);
+}
+
+.bh-account-item-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.bh-account-item-danger,
+.bh-account-item-danger .bh-account-item-icon {
+  color: #b42318;
+}
+
+.bh-account-item-danger:hover {
+  background: #fdeceb;
+}
+
 .bh-avatar {
   display: flex;
   align-items: center;
@@ -215,6 +325,85 @@ body {
 
 .bh-logout:hover {
   background: rgba(255, 255, 255, 0.1);
+}
+
+.bh-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(12, 28, 18, 0.45);
+  animation: bh-account-pop 160ms ease-out;
+}
+
+.bh-modal {
+  width: min(100%, 26rem);
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(12, 28, 18, 0.28);
+  padding: 1.15rem 1.2rem 1.2rem;
+}
+
+.bh-modal-wide {
+  width: min(100%, 30rem);
+}
+
+.bh-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.bh-modal-head h2 {
+  margin: 0;
+  font-family: "Fraunces", serif;
+  font-size: 1.35rem;
+  color: var(--aui-ink);
+}
+
+.bh-modal-close {
+  border: none;
+  background: transparent;
+  color: var(--aui-deep);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.15rem 0.35rem;
+}
+
+.bh-modal-kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--aui-deep);
+  opacity: 0.65;
+}
+
+.bh-modal-step-title {
+  margin: 0 0 0.45rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--aui-ink);
+}
+
+.bh-modal-body {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--aui-deep);
+}
+
+.bh-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  margin-top: 1rem;
 }
 
 .bh-main {
