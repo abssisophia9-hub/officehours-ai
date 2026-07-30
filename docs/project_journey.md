@@ -140,10 +140,14 @@ backend/venv/bin/python scripts/generate_architecture_diagrams.py
 
 ## Honest next steps (agents + production)
 
+Defense claims / ceilings: [`fyp_evidence.md`](fyp_evidence.md).
+
 1. Replace unsigned `POST /canvas/launch` with **real Canvas LTI 1.3**  
-2. Keep growing course KB from Canvas modules (agent quality ceiling)  
-3. Retrain Analyzer / Matcher / Synthesizer on CSC-covered labels ([`agent_performance.md`](agent_performance.md))  
-4. Optional tabular signals (learning style / stress) from external CSVs — bridge, not drop-in text training  
+2. Collect ≥40 held-out TA **gold labels** and re-run eval  
+3. Re-survey on the unified app (`docs/surveys/unified_product_post_demo_survey.md`)  
+4. Keep growing course KB from Canvas modules (agent quality ceiling)  
+5. Retrain Analyzer / Matcher / Synthesizer on CSC-covered labels ([`agent_performance.md`](agent_performance.md))  
+6. Optional tabular signals (learning style / stress) from external CSVs — bridge, not drop-in text training  
 
 ---
 
