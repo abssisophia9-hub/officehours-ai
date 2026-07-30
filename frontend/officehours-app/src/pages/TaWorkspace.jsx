@@ -3,31 +3,6 @@ import { Navigate } from "react-router";
 import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
-const ICONS = {
-  queue: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
-    </svg>
-  ),
-  check: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M8.5 12.5l2.5 2.5 5-5.5" />
-    </svg>
-  ),
-  flame: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M12 2s5 4.5 5 10a5 5 0 0 1-10 0c0-2 1-3.8 2-5 0 2 1 3 2 3 0-3 1-6.5 1-8z" />
-    </svg>
-  ),
-  clock: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3 3" />
-    </svg>
-  ),
-};
-
 function workPill(status) {
   const value = status || "open";
   if (value === "in_progress") return { label: "helping now", className: "bh-pill-amber" };
@@ -36,15 +11,38 @@ function workPill(status) {
   return { label: "open", className: "bh-pill-gray" };
 }
 
+function helpModeLabel(mode) {
+  if (mode === "face_to_face") return "in person";
+  if (mode === "online_meeting") return "online";
+  return "message";
+}
+
+const FILTERS = [
+  ["mine", "Mine"],
+  ["backup", "Backup"],
+  ["in_progress", "Helping"],
+  ["unassigned", "Unassigned"],
+  ["all", "All"],
+];
+
+const DETAIL_TABS = [
+  ["help", "Help"],
+  ["reply", "Reply"],
+  ["curation", "Curation"],
+];
+
 export default function TaWorkspace() {
   const { token, user, activeCourse } = useAuth();
   const [queue, setQueue] = useState([]);
   const [loadInfo, setLoadInfo] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
+  const [detailTab, setDetailTab] = useState("help");
   const [notes, setNotes] = useState("");
   const [hint, setHint] = useState("");
   const [reply, setReply] = useState("");
   const [socraticSteps, setSocraticSteps] = useState([]);
+  const [showSocratic, setShowSocratic] = useState(false);
+  const [showKb, setShowKb] = useState(false);
   const [coachBusy, setCoachBusy] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
@@ -109,22 +107,18 @@ export default function TaWorkspace() {
   }
 
   const selected = queue.find((item) => item.request.id === selectedId) || null;
-
   const urgentCount = queue.filter((item) =>
     ["high", "urgent"].includes((item.request.urgency || "").toLowerCase()),
   ).length;
-  const waits = queue
-    .map((item) => item.request.estimated_wait_minutes)
-    .filter((value) => typeof value === "number");
-  const avgWait = waits.length
-    ? Math.round(waits.reduce((total, value) => total + value, 0) / waits.length)
-    : null;
   const inProgressCount = queue.filter(
     (item) => item.request.work_status === "in_progress",
   ).length;
 
   function selectItem(item) {
     setSelectedId(item.request.id);
+    setDetailTab("help");
+    setShowSocratic(false);
+    setShowKb(false);
     const coach = item.help_coach;
     setNotes(
       coach?.teaching_approach || item.knowledge_entry?.answer_draft || "",
@@ -135,7 +129,7 @@ export default function TaWorkspace() {
         item.request.student_hint ||
         "",
     );
-    setReply(item.request.ta_reply || item.knowledge_entry?.student_hint || "");
+    setReply(item.request.ta_reply || "");
     setSocraticSteps(coach?.socratic_steps || []);
     setError("");
   }
@@ -155,11 +149,15 @@ export default function TaWorkspace() {
         },
       });
       setToast(result.message || "Help Coach updated");
-      if (result.draft_reply) setReply(result.draft_reply);
+      if (result.draft_reply) {
+        setReply(result.draft_reply);
+        setDetailTab("reply");
+      }
       if (result.teaching_approach) setNotes(result.teaching_approach);
       if (result.student_hint) setHint(result.student_hint);
       if (Array.isArray(result.socratic_steps)) {
         setSocraticSteps(result.socratic_steps);
+        if (mode === "socratic") setShowSocratic(true);
       }
       if (result.help_coach) {
         setQueue((prev) =>
@@ -205,7 +203,8 @@ export default function TaWorkspace() {
   async function resolve(status) {
     if (!selected) return;
     if (notes.trim().length < 3) {
-      setError("Add at least a short teaching draft (3+ characters) before resolving.");
+      setError("Add a short teaching draft (3+ characters) before sending to curation.");
+      setDetailTab("curation");
       return;
     }
     setBusy(true);
@@ -238,291 +237,308 @@ export default function TaWorkspace() {
   }
 
   const req = selected?.request;
-  const tags = req?.oracle_tags || [];
+  const coach = selected?.help_coach;
   const work = workPill(req?.work_status);
   const iAmPrimary = req?.assigned_ta === user.display_name;
   const iAmBackup = req?.alternative_ta === user.display_name;
   const iClaimed = req?.claimed_by === user.display_name;
+  const myLoad = (loadInfo?.tas || []).find((ta) => ta.name === user.display_name);
+  const partnerLoad = (loadInfo?.tas || []).find((ta) => ta.name !== user.display_name);
 
   return (
-    <div className="fade-up">
-      <h1 className="bh-page-title">TA Dashboard</h1>
-      <p className="bh-page-subtitle">
-        Claim asks, help with Help Coach, reply async, then send drafts for
-        professor curation · {activeCourse.code} — {activeCourse.title}
-      </p>
-
-      <div className="bh-stats">
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Open Queue {ICONS.queue}</div>
-          <p className="bh-stat-value">{queue.length}</p>
-          <p className="bh-stat-note">Visible with current filter</p>
-        </article>
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Helping now {ICONS.flame}</div>
-          <p className="bh-stat-value">{inProgressCount}</p>
-          <p className="bh-stat-note">In-progress in this filter</p>
-        </article>
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Urgent {ICONS.flame}</div>
-          <p className="bh-stat-value">{urgentCount}</p>
-          <p className="bh-stat-note">High-urgency asks to take first</p>
-        </article>
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Avg Wait {ICONS.clock}</div>
-          <p className="bh-stat-value">{avgWait === null ? "—" : `${avgWait}m`}</p>
-          <p className="bh-stat-note">Matcher wait estimate</p>
-        </article>
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Helped {ICONS.check}</div>
-          <p className="bh-stat-value">{helpedCount}</p>
-          <p className="bh-stat-note">Done helping this session</p>
-        </article>
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">To curation {ICONS.check}</div>
-          <p className="bh-stat-value">{resolvedCount}</p>
-          <p className="bh-stat-note">Sent to professor review</p>
-        </article>
-      </div>
-
-      {loadInfo ? (
-        <section className="bh-card mb-5">
-          <div className="bh-card-title">
-            <h2>TA load (you + partner)</h2>
-          </div>
-          <p className="bh-card-note">
-            Dual-TA Matcher depth for {activeCourse.code}
-            {loadInfo.ta_count ? ` · ${loadInfo.ta_count} TAs` : ""}.
+    <div className="fade-up ta-shell">
+      <header className="ta-top">
+        <div>
+          <h1 className="bh-page-title">TA Dashboard</h1>
+          <p className="bh-page-subtitle">
+            {activeCourse.code} — {activeCourse.title}
           </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {(loadInfo.tas || []).map((ta) => (
-              <span
-                key={ta.name}
-                className={`bh-pill ${
-                  ta.name === user.display_name ? "bh-pill-green" : "bh-pill-gray"
-                }`}
+        </div>
+        <div className="ta-top-metrics">
+          <div>
+            <strong>{queue.length}</strong>
+            <span>open</span>
+          </div>
+          <div>
+            <strong>{inProgressCount}</strong>
+            <span>helping</span>
+          </div>
+          <div>
+            <strong>{urgentCount}</strong>
+            <span>urgent</span>
+          </div>
+          <div>
+            <strong>{helpedCount}</strong>
+            <span>helped</span>
+          </div>
+          <div>
+            <strong>{resolvedCount}</strong>
+            <span>curated</span>
+          </div>
+        </div>
+      </header>
+
+      {(myLoad || partnerLoad) && (
+        <p className="ta-load-line">
+          Load
+          {myLoad ? (
+            <>
+              {" · "}
+              <strong>you {myLoad.queue_depth ?? "—"}</strong>
+            </>
+          ) : null}
+          {partnerLoad ? (
+            <>
+              {" · "}
+              {partnerLoad.name} {partnerLoad.queue_depth ?? "—"}
+            </>
+          ) : null}
+        </p>
+      )}
+
+      <div className={`ta-layout${selected ? " ta-layout-split" : ""}`}>
+        <section id="queue" className="bh-card ta-queue-panel scroll-mt-6">
+          <div className="bh-card-title">
+            <h2>Queue</h2>
+            <span className="bh-pill bh-pill-green live-pulse">live</span>
+          </div>
+
+          <div className="ta-filters">
+            {FILTERS.map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={`ta-filter${assignmentFilter === value ? " is-active" : ""}`}
+                onClick={() => setAssignmentFilter(value)}
               >
-                {ta.name}
-                {ta.name === user.display_name ? " (you)" : ""} · depth{" "}
-                {ta.queue_depth ?? "—"}
-                {Array.isArray(ta.expertise_tags) && ta.expertise_tags.length
-                  ? ` · ${ta.expertise_tags.slice(0, 2).join(", ")}`
-                  : ""}
-              </span>
+                {label}
+              </button>
             ))}
           </div>
-        </section>
-      ) : null}
 
-      <section id="queue" className="bh-card scroll-mt-6">
-        <div className="bh-card-title">
-          <h2>Live Queue</h2>
-          <span className="bh-pill bh-pill-green live-pulse">live</span>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {[
-            ["mine", "Assigned / claimed by me"],
-            ["backup", "I'm backup"],
-            ["in_progress", "I'm helping now"],
-            ["unassigned", "Unassigned"],
-            ["all", "All open asks"],
-          ].map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              className={`btn-ghost px-3 py-1.5 text-xs ${
-                assignmentFilter === value ? "ring-2 ring-aui-deep/30" : ""
-              }`}
-              onClick={() => setAssignmentFilter(value)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
-        {toast ? <p className="mt-2 text-sm text-emerald-700">{toast}</p> : null}
+          {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
+          {toast ? <p className="mt-2 text-sm text-emerald-700">{toast}</p> : null}
 
-        {queue.length === 0 ? (
-          <p className="bh-card-note mt-4">No open requests for this filter.</p>
-        ) : (
-          <table className="bh-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Question</th>
-                <th>From</th>
-                <th>Status</th>
-                <th>Help</th>
-                <th>Category</th>
-                <th>Similar</th>
-                <th>Urgency</th>
-                <th>Primary</th>
-                <th>Backup</th>
-              </tr>
-            </thead>
-            <tbody>
+          {queue.length === 0 ? (
+            <p className="bh-card-note mt-4">No open requests for this filter.</p>
+          ) : (
+            <ul className="ta-queue-list">
               {queue.map((item) => {
                 const request = item.request;
                 const urgency = (request.urgency || "n/a").toLowerCase();
-                const helpMode = request.help_mode || "message";
                 const status = workPill(request.work_status);
                 const similarN = item.help_coach?.similar_open_count || 0;
+                const active = selectedId === request.id;
                 return (
-                  <tr
-                    key={request.id}
-                    className={`bh-row-click${selectedId === request.id ? " bh-row-active" : ""}`}
-                    onClick={() => selectItem(item)}
-                  >
-                    <td className="font-semibold">#{request.id}</td>
-                    <td className="max-w-[22rem]">
-                      <span className="line-clamp-2">{request.text}</span>
-                    </td>
-                    <td>
-                      {request.anonymous
-                        ? "Anonymous"
-                        : request.student_name || request.student_id || "Identified"}
-                    </td>
-                    <td>
-                      <span className={`bh-pill ${status.className}`}>{status.label}</span>
-                    </td>
-                    <td>
-                      <span
-                        className={`bh-pill ${
-                          helpMode === "face_to_face"
-                            ? "bh-pill-amber"
-                            : helpMode === "online_meeting"
-                              ? "bh-pill-blue"
-                              : "bh-pill-gray"
-                        }`}
-                      >
-                        {helpMode === "face_to_face"
-                          ? "in person"
-                          : helpMode === "online_meeting"
-                            ? "online"
-                            : "message"}
-                      </span>
-                    </td>
-                    <td>{request.oracle_category || request.category || "n/a"}</td>
-                    <td>
-                      {similarN > 0 ? (
+                  <li key={request.id}>
+                    <button
+                      type="button"
+                      className={`ta-queue-item${active ? " is-active" : ""}`}
+                      onClick={() => selectItem(item)}
+                    >
+                      <div className="ta-queue-item-top">
+                        <span className="ta-queue-id">#{request.id}</span>
+                        <span className={`bh-pill ${status.className}`}>{status.label}</span>
+                        {similarN > 0 ? (
+                          <span
+                            className={`bh-pill ${
+                              similarN >= 2 ? "bh-pill-amber" : "bh-pill-blue"
+                            }`}
+                          >
+                            {similarN} similar
+                          </span>
+                        ) : null}
                         <span
                           className={`bh-pill ${
-                            similarN >= 2 ? "bh-pill-amber" : "bh-pill-blue"
+                            ["high", "urgent"].includes(urgency)
+                              ? "bh-pill-red"
+                              : urgency === "medium"
+                                ? "bh-pill-amber"
+                                : "bh-pill-gray"
                           }`}
-                          title="Similar open asks — consider group help"
                         >
-                          {similarN} similar
+                          {urgency}
                         </span>
-                      ) : (
-                        <span className="text-aui-deep/45">—</span>
-                      )}
-                    </td>
-                    <td>
-                      <span
-                        className={`bh-pill ${
-                          ["high", "urgent"].includes(urgency)
-                            ? "bh-pill-red"
-                            : urgency === "medium"
-                              ? "bh-pill-amber"
-                              : "bh-pill-gray"
-                        }`}
-                      >
-                        {urgency}
-                      </span>
-                    </td>
-                    <td>{request.assigned_ta || "Unassigned"}</td>
-                    <td>{request.alternative_ta || "—"}</td>
-                  </tr>
+                      </div>
+                      <p className="ta-queue-text">{request.text}</p>
+                      <p className="ta-queue-meta">
+                        {request.anonymous
+                          ? "Anonymous"
+                          : request.student_name || request.student_id || "Identified"}
+                        {" · "}
+                        {helpModeLabel(request.help_mode)}
+                        {" · "}
+                        {request.oracle_category || request.category || "topic"}
+                        {" · "}
+                        {request.assigned_ta || "Unassigned"}
+                        {request.alternative_ta ? ` / ${request.alternative_ta}` : ""}
+                      </p>
+                    </button>
+                  </li>
                 );
               })}
-            </tbody>
-          </table>
-        )}
-      </section>
-
-      {selected && req ? (
-        <section className="bh-card">
-          <div className="bh-card-title">
-            <h2>Ask · #{req.id}</h2>
-            <span className={`bh-pill ${work.className}`}>{work.label}</span>
-          </div>
-          <p className="bh-card-note">{req.text}</p>
-
-          <div className="mt-3 rounded-xl border border-aui-forest/20 bg-[#f3faf5] p-3 text-xs text-aui-deep">
-            <p className="font-semibold text-aui-ink">Triage context</p>
-            <ul className="mt-2 space-y-1">
-              <li>
-                <strong>Category:</strong> {req.oracle_category || req.category || "n/a"}
-                {" · "}
-                <strong>Difficulty:</strong> {req.oracle_difficulty || "n/a"}
-                {" · "}
-                <strong>Est.:</strong>{" "}
-                {req.oracle_estimated_minutes != null
-                  ? `${req.oracle_estimated_minutes} min`
-                  : "n/a"}
-              </li>
-              <li>
-                <strong>Learning style:</strong>{" "}
-                {selected.learning_style || req.learning_style || "n/a"}
-                {" · "}
-                <strong>Urgency:</strong> {req.urgency || "n/a"}
-              </li>
-              <li>
-                <strong>Tags:</strong> {tags.length ? tags.join(", ") : "none"}
-              </li>
-              <li>
-                <strong>Sensitive:</strong> {req.sensitive ? "yes — keep private" : "no"}
-              </li>
-              {req.oracle?.matcher?.rationale ? (
-                <li>
-                  <strong>Matcher:</strong> {req.oracle.matcher.rationale}
-                </li>
-              ) : (
-                <li>
-                  <strong>Matcher:</strong> {req.assigned_ta || "Unassigned"}
-                  {req.alternative_ta ? ` (backup ${req.alternative_ta})` : ""}
-                </li>
-              )}
-              {(selected.help_coach?.kb_insight ||
-                req.oracle?.synthesizer?.kb_insight) ? (
-                <li>
-                  <strong>KB insight:</strong>{" "}
-                  {selected.help_coach?.kb_insight ||
-                    req.oracle?.synthesizer?.kb_insight}
-                </li>
-              ) : null}
             </ul>
-          </div>
+          )}
+        </section>
 
-          {(() => {
-            const coach = selected.help_coach;
-            if (!coach) return null;
-            return (
-              <div className="mt-3 rounded-xl border border-[#c5d9cc] bg-white p-3 text-xs text-aui-deep">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="font-semibold text-aui-ink">Help Coach</p>
-                    <p className="mt-0.5 text-[11px] text-aui-deep/65">
-                      Live co-pilot while you help ·{" "}
-                      {coach.coach_summary || "ready"}
-                    </p>
-                  </div>
-                  {coach.group_help_suggested ? (
-                    <span className="bh-pill bh-pill-amber">
-                      Group help · {coach.similar_open_count} similar open
-                    </span>
+        {selected && req ? (
+          <section className="bh-card ta-detail-panel">
+            <div className="ta-detail-head">
+              <div>
+                <div className="ta-detail-kicker">
+                  <span className={`bh-pill ${work.className}`}>{work.label}</span>
+                  <span className="bh-pill bh-pill-gray">
+                    {helpModeLabel(req.help_mode)}
+                  </span>
+                  {req.sensitive ? (
+                    <span className="bh-pill bh-pill-amber">sensitive</span>
                   ) : null}
                 </div>
+                <h2 className="ta-detail-title">Ask #{req.id}</h2>
+                <p className="ta-detail-question">{req.text}</p>
+                <p className="ta-detail-meta">
+                  {[
+                    req.anonymous
+                      ? "Anonymous"
+                      : req.student_name || req.student_id || "Identified",
+                    req.oracle_category || req.category,
+                    req.oracle_difficulty,
+                    req.oracle_estimated_minutes != null
+                      ? `~${req.oracle_estimated_minutes} min`
+                      : null,
+                    selected.learning_style || req.learning_style,
+                    req.assigned_ta ? `→ ${req.assigned_ta}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              </div>
+              <div className="ta-detail-actions">
+                <button
+                  type="button"
+                  disabled={busy || (req.claimed_by && !iClaimed && req.work_status !== "open")}
+                  className="btn-primary px-3 py-2 text-sm"
+                  onClick={() => runAction("/ta/claim/", { request_id: req.id })}
+                >
+                  Claim
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  className="btn-ghost px-3 py-2 text-sm"
+                  onClick={() =>
+                    runAction("/ta/work-status/", {
+                      request_id: req.id,
+                      status: "in_progress",
+                    })
+                  }
+                >
+                  Start
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  className="btn-ghost px-3 py-2 text-sm"
+                  onClick={() =>
+                    runAction(
+                      "/ta/work-status/",
+                      { request_id: req.id, status: "helped" },
+                      { helpedBump: true },
+                    )
+                  }
+                >
+                  Done
+                </button>
+                {iAmBackup ? (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    className="btn-ghost px-3 py-2 text-sm"
+                    onClick={() => runAction("/ta/take-backup/", { request_id: req.id })}
+                  >
+                    Take primary
+                  </button>
+                ) : null}
+                {!iAmPrimary &&
+                !iAmBackup &&
+                (!req.assigned_ta || req.assigned_ta === "Unassigned") ? (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    className="btn-ghost px-3 py-2 text-sm"
+                    onClick={() => runAction("/ta/take-backup/", { request_id: req.id })}
+                  >
+                    Take ownership
+                  </button>
+                ) : null}
+              </div>
+            </div>
 
-                {coach.similar_open_count > 0 ? (
-                  <div className="mt-3">
-                    <p className="font-semibold text-aui-ink">Similar open asks</p>
-                    <ul className="mt-1 space-y-1">
-                      {coach.similar_open.map((peer) => (
-                        <li key={peer.id} className="rounded-lg bg-[#f3faf5] px-2 py-1.5">
+            {req.code_snippet ? (
+              <pre className="ta-code">{req.code_snippet}</pre>
+            ) : null}
+
+            <div className="ta-tabs" role="tablist">
+              {DETAIL_TABS.map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={detailTab === id}
+                  className={`ta-tab${detailTab === id ? " is-active" : ""}`}
+                  onClick={() => setDetailTab(id)}
+                >
+                  {label}
+                  {id === "help" && coach?.similar_open_count
+                    ? ` (${coach.similar_open_count})`
+                    : ""}
+                </button>
+              ))}
+            </div>
+
+            {detailTab === "help" ? (
+              <div className="ta-tab-panel">
+                <div className="ta-coach-toolbar">
+                  <p className="ta-section-label">Help Coach</p>
+                  <div className="ta-coach-buttons">
+                    <button
+                      type="button"
+                      disabled={busy || coachBusy}
+                      className="btn-primary px-3 py-1.5 text-xs"
+                      onClick={() => runHelpCoach("draft_reply")}
+                    >
+                      {coachBusy ? "Working…" : "Draft reply"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy || coachBusy}
+                      className="btn-ghost px-3 py-1.5 text-xs"
+                      onClick={() => runHelpCoach("socratic")}
+                    >
+                      Socratic steps
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy || coachBusy}
+                      className="btn-ghost px-3 py-1.5 text-xs"
+                      onClick={() => runHelpCoach("refresh_teaching")}
+                    >
+                      Refresh script
+                    </button>
+                  </div>
+                </div>
+
+                {coach?.group_help_suggested || coach?.similar_open_count ? (
+                  <div className="ta-soft-block">
+                    <p className="ta-section-label">
+                      Similar open asks
+                      {coach.group_help_suggested ? " · consider group help" : ""}
+                    </p>
+                    <ul className="ta-link-list">
+                      {(coach.similar_open || []).map((peer) => (
+                        <li key={peer.id}>
                           <button
                             type="button"
-                            className="text-left text-aui-forest underline-offset-2 hover:underline"
                             onClick={() => {
                               const peerItem = queue.find(
                                 (item) => item.request.id === peer.id,
@@ -532,270 +548,173 @@ export default function TaWorkspace() {
                           >
                             #{peer.id}
                           </button>
-                          {" · "}
-                          <span className="text-aui-deep/80">
-                            {(peer.text || "").slice(0, 90)}
-                            {(peer.text || "").length > 90 ? "…" : ""}
-                          </span>
+                          <span>{(peer.text || "").slice(0, 100)}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
                 ) : null}
 
-                {coach.similar_kb?.length ? (
-                  <div className="mt-3">
-                    <p className="font-semibold text-aui-ink">Approved KB neighbors</p>
-                    <ul className="mt-1 space-y-1.5">
-                      {coach.similar_kb.map((hit) => (
-                        <li
-                          key={`${hit.id}-${hit.question_text}`}
-                          className="rounded-lg border border-[#e4ece6] px-2 py-1.5"
-                        >
-                          <p className="font-medium text-aui-ink">
-                            #{hit.id}{" "}
-                            {hit.similarity != null
-                              ? `(${Math.round(Number(hit.similarity) * 100)}%)`
-                              : ""}
-                          </p>
-                          <p className="text-aui-deep/80">
-                            {(hit.question_text || "").slice(0, 110)}
-                          </p>
-                          {hit.answer_preview ? (
-                            <p className="mt-1 text-aui-deep/70">
-                              {hit.answer_preview.slice(0, 160)}
-                              {hit.answer_preview.length > 160 ? "…" : ""}
-                            </p>
-                          ) : null}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-
-                {socraticSteps.length ? (
-                  <div className="mt-3">
-                    <p className="font-semibold text-aui-ink">Socratic steps</p>
-                    <ol className="mt-1 list-decimal space-y-1 pl-4">
+                <div className="ta-soft-block">
+                  <button
+                    type="button"
+                    className="ta-disclosure"
+                    onClick={() => setShowSocratic((value) => !value)}
+                  >
+                    Socratic steps ({socraticSteps.length || 0})
+                    <span>{showSocratic ? "Hide" : "Show"}</span>
+                  </button>
+                  {showSocratic && socraticSteps.length ? (
+                    <ol className="ta-steps">
                       {socraticSteps.map((step) => (
                         <li key={step}>{step}</li>
                       ))}
                     </ol>
+                  ) : null}
+                </div>
+
+                {coach?.similar_kb?.length ? (
+                  <div className="ta-soft-block">
+                    <button
+                      type="button"
+                      className="ta-disclosure"
+                      onClick={() => setShowKb((value) => !value)}
+                    >
+                      Approved KB ({coach.similar_kb.length})
+                      <span>{showKb ? "Hide" : "Show"}</span>
+                    </button>
+                    {showKb ? (
+                      <ul className="ta-kb-list">
+                        {coach.similar_kb.map((hit) => (
+                          <li key={`${hit.id}-${hit.question_text}`}>
+                            <p>
+                              #{hit.id}
+                              {hit.similarity != null
+                                ? ` · ${Math.round(Number(hit.similarity) * 100)}%`
+                                : ""}
+                            </p>
+                            <p>{(hit.question_text || "").slice(0, 120)}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </div>
                 ) : null}
 
-                <div className="mt-3 flex flex-wrap gap-2">
+                {coach?.kb_insight || req.oracle?.synthesizer?.kb_insight ? (
+                  <p className="ta-footnote">
+                    {coach?.kb_insight || req.oracle?.synthesizer?.kb_insight}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
+            {detailTab === "reply" ? (
+              <div className="ta-tab-panel">
+                {(req.help_mode === "message" || !req.help_mode) ? (
+                  <>
+                    <div className="ta-coach-toolbar">
+                      <p className="ta-section-label">Message the student</p>
+                      <div className="ta-coach-buttons">
+                        <button
+                          type="button"
+                          disabled={busy || coachBusy}
+                          className="btn-ghost px-3 py-1.5 text-xs"
+                          onClick={() => runHelpCoach("draft_reply")}
+                        >
+                          Draft
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy || coachBusy || reply.trim().length < 3}
+                          className="btn-ghost px-3 py-1.5 text-xs"
+                          onClick={() => runHelpCoach("rewrite_reply")}
+                        >
+                          Rewrite
+                        </button>
+                      </div>
+                    </div>
+                    <textarea
+                      className="field-glass mt-2 min-h-36 w-full px-3 py-2.5 text-sm"
+                      value={reply}
+                      onChange={(event) => setReply(event.target.value)}
+                      placeholder="Short reply the student can read on request status…"
+                    />
+                    <button
+                      type="button"
+                      disabled={busy || reply.trim().length < 3}
+                      className="btn-primary mt-3 px-4 py-2 text-sm"
+                      onClick={() =>
+                        runAction("/ta/reply/", {
+                          request_id: req.id,
+                          reply: reply.trim(),
+                          update_student_hint: true,
+                        })
+                      }
+                    >
+                      Send reply
+                    </button>
+                    {req.ta_reply ? (
+                      <p className="ta-footnote mt-3">
+                        Last sent: {req.ta_reply}
+                      </p>
+                    ) : null}
+                  </>
+                ) : (
+                  <p className="bh-card-note">
+                    This student asked for {helpModeLabel(req.help_mode)}. Use Help
+                    for coaching notes; reply is for message-mode asks.
+                  </p>
+                )}
+              </div>
+            ) : null}
+
+            {detailTab === "curation" ? (
+              <div className="ta-tab-panel">
+                <p className="ta-section-label">Teaching draft for professor review</p>
+                <textarea
+                  className="field-glass mt-2 min-h-40 w-full px-3 py-2.5 text-sm"
+                  value={notes}
+                  onChange={(event) => setNotes(event.target.value)}
+                  placeholder="How you taught this — becomes a pending KB draft"
+                />
+                <p className="ta-section-label mt-4">Student hint</p>
+                <textarea
+                  className="field-glass mt-2 min-h-20 w-full px-3 py-2.5 text-sm"
+                  value={hint}
+                  onChange={(event) => setHint(event.target.value)}
+                  placeholder="Non-spoiler nudge for the student"
+                />
+                <div className="mt-4 flex flex-wrap gap-2">
                   <button
                     type="button"
-                    disabled={busy || coachBusy}
-                    className="btn-primary px-3 py-1.5 text-xs"
-                    onClick={() => runHelpCoach("draft_reply")}
+                    disabled={busy}
+                    className="btn-primary px-4 py-2 text-sm"
+                    onClick={() => resolve("resolved")}
                   >
-                    {coachBusy ? "Coaching…" : "Draft student reply"}
+                    Send to curation
                   </button>
                   <button
                     type="button"
-                    disabled={busy || coachBusy}
-                    className="btn-ghost px-3 py-1.5 text-xs"
-                    onClick={() => runHelpCoach("socratic")}
+                    disabled={busy}
+                    className="btn-ghost px-4 py-2 text-sm"
+                    onClick={() => resolve("needs_professor")}
                   >
-                    Socratic steps
-                  </button>
-                  <button
-                    type="button"
-                    disabled={busy || coachBusy}
-                    className="btn-ghost px-3 py-1.5 text-xs"
-                    onClick={() => runHelpCoach("refresh_teaching")}
-                  >
-                    Refresh teaching script
-                  </button>
-                  <button
-                    type="button"
-                    disabled={busy || coachBusy || reply.trim().length < 3}
-                    className="btn-ghost px-3 py-1.5 text-xs"
-                    onClick={() => runHelpCoach("rewrite_reply")}
-                  >
-                    Rewrite reply
+                    Needs professor
                   </button>
                 </div>
               </div>
-            );
-          })()}
-
-          <div className="mt-2 flex flex-wrap gap-2 text-xs">
-            <span className="bh-pill bh-pill-gray">
-              {req.anonymous
-                ? "Anonymous"
-                : req.student_name || req.student_id || "Identified"}
-            </span>
-            <span
-              className={`bh-pill ${
-                req.help_mode === "face_to_face"
-                  ? "bh-pill-amber"
-                  : req.help_mode === "online_meeting"
-                    ? "bh-pill-blue"
-                    : "bh-pill-gray"
-              }`}
-            >
-              {req.help_mode === "face_to_face"
-                ? "Wants face-to-face"
-                : req.help_mode === "online_meeting"
-                  ? "Wants online meeting"
-                  : "Message / async"}
-            </span>
-            {req.claimed_by ? (
-              <span className="bh-pill bh-pill-blue">Claimed by {req.claimed_by}</span>
             ) : null}
-          </div>
-
-          {req.recommended_action ? (
-            <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-950">
-              <strong>Suggested action:</strong> {req.recommended_action}
+          </section>
+        ) : (
+          <section className="bh-card ta-detail-panel ta-detail-empty">
+            <p className="bh-card-note">
+              Select an ask from the queue to help with Help Coach, reply, or send
+              a teaching draft.
             </p>
-          ) : null}
-          {req.code_snippet ? (
-            <pre className="soft-stat mt-3 overflow-x-auto font-mono text-xs">
-              {req.code_snippet}
-            </pre>
-          ) : null}
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={busy || (req.claimed_by && !iClaimed && req.work_status !== "open")}
-              className="btn-primary px-4 py-2 text-sm"
-              onClick={() => runAction("/ta/claim/", { request_id: req.id })}
-            >
-              Claim
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              className="btn-ghost px-4 py-2 text-sm"
-              onClick={() =>
-                runAction("/ta/work-status/", {
-                  request_id: req.id,
-                  status: "in_progress",
-                })
-              }
-            >
-              Start helping
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              className="btn-ghost px-4 py-2 text-sm"
-              onClick={() =>
-                runAction(
-                  "/ta/work-status/",
-                  { request_id: req.id, status: "helped" },
-                  { helpedBump: true },
-                )
-              }
-            >
-              Done helping
-            </button>
-            {iAmBackup || (!iAmPrimary && req.alternative_ta === user.display_name) ? (
-              <button
-                type="button"
-                disabled={busy}
-                className="btn-ghost px-4 py-2 text-sm"
-                onClick={() => runAction("/ta/take-backup/", { request_id: req.id })}
-              >
-                Take as primary (backup handoff)
-              </button>
-            ) : null}
-            {!iAmPrimary && !iAmBackup && (!req.assigned_ta || req.assigned_ta === "Unassigned") ? (
-              <button
-                type="button"
-                disabled={busy}
-                className="btn-ghost px-4 py-2 text-sm"
-                onClick={() => runAction("/ta/take-backup/", { request_id: req.id })}
-              >
-                Take ownership
-              </button>
-            ) : null}
-          </div>
-
-          {(req.help_mode === "message" || !req.help_mode) && (
-            <div className="mt-4 rounded-xl border border-[#d7e0d9] p-3">
-              <p className="text-sm font-semibold text-aui-ink">Reply to student</p>
-              <p className="mt-1 text-xs text-aui-deep/70">
-                Publishes on their request status immediately (does not wait for
-                professor KB approval). Use Help Coach to draft, then edit.
-              </p>
-              <textarea
-                className="field-glass mt-2 min-h-24 w-full px-3 py-2.5 text-sm"
-                value={reply}
-                onChange={(event) => setReply(event.target.value)}
-                placeholder="Write a short reply the student can read…"
-              />
-              <button
-                type="button"
-                disabled={busy || reply.trim().length < 3}
-                className="btn-primary mt-2 px-4 py-2 text-sm"
-                onClick={() =>
-                  runAction("/ta/reply/", {
-                    request_id: req.id,
-                    reply: reply.trim(),
-                    update_student_hint: true,
-                  })
-                }
-              >
-                Send reply to student
-              </button>
-              {req.ta_reply ? (
-                <p className="mt-2 text-xs text-aui-deep">
-                  <strong>Last reply:</strong> {req.ta_reply}
-                </p>
-              ) : null}
-            </div>
-          )}
-
-          <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-aui-deep/60">
-            Teaching draft (for professor curation)
-            <textarea
-              className="field-glass mt-1.5 min-h-40 w-full px-3 py-2.5 text-sm"
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-            />
-          </label>
-          <label className="mt-3 block text-xs font-semibold uppercase tracking-wide text-aui-deep/60">
-            Student hint (KB draft)
-            <textarea
-              className="field-glass mt-1.5 min-h-20 w-full px-3 py-2.5 text-sm"
-              value={hint}
-              onChange={(event) => setHint(event.target.value)}
-              placeholder="Student hint"
-            />
-          </label>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={busy}
-              className="btn-primary px-4 py-2 text-sm"
-              onClick={() => resolve("resolved")}
-            >
-              Done + send to professor curation
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              className="btn-ghost px-4 py-2 text-sm"
-              onClick={() => resolve("needs_professor")}
-            >
-              Needs professor
-            </button>
-          </div>
-        </section>
-      ) : (
-        <section className="bh-card">
-          <p className="bh-card-note">
-            Select a request to claim it, help the student, reply, and prepare a
-            teaching draft.
-          </p>
-        </section>
-      )}
+          </section>
+        )}
+      </div>
     </div>
   );
 }

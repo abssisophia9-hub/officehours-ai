@@ -862,3 +862,342 @@ li .glass-panel,
 .clay-pad {
   cursor: pointer;
 }
+
+/* TA workspace — decluttered split layout */
+.ta-shell {
+  max-width: 1200px;
+}
+
+.ta-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+}
+
+.ta-top .bh-page-title {
+  margin-bottom: 0.15rem;
+}
+
+.ta-top .bh-page-subtitle {
+  margin: 0;
+}
+
+.ta-top-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem 1.15rem;
+}
+
+.ta-top-metrics div {
+  min-width: 3.2rem;
+  text-align: right;
+}
+
+.ta-top-metrics strong {
+  display: block;
+  font-family: "Fraunces", serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #17281e;
+  line-height: 1.1;
+}
+
+.ta-top-metrics span {
+  font-size: 0.72rem;
+  color: #6d8177;
+  text-transform: lowercase;
+}
+
+.ta-load-line {
+  margin: 0.85rem 0 0;
+  font-size: 0.82rem;
+  color: #64796d;
+}
+
+.ta-layout {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+@media (min-width: 980px) {
+  .ta-layout-split {
+    grid-template-columns: minmax(280px, 0.95fr) minmax(360px, 1.15fr);
+    align-items: start;
+  }
+
+  .ta-layout-split .ta-queue-panel,
+  .ta-layout-split .ta-detail-panel {
+    margin-top: 0;
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow: auto;
+  }
+}
+
+.ta-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.85rem;
+}
+
+.ta-filter {
+  border: 1px solid #d7e0d9;
+  background: #f7faf7;
+  color: #314439;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.ta-filter.is-active {
+  background: #173528;
+  border-color: #173528;
+  color: #f4faf6;
+}
+
+.ta-queue-list {
+  list-style: none;
+  margin: 0.9rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ta-queue-item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #e4ece6;
+  background: #fff;
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.ta-queue-item:hover {
+  background: #f6f9f6;
+}
+
+.ta-queue-item.is-active {
+  border-color: #7fa88a;
+  background: #f3faf5;
+  box-shadow: inset 3px 0 0 #1f6b45;
+}
+
+.ta-queue-item-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.ta-queue-id {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #173528;
+  margin-right: 0.15rem;
+}
+
+.ta-queue-text {
+  margin: 0.45rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #24362c;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ta-queue-meta {
+  margin: 0.35rem 0 0;
+  font-size: 0.74rem;
+  color: #6d8177;
+}
+
+.ta-detail-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.85rem 1rem;
+}
+
+.ta-detail-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.ta-detail-title {
+  font-family: "Fraunces", serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #17281e;
+  margin: 0.55rem 0 0.35rem;
+}
+
+.ta-detail-question {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: #2a3d32;
+  max-width: 42rem;
+}
+
+.ta-detail-meta {
+  margin: 0.45rem 0 0;
+  font-size: 0.78rem;
+  color: #6d8177;
+}
+
+.ta-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-content: flex-start;
+}
+
+.ta-code {
+  margin-top: 0.85rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 10px;
+  background: #f3f6f3;
+  border: 1px solid #e4ece6;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  overflow-x: auto;
+  color: #24362c;
+}
+
+.ta-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 1rem;
+  border-bottom: 1px solid #e4ece6;
+}
+
+.ta-tab {
+  border: 0;
+  background: transparent;
+  color: #64796d;
+  font-size: 0.84rem;
+  font-weight: 650;
+  padding: 0.55rem 0.8rem;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.ta-tab.is-active {
+  color: #173528;
+  border-bottom-color: #1f6b45;
+}
+
+.ta-tab-panel {
+  padding-top: 0.95rem;
+}
+
+.ta-section-label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6d8177;
+}
+
+.ta-coach-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+}
+
+.ta-coach-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.ta-soft-block {
+  margin-top: 0.85rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  background: #f7faf7;
+  border: 1px solid #e4ece6;
+}
+
+.ta-link-list,
+.ta-kb-list,
+.ta-steps {
+  margin: 0.55rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.ta-link-list li,
+.ta-kb-list li {
+  display: grid;
+  gap: 0.15rem;
+  font-size: 0.8rem;
+  color: #314439;
+}
+
+.ta-link-list button {
+  width: fit-content;
+  border: 0;
+  background: transparent;
+  color: #1f6b45;
+  font-weight: 700;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ta-steps {
+  list-style: decimal;
+  padding-left: 1.15rem;
+  font-size: 0.84rem;
+  color: #314439;
+  gap: 0.35rem;
+}
+
+.ta-disclosure {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #24362c;
+}
+
+.ta-disclosure span {
+  font-weight: 600;
+  color: #6d8177;
+}
+
+.ta-footnote {
+  margin: 0.85rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: #6d8177;
+}
+
+.ta-detail-empty {
+  display: grid;
+  place-items: center;
+  min-height: 12rem;
+}
+
