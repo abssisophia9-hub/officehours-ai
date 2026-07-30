@@ -1,4 +1,4 @@
-"""Golden behavioral checks for Oracle + KB agent usefulness.
+"""Golden behavioral checks for Ask Triage + KB agent usefulness.
 
 These are not CV metrics — they lock demo-critical CSC topics so retrains
 cannot silently break the AUI walkthrough.

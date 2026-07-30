@@ -348,7 +348,7 @@ export default function StudentWorkspace() {
             {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
             <button type="submit" disabled={busy} className="btn-primary mt-4 px-5 py-2.5 text-sm">
               {busy
-                ? "Running Oracle…"
+                ? "Running Ask Triage…"
                 : anonymous
                   ? "Submit anonymously"
                   : "Submit as me"}

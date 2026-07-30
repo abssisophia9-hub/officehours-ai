@@ -19,3 +19,7 @@ software flow as a scanner.
 ## Kiosk Display
 - Run the student-kiosk web app in fullscreen/kiosk mode in Chrome:
   `chrome --kiosk http://localhost:5173`
+
+> **Product note:** supervisor / FYP demos use the unified app at
+> http://127.0.0.1:5180 (`./scripts/run_product.sh`). Port **5173** is the
+> hardware kiosk shell only.

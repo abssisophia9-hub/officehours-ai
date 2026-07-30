@@ -1,5 +1,11 @@
 # OfficeHours AI — Mid-Report Draft
 
+> **Historical mid-report snapshot.** Architecture and UI descriptions below
+> reflect the kiosk + professor-dashboard era. For the current packaged product
+> (unified app `:5180`, Ask Triage, Help Coach, Canvas path), see
+> [`docs/project_journey.md`](../../docs/project_journey.md) and
+> [`docs/product_overview.md`](../../docs/product_overview.md).
+
 ## 1. Project overview
 
 **OfficeHours AI** is an AI-assisted triage system for finals-week academic

@@ -1,5 +1,9 @@
 # Evaluation Plan
 
+> Demo path today: unified product app (`./scripts/run_product.sh`, port **5180**).
+> Survey templates under `docs/surveys/` are mid-report era (kiosk + professor
+> dashboard); adapt questions for Ask Triage / Help Coach when re-running evals.
+
 ## Research Question
 Can an AI-assisted office-hours triage system reduce faculty communication overload and improve student comfort in seeking academic help during final exam periods?
 

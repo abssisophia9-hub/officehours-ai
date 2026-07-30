@@ -1,5 +1,10 @@
 # Mid-Report Screenshots
 
+> **Historical mid-report capture set.** Current supervisor demos should use the
+> unified product app (`./scripts/run_product.sh` → `:5180`). The regen steps below
+> still target legacy kiosk `:5173` + professor dashboard `:5174` to reproduce
+> these specific PNGs.
+
 Captured with `demo/capture_screenshots.mjs` after seeding demo data.
 
 | File | LaTeX caption |

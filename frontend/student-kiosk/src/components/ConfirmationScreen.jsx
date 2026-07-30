@@ -21,7 +21,7 @@ export default function ConfirmationScreen({ result, onReset, onCheckStatus }) {
         Request submitted
       </h1>
       <p className="mt-2 text-center text-lg text-slate-500">
-        Three Oracle agents coordinated in{" "}
+        Ask Triage agents coordinated in{" "}
         {oracle?.elapsed_ms != null ? `~${oracle.elapsed_ms}ms` : "under 2 seconds"}.
         Professor still approves what reaches the student KB agent.
       </p>

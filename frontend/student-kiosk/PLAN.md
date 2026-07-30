@@ -1,5 +1,8 @@
 # Student Kiosk — Plan
 
+> **Legacy shell** (`:5173`). Primary product UI is `frontend/officehours-app`
+> (`:5180`). Keep this file for hardware kiosk experiments only.
+
 ## MVP built
 
 - Barcode/manual check-in screen for student ID capture.

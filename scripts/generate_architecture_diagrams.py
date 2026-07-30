@@ -108,7 +108,7 @@ def draw_architecture() -> None:
         draw,
         w,
         "System Architecture (unified product)",
-        "One login app · role per course · Canvas launch · custom Oracle · professor KB gate",
+        "One login app · role per course · Canvas launch · Ask Triage · professor KB gate",
     )
 
     boxes = [
@@ -153,7 +153,7 @@ def draw_architecture() -> None:
             "#D1FAE5",
             "#047857",
             [
-                "Oracle Analyzer",
+                "Ask Triage · Analyzer",
                 "Embeddings + LogReg",
                 "Category · urgency · tags",
                 "request_classifier.joblib",
@@ -164,7 +164,7 @@ def draw_architecture() -> None:
             "#A7F3D0",
             "#0F766E",
             [
-                "Oracle Matcher",
+                "Ask Triage · Matcher",
                 "TA assigner + queue blend",
                 "Primary / alt TA · wait",
                 "matcher_classifier.joblib",
@@ -175,7 +175,7 @@ def draw_architecture() -> None:
             "#99F6E4",
             "#0F766E",
             [
-                "Oracle Synthesizer",
+                "Ask Triage · Synthesizer",
                 "Approved-KB RAG + teaching bank",
                 "Hint · teaching approach",
                 "Weak hit → seek Quiet ask",
@@ -247,7 +247,7 @@ def draw_workflow() -> None:
         draw,
         w,
         "End-to-End Product Workflow",
-        "Identity + help mode → Oracle → TA → professor curation → student KB / meetings",
+        "Identity + help mode → Ask Triage → TA → professor curation → student KB / meetings",
         fill="#0F766E",
     )
 
@@ -307,7 +307,7 @@ def draw_oracle_agents() -> None:
     draw_header(
         draw,
         w,
-        "Oracle Multi-Agent Design",
+        "Ask Triage Multi-Agent Design",
         "Three specialized local models · professor remains the publication gate",
         fill="#065F46",
     )
@@ -442,7 +442,7 @@ def draw_product_deployment() -> None:
                 "Demo seed (aui-demo) for local tests",
                 "Canvas launch simulator + stub",
                 "Quiet ask / Identify / meetings",
-                "Custom Oracle + KB gate",
+                "Ask Triage + Help Coach + KB gate",
                 "Next: real LTI 1.3 signatures",
             ],
         ),
@@ -474,7 +474,7 @@ def draw_erd() -> None:
         draw,
         w,
         "Database Entity-Relationship Diagram",
-        "Auth · memberships · requests (help_mode) · KB · Oracle · TA roster",
+        "Auth · memberships · requests (help_mode) · KB · Ask Triage · TA roster",
         fill="#1E3A8A",
     )
 
@@ -594,7 +594,7 @@ def draw_erd() -> None:
         [
             "Key runtime paths",
             "Login / Canvas launch → memberships decide workspace role for the active course",
-            "POST /requests → Oracle → Request + pending KnowledgeEntry + WS broadcast (help_mode preserved)",
+            "POST /requests → Ask Triage → Request + pending KnowledgeEntry + WS broadcast (help_mode preserved)",
             "POST /ta/resolve → notes; professor PATCH /knowledge/{id} publishes to /agent/ask",
             "Same user may hold ta in one course and student in another — never two roles in one course",
         ],
@@ -687,7 +687,7 @@ def draw_project_journey() -> None:
         (50, 180, "#FEF3C7", "#B45309", "0 Proposal", "Problem + scope\nkiosk idea"),
         (300, 180, "#DBEAFE", "#1D4ED8", "1 API + kiosk", "FastAPI CRUD\nstudent submit"),
         (550, 180, "#E0E7FF", "#4338CA", "2 Professor AI", "Classify · cluster\ncards · actions"),
-        (800, 180, "#D1FAE5", "#047857", "3 Oracle + TA", "3 agents · KB gate\nWebSocket live"),
+        (800, 180, "#D1FAE5", "#047857", "3 Ask Triage + TA", "3 agents · KB gate\nWebSocket live"),
         (1050, 180, "#A7F3D0", "#0F766E", "4 One app", "Login · courses\nrole per course"),
         (1300, 180, "#99F6E4", "#0F766E", "5 AUI + Canvas", "Catalog codes\nlaunch · materials"),
         (1550, 180, "#FFEDD5", "#C2410C", "6 This upgrade", "Identity · meetings\nTA+student · docs"),
