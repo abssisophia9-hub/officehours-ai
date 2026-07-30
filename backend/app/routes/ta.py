@@ -14,7 +14,10 @@ from app.models.auth import User
 from app.models.knowledge import KnowledgeEntry
 from app.models.request import WORK_STATUSES, Request
 from app.models.ta import (
+    HelpCoachOut,
     TaActionResponse,
+    TaAssistRequest,
+    TaAssistResponse,
     TaClaimRequest,
     TaHandoffRequest,
     TaQueueItem,
@@ -28,6 +31,7 @@ from app.realtime.hub import hub
 from app.routes.auth import get_current_user
 from app.services.access_control import require_course_role
 from app.services.course_ta_service import build_course_ta_load
+from app.services.help_coach_service import build_help_coach, run_help_coach_assist
 from app.services.knowledge_service import to_out
 from app.services.oracle_service import ensure_default_roster
 from app.services.request_serializer import to_request_out
@@ -153,15 +157,69 @@ def list_ta_queue(
             if work != "in_progress" or claimed != name:
                 continue
 
+        coach = build_help_coach(db, request, knowledge_entry=entry)
         items.append(
             TaQueueItem(
                 request=to_request_out(request, db=db),
                 knowledge_entry=to_out(entry) if entry else None,
                 learning_style=request.learning_style,
                 urgency=request.urgency,
+                help_coach=HelpCoachOut.model_validate(coach),
             )
         )
     return items
+
+
+@router.post("/assist/", response_model=TaAssistResponse)
+def help_coach_assist(
+    payload: TaAssistRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """
+    Help Coach — TA co-pilot while helping.
+
+    Modes: draft_reply | socratic | refresh_teaching | rewrite_reply.
+    Uses local Synthesizer / approved-KB RAG (no external LLM).
+    """
+    request = _get_request(db, payload.request_id)
+    _require_ta_for_request(db, user, request)
+    entry = (
+        db.query(KnowledgeEntry)
+        .filter(KnowledgeEntry.source_request_id == request.id)
+        .order_by(KnowledgeEntry.id.desc())
+        .first()
+    )
+    result = run_help_coach_assist(
+        db,
+        request,
+        mode=payload.mode,
+        knowledge_entry=entry,
+        current_reply=payload.current_reply,
+        focus=payload.focus,
+    )
+
+    # Persist refreshed teaching script onto the pending KB draft when asked.
+    if payload.mode == "refresh_teaching" and entry is not None:
+        if result.get("teaching_approach"):
+            entry.answer_draft = str(result["teaching_approach"])
+        if result.get("student_hint"):
+            entry.student_hint = str(result["student_hint"])
+        db.add(entry)
+        db.commit()
+        db.refresh(entry)
+
+    return TaAssistResponse(
+        request_id=request.id,
+        mode=result["mode"],
+        message=result["message"],
+        draft_reply=result.get("draft_reply"),
+        teaching_approach=result.get("teaching_approach"),
+        student_hint=result.get("student_hint"),
+        socratic_steps=list(result.get("socratic_steps") or []),
+        help_coach=HelpCoachOut.model_validate(result["help_coach"]),
+        backend=result.get("backend"),
+    )
 
 
 @router.post("/claim/", response_model=TaActionResponse)

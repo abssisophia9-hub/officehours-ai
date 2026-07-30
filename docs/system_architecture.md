@@ -37,7 +37,9 @@ See also: [`product_overview.md`](product_overview.md),
 5. Meeting modes set/override `recommended_action` for staff scheduling
 6. Backend clusters the request and seeds a `pending_review` knowledge draft
 7. WebSocket `/ws` pushes live events to TA + professor workspaces
-8. TA may edit/resolve notes (still `pending_review`)
+8. TA may use **Help Coach** (`POST /ta/assist/`) while helping — similar open
+   asks, approved KB neighbors, Socratic steps, draft/rewrite reply, refresh
+   teaching script — then edit/resolve notes (still `pending_review`)
 9. Professor approves/edits/rejects KB entries — **only approved** answers reach `/agent/ask`
 10. Student checks status by request code (privacy-safe)
 
