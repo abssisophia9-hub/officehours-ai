@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router";
 import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
@@ -75,7 +76,7 @@ const TOURS = {
 };
 
 function Modal({ title, onClose, children, wide }) {
-  return (
+  return createPortal(
     <div className="bh-modal-backdrop" role="presentation" onClick={onClose}>
       <div
         className={`bh-modal${wide ? " bh-modal-wide" : ""}`}
@@ -92,7 +93,8 @@ function Modal({ title, onClose, children, wide }) {
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
