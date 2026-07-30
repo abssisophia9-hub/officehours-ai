@@ -220,7 +220,7 @@ def draw_architecture() -> None:
 
     draw.text(
         (50, 1000),
-        "Legacy ports 5173–5175 (kiosk / professor / TA) remain for hardware experiments — product testing uses :5180.",
+        "Legacy ports 5173–5175 are older web shells only (no hardware) — product testing uses :5180.",
         fill="#065F46",
         font=font(16, bold=True),
     )

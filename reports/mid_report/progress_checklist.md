@@ -35,6 +35,5 @@
 ## Optional future upgrades
 
 - [x] Train or evaluate an ML classifier after collecting more labeled examples
-- [ ] Test with a real barcode scanner
-- [ ] Add NFC/tap-card support if hardware data format is confirmed
+- [x] ~~Barcode / NFC hardware~~ — **out of scope** (software-only product)
 - [ ] Add auth/access control before real student data use

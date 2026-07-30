@@ -14,7 +14,7 @@ courses; courses may have multiple TAs.
 | --- | --- | --- |
 | **Unified product app** | `5180` | Students, TAs, professors (login + course switcher + Canvas demo) |
 | Backend API | `8000` | Serves the product app |
-| Legacy kiosk / dashboards | `5173–5175` | Optional hardware/experiment shells |
+| Legacy kiosk / dashboards | `5173–5175` | Optional older web shells (not hardware) |
 
 See also: [`product_overview.md`](product_overview.md),
 [`project_journey.md`](project_journey.md), [`training_data.md`](training_data.md).

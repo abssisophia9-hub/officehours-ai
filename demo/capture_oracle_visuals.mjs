@@ -31,7 +31,7 @@ async function main() {
   // --- Student kiosk ---
   const kiosk = await context.newPage();
   await kiosk.goto(KIOSK_URL, { waitUntil: "networkidle" });
-  await kiosk.getByPlaceholder("Scan barcode or type 117027").fill("117027");
+  await kiosk.getByPlaceholder("e.g. 117027").fill("117027");
   await capture(kiosk, "oracle-01-student-kiosk-checkin");
 
   await kiosk.getByRole("button", { name: "Ask KB agent" }).click();
@@ -46,8 +46,8 @@ async function main() {
   await capture(kiosk, "oracle-03-student-kb-agent-answer");
 
   await kiosk.getByRole("button", { name: "Back" }).click();
-  await kiosk.waitForSelector("text=Scan your student ID barcode");
-  await kiosk.getByPlaceholder("Scan barcode or type 117027").fill("117027");
+  await kiosk.waitForSelector("text=Enter your student ID");
+  await kiosk.getByPlaceholder("e.g. 117027").fill("117027");
   await kiosk.getByRole("button", { name: "Continue identified" }).click();
   await kiosk.waitForSelector("text=Ask for help");
   const questionBox = kiosk.locator("textarea").first();

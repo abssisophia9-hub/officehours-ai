@@ -18,8 +18,9 @@ Primary app:
 - `frontend/officehours-app` (dev port **5180**)
 - Launch helper: `./scripts/run_product.sh`
 
-Legacy separate kiosk/dashboard folders remain for hardware/kiosk experiments,
-but **the unified app is what you send for product testing**.
+Legacy separate kiosk/dashboard folders remain as optional web shells only
+(not a physical kiosk / barcode / NFC path). **The unified app is what you send
+for product testing**.
 
 Full history: [`project_journey.md`](project_journey.md).
 

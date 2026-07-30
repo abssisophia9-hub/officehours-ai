@@ -6,7 +6,8 @@ This is the **packaged multi-role product** your supervisor should test:
 - role detection from course membership (student / TA / professor)
 - course switcher (a user can belong to multiple courses with different roles)
 
-Legacy separate kiosk/dashboard apps remain for hardware demos, but **this app is the product**.
+Legacy separate kiosk/dashboard apps remain as optional web shells only
+(**no** physical hardware path), but **this app is the product**.
 
 ## Run
 

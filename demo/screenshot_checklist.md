@@ -25,8 +25,8 @@ npm run dev
 ## Capture list
 
 1. **Student kiosk check-in**
-   - Show barcode/manual student ID input.
-   - Caption: "Scanner-compatible student check-in flow."
+   - Show optional typed student ID input (or anonymous skip).
+   - Caption: "Optional student ID check-in (software-only)."
 
 2. **Student request form**
    - Show anonymous vs. identified toggle.

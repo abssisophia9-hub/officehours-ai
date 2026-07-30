@@ -27,7 +27,7 @@ async function main() {
 
   // 1. Student kiosk check-in
   await page.goto(KIOSK_URL, { waitUntil: "networkidle" });
-  await page.getByPlaceholder("Scan barcode or type 117027").fill("117027");
+  await page.getByPlaceholder("e.g. 117027").fill("117027");
   await capture(page, "01-student-kiosk-checkin");
 
   // 2. Student request form (anonymous toggle visible)

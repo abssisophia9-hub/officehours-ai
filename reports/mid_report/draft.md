@@ -198,10 +198,10 @@ Optional later work:
 
 - Upgrade classification from rule-based baseline to an ML classifier once more
   labeled examples exist.
-- Add real barcode scanner testing.
-- Add NFC/tap-card mapping if the hardware returns card UIDs instead of printed
-  student IDs.
 - Add authentication before using real student data.
+
+> Physical kiosk hardware (barcode scanners, NFC) was considered early and is
+> **out of scope** for the final product.
 
 ## 10. Conclusion
 
