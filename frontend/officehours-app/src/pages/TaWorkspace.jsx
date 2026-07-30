@@ -271,7 +271,7 @@ export default function TaWorkspace() {
         <article className="bh-stat-card">
           <div className="bh-stat-head">Avg Wait {ICONS.clock}</div>
           <p className="bh-stat-value">{avgWait === null ? "—" : `${avgWait}m`}</p>
-          <p className="bh-stat-note">Oracle wait estimate</p>
+          <p className="bh-stat-note">Matcher wait estimate</p>
         </article>
         <article className="bh-stat-card">
           <div className="bh-stat-head">Helped {ICONS.check}</div>
