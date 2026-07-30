@@ -77,8 +77,12 @@ source:
 | **Canvas launch** (intended SaaS path) | Click **Open OfficeHours AI** inside a Canvas course | Auto-provision course + membership from Canvas role, mint session |
 | **Live Canvas materials** | Professor syncs | `CANVAS_BASE_URL` + `CANVAS_ACCESS_TOKEN` (else local AUI Canvas mirror) |
 
-**Community recommendation:** Canvas LTI as primary. Not AUI portal scraping.
+**Community recommendation:** Canvas LTI 1.3 as primary. Not AUI portal scraping.
 Manual admin entry only as a rare support escape hatch.
+
+> **Demo honesty:** today’s `POST /canvas/launch` and `/canvas-demo` are an
+> **unsigned** JIT simulator (optional lock via `OFFICEHOURS_CANVAS_LAUNCH_SECRET`).
+> Do not claim signed LTI in a defense. See [`fyp_evidence.md`](fyp_evidence.md).
 
 ## Asking for help (identity + meeting preference)
 
@@ -152,12 +156,14 @@ role + course context, not three naked URLs**.
 
 ## Agent performance backlog
 
-See [`docs/agent_performance.md`](agent_performance.md) for metrics and upgrades:
+See [`docs/agent_performance.md`](agent_performance.md) and
+[`docs/fyp_evidence.md`](fyp_evidence.md) for metrics, ceilings, and defense claims:
 
 - Offline CV / silver holdout reports
 - **Human gold labels** (`data/gold_labels/` + `evaluate_gold_labels.py`)
 - **Per-course KB hit-rate** (`GET /analytics/kb-hit-rate`)
 - Multi-department training (MTH / COM / ECO / ENG / GEN — not CSC-only)
+- Ask Triage latency smoke (`measure_ask_triage_latency.py`)
 
 ## Canvas / course materials
 

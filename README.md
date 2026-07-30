@@ -20,12 +20,14 @@ A **multi-role campus application** with login (or Canvas launch):
 - one workspace: `frontend/officehours-app` (port **5180**)
 
 **Community deploy path:** Canvas LTI (not AUI portal scraping, not manual
-enrollment as the main model).
+enrollment as the main model). Physical kiosk / barcode / NFC hardware is
+**out of scope**.
 
 Start here:
 
 - [`docs/product_overview.md`](docs/product_overview.md) — how to demo
 - [`docs/glossary.md`](docs/glossary.md) — Ask Triage · Help Coach · roles · status
+- [`docs/fyp_evidence.md`](docs/fyp_evidence.md) — what to claim in a defense
 - [`docs/README.md`](docs/README.md) — full documentation index
 - [`docs/project_journey.md`](docs/project_journey.md) — day 1 → current product
 - [`docs/system_architecture.md`](docs/system_architecture.md) — components + diagrams
@@ -74,7 +76,7 @@ to ask for help.
 
 ## Tech stack
 
-- React + Tailwind — **product app `5180`** (legacy shells: kiosk `5173`,
+- React + Tailwind — **product app `5180`** (legacy web shells: kiosk `5173`,
   professor `5174`, TA `5175`)
 - FastAPI + SQLAlchemy + SQLite
 - sentence-transformers + scikit-learn

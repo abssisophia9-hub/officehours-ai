@@ -128,6 +128,20 @@ export default function CanvasSimulatorPage() {
       </header>
 
       <main className="mx-auto max-w-3xl px-6 py-8">
+        <div className="mb-6 rounded border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="font-semibold">Unsigned demo simulator</p>
+          <p className="mt-1 text-amber-900/80">
+            This page stands in for Canvas LMS. Launch provisioning is{" "}
+            <strong>not</strong> LTI-signed — anyone who can hit{" "}
+            <code className="rounded bg-amber-100 px-1">POST /canvas/launch</code>{" "}
+            can impersonate a user in local demos. Production needs Canvas LTI
+            1.3. Optional lock: set{" "}
+            <code className="rounded bg-amber-100 px-1">
+              OFFICEHOURS_CANVAS_LAUNCH_SECRET
+            </code>
+            .
+          </p>
+        </div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="mt-1 text-sm text-[#2d3b45]/70">
           In real Canvas you are already signed in — the switcher above stands

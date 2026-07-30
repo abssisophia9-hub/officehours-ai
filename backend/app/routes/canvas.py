@@ -8,7 +8,9 @@ a signed-in session scoped to that course.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, status
+import os
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -31,6 +33,13 @@ class CanvasLaunchRequest(BaseModel):
     course_title: str | None = None
     term: str | None = None
     student_id: str | None = None
+    demo_secret: str | None = Field(
+        default=None,
+        description=(
+            "Optional shared secret when OFFICEHOURS_CANVAS_LAUNCH_SECRET is set. "
+            "Unsigned launches are demo-only; production needs Canvas LTI 1.3."
+        ),
+    )
 
 
 class CanvasLaunchOut(BaseModel):
@@ -55,6 +64,22 @@ class CanvasLaunchOut(BaseModel):
 
 @router.post("/launch", response_model=CanvasLaunchOut, status_code=status.HTTP_201_CREATED)
 async def canvas_launch(payload: CanvasLaunchRequest, db: Session = Depends(get_db)):
+    """JIT provision from a Canvas-like launch payload.
+
+    Demo default: unsigned (anyone who can POST can impersonate). Set
+    ``OFFICEHOURS_CANVAS_LAUNCH_SECRET`` to require ``demo_secret`` on the body.
+    Production path is signed Canvas LTI 1.3 — not implemented here.
+    """
+    required = (os.getenv("OFFICEHOURS_CANVAS_LAUNCH_SECRET") or "").strip()
+    if required and (payload.demo_secret or "").strip() != required:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=(
+                "Canvas launch secret required. This endpoint is an unsigned "
+                "demo simulator; production needs Canvas LTI 1.3."
+            ),
+        )
+
     result = launch_from_canvas(
         db,
         canvas_course_id=payload.canvas_course_id,

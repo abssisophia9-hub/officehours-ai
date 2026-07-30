@@ -278,3 +278,33 @@ def test_course_agents_stay_isolated_across_launches():
         },
     ).json()
     assert scheduling_in_os["matched_count"] >= 1
+
+
+def test_canvas_launch_secret_gate():
+    """Optional OFFICEHOURS_CANVAS_LAUNCH_SECRET blocks unsigned demo abuse."""
+    os.environ["OFFICEHOURS_CANVAS_LAUNCH_SECRET"] = "fyp-demo-lock"
+    try:
+        denied = client.post(
+            "/canvas/launch",
+            json={
+                "canvas_course_id": "2101",
+                "email": "o.tazi@aui.ma",
+                "display_name": "Omar Tazi",
+                "canvas_role": "StudentEnrollment",
+            },
+        )
+        assert denied.status_code == 401
+
+        ok = client.post(
+            "/canvas/launch",
+            json={
+                "canvas_course_id": "2101",
+                "email": "o.tazi@aui.ma",
+                "display_name": "Omar Tazi",
+                "canvas_role": "StudentEnrollment",
+                "demo_secret": "fyp-demo-lock",
+            },
+        )
+        assert ok.status_code == 201, ok.text
+    finally:
+        os.environ.pop("OFFICEHOURS_CANVAS_LAUNCH_SECRET", None)
