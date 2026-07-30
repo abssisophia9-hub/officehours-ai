@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Navigate } from "react-router";
 import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
+import PeerNotesFeed from "../components/PeerNotesFeed.jsx";
 
 const ICONS = {
   doc: (
@@ -431,6 +432,12 @@ export default function StudentWorkspace() {
           ) : null}
         </section>
       </div>
+
+      <PeerNotesFeed
+        token={token}
+        courseId={activeCourse.id}
+        courseCode={activeCourse.code}
+      />
     </div>
   );
 }
