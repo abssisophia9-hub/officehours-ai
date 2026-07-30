@@ -21,6 +21,7 @@ enrollment as the main model).
 Start here:
 
 - [`docs/product_overview.md`](docs/product_overview.md) — how to demo
+- [`docs/fyp_evidence.md`](docs/fyp_evidence.md) — what to claim in a defense
 - [`docs/project_journey.md`](docs/project_journey.md) — day 1 → this upgrade
 - [`docs/system_architecture.md`](docs/system_architecture.md) — components + diagrams
 - [`diagrams/`](diagrams/) — architecture / workflow / Canvas / journey PNGs

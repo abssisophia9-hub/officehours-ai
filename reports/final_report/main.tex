@@ -17,23 +17,25 @@
 \maketitle
 
 \begin{abstract}
-This report presents the completed OfficeHours AI prototype: an AI-assisted
-office-hours triage system for finals-week academic support. We describe the
-student kiosk, professor dashboard, backend services, NLP pipeline, and
-action-orchestration workflow. Technical evaluation on synthetic labeled data
-achieved 100\% classifier accuracy on the development set. A pilot demo
-evaluation with eight student and four faculty survey responses indicates
-strong usability, privacy comfort, and perceived workload reduction. All core
-features---including office-hours persistence, calendar export, and anonymous
-status lookup---were implemented and verified with automated tests and CI.
+OfficeHours AI is a packaged multi-role campus application for office-hours
+triage at Al Akhawayn University. Students, teaching assistants, and professors
+share one web app (role decided per course membership). At ask intake, a
+custom-trained \textbf{Ask Triage} pipeline (Analyzer $\rightarrow$ Matcher
+$\rightarrow$ Synthesizer) classifies the question, assigns staff, and drafts a
+teaching hint using local models only. Mid-session, a \textbf{Help Coach}
+assists TAs; professors remain the gate for what the student Study Agent may
+retrieve. This report describes the shipped system, technical evaluation on
+synthetic and silver labels, a small legacy pilot survey, and honest limits
+(gold-label size, unsigned Canvas launch simulator, future LTI hardening).
 \end{abstract}
 
 \section{Introduction}
 During final exam periods, professors receive many repeated or overlapping
 student questions, while students may delay asking for help because of stress,
 embarrassment, or uncertainty about how to phrase their confusion. OfficeHours
-AI addresses both sides by clustering similar requests, recommending grouped
-response actions, and preserving professor control over final decisions.
+AI addresses both sides by triaging asks, clustering similar requests,
+supporting TAs while they help, and preserving professor control over published
+knowledge-base answers.
 
 \subsection{Research question}
 Can an AI-assisted office-hours triage system reduce faculty communication
@@ -42,32 +44,56 @@ periods?
 
 \subsection{Contributions}
 \begin{itemize}[noitemsep]
-  \item End-to-end prototype with student kiosk and professor dashboard frontends.
-  \item Backend API with classification, semantic clustering, and action orchestration.
-  \item Privacy-preserving anonymous submission and request-code status lookup.
-  \item Pilot demo evaluation using structured student and professor surveys.
+  \item One multi-role product app with login (or Canvas launch simulation) and
+        role-per-course memberships (a TA can also be a student elsewhere).
+  \item Custom-trained Ask Triage agents (no prompted external LLM on the
+        assessed path) plus Help Coach for TAs and a professor-gated Study Agent.
+  \item Staffing loop, shared group meetings for repeated clusters, Quiet ask /
+        Identify me, and privacy-safe request-code status.
+  \item Reproducible training/evaluation artifacts and automated tests
+        ($\approx$118 backend pytest cases) with CI.
 \end{itemize}
 
 \section{System design}
 \subsection{Architecture}
-The system has four layers:
+The shipped system has these layers:
 \begin{enumerate}
-  \item \textbf{Student kiosk} (React/Vite/Tailwind) --- check-in, request form, confirmation, status lookup.
-  \item \textbf{Professor dashboard} (React/Vite/Recharts) --- queue analytics, recommendation cards, office-hours panel.
-  \item \textbf{Backend API} (FastAPI/SQLAlchemy/SQLite) --- request CRUD, decisions, office hours, status endpoint.
-  \item \textbf{AI/NLP layer} --- rule-based classifier; sentence-transformer clustering with lexical test backend.
+  \item \textbf{Product app} (\texttt{frontend/officehours-app}, port 5180) ---
+        login, course picker, student / TA / professor workspaces, Canvas simulator.
+  \item \textbf{Backend API} (FastAPI / SQLAlchemy / SQLite) --- auth, requests,
+        Ask Triage, Help Coach, knowledge, peer notes, analytics, WebSockets.
+  \item \textbf{Ask Triage AI} --- Analyzer / Matcher / Synthesizer using
+        sentence-transformer embeddings and scikit-learn models on disk
+        (\texttt{backend/models/*.joblib}). Implementation module historically
+        named \texttt{oracle\_service.py}; API fields often use the
+        \texttt{oracle\_*} prefix.
+  \item \textbf{Help Coach} --- mid-session TA assist (\texttt{POST /ta/assist/})
+        reusing approved-KB / teaching-bank RAG (not a separate joblib).
+  \item \textbf{Canvas path} --- JIT launch provisioning + materials sync
+        (\textbf{unsigned demo}; production needs Canvas LTI 1.3).
 \end{enumerate}
 
+Legacy student-kiosk / professor-dashboard / TA-dashboard shells remain for
+hardware experiments; the unified app is the product under test.
+
 \subsection{Data flow}
-Students submit requests through the kiosk. The backend classifies each request,
-assigns a cluster, and stores a recommended action. The dashboard groups
-requests into recommendation cards. When the professor approves a card, the
-action orchestration engine generates an agenda item, student update text, and
-optional \texttt{.ics} calendar export tied to persisted office-hour windows.
-Students can later check privacy-safe status with their request code.
+\begin{enumerate}
+  \item Student submits (\texttt{POST /requests/}) with Quiet ask or Identify me
+        and a help mode (message / face-to-face / online).
+  \item Ask Triage runs Analyzer $\rightarrow$ Matcher $\rightarrow$ Synthesizer;
+        the request is clustered; a pending knowledge draft is seeded.
+  \item Live WebSocket events update TA and professor workspaces.
+  \item TA claims / helps; Help Coach may draft replies or Socratic steps;
+        repeated clusters may share one group meeting on every linked status.
+  \item Professor approves/edits/rejects KB material --- only approved answers
+        reach the Study Agent (\texttt{POST /agent/ask}).
+\end{enumerate}
+
+Living docs: \path{docs/product_overview.md}, \path{docs/fyp_evidence.md},
+\path{docs/system_architecture.md}.
 
 \section{Implementation summary}
-Table~\ref{tab:features} lists major features completed during the project.
+Table~\ref{tab:features} lists major features at project completion.
 
 \begin{table}[htbp]
   \centering
@@ -77,46 +103,65 @@ Table~\ref{tab:features} lists major features completed during the project.
     \toprule
     Component & Feature \\
     \midrule
-    Student kiosk & Barcode/manual check-in, anonymous/identified submission \\
-    Student kiosk & Confirmation screen and anonymous status lookup \\
-    Backend & Request CRUD, classification, clustering \\
-    Backend & Recommendation decisions and action plans \\
+    Product app & Login, course switcher, dual-role TA+student \\
+    Student workspace & Quiet ask / Identify me, help modes, status lookup \\
+    Student workspace & Study Agent + classmate peer notes \\
+    TA workspace & Claim / help / reply / backup handoff, Help Coach \\
+    TA / professor & Shared group meetings for request clusters \\
+    Professor & Clusters, recommendation cards, KB gate, Canvas sync \\
+    Backend & Ask Triage, clustering, auth, WebSockets, analytics \\
     Backend & Office-hours persistence and \texttt{.ics} export \\
-    Professor dashboard & Summary cards, charts, triage table \\
-    Professor dashboard & Recommendation approve/edit/dismiss workflow \\
-    DevOps & GitHub Actions CI, demo seed script, screenshot automation \\
-    Evaluation & Student/professor survey templates and pilot analysis \\
+    DevOps & GitHub Actions CI, \texttt{run\_product.sh}, seed script \\
+    Evaluation & Classifier / matcher / gold / survey artifacts under \path{reports/final\_report/} \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \section{Technical evaluation}
 \subsection{Automated testing}
-The backend test suite contains 32 pytest cases covering requests, classification,
-clustering, actions, office hours, ICS export, and request status lookup.
-GitHub Actions runs backend tests and both frontend build/audit jobs on every
-pull request.
+The backend suite currently collects \textbf{118} pytest cases covering auth,
+Canvas launch simulation, Ask Triage fields, Help Coach, TA staffing, peer notes,
+knowledge gating, clustering, and agent-quality smoke locks. GitHub Actions runs
+backend tests and frontend build/audit jobs (including the unified product app).
 
-\subsection{Classification accuracy}
-On the synthetic labeled dataset (\path{data/labeled_requests.csv}, $n=40$),
-the rule-based classifier achieved \textbf{100\%} category accuracy in the
-development environment. With 120 labeled examples across three CSV files, an
-embedding + logistic regression classifier reached \textbf{89.2\%} stratified
-cross-validation accuracy and \textbf{0.90 macro F1} (see
-\path{reports/final_report/classifier_evaluation.json}).
+\subsection{Ask Triage --- Analyzer}
+On the union of synthetic / curated labeled CSVs ($n=156$), the embedding +
+logistic regression Analyzer reaches approximately \textbf{84.6\%} stratified
+cross-validation accuracy and \textbf{0.85} macro F1
+(\path{reports/final_report/classifier_evaluation.json}). These labels are
+\textbf{not} private AUI transcripts.
+
+\subsection{Ask Triage --- Matcher}
+Silver holdout accuracy is approximately \textbf{87.5\%}
+(\path{reports/final_report/matcher_evaluation.json}). Labels come from expertise
+overlap with the demo TA roster --- \textbf{not} independent gold TA judgments.
+
+\subsection{Human gold labels (illustrative)}
+A seed gold file ($n=12$) yields perfect Analyzer/Matcher scores in
+\path{gold_label_evaluation.json}. The artifact itself notes that seed gold is
+\textbf{illustrative} and may overlap training phrasing. Collecting $\geq 40$
+held-out TA judgments is required before claiming production agent quality
+(\path{data/gold_labels/README.md}).
+
+\subsection{External LLM}
+The assessed FYP path sets \texttt{OFFICEHOURS\_ALLOW\_EXTERNAL\_LLM=false}.
+Prompted Claude calls are not part of the default runtime.
 
 \subsection{Clustering and demo behavior}
-Demo scenarios in \path{data/demo_scenarios.csv} validate that repeated
-finals-week topics (graph algorithms, exam logistics, grading disputes) map to
-expected cluster/action patterns. The seed script loads 20 synthetic requests
-for repeatable demo and screenshot capture.
+Requests receive a \texttt{cluster\_id} via sentence-transformer similarity
+(lexical backend in tests). Demo scenarios and the seed script support
+repeatable walkthroughs of repeated finals-week topics and group meetings.
 
 \section{Pilot demo and survey evaluation}
-\subsection{Method}
-After a seeded finals-week demo (\path{demo/demo_script.md}), participants
-completed the instruments in \path{docs/surveys/}. Responses were exported to
-\path{data/survey_responses/} and summarized with
-\path{backend/scripts/analyze_survey_responses.py}.
+\subsection{Method and caveat}
+After a seeded finals-week demo, participants completed instruments in
+\path{docs/surveys/}. Responses live in \path{data/survey_responses/} and are
+summarized in \path{reports/final_report/survey_evaluation_summary.md}.
+
+\textbf{Important:} that pilot targeted the \textbf{legacy} student kiosk +
+professor dashboard UI. It supports early usability/privacy claims; it does
+\textbf{not} measure Ask Triage naming, Help Coach, or the unified app.
+A follow-up survey on port 5180 is recommended.
 
 \subsection{Participants}
 Eight student and four professor responses were collected from a simulated demo
@@ -129,7 +174,7 @@ target was an average of $\geq 4.0$ on core usability and workload questions.
 
 \begin{table}[htbp]
   \centering
-  \caption{Student survey Likert averages ($n=8$)}
+  \caption{Student survey Likert averages ($n=8$, legacy kiosk pilot)}
   \label{tab:student-survey}
   \begin{tabular}{@{}lc@{}}
     \toprule
@@ -147,7 +192,7 @@ target was an average of $\geq 4.0$ on core usability and workload questions.
 
 \begin{table}[htbp]
   \centering
-  \caption{Professor survey Likert averages ($n=4$)}
+  \caption{Professor survey Likert averages ($n=4$, legacy dashboard pilot)}
   \label{tab:professor-survey}
   \begin{tabular}{@{}lc@{}}
     \toprule
@@ -164,68 +209,78 @@ target was an average of $\geq 4.0$ on core usability and workload questions.
 
 \subsection{Qualitative themes}
 \textbf{Students} emphasized clear anonymous/identified labeling, the value of
-request-code status lookup, and willingness to use the kiosk during finals week.
-Minor UI suggestions included larger form text and clearer barcode instructions.
+request-code status lookup, and willingness to use the tool during finals week.
 
-\textbf{Professors} valued group-review recommendation cards, approve/edit/dismiss
-control, and \texttt{.ics} export after approval. They flagged grading/admin
-routes as needing the most human caution and requested clearer handling when
-urgent and routine requests appear in the same cluster.
-
-\subsection{Submission mode preference}
-Among students, four preferred anonymous submission, three said ``it depends,''
-and one preferred identified submission with student ID.
+\textbf{Professors} valued group-review recommendation cards and human-in-the-loop
+control. They flagged grading/admin routes as needing caution when urgent and
+routine requests share a cluster.
 
 \section{Ethics and privacy}
 The design follows anonymity-by-default, opt-in identification, and
-human-in-the-loop decision-making (\path{docs/ethics_privacy.md}). The anonymous
-status endpoint returns queue updates without exposing student ID or request
-text. Development used synthetic data only; real deployment would require
-institutional ethics review.
+human-in-the-loop publication of Study Agent answers
+(\path{docs/ethics_privacy.md}). TA message replies can reach a student on
+request status before KB approval --- intentional async help, separate from the
+Study Agent. Development used synthetic training data; real deployment requires
+institutional ethics review. Canvas launch today is an \textbf{unsigned}
+simulator suitable for demos only.
 
 \section{Limitations and future work}
 \begin{itemize}[noitemsep]
-  \item Classifier is rule-based and tuned to synthetic labels.
-  \item Pilot survey sample is small and collected in a demo setting.
-  \item No production authentication, LMS integration, or real hardware scanner testing yet.
-  \item ML classifier training and larger-scale user studies remain future work.
+  \item Training and CV metrics use synthetic / silver / curated labels --- not
+        real private student email corpora.
+  \item Seed gold labels are too small and too easy; real held-out TA gold is next.
+  \item Pilot survey $n$ is small and UI-mismatched to the current product app.
+  \item Canvas LTI 1.3 signatures and campus-hardened ACLs remain future work
+        (launch is intentionally a demo stub).
+  \item Some list endpoints remain open for local demos; production needs tighter
+        authorization.
+  \item Clustering silhouette / longitudinal KB hit-rate tables are evaluation
+        backlog items (\path{docs/evaluation_plan.md}, \path{docs/fyp_evidence.md}).
 \end{itemize}
 
 \section{Conclusion}
-OfficeHours AI demonstrates a complete MVP for finals-week office-hours triage.
-Students can submit privately, professors can group and act on repeated needs,
-and the system generates actionable next steps without removing faculty control.
-Technical tests and pilot survey results support the project's feasibility, with
-clear paths for production hardening and broader evaluation.
+OfficeHours AI demonstrates a defendable FYP prototype: a unified campus app,
+custom-trained Ask Triage under a professor KB gate, TA Help Coach and staffing,
+and a clear Canvas-first deployment story with an honest simulator today.
+Technical tests and early pilot surveys support feasibility; the strongest next
+gains are evidence quality (gold labels, unified-app surveys, LTI) rather than
+more product surface area.
 
 \appendix
 \section{Demo screenshots}
-Selected figures from the seeded demo session (full set in \path{demo/screenshots/}).
+Selected figures from the earlier seeded kiosk/dashboard demo session (full set
+in \path{demo/screenshots/}). Prefer live demos of \texttt{officehours-app}
+(:5180) for supervisors; capture a unified-app screenshot pack when possible.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.92\linewidth]{../../demo/screenshots/02-student-request-form.png}
-  \caption{Privacy-preserving request submission.}
+  \caption{Legacy kiosk: privacy-preserving request submission.}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.85\linewidth]{../../demo/screenshots/05-recommendation-cards.png}
-  \caption{AI-assisted recommendation cards.}
+  \caption{Legacy dashboard: AI-assisted recommendation cards.}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.85\linewidth]{../../demo/screenshots/06-action-orchestration-plan.png}
-  \caption{Action plan after professor approval.}
+  \caption{Legacy dashboard: action plan after professor approval.}
 \end{figure}
 
 \section{Reproducibility}
 \begin{itemize}[noitemsep]
+  \item Product demo: \path{scripts/run_product.sh} (see \path{demo/demo_script.md})
   \item Seed demo data: \path{backend/scripts/seed_demo_data.py}
-  \item Capture screenshots: \path{demo/capture_screenshots.mjs}
+  \item Train agents: \path{backend/scripts/train\_*.py}
+  \item Gold eval: \path{backend/scripts/evaluate_gold_labels.py}
+  \item Latency smoke: \path{backend/scripts/measure_ask_triage_latency.py}
   \item Analyze surveys: \path{backend/scripts/analyze_survey_responses.py}
-  \item Run tests: \path{pytest} from \path{backend/}
+  \item Run tests: \texttt{pytest} from \path{backend/} with
+        \texttt{OFFICEHOURS\_CLUSTERING\_BACKEND=lexical}
+  \item Defense notes: \path{docs/fyp_evidence.md}
 \end{itemize}
 
 \end{document}

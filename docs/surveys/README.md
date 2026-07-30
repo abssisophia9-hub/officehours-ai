@@ -2,12 +2,15 @@
 
 This folder contains survey templates for evaluating the OfficeHours AI demo.
 
+> Prefer **`unified_product_post_demo_survey.md`** for new demos on `:5180`.
+> The student/professor templates below are the **legacy kiosk + dashboard**
+> instruments used in the early pilot (`survey_evaluation_summary.md`).
+
 ## Forms
 
-- `student_post_demo_survey.md` — student comfort, anonymity, kiosk usability,
-  and help-seeking intent.
-- `professor_post_demo_survey.md` — professor workload, dashboard clarity,
-  recommendation usefulness, and human-in-the-loop trust.
+- `unified_product_post_demo_survey.md` — **current product** (Ask Triage, Help Coach, dual roles)
+- `student_post_demo_survey.md` — legacy student kiosk comfort / anonymity
+- `professor_post_demo_survey.md` — legacy professor dashboard workload / trust
 
 ## How to deploy
 

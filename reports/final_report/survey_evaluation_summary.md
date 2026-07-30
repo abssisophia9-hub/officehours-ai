@@ -1,10 +1,16 @@
 # Pilot Demo Survey Evaluation Summary
 
+> **Legacy pilot.** Instruments and this session targeted the **student kiosk +
+> professor dashboard** mid-report UI. Results support early usability / privacy /
+> workload claims. They do **not** evaluate Ask Triage naming, Help Coach, dual
+> roles, or the unified product app (`:5180`). See `docs/fyp_evidence.md`.
+
 ## Session context
 
 - Demo: Simulated finals-week demo with seeded backend data
 - Student respondents: 8
 - Professor respondents: 4
+- Product surface at time of pilot: legacy kiosk (`:5173`) + professor dashboard (`:5174`)
 
 ## Student Likert averages (1–5)
 

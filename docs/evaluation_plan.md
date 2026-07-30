@@ -1,30 +1,40 @@
 # Evaluation Plan
 
+> Demo path today: unified product app (`./scripts/run_product.sh`, port **5180**).
+> Defense evidence package: [`fyp_evidence.md`](fyp_evidence.md).
+
 ## Research Question
 Can an AI-assisted office-hours triage system reduce faculty communication overload and improve student comfort in seeking academic help during final exam periods?
 
 ## Evaluation Methods
 
 ### 1. Technical Evaluation
-- Classification accuracy on labeled dataset (`data/labeled_requests.csv`)
-- Clustering quality (silhouette score, manual inspection of clusters)
-- Latency of end-to-end request → recommendation pipeline
+- Analyzer CV on labeled CSVs → `reports/final_report/classifier_evaluation.json`
+- Matcher silver holdout → `reports/final_report/matcher_evaluation.json`
+- Human gold (grow beyond seed) → `scripts/evaluate_gold_labels.py`
+- Ask Triage latency smoke → `scripts/measure_ask_triage_latency.py` →
+  `reports/final_report/ask_triage_latency.json`
+- Clustering quality (silhouette / manual gallery) — backlog
+- Study Agent KB hit-rate — `GET /analytics/kb-hit-rate` after Canvas sync demos
 
 ### 2. User Evaluation
-- Simulated finals-week demo scenario (`demo/demo_script.md`)
-- Survey for student comfort/anonymity perception (`docs/surveys/student_post_demo_survey.md`)
-- Survey for faculty perceived workload reduction (`docs/surveys/professor_post_demo_survey.md`)
+- Simulated finals-week demo (`demo/demo_script.md`) on **`:5180`**
+- Legacy pilot surveys (`docs/surveys/`) — kiosk/dashboard era; label as such
+- Recommended: refresh surveys for Ask Triage, Help Coach, dual roles, group meetings
 
 ### 3. Metrics
-| Metric | Target |
-|---|---|
-| Classification accuracy | ≥ 80% on labeled test set |
-| Avg. requests per cluster (during simulated peak) | Reduction vs. unclustered baseline |
-| Student comfort survey score | Qualitative + Likert scale |
-| Faculty time-to-triage | Reduction vs. manual baseline |
+| Metric | Target | Status |
+|---|---|---|
+| Analyzer CV accuracy | ≥ 80% on labeled set | ~84.6% (synthetic union) |
+| Matcher silver holdout | report with caveats | ~87.5% (not gold) |
+| Human gold agreement | grow n ≥ 40 held-out | seed n=12 illustrative only |
+| Student comfort survey | Likert ≥ 4.0 | legacy pilot met target |
+| Faculty workload survey | Likert ≥ 4.0 | legacy pilot met target |
+| Ask Triage latency | report p50/p95 | measure script |
+| Faculty time-to-triage vs baseline | qualitative / future study | not instrumented |
 
 ## Reporting
-Results will be documented in `reports/mid_report` and `reports/final_report`, with supporting analysis in `notebooks/`.
+Primary graded narrative: `reports/final_report/main.tex`.  
+Honesty ceilings: `docs/fyp_evidence.md`, `docs/agent_performance.md`.
 
-Survey deployment instructions and metric mapping are documented in
-`docs/surveys/README.md`.
+Survey deployment: `docs/surveys/README.md`.
