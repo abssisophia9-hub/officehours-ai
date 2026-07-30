@@ -128,6 +128,20 @@ Help Coach panel show on the selected ask. Queue items include a **similar**
 badge when classmates are stuck on the same cluster/category. Queue + load +
 assist APIs require auth and TA/professor membership for the course.
 
+## Shared group meetings (repeated concepts)
+
+When many asks share a cluster / topic:
+
+1. Professor (**Repeated Topics**) or TA (**Help Coach → Propose one group meeting**)
+   sets one **title + when + where/link**
+2. `POST /actions/recommendations/` stores a `group_session` decision with
+   `meeting_*` fields attached to all `request_ids` in the cluster
+3. Each student looks up their request code — status shows the **same** shared
+   meeting time/place (`meeting_title`, `meeting_when`, `meeting_place`)
+
+This is the intended face-to-face path for repeats: teach once as a group, not
+copy a chat reply to every student.
+
 ## Packaging note
 
 Today the deliverable is a **single web application package** (one frontend +

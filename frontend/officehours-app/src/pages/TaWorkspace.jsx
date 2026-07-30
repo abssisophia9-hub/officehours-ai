@@ -52,6 +52,10 @@ export default function TaWorkspace() {
   const [helpedCount, setHelpedCount] = useState(0);
   const [assignmentFilter, setAssignmentFilter] = useState("mine");
   const [busy, setBusy] = useState(false);
+  const [meetingOpen, setMeetingOpen] = useState(false);
+  const [meetingTitle, setMeetingTitle] = useState("");
+  const [meetingWhen, setMeetingWhen] = useState("");
+  const [meetingPlace, setMeetingPlace] = useState("");
 
   const loadQueue = useCallback(async () => {
     try {
@@ -137,6 +141,12 @@ export default function TaWorkspace() {
     );
     setReply(item.request.ta_reply || item.knowledge_entry?.student_hint || "");
     setSocraticSteps(coach?.socratic_steps || []);
+    setMeetingOpen(false);
+    setMeetingTitle(
+      `Group review: ${item.request.oracle_category || item.request.category || "topic"}`,
+    );
+    setMeetingWhen("");
+    setMeetingPlace("");
     setError("");
   }
 
@@ -174,6 +184,51 @@ export default function TaWorkspace() {
       setError(err.message);
     } finally {
       setCoachBusy(false);
+    }
+  }
+
+  async function proposeGroupMeeting() {
+    if (!selected || !req) return;
+    const when = meetingWhen.trim();
+    const place = meetingPlace.trim();
+    if (!when || !place) {
+      setError("Add a shared time and place/link for the group meeting.");
+      setMeetingOpen(true);
+      return;
+    }
+    const peerIds = (selected.help_coach?.similar_open || []).map((peer) => peer.id);
+    const requestIds = Array.from(new Set([req.id, ...peerIds]));
+    const title = (
+      meetingTitle ||
+      `Group review: ${req.oracle_category || req.category || "topic"}`
+    ).trim();
+    setBusy(true);
+    setError("");
+    try {
+      await api("/actions/recommendations/", {
+        method: "POST",
+        token,
+        body: {
+          card_id: `ta-group-${req.cluster_id || req.id}-${Date.now()}`,
+          action_kind: "group_session",
+          action_title: title,
+          status: "approved",
+          cluster_id: req.cluster_id || null,
+          request_ids: requestIds,
+          professor_note: "Proposed by TA from Help Coach similar asks.",
+          meeting_title: title,
+          meeting_when: when,
+          meeting_place: place,
+        },
+      });
+      setToast(
+        `Group meeting set for ${requestIds.length} asks · ${when} · ${place}`,
+      );
+      setMeetingOpen(false);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -540,6 +595,51 @@ export default function TaWorkspace() {
                         </li>
                       ))}
                     </ul>
+                    <button
+                      type="button"
+                      className="btn-ghost mt-2 px-3 py-1.5 text-xs"
+                      disabled={busy}
+                      onClick={() => setMeetingOpen((value) => !value)}
+                    >
+                      {meetingOpen ? "Hide group meeting form" : "Propose one group meeting"}
+                    </button>
+                    {meetingOpen ? (
+                      <div className="mt-2 rounded-lg border border-[#d7e0d9] bg-white p-2.5">
+                        <p className="text-[11px] text-aui-deep/70">
+                          Schedules the same time/place on status for this ask and{" "}
+                          {coach.similar_open_count} similar open ask
+                          {coach.similar_open_count === 1 ? "" : "s"}.
+                        </p>
+                        <input
+                          className="field-glass mt-2 w-full px-2.5 py-1.5 text-xs"
+                          value={meetingTitle}
+                          onChange={(event) => setMeetingTitle(event.target.value)}
+                          placeholder="Meeting title"
+                        />
+                        <div className="mt-1.5 grid gap-1.5 sm:grid-cols-2">
+                          <input
+                            className="field-glass w-full px-2.5 py-1.5 text-xs"
+                            value={meetingWhen}
+                            onChange={(event) => setMeetingWhen(event.target.value)}
+                            placeholder="When · Thu 4:00–4:30 PM"
+                          />
+                          <input
+                            className="field-glass w-full px-2.5 py-1.5 text-xs"
+                            value={meetingPlace}
+                            onChange={(event) => setMeetingPlace(event.target.value)}
+                            placeholder="Where / Zoom link"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          className="btn-primary mt-2 px-3 py-1.5 text-xs"
+                          disabled={busy}
+                          onClick={proposeGroupMeeting}
+                        >
+                          Schedule shared meeting
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
 

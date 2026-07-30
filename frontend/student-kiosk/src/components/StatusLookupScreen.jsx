@@ -131,6 +131,30 @@ export default function StatusLookupScreen({ initialCode = "", onBack }) {
             </p>
           ) : null}
 
+          {result.meeting_title || result.meeting_when || result.meeting_place ? (
+            <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
+              <p className="font-bold uppercase tracking-wide text-emerald-700">
+                Shared group meeting
+              </p>
+              {result.meeting_title ? (
+                <p className="mt-1 text-base font-semibold">{result.meeting_title}</p>
+              ) : null}
+              {result.meeting_when ? (
+                <p className="mt-1">
+                  <strong>When:</strong> {result.meeting_when}
+                </p>
+              ) : null}
+              {result.meeting_place ? (
+                <p className="mt-1">
+                  <strong>Where:</strong> {result.meeting_place}
+                </p>
+              ) : null}
+              <p className="mt-2 text-xs text-emerald-800/80">
+                Classmates stuck on the same topic were invited to this same meeting.
+              </p>
+            </div>
+          ) : null}
+
           <p className="mt-4 text-xs uppercase tracking-wide text-slate-400">
             Privacy-safe view — your identity is never shown on this page.
           </p>

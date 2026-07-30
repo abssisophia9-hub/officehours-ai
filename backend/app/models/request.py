@@ -160,5 +160,10 @@ class RequestStatusOut(BaseModel):
     student_hint: str | None = None
     assigned_ta: str | None = None
     estimated_wait_minutes: int | None = None
+    # Shared cluster group meeting (same for every request_id on the decision).
+    meeting_title: str | None = None
+    meeting_when: str | None = None
+    meeting_place: str | None = None
+    group_meeting: dict[str, Any] | None = None
 
     model_config = ConfigDict(from_attributes=True)
