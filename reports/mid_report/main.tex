@@ -38,7 +38,7 @@ periods?
 \section{System architecture}
 The prototype consists of four major components:
 \begin{itemize}
-  \item \textbf{Student kiosk} --- barcode/manual check-in, anonymous or identified submission, confirmation and status lookup.
+  \item \textbf{Student kiosk} --- optional typed student ID check-in, anonymous or identified submission, confirmation and status lookup.
   \item \textbf{Professor dashboard} --- request queue, charts, recommendation cards, office-hours setup.
   \item \textbf{Backend API} --- FastAPI, SQLite, request CRUD, classification, clustering, action orchestration.
   \item \textbf{AI/NLP layer} --- rule-based classifier and sentence-transformer clustering (lexical backend for tests).
@@ -46,7 +46,7 @@ The prototype consists of four major components:
 
 \section{Implementation progress}
 At mid-semester the project includes backend persistence, both frontends, CI,
-synthetic datasets, semantic clustering, barcode check-in, recommendation cards,
+synthetic datasets, semantic clustering, soft check-in, recommendation cards,
 action orchestration, demo seeding, and evaluation survey templates.
 
 \section{Demo screenshots}

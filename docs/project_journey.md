@@ -28,7 +28,7 @@ Oracle agents triage help under a professor KB gate.
 ### Phase 1 — Backend + student kiosk MVP
 
 - FastAPI request CRUD, health, SQLite
-- Student kiosk (Vite/React/Tailwind): submit questions, barcode check-in prototype
+- Student kiosk (Vite/React/Tailwind): submit questions, optional typed ID check-in
 - Synthetic finals-week dataset for early classifier work
 
 ### Phase 2 — Professor surface + first AI
@@ -53,7 +53,8 @@ Oracle agents triage help under a professor KB gate.
 - Unified `frontend/officehours-app` (port **5180**)
 - Login + `users` / `courses` / `course_memberships`
 - Role is **never** in the email — only in the membership for the active course
-- Legacy kiosk/dashboards kept for hardware experiments only
+- Legacy kiosk/dashboards kept as older web shells only (**no** physical
+  hardware / barcode / NFC path)
 
 ### Phase 5 — AUI realism + Canvas path
 

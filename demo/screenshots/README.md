@@ -4,7 +4,7 @@ Captured with `demo/capture_screenshots.mjs` after seeding demo data.
 
 | File | LaTeX caption |
 | --- | --- |
-| `01-student-kiosk-checkin.png` | Scanner-compatible student check-in flow. |
+| `01-student-kiosk-checkin.png` | Optional student ID check-in (software-only). |
 | `02-student-request-form.png` | Privacy-preserving request submission. |
 | `03-submission-confirmation.png` | Student receives confirmation after backend submission. |
 | `04-professor-dashboard-overview.png` | Professor sees categorized and clustered request queue. |

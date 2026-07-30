@@ -42,7 +42,7 @@
 - Nothing major; maybe a larger font on the question box.
 - Would use this during finals week.
 - Knowing the request code lets me check status without giving my name.
-- The barcode step might confuse people without scanners.
+- Prefer clear typing of student ID over any scanner step.
 
 ### Professors
 - Would want persisted office hours reflected in calendar export sooner.

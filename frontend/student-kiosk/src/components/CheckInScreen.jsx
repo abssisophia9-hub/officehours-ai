@@ -10,17 +10,17 @@ export default function CheckInScreen({ onContinue }) {
     inputRef.current?.focus();
   }, []);
 
-  function continueWithScan(event) {
+  function continueWithId(event) {
     event.preventDefault();
     const studentId = parseStudentIdFromScan(scanValue);
 
     if (!studentId) {
-      setError("Scan your ID barcode or type your student ID to continue.");
+      setError("Enter your student ID to continue, or stay anonymous.");
       inputRef.current?.focus();
       return;
     }
 
-    onContinue({ studentId, source: "barcode" });
+    onContinue({ studentId, source: "typed" });
   }
 
   function continueAnonymously() {
@@ -30,18 +30,17 @@ export default function CheckInScreen({ onContinue }) {
   return (
     <section className="grid w-full max-w-5xl gap-6 lg:grid-cols-[1.15fr_0.85fr]">
       <form
-        onSubmit={continueWithScan}
+        onSubmit={continueWithId}
         className="glass-panel animate-fade-in-up p-8 sm:p-10"
       >
         <div className="mb-8">
           <p className="glass-chip mb-4">Check in</p>
           <h1 className="font-display text-3xl font-bold tracking-tight text-aui-ink sm:text-5xl">
-            Scan your student ID
+            Enter your student ID
           </h1>
           <p className="mt-4 text-lg leading-8 text-aui-deep/70">
-            A USB barcode scanner works like a keyboard: scan the ID, then the
-            kiosk moves to the question form. You can also type the ID for demo
-            mode.
+            Type your campus student ID if you want staff to follow up with you.
+            You can also skip and stay anonymous.
           </p>
         </div>
 
@@ -49,7 +48,7 @@ export default function CheckInScreen({ onContinue }) {
           htmlFor="scanValue"
           className="mb-2 block text-sm font-semibold uppercase tracking-wide text-aui-deep/60"
         >
-          Student ID / barcode value
+          Student ID
         </label>
         <input
           ref={inputRef}
@@ -62,7 +61,7 @@ export default function CheckInScreen({ onContinue }) {
             setScanValue(event.target.value);
             setError("");
           }}
-          placeholder="Scan barcode or type 117027"
+          placeholder="e.g. 117027"
           className="field-glass px-5 py-5 text-3xl font-bold tracking-wide text-aui-ink placeholder:text-lg placeholder:font-medium placeholder:tracking-normal"
         />
 
@@ -95,16 +94,16 @@ export default function CheckInScreen({ onContinue }) {
           className="mb-6 h-14 w-auto brightness-0 invert opacity-95"
         />
         <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-100/90">
-          Hardware prototype
+          Soft check-in
         </p>
         <h2 className="font-display mt-2 text-3xl font-bold">
           Built for AUI office hours
         </h2>
         <ul className="mt-6 space-y-4 text-lg leading-8 text-emerald-50/95">
-          <li>Use any USB barcode scanner in HID keyboard mode.</li>
-          <li>Click this field, scan, and the scanner types the value.</li>
-          <li>Manual typing simulates hardware for demos.</li>
-          <li>Anonymous submissions still store no student ID.</li>
+          <li>Optional student ID for identified follow-up.</li>
+          <li>Anonymous asks never store a student ID.</li>
+          <li>Prefer the unified product app (login) for demos.</li>
+          <li>No barcode scanner or NFC hardware required.</li>
         </ul>
       </aside>
     </section>

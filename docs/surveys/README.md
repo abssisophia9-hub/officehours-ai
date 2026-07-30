@@ -39,4 +39,4 @@ This folder contains survey templates for evaluating the OfficeHours AI demo.
   - UI clarity
   - recommendation trust
   - missing information
-  - hardware/check-in concerns
+  - check-in / identity-flow concerns
