@@ -29,7 +29,7 @@ from app.routes.auth import get_current_user
 from app.services.access_control import require_course_role
 from app.services.course_ta_service import build_course_ta_load
 from app.services.knowledge_service import to_out
-from app.services.oracle_service import ensure_default_roster
+from app.services.triage_service import ensure_default_roster
 from app.services.request_serializer import to_request_out
 
 router = APIRouter(prefix="/ta", tags=["ta"])

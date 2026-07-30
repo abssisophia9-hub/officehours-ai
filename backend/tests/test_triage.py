@@ -16,7 +16,7 @@ def setup_function():
     Base.metadata.create_all(bind=engine)
 
 
-def test_oracle_pipeline_on_red_black_submission():
+def test_triage_pipeline_on_red_black_submission():
     with TestClient(app) as client:
         from app.database.session import SessionLocal
         from app.services.demo_accounts import ensure_demo_accounts
@@ -60,19 +60,22 @@ def test_oracle_pipeline_on_red_black_submission():
         assert data["student_name"] == "Alex Smith"
         assert data["course"] == "CSC 2302"
         assert data["code_snippet"]
-        assert data["oracle"] is not None
-        assert "Red-Black" in data["oracle"]["analyzer"]["category"]
-        assert data["oracle"]["analyzer"]["difficulty"] in {"EASY", "MEDIUM", "HARD"}
-        assert "trees" in data["oracle"]["analyzer"]["tags"] or "red-black" in data[
-            "oracle"
-        ]["analyzer"]["tags"]
-        assert data["oracle"]["matcher"]["assigned_ta"] == "Alice Chen"
-        assert data["oracle"]["matcher"]["alternative_ta"]
-        assert data["oracle"]["synthesizer"]["student_hint"]
-        assert data["oracle"]["synthesizer"]["teaching_approach"]
+        triage = data["triage"] or data["oracle"]
+        assert triage is not None
+        assert data["triage"] is not None
+        assert data["oracle"] is not None  # legacy alias
+        assert "Red-Black" in triage["analyzer"]["category"]
+        assert triage["analyzer"]["difficulty"] in {"EASY", "MEDIUM", "HARD"}
+        assert "trees" in triage["analyzer"]["tags"] or "red-black" in triage[
+            "analyzer"
+        ]["tags"]
+        assert triage["matcher"]["assigned_ta"] == "Alice Chen"
+        assert triage["matcher"]["alternative_ta"]
+        assert triage["synthesizer"]["student_hint"]
+        assert triage["synthesizer"]["teaching_approach"]
         assert data["assigned_ta"] == "Alice Chen"
-        assert data["oracle"]["elapsed_ms"] is not None
-        assert {step["agent"] for step in data["oracle"]["steps"]} == {
+        assert triage["elapsed_ms"] is not None
+        assert {step["agent"] for step in triage["steps"]} == {
             "analyzer",
             "matcher",
             "synthesizer",
@@ -93,10 +96,12 @@ def test_oracle_pipeline_on_red_black_submission():
         assert item["knowledge_entry"]["student_hint"]
         assert "claude" not in (item["knowledge_entry"].get("drafter_backend") or "")
 
-        metrics = client.get("/analytics/oracle-metrics").json()
-        assert metrics["oracle_runs"] >= 1
+        metrics = client.get("/analytics/triage-metrics").json()
+        assert (metrics.get("triage_runs") or metrics.get("oracle_runs")) >= 1
         assert metrics["matched_assignments"] >= 1
         assert metrics["time_saved_minutes"] >= 0
+        legacy = client.get("/analytics/oracle-metrics").json()
+        assert legacy["oracle_runs"] == metrics["triage_runs"]
 
         roster = client.get(
             "/ta/roster/",

@@ -4,17 +4,20 @@ from __future__ import annotations
 
 import json
 
-from app.models.request import OracleResultOut, Request, RequestOut
-from app.services.oracle_service import build_oracle_public_payload
+from app.models.request import TriageResultOut, Request, RequestOut
+from app.services.triage_service import build_triage_public_payload
 from app.services.study_buddy_service import solidarity_payload_for_request
 
 
 def to_request_out(
     request: Request,
-    oracle: dict | None = None,
+    triage: dict | None = None,
     *,
     db=None,
+    oracle: dict | None = None,  # legacy kwarg alias
 ) -> RequestOut:
+    if triage is None and oracle is not None:
+        triage = oracle
     tags: list[str] = []
     if request.oracle_tags:
         try:
@@ -24,17 +27,17 @@ def to_request_out(
         except json.JSONDecodeError:
             tags = []
 
-    oracle_payload = None
-    if oracle is not None:
-        oracle_payload = OracleResultOut.model_validate(oracle)
+    triage_payload = None
+    if triage is not None:
+        triage_payload = TriageResultOut.model_validate(triage)
     elif request.oracle_trace_json:
         try:
             trace = json.loads(request.oracle_trace_json)
-            oracle_payload = OracleResultOut.model_validate(
-                build_oracle_public_payload(trace)
+            triage_payload = TriageResultOut.model_validate(
+                build_triage_public_payload(trace)
             )
         except Exception:
-            oracle_payload = None
+            triage_payload = None
 
     solidarity = {
         "similar_asks_this_week": 0,
@@ -75,7 +78,8 @@ def to_request_out(
         alternative_ta=request.alternative_ta,
         estimated_wait_minutes=request.estimated_wait_minutes,
         student_hint=request.student_hint,
-        oracle=oracle_payload,
+        triage=triage_payload,
+        oracle=triage_payload,
         similar_asks_this_week=int(solidarity.get("similar_asks_this_week") or 0),
         solidarity_message=solidarity.get("solidarity_message"),
         study_buddy_eligible=bool(solidarity.get("study_buddy_eligible")),

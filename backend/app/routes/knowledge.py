@@ -48,7 +48,7 @@ from app.services.agent_metrics_service import (
 from app.services.analytics_service import (
     build_cluster_command_center,
     build_escalation_feed,
-    build_oracle_metrics,
+    build_triage_metrics,
     build_struggle_heatmap,
 )
 from app.services.canvas_service import canvas_status, sync_course_materials
@@ -61,7 +61,7 @@ from app.services.knowledge_service import (
     to_out,
     update_entry,
 )
-from app.services.oracle_service import lifetime_confusion_topics
+from app.services.triage_service import lifetime_confusion_topics
 
 router = APIRouter(tags=["knowledge"])
 
@@ -348,9 +348,10 @@ def cluster_command_center(
     return build_cluster_command_center(db, course=course, course_id=course_id)
 
 
-@router.get("/analytics/oracle-metrics")
-def oracle_metrics(db: Session = Depends(get_db)):
-    return build_oracle_metrics(db)
+@router.get("/analytics/triage-metrics")
+@router.get("/analytics/oracle-metrics")  # legacy alias
+def triage_metrics(db: Session = Depends(get_db)):
+    return build_triage_metrics(db)
 
 
 @router.get("/analytics/kb-hit-rate", response_model=KbHitRateReport)

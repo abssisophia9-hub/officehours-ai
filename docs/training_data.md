@@ -1,4 +1,4 @@
-# Training data for custom Oracle agents
+# Training data for custom Ask Triage agents
 
 All current training fixtures are **synthetic / silver / curated** for the FYP.
 They are **not** scraped private student emails or real AUI transcripts.

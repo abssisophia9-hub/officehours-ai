@@ -142,7 +142,9 @@ def test_websocket_receives_request_created_event():
             )
 
             seen_types = set()
-            for _ in range(5):
+            # Analyzer/Matcher/Synthesizer emit triage.* (+ legacy oracle.*) before
+            # request.created / knowledge.created.
+            for _ in range(12):
                 message = websocket.receive_json()
                 seen_types.add(message["type"])
                 if "request.created" in seen_types and "knowledge.created" in seen_types:
@@ -150,3 +152,4 @@ def test_websocket_receives_request_created_event():
 
             assert "request.created" in seen_types
             assert "knowledge.created" in seen_types
+            assert "triage.analyzer.done" in seen_types or "oracle.analyzer.done" in seen_types

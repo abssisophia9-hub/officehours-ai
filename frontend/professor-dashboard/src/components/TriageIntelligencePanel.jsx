@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
 
-export default function OracleIntelligencePanel() {
+export default function TriageIntelligencePanel() {
   const [metrics, setMetrics] = useState(null);
   const [lifetime, setLifetime] = useState(null);
   const [error, setError] = useState("");
@@ -13,11 +13,11 @@ export default function OracleIntelligencePanel() {
     async function load() {
       try {
         const [metricsRes, lifetimeRes] = await Promise.all([
-          fetch(`${API_BASE}/analytics/oracle-metrics`),
+          fetch(`${API_BASE}/analytics/triage-metrics`),
           fetch(`${API_BASE}/analytics/lifetime-confusion`),
         ]);
         if (!metricsRes.ok || !lifetimeRes.ok) {
-          throw new Error("Oracle analytics unavailable");
+          throw new Error("Ask Triage analytics unavailable");
         }
         const metricsJson = await metricsRes.json();
         const lifetimeJson = await lifetimeRes.json();
@@ -42,7 +42,7 @@ export default function OracleIntelligencePanel() {
   if (error) {
     return (
       <section className="rounded-3xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
-        <p className="font-bold">Oracle metrics unavailable</p>
+        <p className="font-bold">Ask Triage metrics unavailable</p>
         <p className="mt-1 text-sm">{error}</p>
       </section>
     );
@@ -51,23 +51,25 @@ export default function OracleIntelligencePanel() {
   if (!metrics) {
     return (
       <section className="rounded-3xl border border-slate-200 bg-white p-6 text-slate-500 shadow-sm">
-        Loading Oracle intelligence…
+        Loading Ask Triage intelligence…
       </section>
     );
   }
+
+  const triageRuns = metrics.triage_runs ?? metrics.oracle_runs;
 
   return (
     <section className="glass-panel p-6">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-aui-forest">
-            Office Hours Oracle
+            Ask Triage
           </p>
           <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">
             Multi-agent intelligence
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-            Analyzer → Matcher → Synthesizer coordinate each submission. You
+            Analyzer → Matcher → Synthesizer triage each submission. You
             remain the gate: approve curated answers before the student KB /
             lifetime confusion agent can use them.
           </p>
@@ -78,7 +80,7 @@ export default function OracleIntelligencePanel() {
         <MetricCard label="Time saved" value={`${metrics.time_saved_minutes} min`} />
         <MetricCard label="KB growth" value={metrics.kb_growth} />
         <MetricCard label="Approved answers" value={metrics.kb_approved} />
-        <MetricCard label="Oracle runs" value={metrics.oracle_runs} />
+        <MetricCard label="Triage runs" value={triageRuns} />
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
@@ -105,12 +107,13 @@ export default function OracleIntelligencePanel() {
                 key={trace.request_id}
                 className="rounded-xl bg-white/5 px-3 py-2"
               >
-                #{trace.request_id} · {trace.oracle_category || "topic"} ·{" "}
+                #{trace.request_id} ·{" "}
+                {trace.triage_category || trace.oracle_category || "topic"} ·{" "}
                 {trace.assigned_ta || "unassigned"} · {trace.elapsed_ms ?? "?"}ms
               </li>
             ))}
             {(metrics.recent_agent_traces || []).length === 0 ? (
-              <li className="text-slate-400">No Oracle traces yet.</li>
+              <li className="text-slate-400">No Ask Triage traces yet.</li>
             ) : null}
           </ul>
         </div>

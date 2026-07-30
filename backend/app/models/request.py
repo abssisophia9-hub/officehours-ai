@@ -78,7 +78,7 @@ class RequestCreate(BaseModel):
     help_mode: str = "message"
 
 
-class OracleAnalyzerOut(BaseModel):
+class TriageAnalyzerOut(BaseModel):
     category: str | None = None
     difficulty: str | None = None
     estimated_minutes: int | None = None
@@ -87,14 +87,14 @@ class OracleAnalyzerOut(BaseModel):
     rationale: str | None = None
 
 
-class OracleMatcherOut(BaseModel):
+class TriageMatcherOut(BaseModel):
     assigned_ta: str | None = None
     alternative_ta: str | None = None
     estimated_wait_minutes: int | None = None
     rationale: str | None = None
 
 
-class OracleSynthesizerOut(BaseModel):
+class TriageSynthesizerOut(BaseModel):
     student_hint: str | None = None
     teaching_approach: str | None = None
     similar_count: int = 0
@@ -102,17 +102,27 @@ class OracleSynthesizerOut(BaseModel):
     kb_insight: str | None = None
 
 
-class OracleStepOut(BaseModel):
+class TriageStepOut(BaseModel):
     agent: str
     elapsed_ms: int
 
 
-class OracleResultOut(BaseModel):
-    analyzer: OracleAnalyzerOut
-    matcher: OracleMatcherOut
-    synthesizer: OracleSynthesizerOut
-    steps: list[OracleStepOut] = Field(default_factory=list)
+class TriageResultOut(BaseModel):
+    """Ask Triage result: Analyzer → Matcher → Synthesizer."""
+
+    analyzer: TriageAnalyzerOut
+    matcher: TriageMatcherOut
+    synthesizer: TriageSynthesizerOut
+    steps: list[TriageStepOut] = Field(default_factory=list)
     elapsed_ms: int | None = None
+
+
+# Backward-compatible aliases.
+OracleAnalyzerOut = TriageAnalyzerOut
+OracleMatcherOut = TriageMatcherOut
+OracleSynthesizerOut = TriageSynthesizerOut
+OracleStepOut = TriageStepOut
+OracleResultOut = TriageResultOut
 
 
 class RequestOut(RequestCreate):
@@ -134,7 +144,9 @@ class RequestOut(RequestCreate):
     alternative_ta: str | None = None
     estimated_wait_minutes: int | None = None
     student_hint: str | None = None
-    oracle: OracleResultOut | None = None
+    triage: TriageResultOut | None = None
+    # Legacy alias kept so older clients reading ``oracle`` still work.
+    oracle: TriageResultOut | None = None
     # Anonymous solidarity (non-sensitive only in messaging).
     similar_asks_this_week: int = 0
     solidarity_message: str | None = None

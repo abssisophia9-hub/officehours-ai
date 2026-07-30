@@ -1,5 +1,5 @@
 """
-Office Hours Oracle agent entrypoints — custom-trained models only.
+Ask Triage agent entrypoints — custom-trained models only.
 
 FYP constraint: no prompted Claude calls and no USE_MOCK_CLAUDE deterministic
 mocks on the runtime path. Analyzer / Matcher / Synthesizer use trained local

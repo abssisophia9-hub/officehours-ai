@@ -3,7 +3,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
 /**
  * Submit a student request to the backend.
  *
- * @returns {Promise<object>} the created request (RequestOut + oracle)
+ * @returns {Promise<object>} the created request (RequestOut + triage)
  */
 export async function submitRequest({
   text,

@@ -23,12 +23,12 @@ See also: [`product_overview.md`](product_overview.md),
 ## Components
 
 1. **Product app** — login, course picker, student ask (identity + help mode), TA queue, professor command center, Canvas simulator
-2. **Backend API** — auth, requests, Oracle pipeline, clustering, knowledge, Canvas launch/sync, TA roster, analytics, action plans, `.ics`
-3. **Oracle AI layer (custom-trained)** — Analyzer / Matcher / Synthesizer (no prompted Claude on the FYP path)
+2. **Backend API** — auth, requests, Ask Triage pipeline, clustering, knowledge, Canvas launch/sync, TA roster, analytics, action plans, `.ics`
+3. **Ask Triage AI layer (custom-trained)** — Analyzer / Matcher / Synthesizer (no prompted Claude on the FYP path)
 4. **Canvas integration** — JIT launch provisioning + materials → course KB (LTI signatures still TODO for production)
 5. **Action orchestration** — professor decisions → agenda / status / calendar plans
 
-## Oracle data flow (current)
+## Ask Triage data flow (current)
 
 1. Student submits (`POST /requests/`) with optional identity + `help_mode`
 2. **Analyzer** → category, urgency, difficulty, tags, ETA
@@ -46,7 +46,7 @@ See also: [`product_overview.md`](product_overview.md),
 | File | What it shows |
 | --- | --- |
 | `diagrams/architecture.png` | Unified app + API + Canvas + three agents + curation |
-| `diagrams/workflow.png` | Identity / help mode → Oracle → TA → professor → KB |
+| `diagrams/workflow.png` | Identity / help mode → Ask Triage → TA → professor → KB |
 | `diagrams/oracle_agents.png` | Analyzer / Matcher / Synthesizer training artifacts |
 | `diagrams/product_deployment.png` | Canvas-first community deploy vs alternatives |
 | `diagrams/database_erd.png` | Auth, memberships, requests (`help_mode`), KB |

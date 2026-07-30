@@ -1,8 +1,8 @@
 # OfficeHours AI — Backend
 
-FastAPI backend for the OfficeHours AI / Office Hours Oracle triage system.
+FastAPI backend for the OfficeHours AI Ask Triage system.
 
-## Oracle multi-agent pipeline (custom-trained models)
+## Ask Triage multi-agent pipeline (custom-trained models)
 
 On `POST /requests/`, the backend runs **local trained models only** (FYP path —
 no prompted Claude calls, no `USE_MOCK_CLAUDE` mocks):

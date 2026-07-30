@@ -55,7 +55,7 @@ Summarize with `backend/scripts/analyze_survey_responses.py`.
 ## `labeled_requests*.csv` / Matcher / Synthesizer banks
 
 See [`docs/training_data.md`](../docs/training_data.md) for the full custom-trained
-Oracle dataset inventory.
+Ask Triage dataset inventory.
 
 Campus-wide supplements (not CSC-only):
 

@@ -187,17 +187,18 @@ def build_cluster_command_center(
     )
 
 
-def build_oracle_metrics(db: Session) -> dict:
+def build_triage_metrics(db: Session) -> dict:
+    """Ask Triage run counts, time-saved estimate, and recent agent traces."""
     requests = db.query(Request).all()
     entries = db.query(KnowledgeEntry).all()
     approved = [entry for entry in entries if entry.status == "approved"]
     pending = [entry for entry in entries if entry.status == "pending_review"]
-    with_oracle = [request for request in requests if request.oracle_trace_json]
+    with_triage = [request for request in requests if request.oracle_trace_json]
     assigned = [request for request in requests if request.assigned_ta]
 
     time_saved = max(
         0,
-        len(with_oracle) * (MANUAL_MINUTES_PER_REQUEST - AI_ASSIST_MINUTES_PER_REQUEST),
+        len(with_triage) * (MANUAL_MINUTES_PER_REQUEST - AI_ASSIST_MINUTES_PER_REQUEST),
     )
 
     recent_traces = []
@@ -219,13 +220,16 @@ def build_oracle_metrics(db: Session) -> dict:
                     for step in trace.get("steps") or []
                 ],
                 "assigned_ta": request.assigned_ta,
-                "oracle_category": request.oracle_category,
+                "triage_category": request.oracle_category,
+                "oracle_category": request.oracle_category,  # legacy alias
             }
         )
 
+    triage_runs = len(with_triage)
     return {
         "total_requests": len(requests),
-        "oracle_runs": len(with_oracle),
+        "triage_runs": triage_runs,
+        "oracle_runs": triage_runs,  # legacy alias
         "matched_assignments": len(assigned),
         "kb_pending_review": len(pending),
         "kb_approved": len(approved),
@@ -235,6 +239,9 @@ def build_oracle_metrics(db: Session) -> dict:
         "avg_ai_assist_minutes_assumed": AI_ASSIST_MINUTES_PER_REQUEST,
         "recent_agent_traces": recent_traces,
     }
+
+
+build_oracle_metrics = build_triage_metrics
 
 
 def is_sensitive_category(category: str | None) -> bool:

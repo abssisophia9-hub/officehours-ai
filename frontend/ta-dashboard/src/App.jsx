@@ -246,7 +246,8 @@ export default function App() {
                     Synthesizer
                   </p>
                   <p className="mt-1 text-sm text-slate-700">
-                    {selected.request.oracle?.synthesizer?.kb_insight ||
+                    {selected.request.triage?.synthesizer?.kb_insight ||
+                      selected.request.oracle?.synthesizer?.kb_insight ||
                       selected.knowledge_entry?.drafter_backend ||
                       "Teaching draft ready"}
                   </p>

@@ -140,7 +140,7 @@ def test_full_community_loop_ask_ta_professor_agent():
     ).json()
     assert before["matched_count"] == 0
 
-    # 2. Student submits a quiet ask; Oracle runs and seeds a pending draft.
+    # 2. Student submits a quiet ask; Ask Triage runs and seeds a pending draft.
     created = client.post(
         "/requests/",
         json={

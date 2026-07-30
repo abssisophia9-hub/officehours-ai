@@ -323,7 +323,7 @@ export default function StudentWorkspace() {
             {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
             <button type="submit" disabled={busy} className="btn-primary mt-4 px-5 py-2.5 text-sm">
               {busy
-                ? "Running Oracle…"
+                ? "Running Ask Triage…"
                 : anonymous
                   ? "Submit anonymously"
                   : "Submit as me"}
@@ -355,21 +355,25 @@ export default function StudentWorkspace() {
                   {result.solidarity_message}
                 </p>
               ) : null}
-              {result.oracle ? (
+              {(result.triage || result.oracle) ? (
                 <ul className="mt-3 space-y-1.5 text-xs text-aui-deep/85">
                   <li>
-                    <strong>Analyzer:</strong> {result.oracle.analyzer.category} ·{" "}
-                    {result.oracle.analyzer.difficulty}
+                    <strong>Analyzer:</strong>{" "}
+                    {(result.triage || result.oracle).analyzer.category} ·{" "}
+                    {(result.triage || result.oracle).analyzer.difficulty}
                   </li>
                   <li>
-                    <strong>Matcher:</strong> {result.oracle.matcher.assigned_ta}
-                    {result.oracle.matcher.alternative_ta
-                      ? ` (backup: ${result.oracle.matcher.alternative_ta})`
+                    <strong>Matcher:</strong>{" "}
+                    {(result.triage || result.oracle).matcher.assigned_ta}
+                    {(result.triage || result.oracle).matcher.alternative_ta
+                      ? ` (backup: ${(result.triage || result.oracle).matcher.alternative_ta})`
                       : ""}{" "}
-                    · wait ~{result.oracle.matcher.estimated_wait_minutes} min
+                    · wait ~
+                    {(result.triage || result.oracle).matcher.estimated_wait_minutes} min
                   </li>
                   <li>
-                    <strong>Hint:</strong> {result.oracle.synthesizer.student_hint}
+                    <strong>Hint:</strong>{" "}
+                    {(result.triage || result.oracle).synthesizer.student_hint}
                   </li>
                 </ul>
               ) : null}

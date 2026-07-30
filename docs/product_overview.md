@@ -121,7 +121,7 @@ TAs own a real office-hours loop — not only curation drafts:
 4. **Done helping** or **Take as primary** (backup handoff)  
 5. **Send teaching draft** to professor curation  
 
-Oracle teaching context (difficulty, learning style, tags, sensitive, matcher)
+Ask Triage teaching context (difficulty, learning style, tags, sensitive, matcher)
 is shown on the selected ask. Queue + load APIs require auth and TA/professor
 membership for the course.
 

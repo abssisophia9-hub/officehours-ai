@@ -1,5 +1,5 @@
 export default function ConfirmationScreen({ result, onReset, onCheckStatus }) {
-  const oracle = result.oracle;
+  const triage = result.triage || result.oracle;
 
   return (
     <div className="glass-panel w-full max-w-4xl animate-fade-in-up p-8 sm:p-10">
@@ -21,8 +21,8 @@ export default function ConfirmationScreen({ result, onReset, onCheckStatus }) {
         Request submitted
       </h1>
       <p className="mt-2 text-center text-lg text-slate-500">
-        Three Oracle agents coordinated in{" "}
-        {oracle?.elapsed_ms != null ? `~${oracle.elapsed_ms}ms` : "under 2 seconds"}.
+        Ask Triage (Analyzer → Matcher → Synthesizer) finished in{" "}
+        {triage?.elapsed_ms != null ? `~${triage.elapsed_ms}ms` : "under 2 seconds"}.
         Professor still approves what reaches the student KB agent.
       </p>
 
@@ -47,47 +47,47 @@ export default function ConfirmationScreen({ result, onReset, onCheckStatus }) {
         </p>
       </div>
 
-      {oracle ? (
+      {triage ? (
         <div className="mt-6 grid gap-4 lg:grid-cols-3">
           <AgentCard
             title="Analyzer"
             accent="bg-sky-500"
             lines={[
-              `Category: ${oracle.analyzer.category}`,
-              `Difficulty: ${oracle.analyzer.difficulty}`,
-              `Est. time: ${oracle.analyzer.estimated_minutes} min`,
-              `Tags: ${(oracle.analyzer.tags || []).join(", ")}`,
+              `Category: ${triage.analyzer.category}`,
+              `Difficulty: ${triage.analyzer.difficulty}`,
+              `Est. time: ${triage.analyzer.estimated_minutes} min`,
+              `Tags: ${(triage.analyzer.tags || []).join(", ")}`,
             ]}
           />
           <AgentCard
             title="Matcher"
             accent="bg-orange-500"
             lines={[
-              `Assigned: ${oracle.matcher.assigned_ta}`,
-              `Wait: ~${oracle.matcher.estimated_wait_minutes} min`,
-              `Alternative: ${oracle.matcher.alternative_ta || "n/a"}`,
-              oracle.matcher.rationale,
+              `Assigned: ${triage.matcher.assigned_ta}`,
+              `Wait: ~${triage.matcher.estimated_wait_minutes} min`,
+              `Alternative: ${triage.matcher.alternative_ta || "n/a"}`,
+              triage.matcher.rationale,
             ]}
           />
           <AgentCard
             title="Synthesizer"
             accent="bg-emerald-500"
             lines={[
-              `Similar KB hits: ${oracle.synthesizer.similar_count}`,
-              `Hint: ${oracle.synthesizer.student_hint}`,
-              oracle.synthesizer.kb_insight,
+              `Similar KB hits: ${triage.synthesizer.similar_count}`,
+              `Hint: ${triage.synthesizer.student_hint}`,
+              triage.synthesizer.kb_insight,
             ]}
           />
         </div>
       ) : null}
 
-      {oracle?.synthesizer?.student_hint ? (
+      {triage?.synthesizer?.student_hint ? (
         <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-left">
           <p className="text-sm font-bold uppercase tracking-wide text-amber-700">
             While you wait
           </p>
           <p className="mt-2 text-base leading-7 text-amber-950">
-            {oracle.synthesizer.student_hint}
+            {triage.synthesizer.student_hint}
           </p>
         </div>
       ) : null}

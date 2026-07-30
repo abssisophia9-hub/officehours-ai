@@ -51,7 +51,7 @@ def export_rows() -> list[dict[str, str]]:
         for entry in approved:
             if not entry.question_text or not entry.category:
                 continue
-            # Map Oracle display topics back to taxonomy when possible.
+            # Map Ask Triage display topics back to taxonomy when possible.
             category = _normalize_category(entry.category)
             rows.append(
                 {

@@ -1,4 +1,4 @@
-# AI / NLP Design (Custom-Trained Oracle)
+# AI / NLP Design (Custom-Trained Ask Triage)
 
 ## FYP constraint
 
@@ -6,7 +6,7 @@ The assessed runtime path uses **custom-trained local models only**.
 Prompted Claude calls and `USE_MOCK_CLAUDE` mocks are disabled by default
 (`OFFICEHOURS_ALLOW_EXTERNAL_LLM=false`).
 
-## Oracle pipeline
+## Ask Triage pipeline
 
 On every `POST /requests/`:
 
@@ -47,7 +47,7 @@ Tests use `OFFICEHOURS_CLUSTERING_BACKEND=lexical` to avoid model downloads.
 | Grading / retake / integrity | Admin route |
 | Urgent / emotional | Priority 1:1 |
 
-Oracle Matcher assignment is separate from these professor recommendation cards:
+Ask Triage Matcher assignment is separate from these professor recommendation cards:
 Matcher picks a TA for the live queue; recommendation cards help the professor
 plan office-hours agenda blocks.
 

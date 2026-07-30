@@ -3,7 +3,7 @@
 Campus office-hours triage system for **Al Akhawayn University** (FYP).
 
 Students, TAs, and professors use **one packaged web app**. Custom-trained
-**Oracle** agents (Analyzer → Matcher → Synthesizer) triage and draft help.
+**Ask Triage** agents (Analyzer → Matcher → Synthesizer) triage and draft help.
 The professor remains the gate for what students can retrieve from the
 knowledge base.
 
@@ -31,7 +31,7 @@ Start here:
 ```
 
 
-## Oracle agents (custom-trained)
+## Ask Triage agents (custom-trained)
 
 | Agent | Model | Training data |
 | --- | --- | --- |

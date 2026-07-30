@@ -223,7 +223,7 @@ export default function TaWorkspace() {
         <article className="bh-stat-card">
           <div className="bh-stat-head">Avg Wait {ICONS.clock}</div>
           <p className="bh-stat-value">{avgWait === null ? "—" : `${avgWait}m`}</p>
-          <p className="bh-stat-note">Oracle wait estimate</p>
+          <p className="bh-stat-note">Ask Triage wait estimate</p>
         </article>
         <article className="bh-stat-card">
           <div className="bh-stat-head">Helped {ICONS.check}</div>
@@ -384,8 +384,11 @@ export default function TaWorkspace() {
           </div>
           <p className="bh-card-note">{req.text}</p>
 
-          <div className="mt-3 rounded-xl border border-aui-forest/20 bg-[#f3faf5] p-3 text-xs text-aui-deep">
-            <p className="font-semibold text-aui-ink">Oracle teaching context</p>
+            <div className="mt-3 rounded-xl border border-aui-forest/20 bg-[#f3faf5] p-3 text-xs text-aui-deep">
+            <p className="font-semibold text-aui-ink">Ask Triage context</p>
+            <p className="mt-0.5 text-[11px] text-aui-deep/65">
+              Analyzer → Matcher → Synthesizer (runs when the student submits)
+            </p>
             <ul className="mt-2 space-y-1">
               <li>
                 <strong>Category:</strong> {req.oracle_category || req.category || "n/a"}
@@ -409,9 +412,10 @@ export default function TaWorkspace() {
               <li>
                 <strong>Sensitive:</strong> {req.sensitive ? "yes — keep private" : "no"}
               </li>
-              {req.oracle?.matcher?.rationale ? (
+              {req.triage?.matcher?.rationale || req.oracle?.matcher?.rationale ? (
                 <li>
-                  <strong>Matcher:</strong> {req.oracle.matcher.rationale}
+                  <strong>Matcher:</strong>{" "}
+                  {req.triage?.matcher?.rationale || req.oracle?.matcher?.rationale}
                 </li>
               ) : (
                 <li>
@@ -419,9 +423,12 @@ export default function TaWorkspace() {
                   {req.alternative_ta ? ` (backup ${req.alternative_ta})` : ""}
                 </li>
               )}
-              {req.oracle?.synthesizer?.kb_insight ? (
+              {(req.triage?.synthesizer?.kb_insight ||
+                req.oracle?.synthesizer?.kb_insight) ? (
                 <li>
-                  <strong>KB insight:</strong> {req.oracle.synthesizer.kb_insight}
+                  <strong>KB insight:</strong>{" "}
+                  {req.triage?.synthesizer?.kb_insight ||
+                    req.oracle?.synthesizer?.kb_insight}
                 </li>
               ) : null}
             </ul>
