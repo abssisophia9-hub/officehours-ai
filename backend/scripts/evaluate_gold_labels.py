@@ -161,8 +161,9 @@ def evaluate(rows: list[dict[str, str]]) -> dict[str, object]:
         },
         "source": "data/gold_labels/gold_labels.csv (+ optional DB)",
         "note": (
-            "Seed gold is illustrative. Replace with real TA judgments before "
-            "claiming production agent quality."
+            "Includes human_gold_seed (illustrative) plus curated_heldout_public "
+            "(original university-style asks; not private scraped transcripts; "
+            "not independent TA judgments). Prefer real human_gold when available."
         ),
     }
     return report

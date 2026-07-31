@@ -1,26 +1,196 @@
 {
-  "n_labels": 12,
+  "n_labels": 80,
   "by_department": {
-    "MTH": 2,
-    "COM": 2,
-    "GEN": 2,
-    "ECO": 2,
-    "ENG": 2,
-    "CSC": 2
+    "MTH": 9,
+    "COM": 9,
+    "GEN": 16,
+    "ECO": 8,
+    "ENG": 10,
+    "CSC": 28
   },
   "analyzer": {
-    "n": 12,
-    "accuracy": 1.0,
-    "macro_f1": 1.0,
-    "errors_sample": []
+    "n": 80,
+    "accuracy": 0.75,
+    "macro_f1": 0.6617,
+    "errors_sample": [
+      {
+        "label_id": "GOLD017",
+        "department": "CSC",
+        "gold": "grading_dispute",
+        "predicted": "project_submission",
+        "text": "I submitted the hashing project to Canvas but the grade shows zero \u2014 can you check if the upload failed?"
+      },
+      {
+        "label_id": "GOLD019",
+        "department": "CSC",
+        "gold": "academic_integrity",
+        "predicted": "accessibility_accommodation",
+        "text": "I think I accidentally looked at a classmate's screen during the quiz \u2014 what should I do?"
+      },
+      {
+        "label_id": "GOLD029",
+        "department": "COM",
+        "gold": "exam_logistics",
+        "predicted": "project_submission",
+        "text": "When is the COM 1301 final presentation slot and do we need slides uploaded first?"
+      },
+      {
+        "label_id": "GOLD034",
+        "department": "ECO",
+        "gold": "conceptual_question",
+        "predicted": "grading_dispute",
+        "text": "I calculated consumer surplus wrong on HW3 \u2014 can you show where my area formula fails?"
+      },
+      {
+        "label_id": "GOLD037",
+        "department": "ENG",
+        "gold": "project_submission",
+        "predicted": "exam_logistics",
+        "text": "What is the late-policy for the ENG research paper if Canvas says one thing and the syllabus another?"
+      },
+      {
+        "label_id": "GOLD038",
+        "department": "ENG",
+        "gold": "academic_integrity",
+        "predicted": "conceptual_question",
+        "text": "I am accused of over-quoting \u2014 how do I paraphrase without changing the meaning?"
+      },
+      {
+        "label_id": "GOLD042",
+        "department": "GEN",
+        "gold": "office_hours_access",
+        "predicted": "conceptual_question",
+        "text": "Do I need to identify myself to ask a logistics question or can I stay anonymous?"
+      },
+      {
+        "label_id": "GOLD049",
+        "department": "CSC",
+        "gold": "academic_integrity",
+        "predicted": "conceptual_question",
+        "text": "Is collaboration allowed on the take-home algorithms quiz or is it individual only?"
+      },
+      {
+        "label_id": "GOLD051",
+        "department": "CSC",
+        "gold": "retake_request",
+        "predicted": "grading_dispute",
+        "text": "I failed the midterm and want to know if a retake or grade replacement is possible."
+      },
+      {
+        "label_id": "GOLD055",
+        "department": "COM",
+        "gold": "retake_request",
+        "predicted": "project_submission",
+        "text": "I lost my voice before the speech \u2014 can I submit a recorded version instead?"
+      },
+      {
+        "label_id": "GOLD062",
+        "department": "CSC",
+        "gold": "exam_logistics",
+        "predicted": "conceptual_question",
+        "text": "What is the best way to prepare for the upcoming CSC 2302 final \u2014 practice trees first or hashing?"
+      },
+      {
+        "label_id": "GOLD063",
+        "department": "MTH",
+        "gold": "grading_dispute",
+        "predicted": "conceptual_question",
+        "text": "I reviewed your feedback on my midterm and still do not see why I lost points on the induction proof."
+      }
+    ]
   },
   "matcher": {
-    "n": 12,
-    "accuracy": 1.0,
-    "macro_f1": 1.0,
-    "errors_sample": [],
+    "n": 80,
+    "accuracy": 0.7875,
+    "macro_f1": 0.7766,
+    "errors_sample": [
+      {
+        "label_id": "GOLD017",
+        "department": "CSC",
+        "gold": "Sam Ortiz",
+        "predicted": "Priya Nair",
+        "text": "I submitted the hashing project to Canvas but the grade shows zero \u2014 can you check if the upload failed?"
+      },
+      {
+        "label_id": "GOLD022",
+        "department": "CSC",
+        "gold": "Sam Ortiz",
+        "predicted": "Alice Chen",
+        "text": "My pointer diagram for free-list allocators is wrong and I am stuck debugging segfaults."
+      },
+      {
+        "label_id": "GOLD034",
+        "department": "ECO",
+        "gold": "Alice Chen",
+        "predicted": "Sam Ortiz",
+        "text": "I calculated consumer surplus wrong on HW3 \u2014 can you show where my area formula fails?"
+      },
+      {
+        "label_id": "GOLD038",
+        "department": "ENG",
+        "gold": "Sam Ortiz",
+        "predicted": "Alice Chen",
+        "text": "I am accused of over-quoting \u2014 how do I paraphrase without changing the meaning?"
+      },
+      {
+        "label_id": "GOLD042",
+        "department": "GEN",
+        "gold": "Sam Ortiz",
+        "predicted": "Alice Chen",
+        "text": "Do I need to identify myself to ask a logistics question or can I stay anonymous?"
+      },
+      {
+        "label_id": "GOLD046",
+        "department": "CSC",
+        "gold": "Bob Martinez",
+        "predicted": "Alice Chen",
+        "text": "Why is the average-case of quicksort O(n log n) but worst-case O(n^2) with bad pivots?"
+      },
+      {
+        "label_id": "GOLD049",
+        "department": "CSC",
+        "gold": "Sam Ortiz",
+        "predicted": "Priya Nair",
+        "text": "Is collaboration allowed on the take-home algorithms quiz or is it individual only?"
+      },
+      {
+        "label_id": "GOLD055",
+        "department": "COM",
+        "gold": "Sam Ortiz",
+        "predicted": "Priya Nair",
+        "text": "I lost my voice before the speech \u2014 can I submit a recorded version instead?"
+      },
+      {
+        "label_id": "GOLD061",
+        "department": "CSC",
+        "gold": "Bob Martinez",
+        "predicted": "Alice Chen",
+        "text": "Can you help me understand the concept from Tuesday's lecture on amortized analysis? I followed the start but lost the accounting method."
+      },
+      {
+        "label_id": "GOLD063",
+        "department": "MTH",
+        "gold": "Sam Ortiz",
+        "predicted": "Alice Chen",
+        "text": "I reviewed your feedback on my midterm and still do not see why I lost points on the induction proof."
+      },
+      {
+        "label_id": "GOLD064",
+        "department": "CSC",
+        "gold": "Bob Martinez",
+        "predicted": "Alice Chen",
+        "text": "Can we go step by step through one practice problem on recurrence relations before the quiz?"
+      },
+      {
+        "label_id": "GOLD068",
+        "department": "CSC",
+        "gold": "Priya Nair",
+        "predicted": "Alice Chen",
+        "text": "Several of us are stuck on the same red-black deletion case \u2014 can there be one group review session?"
+      }
+    ],
     "label_note": "Compared against human gold_assigned_ta \u2014 not silver holdout"
   },
   "source": "data/gold_labels/gold_labels.csv (+ optional DB)",
-  "note": "Seed gold is illustrative. Replace with real TA judgments before claiming production agent quality."
+  "note": "Includes human_gold_seed (illustrative) plus curated_heldout_public (original university-style asks; not private scraped transcripts; not independent TA judgments). Prefer real human_gold when available."
 }

@@ -1,38 +1,38 @@
 {
   "n": 5,
   "clustering_backend": "lexical",
-  "mean_ms": 589.86,
-  "p50_ms": 52.72,
-  "p95_ms": 2202.68,
-  "max_ms": 2739.19,
+  "mean_ms": 640.57,
+  "p50_ms": 62.57,
+  "p95_ms": 2378.86,
+  "max_ms": 2957.87,
   "samples": [
     {
       "status_code": 201,
-      "elapsed_ms": 2739.19,
+      "elapsed_ms": 2957.87,
       "category": "Red-Black Tree Deletion",
       "assigned_ta": "Alice Chen"
     },
     {
       "status_code": 201,
-      "elapsed_ms": 56.61,
+      "elapsed_ms": 62.46,
       "category": "Exam Logistics",
       "assigned_ta": "Priya Nair"
     },
     {
       "status_code": 201,
-      "elapsed_ms": 49.52,
+      "elapsed_ms": 57.13,
       "category": "Hash Tables",
       "assigned_ta": "Priya Nair"
     },
     {
       "status_code": 201,
-      "elapsed_ms": 52.72,
+      "elapsed_ms": 62.83,
       "category": "Conceptual Question",
       "assigned_ta": "Bob Martinez"
     },
     {
       "status_code": 201,
-      "elapsed_ms": 51.25,
+      "elapsed_ms": 62.57,
       "category": "Conceptual Question",
       "assigned_ta": "Alice Chen"
     }

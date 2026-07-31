@@ -28,15 +28,18 @@ overload** and **improve student comfort** seeking academic help during finals?
 | --- | --- | --- |
 | `classifier_evaluation.json` (~84.6% CV, n=156) | Stratified CV on **synthetic / curated** labels | Proof on real AUI student text |
 | `matcher_evaluation.json` (~87.5% holdout) | Silver expertise-overlap labels | Gold TA judgment |
-| `gold_label_evaluation.json` (seed n=12, perfect scores) | **Illustrative** seed set | Held-out human gold — replace before claiming quality |
+| `gold_label_evaluation.json` (n=80) | Seed + curated held-out from public OH research; Analyzer ~75%, Matcher ~79% | Independent campus TA judgments (`human_gold`) |
 | Survey summary (n=8 students / n=4 professors) | **Legacy kiosk + professor-dashboard** pilot | Eval of Ask Triage / Help Coach / `:5180` product |
 | KB hit-rate endpoint | Runtime Study Agent ceiling | Not yet a published longitudinal table |
 
 ## Gaps supervisors will ask about
 
-1. **Gold labels** — collect ≥40 real TA judgments (`data/gold_labels/README.md`).
-2. **Surveys** — re-run on unified app with Ask Triage / Help Coach questions
-   (`docs/surveys/` templates are mid-report era).
+1. **Gold labels** — n=80 curated held-out set from public uni OH research
+   (`docs/research/office_hours_public_sources.md`); still collect real TA
+   `human_gold` when possible.
+2. **Surveys** — still need live participants on `:5180`
+   (`docs/surveys/unified_product_post_demo_survey.md`). Scraped public pages
+   are **not** survey responses.
 3. **Canvas LTI 1.3** — production needs signed launches; today is unsigned JIT demo.
 4. **Open demo APIs** — some list endpoints are convenient for local demos; not
    campus-hardened ACLs.

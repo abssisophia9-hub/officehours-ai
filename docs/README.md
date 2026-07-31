@@ -11,8 +11,9 @@
 | [`agent_performance.md`](agent_performance.md) | Metrics + upgrade backlog |
 | [`ethics_privacy.md`](ethics_privacy.md) | Privacy principles |
 | [`evaluation_plan.md`](evaluation_plan.md) | Evaluation methods |
-| [`hardware_plan.md`](hardware_plan.md) | Kiosk hardware |
+| [`fyp_evidence.md`](fyp_evidence.md) | Defense claims / metric honesty |
+| [`research/office_hours_public_sources.md`](research/office_hours_public_sources.md) | Public uni OH research → gold themes |
 | [`proposal.md`](proposal.md) | Original FYP proposal |
-| [`surveys/`](surveys/) | Mid-report survey templates (historical) |
+| [`surveys/`](surveys/) | Survey templates (unified + legacy pilots) |
 
 Diagrams: [`../diagrams/`](../diagrams/). Cloud operators: [`../AGENTS.md`](../AGENTS.md).
