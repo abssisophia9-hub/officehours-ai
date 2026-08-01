@@ -1,11 +1,27 @@
-# Mid-Report Screenshots
+# Screenshots
 
-> **Historical mid-report capture set.** Current supervisor demos should use the
-> unified product app (`./scripts/run_product.sh` → `:5180`). The regen steps below
-> still target legacy kiosk `:5173` + professor dashboard `:5174` to reproduce
-> these specific PNGs.
+## Unified product (`product-*.png`) — use these
 
-Captured with `demo/capture_screenshots.mjs` after seeding demo data.
+Captured with `demo/capture_product_screenshots.mjs` against `:5180`.
+
+| File | Caption |
+| --- | --- |
+| `product-01-login.png` | Unified product login |
+| `product-02-student-ask.png` | Student Quiet ask form (CSC 2302) |
+| `product-03-ask-triage-result.png` | Ask Triage Analyzer / Matcher / hint |
+| `product-04-ta-help-coach.png` | TA workspace / Help Coach |
+| `product-05-professor-kb.png` | Professor command center |
+| `product-06-canvas-simulator.png` | Unsigned Canvas launch simulator |
+
+```bash
+# backend :8000 + officehours-app :5180 running
+cd demo && npm ci && npx playwright install chromium
+node capture_product_screenshots.mjs
+```
+
+## Mid-report legacy set (historical)
+
+> Older kiosk `:5173` + professor dashboard `:5174` captures for mid-report LaTeX.
 
 | File | LaTeX caption |
 | --- | --- |
@@ -18,19 +34,8 @@ Captured with `demo/capture_screenshots.mjs` after seeding demo data.
 | `07-survey-templates.png` | Evaluation instruments for student and professor feedback. |
 | `08-github-actions-ci.png` | Automated verification for backend and frontend builds. |
 
-## Regenerate
-
 ```bash
-cd backend
-python3 scripts/seed_demo_data.py --reset --limit 20
-OFFICEHOURS_CLUSTERING_BACKEND=lexical venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
-
-# separate terminals
-cd frontend/student-kiosk && npm run dev -- --host 127.0.0.1 --port 5173
-cd frontend/professor-dashboard && npm run dev -- --host 127.0.0.1 --port 5174
-
-cd demo
-npm install
-npx playwright install chromium
-node capture_screenshots.mjs
+cd backend && python3 scripts/seed_demo_data.py --reset --limit 20
+# start legacy frontends 5173/5174 + backend, then:
+cd demo && node capture_screenshots.mjs
 ```

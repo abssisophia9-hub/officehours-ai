@@ -24,6 +24,8 @@ Can an AI-assisted office-hours triage system reduce faculty communication overl
 - Legacy pilot surveys (`docs/surveys/`) — kiosk/dashboard era; label as such
 - Recommended: refresh surveys for Ask Triage, Help Coach, dual roles, group meetings
   (`docs/surveys/unified_product_post_demo_survey.md`)
+- Public university OH research supports **gold-label themes**, not Likert scores
+  (`docs/research/office_hours_public_sources.md`)
 
 ### 3. Metrics
 | Metric | Target | Status |

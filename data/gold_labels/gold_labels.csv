@@ -1,13 +1,81 @@
 label_id,text,gold_category,gold_assigned_ta,gold_hint_useful,department,course_code,labeled_by,label_source,notes
-GOLD001,"In MTH 1304 how do I set up a proof by induction for a simple summation formula?",conceptual_question,Alice Chen,1,MTH,MTH 1304,ta_seed,human_gold_seed,Seed gold — replace with real TA judgments
-GOLD002,"What calculator is allowed on the MTH 1304 midterm?",exam_logistics,Priya Nair,1,MTH,MTH 1304,ta_seed,human_gold_seed,
-GOLD003,"I keep freezing when I start my COM 1301 speech — can someone help me privately?",emotional_stress,Sam Ortiz,1,COM,COM 1301,ta_seed,human_gold_seed,Sensitive — private route
-GOLD004,"How should I organize attention getter and thesis in my persuasive speech intro?",conceptual_question,Alice Chen,1,COM,COM 1301,ta_seed,human_gold_seed,
-GOLD005,"I need documentation guidance for quiz time accommodations.",accessibility_accommodation,Sam Ortiz,1,GEN,,ta_seed,human_gold_seed,
+GOLD001,In MTH 1304 how do I set up a proof by induction for a simple summation formula?,conceptual_question,Alice Chen,1,MTH,MTH 1304,ta_seed,human_gold_seed,Seed gold — replace with real TA judgments
+GOLD002,What calculator is allowed on the MTH 1304 midterm?,exam_logistics,Priya Nair,1,MTH,MTH 1304,ta_seed,human_gold_seed,
+GOLD003,I keep freezing when I start my COM 1301 speech — can someone help me privately?,emotional_stress,Sam Ortiz,1,COM,COM 1301,ta_seed,human_gold_seed,Sensitive — private route
+GOLD004,How should I organize attention getter and thesis in my persuasive speech intro?,conceptual_question,Alice Chen,1,COM,COM 1301,ta_seed,human_gold_seed,
+GOLD005,I need documentation guidance for quiz time accommodations.,accessibility_accommodation,Sam Ortiz,1,GEN,,ta_seed,human_gold_seed,
 GOLD006,"On a price ceiling below equilibrium, why is there a shortage?",conceptual_question,Bob Martinez,1,ECO,,ta_seed,human_gold_seed,
-GOLD007,"Is a formula sheet allowed on the ECO midterm?",exam_logistics,Priya Nair,1,ECO,,ta_seed,human_gold_seed,
-GOLD008,"My ENG thesis is too vague — how do I make it arguable?",conceptual_question,Alice Chen,1,ENG,,ta_seed,human_gold_seed,
-GOLD009,"When is the ENG research paper due on Canvas?",project_submission,Priya Nair,1,ENG,,ta_seed,human_gold_seed,
-GOLD010,"I am drowning in deadlines across five classes and cannot sleep.",emotional_stress,Sam Ortiz,1,GEN,,ta_seed,human_gold_seed,
-GOLD011,"Red-black deletion fixup after deleting a black leaf — which rotations?",conceptual_question,Alice Chen,1,CSC,CSC 2302,ta_seed,human_gold_seed,Keep some CSC gold for SSE demos
-GOLD012,"I think my lab grade on AVL rotations is wrong.",grading_dispute,Sam Ortiz,1,CSC,CSC 2302,ta_seed,human_gold_seed,
+GOLD007,Is a formula sheet allowed on the ECO midterm?,exam_logistics,Priya Nair,1,ECO,,ta_seed,human_gold_seed,
+GOLD008,My ENG thesis is too vague — how do I make it arguable?,conceptual_question,Alice Chen,1,ENG,,ta_seed,human_gold_seed,
+GOLD009,When is the ENG research paper due on Canvas?,project_submission,Priya Nair,1,ENG,,ta_seed,human_gold_seed,
+GOLD010,I am drowning in deadlines across five classes and cannot sleep.,emotional_stress,Sam Ortiz,1,GEN,,ta_seed,human_gold_seed,
+GOLD011,Red-black deletion fixup after deleting a black leaf — which rotations?,conceptual_question,Alice Chen,1,CSC,CSC 2302,ta_seed,human_gold_seed,Keep some CSC gold for SSE demos
+GOLD012,I think my lab grade on AVL rotations is wrong.,grading_dispute,Sam Ortiz,1,CSC,CSC 2302,ta_seed,human_gold_seed,
+GOLD013,Can someone walk me through why a red-black tree needs a double rotation after deleting a black node with one red child?,conceptual_question,Alice Chen,1,CSC,CSC 2302,curator_fyp,curated_heldout_public,Held-out; public OH theme: clarify concept before exam
+GOLD014,I understand mergesort's divide step but I keep messing up the merge indices on paper — can we do one example slowly?,conceptual_question,Bob Martinez,1,CSC,CSC 3323,curator_fyp,curated_heldout_public,
+GOLD015,"For open addressing, when do we rehash versus just probe further? I am confused about load factor thresholds.",conceptual_question,Priya Nair,1,CSC,CSC 2302,curator_fyp,curated_heldout_public,
+GOLD016,What chapters are on the CSC 2302 final and is the exam closed book?,exam_logistics,Priya Nair,1,CSC,CSC 2302,curator_fyp,curated_heldout_public,Public FAQ theme: exam logistics near finals
+GOLD017,I submitted the hashing project to Canvas but the grade shows zero — can you check if the upload failed?,grading_dispute,Sam Ortiz,1,CSC,CSC 2302,curator_fyp,curated_heldout_public,
+GOLD018,May I get a short extension on the distributed RPC lab? I was sick with a doctor's note.,project_submission,Priya Nair,1,CSC,CSC 3374,curator_fyp,curated_heldout_public,Public theme: extension with documentation
+GOLD019,I think I accidentally looked at a classmate's screen during the quiz — what should I do?,academic_integrity,Sam Ortiz,1,CSC,CSC 3323,curator_fyp,curated_heldout_public,
+GOLD020,Where are TA office hours for CSC 2302 this week and is Zoom allowed?,office_hours_access,Sam Ortiz,1,CSC,CSC 2302,curator_fyp,curated_heldout_public,Public theme: how to find OH
+GOLD021,Dynamic programming vs memoized recursion for knapsack — when is bottom-up clearer?,conceptual_question,Bob Martinez,1,CSC,CSC 3323,curator_fyp,curated_heldout_public,
+GOLD022,My pointer diagram for free-list allocators is wrong and I am stuck debugging segfaults.,conceptual_question,Sam Ortiz,1,CSC,CSC 3351,curator_fyp,curated_heldout_public,
+GOLD023,How do I choose the base case correctly when proving a closed form by induction?,conceptual_question,Alice Chen,1,MTH,MTH 1304,curator_fyp,curated_heldout_public,
+GOLD024,Is the MTH 1304 final cumulative and how much time do we get?,exam_logistics,Priya Nair,1,MTH,MTH 1304,curator_fyp,curated_heldout_public,
+GOLD025,I keep getting the wrong sign when integrating by parts — can we redo one homework problem together?,conceptual_question,Alice Chen,1,MTH,MTH 1304,curator_fyp,curated_heldout_public,
+GOLD026,I want to request a make-up for the midterm I missed due to a family emergency.,retake_request,Sam Ortiz,1,MTH,MTH 1304,curator_fyp,curated_heldout_public,Public theme: emergency make-up
+GOLD027,My quiz score looks lower than the rubric says — can we review the grading?,grading_dispute,Sam Ortiz,1,MTH,MTH 1304,curator_fyp,curated_heldout_public,
+GOLD028,How do I tighten a persuasive speech thesis so it is actually debatable?,conceptual_question,Alice Chen,1,COM,COM 1301,curator_fyp,curated_heldout_public,
+GOLD029,When is the COM 1301 final presentation slot and do we need slides uploaded first?,exam_logistics,Priya Nair,1,COM,COM 1301,curator_fyp,curated_heldout_public,
+GOLD030,I get panic attacks before public speaking — can I present privately or get another format?,emotional_stress,Sam Ortiz,1,COM,COM 1301,curator_fyp,curated_heldout_public,Public theme: anxiety / private help
+GOLD031,Do I need to cite every image on my speech slides the same way as the paper?,project_submission,Priya Nair,1,COM,COM 1301,curator_fyp,curated_heldout_public,
+GOLD032,Why does a binding price floor create a surplus — can we draw the graph step by step?,conceptual_question,Bob Martinez,1,ECO,ECO 1300,curator_fyp,curated_heldout_public,
+GOLD033,Is a formula sheet allowed on the ECO final and which chapters are included?,exam_logistics,Priya Nair,1,ECO,ECO 1300,curator_fyp,curated_heldout_public,
+GOLD034,I calculated consumer surplus wrong on HW3 — can you show where my area formula fails?,conceptual_question,Alice Chen,1,ECO,ECO 1300,curator_fyp,curated_heldout_public,
+GOLD035,The problem set deadline on Canvas seems wrong compared to the syllabus.,project_submission,Priya Nair,1,ECO,ECO 1300,curator_fyp,curated_heldout_public,
+GOLD036,How do I revise a vague thesis into a clear argumentative claim for the research paper?,conceptual_question,Alice Chen,1,ENG,ENG 2301,curator_fyp,curated_heldout_public,
+GOLD037,What is the late-policy for the ENG research paper if Canvas says one thing and the syllabus another?,project_submission,Priya Nair,1,ENG,ENG 2301,curator_fyp,curated_heldout_public,
+GOLD038,I am accused of over-quoting — how do I paraphrase without changing the meaning?,academic_integrity,Sam Ortiz,1,ENG,ENG 2301,curator_fyp,curated_heldout_public,
+GOLD039,Can I get extended time on the in-class essay with my accessibility letter?,accessibility_accommodation,Sam Ortiz,1,ENG,ENG 2301,curator_fyp,curated_heldout_public,Public theme: accommodations
+GOLD040,I am behind in five courses and cannot sleep — I do not know who to ask first.,emotional_stress,Sam Ortiz,1,GEN,,curator_fyp,curated_heldout_public,Public theme: overload / help-seeking barrier
+GOLD041,How do I book a face-to-face office-hours slot when the posted times conflict with my lab?,office_hours_access,Sam Ortiz,1,GEN,,curator_fyp,curated_heldout_public,
+GOLD042,Do I need to identify myself to ask a logistics question or can I stay anonymous?,office_hours_access,Sam Ortiz,1,GEN,,curator_fyp,curated_heldout_public,Product-relevant privacy ask
+GOLD043,I need note-taking support approved before next week's midterms — who signs the form?,accessibility_accommodation,Sam Ortiz,1,GEN,,curator_fyp,curated_heldout_public,
+GOLD044,I want to contest a plagiarism flag that I believe is a false positive from the detector.,academic_integrity,Sam Ortiz,1,GEN,,curator_fyp,curated_heldout_public,
+GOLD045,Can professors schedule one group review when many students ask the same finals question?,exam_logistics,Priya Nair,1,GEN,,curator_fyp,curated_heldout_public,Maps to product group-meeting story
+GOLD046,Why is the average-case of quicksort O(n log n) but worst-case O(n^2) with bad pivots?,conceptual_question,Bob Martinez,1,CSC,CSC 3323,curator_fyp,curated_heldout_public,
+GOLD047,"In round-robin scheduling, what happens to the ready queue when the quantum expires?",conceptual_question,Priya Nair,1,CSC,CSC 3351,curator_fyp,curated_heldout_public,
+GOLD048,I still do not get B-tree split/promotions after insert — can we do a tiny example?,conceptual_question,Alice Chen,1,CSC,CSC 2302,curator_fyp,curated_heldout_public,
+GOLD049,Is collaboration allowed on the take-home algorithms quiz or is it individual only?,academic_integrity,Sam Ortiz,1,CSC,CSC 3323,curator_fyp,curated_heldout_public,
+GOLD050,The autograder rejected my RPC client but it works locally — how do I debug the environment mismatch?,project_submission,Priya Nair,1,CSC,CSC 3374,curator_fyp,curated_heldout_public,
+GOLD051,I failed the midterm and want to know if a retake or grade replacement is possible.,retake_request,Sam Ortiz,1,CSC,CSC 2302,curator_fyp,curated_heldout_public,
+GOLD052,Can we meet online instead of in person for office hours this Friday?,office_hours_access,Sam Ortiz,1,CSC,CSC 2302,curator_fyp,curated_heldout_public,
+GOLD053,How should I structure a literature review paragraph that synthesizes two opposing sources?,conceptual_question,Alice Chen,1,ENG,ENG 2301,curator_fyp,curated_heldout_public,
+GOLD054,What is the difference between a shift in demand and a movement along the demand curve?,conceptual_question,Bob Martinez,1,ECO,ECO 1300,curator_fyp,curated_heldout_public,
+GOLD055,I lost my voice before the speech — can I submit a recorded version instead?,retake_request,Sam Ortiz,1,COM,COM 1301,curator_fyp,curated_heldout_public,
+GOLD056,Does the MTH final allow a graphing calculator or only scientific?,exam_logistics,Priya Nair,1,MTH,MTH 1304,curator_fyp,curated_heldout_public,
+GOLD057,My peer review partner never responded and the deadline is tonight — what do I submit?,project_submission,Priya Nair,1,ENG,ENG 2301,curator_fyp,curated_heldout_public,
+GOLD058,I am overwhelmed and embarrassed to ask in class — is anonymous help okay for a basic question?,emotional_stress,Sam Ortiz,1,GEN,,curator_fyp,curated_heldout_public,Help-seeking barrier theme from public OH guides
+GOLD059,"For AVL trees, after an insert that unbalances a node, how do I choose left-left vs left-right?",conceptual_question,Alice Chen,1,CSC,CSC 2302,curator_fyp,curated_heldout_public,
+GOLD060,The syllabus says office hours are by appointment but Canvas only lists a Zoom link — which is correct?,office_hours_access,Sam Ortiz,1,GEN,,curator_fyp,curated_heldout_public,
+GOLD061,Can you help me understand the concept from Tuesday's lecture on amortized analysis? I followed the start but lost the accounting method.,conceptual_question,Bob Martinez,1,CSC,CSC 3323,curator_fyp,curated_heldout_public,Iowa/OSU theme: clarify lecture concept
+GOLD062,What is the best way to prepare for the upcoming CSC 2302 final — practice trees first or hashing?,exam_logistics,Priya Nair,1,CSC,CSC 2302,curator_fyp,curated_heldout_public,Iowa theme: exam prep priorities
+GOLD063,I reviewed your feedback on my midterm and still do not see why I lost points on the induction proof.,grading_dispute,Sam Ortiz,1,MTH,MTH 1304,curator_fyp,curated_heldout_public,UNC theme: review feedback / grades
+GOLD064,Can we go step by step through one practice problem on recurrence relations before the quiz?,conceptual_question,Bob Martinez,1,CSC,CSC 3323,curator_fyp,curated_heldout_public,UNC theme: practice problems
+GOLD065,I have an accessibility letter for extended time — can we talk about how it works for the in-class quiz?,accessibility_accommodation,Sam Ortiz,1,GEN,,curator_fyp,curated_heldout_public,Iowa SDS / Berkeley DSP theme
+GOLD066,I am a student athlete traveling next week — how should I stay caught up and who do I message?,office_hours_access,Sam Ortiz,1,GEN,,curator_fyp,curated_heldout_public,Iowa special circumstances
+GOLD067,Posted office hours conflict with my lab — can we meet on Zoom by appointment instead?,office_hours_access,Sam Ortiz,1,CSC,CSC 2302,curator_fyp,curated_heldout_public,McGill/Stanford online OH theme
+GOLD068,Several of us are stuck on the same red-black deletion case — can there be one group review session?,exam_logistics,Priya Nair,1,CSC,CSC 2302,curator_fyp,curated_heldout_public,Stanford review session / product group meeting
+GOLD069,I feel stupid asking a basic COM 1301 outline question in front of everyone — can I ask quietly?,emotional_stress,Sam Ortiz,1,COM,COM 1301,curator_fyp,curated_heldout_public,OSU/Iowa myth: fear of judgment
+GOLD070,After carefully reading the syllabus I am still unsure when the ENG paper is due on Canvas.,project_submission,Priya Nair,1,ENG,ENG 2301,curator_fyp,curated_heldout_public,UNC syllabus/due dates theme
+GOLD071,Can we go over my draft thesis paragraph together before I submit the research paper?,conceptual_question,Alice Chen,1,ENG,ENG 2301,curator_fyp,curated_heldout_public,Iowa: go over paper/assignment
+GOLD072,Will there be a review session before the ECO final and who runs it?,exam_logistics,Priya Nair,1,ECO,ECO 1300,curator_fyp,curated_heldout_public,Toronto TATP / Stanford review session
+GOLD073,I want a regrade on question 3 of the midterm — what is the process and deadline?,grading_dispute,Sam Ortiz,1,CSC,CSC 3323,curator_fyp,curated_heldout_public,Toronto regrade theme
+GOLD074,I observe a religious holiday on the quiz day — how do we manage the conflict?,accessibility_accommodation,Sam Ortiz,1,GEN,,curator_fyp,curated_heldout_public,Iowa religious holiday theme
+GOLD075,Many students email the same panicked question before finals — can answers be posted once for everyone?,exam_logistics,Priya Nair,1,GEN,,curator_fyp,curated_heldout_public,Toronto finals email flood / FAQ
+GOLD076,I understand two parts of hash collision resolution but not how they connect — can we connect them?,conceptual_question,Priya Nair,1,CSC,CSC 2302,curator_fyp,curated_heldout_public,UNC specific partial-understanding prompt
+GOLD077,Is it okay to bring a classmate to office hours so we ask shared questions together?,office_hours_access,Sam Ortiz,1,GEN,,curator_fyp,curated_heldout_public,OSU: go with a classmate
+GOLD078,Can I submit anonymous questions ahead of the review session so the TA covers common stuck points?,exam_logistics,Priya Nair,1,CSC,CSC 2302,curator_fyp,curated_heldout_public,Stanford anonymous poll for review
+GOLD079,I am generally lost in the course and embarrassed — where should I start without waiting until the final?,emotional_stress,Sam Ortiz,1,GEN,,curator_fyp,curated_heldout_public,McGill/OSU: don't wait until last minute
+GOLD080,How do my SDS accommodations apply to the COM final presentation specifically?,accessibility_accommodation,Sam Ortiz,1,COM,COM 1301,curator_fyp,curated_heldout_public,Iowa accommodations in this class

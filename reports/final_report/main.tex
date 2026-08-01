@@ -136,11 +136,21 @@ Silver holdout accuracy is approximately \textbf{87.5\%}
 (\path{reports/final_report/matcher_evaluation.json}). Labels come from expertise
 overlap with the demo TA roster --- \textbf{not} independent gold TA judgments.
 
-\subsection{Human gold labels (illustrative)}
-A seed gold file ($n=12$) yields perfect Analyzer/Matcher scores in
-\path{gold_label_evaluation.json}. The artifact itself notes that seed gold is
-\textbf{illustrative} and may overlap training phrasing. Collecting $\geq 40$
-held-out TA judgments is required before claiming production agent quality
+\subsection{Held-out evaluation labels}
+The gold file has $n=80$ rows: 12 illustrative seed labels plus 68
+\textbf{curated held-out} university-style office-hours asks
+(\texttt{curated\_heldout\_public}). Asks are original AUI-framed text grounded in
+public help-seeking / office-hours guidance (McGill, Iowa, UNC, Oregon State,
+Stanford Teaching Commons, Toronto TATP) --- see
+\path{docs/research/office_hours_public_sources.md}. They are \textbf{not}
+scraped private student emails or LMS transcripts, and \textbf{not} independent
+TA judgments.
+
+On this set, Analyzer accuracy is approximately \textbf{75.0\%}
+(macro F1 $\approx 0.66$) and Matcher accuracy approximately \textbf{78.8\%}
+(macro F1 $\approx 0.78$) --- see
+\path{reports/final_report/gold_label_evaluation.json} for error samples.
+Real TA \texttt{human\_gold} labels remain the stronger future bar
 (\path{data/gold_labels/README.md}).
 
 \subsection{External LLM}
@@ -250,26 +260,32 @@ more product surface area.
 
 \appendix
 \section{Demo screenshots}
-Selected figures from the earlier seeded kiosk/dashboard demo session (full set
-in \path{demo/screenshots/}). Prefer live demos of \texttt{officehours-app}
-(:5180) for supervisors; capture a unified-app screenshot pack when possible.
+Unified product captures (\path{demo/screenshots/product-*.png}, regenerated with
+\path{demo/capture_product_screenshots.mjs}). Legacy kiosk/dashboard PNGs remain
+in the same folder for historical mid-report figures.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.92\linewidth]{../../demo/screenshots/02-student-request-form.png}
-  \caption{Legacy kiosk: privacy-preserving request submission.}
+  \includegraphics[width=0.92\linewidth]{../../demo/screenshots/product-01-login.png}
+  \caption{Unified product login (:5180).}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.85\linewidth]{../../demo/screenshots/05-recommendation-cards.png}
-  \caption{Legacy dashboard: AI-assisted recommendation cards.}
+  \includegraphics[width=0.92\linewidth]{../../demo/screenshots/product-03-ask-triage-result.png}
+  \caption{Student Quiet ask with Ask Triage feedback.}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.85\linewidth]{../../demo/screenshots/06-action-orchestration-plan.png}
-  \caption{Legacy dashboard: action plan after professor approval.}
+  \includegraphics[width=0.92\linewidth]{../../demo/screenshots/product-04-ta-help-coach.png}
+  \caption{TA workspace / Help Coach surface.}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.92\linewidth]{../../demo/screenshots/product-06-canvas-simulator.png}
+  \caption{Canvas launch simulator (unsigned demo).}
 \end{figure}
 
 \section{Reproducibility}
