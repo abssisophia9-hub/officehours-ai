@@ -1,50 +1,47 @@
 # Evaluation Survey Forms
 
-> **Note:** these templates were written for mid-report demos that used the
-> **legacy** student kiosk + professor dashboard. Prefer demos on the unified
-> product app (`:5180`) today; keep or adapt questions for Ask Triage, Help Coach,
-> dual roles, and group meetings when you run a new eval round.
+## Use this for the current product (`:5180`)
 
-This folder contains survey templates for evaluating the OfficeHours AI demo.
+**Primary pack (Google Forms + email):**  
+[`unified_product_post_demo_survey.md`](unified_product_post_demo_survey.md)
 
-> Prefer **`unified_product_post_demo_survey.md`** for new demos on `:5180`.
-> The student/professor templates below are the **legacy kiosk + dashboard**
-> instruments used in the early pilot (`survey_evaluation_summary.md`).
+That file has copy/paste questions for:
 
-## Forms
+1. Student form  
+2. TA form  
+3. Professor form  
 
-- `unified_product_post_demo_survey.md` — **current product** (Ask Triage, Help Coach, dual roles)
-- `student_post_demo_survey.md` — legacy student kiosk comfort / anonymity
-- `professor_post_demo_survey.md` — legacy professor dashboard workload / trust
+Plus an email draft for **`survey@aui.ma`**.
 
-## How to deploy
+## Legacy mid-report forms (kiosk + professor dashboard)
 
-1. Copy each template into Google Forms, Microsoft Forms, or a paper handout.
-2. Keep student survey responses anonymous.
-3. Do not collect real grades, medical details, or private student records.
-4. Run the surveys after a simulated demo, not during a real advising session.
-5. Export responses as CSV for qualitative notes and Likert-score summaries.
-6. Store pilot/demo CSV exports under `data/survey_responses/`.
-7. Summarize results with `backend/scripts/analyze_survey_responses.py`.
+- `student_post_demo_survey.md` — early kiosk pilot  
+- `professor_post_demo_survey.md` — early dashboard pilot  
 
-## Metrics supported
+Keep those as historical; prefer the unified pack for new data collection.
 
-| Evaluation metric | Survey source |
-|---|---|
-| Student comfort using anonymous request flow | Student Q3, Q6, Q8 |
-| Understanding of anonymous vs. identified submission | Student Q2, Q7 |
-| Kiosk usability | Student Q1, Q4, Q5, Q9 |
-| Faculty perceived workload reduction | Professor Q1, Q2, Q5 |
-| Recommendation usefulness | Professor Q3, Q6, Q9 |
-| Human-in-the-loop trust and risk | Professor Q4, Q7, Q8, Q10 |
+## How to deploy (unified pack)
 
-## Suggested analysis
+1. Create three Google Forms from `unified_product_post_demo_survey.md`.
+2. Email the links from `survey@aui.ma` (template in that file).
+3. Keep student responses anonymous.
+4. Do not collect real grades, medical details, or private student records.
+5. Run after a simulated / demo session, not a live advising session.
+6. Export CSVs to `data/survey_responses/`.
+7. Put averages + themes into `reports/final_report/main.tex`.
 
-- Calculate average Likert score for each closed-ended question.
-- Compare student comfort scores for anonymous vs. identified preference.
-- Summarize free-response feedback into themes:
-  - privacy/anonymity
-  - UI clarity
-  - recommendation trust
-  - missing information
-  - check-in / identity-flow concerns
+## Metrics supported (unified pack)
+
+| Metric | Form |
+| --- | --- |
+| Student comfort / anonymity / Quiet ask | Student Q1–Q3, Q8 |
+| Ask Triage clarity | Student Q4 |
+| Status privacy | Student Q5 |
+| Help-seeking intent | Student Q6 |
+| Study Agent honesty | Student Q7 |
+| TA queue / staffing loop | TA Q1–Q2 |
+| Help Coach usefulness | TA Q3 |
+| Group meetings | TA Q4, Professor Q4 |
+| Dual-role clarity | TA Q5 |
+| Professor KB control | Professor Q2 |
+| Perceived workload reduction | Professor Q5, TA Q6 |
