@@ -10,6 +10,12 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.ai.summarizer import summarize_request_cluster
+from app.models.auth import Course
+from app.models.help_room import (
+    HelpPost,
+    ReviewInsightTopicOut,
+    ReviewInsightsOut,
+)
 from app.models.knowledge import (
     ClusterCommandCenterOut,
     ClusterTopicOut,
@@ -239,6 +245,126 @@ def build_oracle_metrics(db: Session) -> dict:
 
 def is_sensitive_category(category: str | None) -> bool:
     return (category or "") in SENSITIVE_CATEGORIES
+
+
+def build_review_insights(db: Session, *, course_id: int) -> ReviewInsightsOut:
+    """Chapter / topic signals for review sessions — Quiet ask + Stuck Room, not a new corpus."""
+    course = db.get(Course, course_id)
+    course_code = course.code if course else None
+
+    request_query = db.query(Request).filter(Request.course_id == course_id)
+    requests = request_query.order_by(Request.created_at.desc()).all()
+    posts = (
+        db.query(HelpPost)
+        .filter(HelpPost.course_id == course_id)
+        .order_by(HelpPost.created_at.desc())
+        .all()
+    )
+
+    by_label: dict[str, dict] = {}
+
+    def bucket(label: str, kind: str) -> dict:
+        key = f"{kind}:{label.lower()}"
+        if key not in by_label:
+            by_label[key] = {
+                "label": label,
+                "bucket": kind,
+                "office_hours_count": 0,
+                "stuck_post_count": 0,
+                "samples": [],
+            }
+        return by_label[key]
+
+    public_requests = 0
+    for request in requests:
+        category = request.oracle_category or request.category or "uncategorized"
+        if bool(getattr(request, "sensitive", False)) or is_sensitive_category(
+            request.category
+        ) or is_sensitive_category(request.oracle_category):
+            continue
+        public_requests += 1
+        row = bucket(category.replace("_", " "), "ask_category")
+        row["office_hours_count"] += 1
+        text = (request.text or "").strip()
+        if text and text not in row["samples"] and len(row["samples"]) < 3:
+            row["samples"].append(text[:220])
+
+    for post in posts:
+        label = post.chapter or "Unspecified chapter"
+        row = bucket(label, "chapter")
+        row["stuck_post_count"] += 1
+        sample = (post.title or "").strip()
+        if sample and sample not in row["samples"] and len(row["samples"]) < 3:
+            row["samples"].append(sample[:220])
+
+    topics: list[ReviewInsightTopicOut] = []
+    for row in by_label.values():
+        oh = row["office_hours_count"]
+        stuck = row["stuck_post_count"]
+        total = oh + stuck
+        topics.append(
+            ReviewInsightTopicOut(
+                label=row["label"],
+                bucket=row["bucket"],
+                office_hours_count=oh,
+                stuck_post_count=stuck,
+                total_signal=total,
+                sample_questions=row["samples"],
+                review_hint=_review_hint(row["label"], oh, stuck),
+                emphasize=total >= 2 or oh >= 2 or stuck >= 2,
+            )
+        )
+    topics.sort(key=lambda item: (-item.total_signal, item.label.lower()))
+
+    if not topics:
+        message = (
+            "No review signals yet. Quiet asks and Stuck Room posts in this course "
+            "will group here by triage category and student-labeled chapter."
+        )
+    else:
+        hot = sum(1 for item in topics if item.emphasize)
+        message = (
+            f"{hot} topic{'s' if hot != 1 else ''} worth emphasizing in the next "
+            "review or in the explanation for the following chapter. Sensitive / "
+            "private asks stay out of this list."
+        )
+
+    return ReviewInsightsOut(
+        course_id=course_id,
+        course_code=course_code,
+        topics=topics,
+        office_hours_total=public_requests,
+        stuck_post_total=len(posts),
+        message=message,
+    )
+
+
+def _review_hint(label: str, office_hours_count: int, stuck_post_count: int) -> str:
+    if stuck_post_count >= 2 and office_hours_count >= 2:
+        return (
+            f"Both Quiet ask and Stuck Room show {label} — emphasize it in the next "
+            "review and consider a FAQ for later cohorts / related chapters."
+        )
+    if stuck_post_count >= 2:
+        return (
+            f"Classmates are posting stuck threads on {label} — walk through a simpler "
+            "approach in review; a small perspective shift is often the unlock."
+        )
+    if office_hours_count >= 3:
+        return (
+            f"{office_hours_count} office-hours asks on {label} — schedule a short "
+            "review or draft one FAQ so the next cohort does not repeat the same gap."
+        )
+    if office_hours_count >= 2:
+        return (
+            f"Repeated asks on {label} — tighten the explanation before the next "
+            "related chapter."
+        )
+    if stuck_post_count >= 1:
+        return (
+            f"Early Stuck Room signal on {label} — watch if this grows by chapter end."
+        )
+    return f"Early office-hours signal on {label} — keep watching."
 
 
 def _suggest_cluster_action(

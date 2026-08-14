@@ -5,7 +5,8 @@ This is the **packaged multi-role product** your supervisor should test:
 - one login screen
 - role detection from course membership (student / TA / professor)
 - course switcher (a user can belong to multiple courses with different roles)
-- **Ask Triage** on submit · **Help Coach** in the TA workspace · Study Agent + classmate notes
+- **Ask Triage** on submit · **Help Coach** in the TA workspace · Study Agent +
+  Stuck Room + classmate notes
 
 Legacy separate kiosk/dashboard apps remain as optional web shells only
 (**no** physical hardware path), but **this app is the product**.

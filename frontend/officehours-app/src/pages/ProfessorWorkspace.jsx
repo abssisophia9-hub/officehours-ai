@@ -35,6 +35,7 @@ export default function ProfessorWorkspace() {
   const [requests, setRequests] = useState([]);
   const [entries, setEntries] = useState([]);
   const [commandCenter, setCommandCenter] = useState(null);
+  const [reviewInsights, setReviewInsights] = useState(null);
   const [taLoad, setTaLoad] = useState(null);
   const [materialTitle, setMaterialTitle] = useState("");
   const [materialContent, setMaterialContent] = useState("");
@@ -68,7 +69,7 @@ export default function ProfessorWorkspace() {
 
   const load = useCallback(async () => {
     try {
-      const [req, kb, clusters, canvas, load] = await Promise.all([
+      const [req, kb, clusters, canvas, load, insights] = await Promise.all([
         api("/requests/", { token }),
         api(`/knowledge/?status=pending_review&course_id=${activeCourse.id}`, { token }),
         api(
@@ -77,6 +78,7 @@ export default function ProfessorWorkspace() {
         ),
         api(`/knowledge/canvas/status?course_id=${activeCourse.id}`, { token }),
         api(`/ta/load/?course_id=${activeCourse.id}`, { token }),
+        api(`/analytics/review-insights?course_id=${activeCourse.id}`, { token }),
       ]);
       setRequests(
         req.filter((item) => !item.course || item.course === activeCourse.code),
@@ -89,6 +91,7 @@ export default function ProfessorWorkspace() {
         }),
       );
       setCommandCenter(clusters);
+      setReviewInsights(insights);
       setCanvasInfo(canvas);
       setTaLoad(load);
     } catch (err) {
@@ -280,8 +283,8 @@ export default function ProfessorWorkspace() {
     <div className="fade-up">
       <h1 className="bh-page-title">Professor Dashboard</h1>
       <p className="bh-page-subtitle">
-        Group repeats, curate knowledge, and ground the study agent in your
-        Canvas materials · {activeCourse.code} — {activeCourse.title}
+        Group repeats, see what to emphasize at chapter end, and ground the study
+        agent in your Canvas materials · {activeCourse.code} — {activeCourse.title}
       </p>
 
       {error ? (
@@ -489,6 +492,69 @@ export default function ProfessorWorkspace() {
             </p>
           ) : null}
         </ul>
+      </section>
+
+      <section id="review-insights" className="bh-card scroll-mt-6">
+        <div className="bh-card-title">
+          <h2>Chapter &amp; topic review insights</h2>
+          <span className="bh-pill bh-pill-green">
+            {(reviewInsights?.topics || []).filter((topic) => topic.emphasize).length}{" "}
+            to emphasize
+          </span>
+        </div>
+        <p className="bh-card-note">
+          {reviewInsights?.message ||
+            "End-of-chapter board: Quiet ask categories plus student-labeled Stuck Room chapters — what to review and what to explain better next time."}
+        </p>
+        <p className="mt-2 text-xs text-aui-deep/65">
+          This is not a live student chat. Staff do not sit in Stuck Room;
+          samples are question titles/texts only. Sensitive asks stay out.
+        </p>
+        {(reviewInsights?.topics || []).length === 0 ? (
+          <p className="mt-3 text-sm text-aui-deep/60">
+            No signals yet for {activeCourse.code}. Once students Quiet ask or
+            post in Stuck Room, topics land here.
+          </p>
+        ) : (
+          <table className="bh-table mt-3">
+            <thead>
+              <tr>
+                <th>Topic</th>
+                <th>Source</th>
+                <th>Quiet asks</th>
+                <th>Stuck posts</th>
+                <th>Review note</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reviewInsights.topics.map((topic) => (
+                <tr key={`${topic.bucket}-${topic.label}`}>
+                  <td>
+                    <p className="font-semibold">{topic.label}</p>
+                    <ul className="mt-1 space-y-0.5 text-xs text-aui-deep/70">
+                      {topic.sample_questions.map((sample) => (
+                        <li key={sample} className="line-clamp-2">
+                          • {sample}
+                        </li>
+                      ))}
+                    </ul>
+                  </td>
+                  <td>
+                    {topic.bucket === "chapter" ? "Stuck Room chapter" : "Ask category"}
+                    {topic.emphasize ? (
+                      <span className="bh-pill bh-pill-amber ml-1">emphasize</span>
+                    ) : null}
+                  </td>
+                  <td>{topic.office_hours_count}</td>
+                  <td>{topic.stuck_post_count}</td>
+                  <td className="max-w-[22rem] text-sm text-aui-deep/80">
+                    {topic.review_hint}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
 
       <section className="bh-card">

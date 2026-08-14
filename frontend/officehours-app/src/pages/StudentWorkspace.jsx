@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Navigate } from "react-router";
 import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
+import HelpRoomFeed from "../components/HelpRoomFeed.jsx";
 import PeerNotesFeed from "../components/PeerNotesFeed.jsx";
 
 const ICONS = {
@@ -185,8 +186,8 @@ export default function StudentWorkspace() {
     <div className="fade-up">
       <h1 className="bh-page-title">Student Dashboard</h1>
       <p className="bh-page-subtitle">
-        Ask for help quietly and study from professor-approved course knowledge ·{" "}
-        {activeCourse.code} — {activeCourse.title}
+        Ask staff quietly, unlock an “aha” with classmates, or study from
+        professor-approved knowledge · {activeCourse.code} — {activeCourse.title}
       </p>
 
       <div className="bh-stats">
@@ -503,16 +504,28 @@ export default function StudentWorkspace() {
             <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
               <p className="font-semibold">No approved answer yet — seek help.</p>
               <p className="mt-1 text-xs leading-5">
-                Don&apos;t keep spinning on the agent. Use Quiet ask on the left so a
-                TA or professor can unblock you.
+                Don&apos;t keep spinning on the agent. Quiet ask a TA, or post the
+                stuck point in Stuck Room — a classmate often has the missing
+                perspective.
               </p>
-              <a href="#ask" className="btn-primary mt-3 inline-flex px-4 py-2 text-xs">
-                Go to Quiet ask
-              </a>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <a href="#ask" className="btn-primary inline-flex px-4 py-2 text-xs">
+                  Go to Quiet ask
+                </a>
+                <a href="#stuck-room" className="btn-ghost inline-flex px-4 py-2 text-xs">
+                  Open Stuck Room
+                </a>
+              </div>
             </div>
           ) : null}
         </section>
       </div>
+
+      <HelpRoomFeed
+        token={token}
+        courseId={activeCourse.id}
+        courseCode={activeCourse.code}
+      />
 
       <PeerNotesFeed
         token={token}

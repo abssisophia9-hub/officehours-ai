@@ -35,6 +35,17 @@ const ICONS = {
       <path d="M7 9h6M7 13h6M7 17h4" />
     </svg>
   ),
+  stuck: (
+    <svg className="bh-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z" />
+      <path d="M8.5 12.5h7M12 9v7" />
+    </svg>
+  ),
+  insights: (
+    <svg className="bh-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M4 19h16M7 16V9M12 16V5M17 16v-4" />
+    </svg>
+  ),
   queue: (
     <svg className="bh-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
@@ -71,6 +82,7 @@ const SECTION_NAV = {
   student: [
     { id: "ask", label: "Ask for Help", icon: "ask" },
     { id: "agent", label: "Study Agent", icon: "agent" },
+    { id: "stuck-room", label: "Stuck Room", icon: "stuck" },
     { id: "peer-notes", label: "Classmate Notes", icon: "notes" },
   ],
   ta: [
@@ -78,6 +90,7 @@ const SECTION_NAV = {
   ],
   professor: [
     { id: "clusters", label: "Repeated Topics", icon: "clusters" },
+    { id: "review-insights", label: "Review Insights", icon: "insights" },
     { id: "knowledge", label: "Knowledge Review", icon: "knowledge" },
     { id: "materials", label: "Canvas Materials", icon: "canvas" },
     { id: "requests", label: "Requests", icon: "requests" },

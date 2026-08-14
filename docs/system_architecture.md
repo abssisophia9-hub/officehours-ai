@@ -22,10 +22,10 @@ history: [`project_journey.md`](project_journey.md) · training: [`training_data
 ## Components
 
 1. **Product app** — login, course picker, student ask (identity + help mode +
-   status lookup), Study Agent, classmate notes, TA queue + Help Coach,
-   professor command center, Canvas simulator, account menu (tour / bug report)
+   status lookup), Study Agent, Stuck Room, classmate notes, TA queue + Help Coach,
+   professor command center + review insights, Canvas simulator, account menu
 2. **Backend API** — auth, requests, Ask Triage pipeline, Help Coach, clustering,
-   knowledge, peer notes, Canvas launch/sync, TA roster/staffing, analytics,
+   knowledge, peer notes, help-room, Canvas launch/sync, TA roster/staffing, analytics,
    action plans / group meetings, feedback, `.ics`
 3. **Ask Triage AI (custom-trained)** — Analyzer / Matcher / Synthesizer at
    intake (implementation: `oracle_service.py` / `oracle_*` fields)

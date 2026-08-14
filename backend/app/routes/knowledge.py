@@ -21,6 +21,7 @@ from app.models.agent_metrics import (
     GoldLabelOut,
     KbHitRateReport,
 )
+from app.models.help_room import ReviewInsightsOut
 from app.models.knowledge import (
     AgentAskRequest,
     AgentAskResponse,
@@ -49,6 +50,7 @@ from app.services.analytics_service import (
     build_cluster_command_center,
     build_escalation_feed,
     build_oracle_metrics,
+    build_review_insights,
     build_struggle_heatmap,
 )
 from app.services.canvas_service import canvas_status, sync_course_materials
@@ -390,3 +392,14 @@ def lifetime_confusion(db: Session = Depends(get_db), limit: int = Query(default
             "most this semester. Professor curation remains the gate."
         ),
     }
+
+
+@router.get("/analytics/review-insights", response_model=ReviewInsightsOut)
+def review_insights(
+    course_id: int = Query(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Professor chapter/topic review board from Quiet asks + Stuck Room posts."""
+    require_course_role(db, user, course_id, roles={"professor"})
+    return build_review_insights(db, course_id=course_id)

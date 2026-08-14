@@ -53,12 +53,14 @@ Dual-TA sections (primary + backup Matcher): CSC 2302 (Alice/Bob), CSC 3323
 
 1. Run `./scripts/run_product.sh` (or start backend + `officehours-app`)
 2. Open **http://127.0.0.1:5180**
-3. Sign in as student → **Quiet ask** or **Identify me** → pick message / face-to-face / online
+3. Sign in as student → **Quiet ask** or **Identify me** → pick message / face-to-face / online;
+   optionally post in **Stuck Room** and mark a classmate reply “this unlocked it”
 4. Sign in as Alice (`a.chen@aui.ma`) → TA queue filters **Assigned to me** /
    **I'm backup** / **All** → switch course picker to a **student** course
 5. Sign in as professor (`a.benali@aui.ma`) → **TA load** panel + command center:
    - dual-TA primary/backup counts
    - repeated topic clusters (group review vs FAQ)
+   - **Review insights** (chapter / ask-category board for the next review session)
    - urgent/sensitive flags
    - **Sync Canvas materials into KB** (or paste slides)
    - approve pending FAQ/KB drafts
@@ -115,6 +117,37 @@ KB stays separate.
 
 API: `GET|POST /peer-notes/`, like/comment/download under `/peer-notes/{id}/…`
 (auth + course membership required).
+
+## Stuck Room (classmate help threads)
+
+A **Reddit-style live chat is the wrong shape** for a course: integrity risk,
+moderation load, and it overlaps Quiet ask + classmate notes. Stuck Room is
+instead a **course-scoped thread**:
+
+1. Student posts what they are stuck on (optional chapter label, optional
+   “Classmate” anonymity)
+2. Classmates reply with a simpler approach or missing perspective — not the
+   homework write-up
+3. Unique **“this unlocked it”** marks (no self-votes) become **helpful points**
+   and a course rank
+4. Grades, integrity, and crises are blocked → use **Quiet ask**
+
+Staff (TA/professor) **do not read the social room**. Professors get aggregated
+**review insights** instead.
+
+API: `GET|POST /help-room/`, replies + helpful marks, `GET /help-room/ranks/`.
+
+## Review insights (professor chapter board)
+
+`GET /analytics/review-insights?course_id=` (professor auth) groups:
+
+- Quiet ask / office-hours questions by Analyzer category (sensitive excluded)
+- Stuck Room posts by student-labeled chapter
+
+Each topic shows counts, sample question titles, and a **review hint** (emphasize
+in the next session, tighten the explanation for the next cohort / related
+chapter). This reuses the existing question corpus — it is not a second empty
+database.
 
 ## TA staffing loop
 

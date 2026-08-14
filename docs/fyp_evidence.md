@@ -19,8 +19,10 @@ overload** and **improve student comfort** seeking academic help during finals?
 | Professor remains the Study Agent publication gate | KB `pending_review` → approve → `/agent/ask` |
 | TA staffing + Help Coach mid-session | `/ta/claim/`, `/ta/assist/` |
 | Privacy-preserving Quiet ask + request-code status | student workspace, `GET /requests/{id}/status` |
+| Stuck Room classmate threads + helpful-point ranks | `/help-room/`, students only; not a staff chat |
+| Professor chapter/topic review insights | `GET /analytics/review-insights` (asks + stuck posts) |
 | Canvas is the intended community enrollment path | `/canvas/launch` **simulator** (unsigned demo) |
-| Automated regression | ~118 backend pytest cases + CI builds |
+| Automated regression | ~123 backend pytest cases + CI builds |
 
 ## Metric honesty (read before citing)
 

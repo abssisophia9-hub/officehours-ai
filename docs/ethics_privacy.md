@@ -6,6 +6,9 @@
 - **Professor stays in control of published answers** — Study Agent only reads **approved** KB; AI does not auto-change grades or publish FAQ without review
 - **Data minimization** — store only what's needed for triage; student ID is
   optional and only kept when the student chooses identified submission
+- **Stuck Room is classmates, not staff surveillance** — professors see
+  aggregated chapter/topic insights, not a live student chat; grades/integrity/
+  crises are blocked from the room and sent to Quiet ask
 
 ## Risks
 - Misclassification leading to a student's urgent request being deprioritized

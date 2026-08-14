@@ -87,6 +87,15 @@ Vocabulary: [`glossary.md`](glossary.md).
 | **Classmate notes** | Peer upload/like/comment/download under Study Agent (not agent training) |
 | **Account menu** | Tour, report bug/issue (`POST /feedback/bugs`), log out |
 
+### Phase 8 — Stuck Room + professor review insights
+
+| Decision / feature | What we shipped |
+| --- | --- |
+| **Not a Reddit chat** | Course-scoped stuck threads; no live chat, no homework dumps |
+| **Helpful points** | Unique “this unlocked it” marks on replies (no self-votes) → ranks |
+| **Staff stay out of the room** | Students post/reply; professors get `GET /analytics/review-insights` |
+| **Review insights** | Quiet-ask categories + Stuck Room chapters → emphasize in review / next cohort |
+
 ---
 
 ## How campus enrollment works (production recommendation)

@@ -7,9 +7,9 @@ say `oracle_*` are noted where they differ.
 
 | Role | Who | Workspace |
 | --- | --- | --- |
-| **Student** | Enrolled learner | Ask · Study Agent · classmate notes · status lookup |
+| **Student** | Enrolled learner | Ask · Study Agent · Stuck Room · classmate notes · status lookup |
 | **TA** | Course teaching assistant | Queue · Help Coach · staffing · optional group meeting |
-| **Professor** | Course instructor | Clusters · KB gate · Canvas sync · group meetings · metrics |
+| **Professor** | Course instructor | Clusters · **review insights** · KB gate · Canvas sync · group meetings · metrics |
 
 The same login can be TA in one course and student in another.
 
@@ -38,6 +38,8 @@ The same login can be TA in one course and student in another.
 | **Similar badge / Help Coach** | TA | Cue to help as a group |
 | **Shared group meeting** | TA or professor | One title + when + place on **all** linked request statuses |
 | **FAQ / KB approve** | Professor | Later students get the answer via Study Agent |
+| **Stuck Room** | Students (course-scoped) | Thread: “what I’m stuck on” + classmate perspectives. Helpful marks (not likes) rank helpers. Staff do not sit in the room. |
+| **Review insights** | Professor | End-of-chapter board from Quiet ask categories + Stuck Room chapter labels — what to emphasize in review / next cohort. |
 
 ## Status (student)
 
