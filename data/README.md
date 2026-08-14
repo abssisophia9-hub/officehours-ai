@@ -45,12 +45,13 @@ production data.
 
 ## `survey_responses/`
 
-Pilot demo survey CSV exports used for final-report evaluation:
+**Legacy** kiosk/dashboard pilot CSVs already used in the final report.
+No new survey collection is required before the capstone presentation.
 
-- `student_responses.csv` — student post-demo Likert + free-text responses
-- `professor_responses.csv` — professor post-demo Likert + free-text responses
+- `student_responses.csv` — student post-demo Likert + free-text (historical)
+- `professor_responses.csv` — professor post-demo Likert + free-text (historical)
 
-Summarize with `backend/scripts/analyze_survey_responses.py`.
+Optional summarize: `backend/scripts/analyze_survey_responses.py`.
 
 ## `labeled_requests*.csv` / Matcher / Synthesizer banks
 

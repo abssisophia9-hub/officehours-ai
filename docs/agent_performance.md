@@ -36,7 +36,7 @@ No prompted Claude on the default path. Models live in `backend/models/*.joblib`
 | Submit gold | `POST /analytics/gold-labels` | Stored in DB; `--include-db` on eval |
 | **KB hit-rate** | `GET /analytics/kb-hit-rate` | Per-course hits vs seek-help |
 | Golden smoke | `tests/test_agent_quality.py` | CSC + multi-dept behavior locks |
-| Human surveys | `docs/evaluation_plan.md` / `docs/surveys/` | Comfort / workload |
+| Human surveys | `docs/surveys/` | Optional / legacy pilot only — not a capstone gate |
 
 ```bash
 # Gold-label evaluation (from backend/)

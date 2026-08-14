@@ -14,6 +14,6 @@
 | [`fyp_evidence.md`](fyp_evidence.md) | Defense claims / metric honesty |
 | [`research/office_hours_public_sources.md`](research/office_hours_public_sources.md) | Public uni OH research → gold themes |
 | [`proposal.md`](proposal.md) | Original FYP proposal |
-| [`surveys/`](surveys/) | Survey templates (unified + legacy pilots) |
+| [`surveys/`](surveys/) | Optional templates; **not** a capstone collection task |
 
 Diagrams: [`../diagrams/`](../diagrams/). Cloud operators: [`../AGENTS.md`](../AGENTS.md).
