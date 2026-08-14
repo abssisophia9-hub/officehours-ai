@@ -21,7 +21,7 @@ from app.models.agent_metrics import (
     GoldLabelOut,
     KbHitRateReport,
 )
-from app.models.help_room import ReviewInsightsOut
+from app.models.help_room import InsightFaqRequest, ReviewInsightsOut, ReviewTopicNoteUpdate
 from app.models.knowledge import (
     AgentAskRequest,
     AgentAskResponse,
@@ -52,12 +52,14 @@ from app.services.analytics_service import (
     build_oracle_metrics,
     build_review_insights,
     build_struggle_heatmap,
+    upsert_review_topic_note,
 )
 from app.services.canvas_service import canvas_status, sync_course_materials
 from app.services.kb_agent_service import answer_from_knowledge_base
 from app.services.material_extract import extract_material_text
 from app.services.knowledge_service import (
     create_faq_from_cluster,
+    create_faq_from_insight,
     ingest_course_material,
     list_entries,
     to_out,
@@ -403,3 +405,54 @@ def review_insights(
     """Professor chapter/topic review board from Quiet asks + Stuck Room posts."""
     require_course_role(db, user, course_id, roles={"professor"})
     return build_review_insights(db, course_id=course_id)
+
+
+@router.patch("/analytics/review-insights", response_model=ReviewInsightsOut)
+def update_review_insight_note(
+    payload: ReviewTopicNoteUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    require_course_role(db, user, payload.course_id, roles={"professor"})
+    upsert_review_topic_note(
+        db,
+        course_id=payload.course_id,
+        topic_key=payload.topic_key,
+        review_status=payload.review_status,
+        next_cohort_note=payload.next_cohort_note,
+    )
+    return build_review_insights(db, course_id=payload.course_id)
+
+
+@router.post(
+    "/knowledge/from-insight",
+    response_model=KnowledgeEntryOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def faq_from_insight(
+    payload: InsightFaqRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    require_course_role(db, user, payload.course_id, roles={"professor"})
+    entry = create_faq_from_insight(
+        db,
+        course_id=payload.course_id,
+        topic_key=payload.topic_key,
+    )
+    if entry is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No questions found for that review topic.",
+        )
+    out = to_out(entry)
+    await hub.broadcast(
+        "knowledge.created",
+        {
+            "id": out.id,
+            "status": out.status,
+            "source_request_id": out.source_request_id,
+            "cluster_id": out.cluster_id,
+        },
+    )
+    return out

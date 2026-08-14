@@ -59,6 +59,43 @@ class HelpfulMark(Base):
     )
 
 
+class HelpReachOut(Base):
+    """Identified handshake after an aha — not a chat, not staff-visible."""
+
+    __tablename__ = "help_reach_outs"
+    __table_args__ = (
+        UniqueConstraint("reply_id", "from_user_id", name="uq_help_reach_out"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    course_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    reply_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    from_user_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    to_user_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    note: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow
+    )
+
+
+class ReviewTopicNote(Base):
+    """Professor annotation on a review-insight topic (covered / next cohort)."""
+
+    __tablename__ = "review_topic_notes"
+    __table_args__ = (
+        UniqueConstraint("course_id", "topic_key", name="uq_review_topic_note"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    course_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    topic_key: Mapped[str] = mapped_column(String, nullable=False)
+    review_status: Mapped[str] = mapped_column(String, nullable=False, default="watch")
+    next_cohort_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow
+    )
+
+
 class HelpPostCreate(BaseModel):
     course_id: int = Field(ge=1)
     title: str = Field(min_length=1, max_length=200)
@@ -82,6 +119,8 @@ class HelpReplyOut(BaseModel):
     is_mine: bool = False
     helpful_count: int = 0
     marked_helpful_by_me: bool = False
+    reachable: bool = False
+    reached_out_by_me: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -97,6 +136,7 @@ class HelpPostOut(BaseModel):
     created_at: datetime
     is_mine: bool = False
     reply_count: int = 0
+    similar_chapter_count: int = 0
     replies: list[HelpReplyOut] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
@@ -106,6 +146,30 @@ class HelpfulMarkOut(BaseModel):
     reply_id: int
     marked: bool
     helpful_count: int
+    reachable: bool = False
+    reached_out_by_me: bool = False
+
+
+class HelpReachOutCreate(BaseModel):
+    note: str = Field(
+        default="Your perspective unlocked it for me — thanks. If you're open to it, I'd like to compare notes.",
+        min_length=1,
+        max_length=500,
+    )
+
+
+class HelpReachOutOut(BaseModel):
+    id: int
+    course_id: int
+    reply_id: int
+    post_title: str
+    note: str
+    from_display: str
+    to_display: str
+    is_incoming: bool
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class HelpRankOut(BaseModel):
@@ -116,15 +180,29 @@ class HelpRankOut(BaseModel):
     reply_count: int
 
 
+class ReviewInsightQuestionOut(BaseModel):
+    source: str
+    text: str
+    request_id: int | None = None
+    cluster_id: int | None = None
+    stuck_post_id: int | None = None
+
+
 class ReviewInsightTopicOut(BaseModel):
+    topic_key: str
     label: str
     bucket: str
     office_hours_count: int = 0
     stuck_post_count: int = 0
     total_signal: int = 0
     sample_questions: list[str] = Field(default_factory=list)
+    questions: list[ReviewInsightQuestionOut] = Field(default_factory=list)
+    request_ids: list[int] = Field(default_factory=list)
+    cluster_id: int | None = None
     review_hint: str
     emphasize: bool = False
+    review_status: str = "watch"
+    next_cohort_note: str | None = None
 
 
 class ReviewInsightsOut(BaseModel):
@@ -134,3 +212,15 @@ class ReviewInsightsOut(BaseModel):
     office_hours_total: int = 0
     stuck_post_total: int = 0
     message: str
+
+
+class ReviewTopicNoteUpdate(BaseModel):
+    course_id: int = Field(ge=1)
+    topic_key: str = Field(min_length=1, max_length=200)
+    review_status: str = Field(default="watch", max_length=20)
+    next_cohort_note: str | None = Field(default=None, max_length=2000)
+
+
+class InsightFaqRequest(BaseModel):
+    course_id: int = Field(ge=1)
+    topic_key: str = Field(min_length=1, max_length=200)

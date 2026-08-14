@@ -38,8 +38,8 @@ The same login can be TA in one course and student in another.
 | **Similar badge / Help Coach** | TA | Cue to help as a group |
 | **Shared group meeting** | TA or professor | One title + when + place on **all** linked request statuses |
 | **FAQ / KB approve** | Professor | Later students get the answer via Study Agent |
-| **Stuck Room** | Students (course-scoped) | Thread: “what I’m stuck on” + classmate perspectives. Helpful marks (not likes) rank helpers. Staff do not sit in the room. |
-| **Review insights** | Professor | End-of-chapter board from Quiet ask categories + Stuck Room chapter labels — what to emphasize in review / next cohort. |
+| **Stuck Room** | Students (course-scoped) | Thread: “what I’m stuck on” + classmate perspectives. Helpful marks rank helpers. After an aha, optional named compare-notes handshake. Staff do not sit in the room. |
+| **Review insights** | Professor | End-of-chapter question board from Quiet asks + Stuck Room chapters — emphasize / cover / draft FAQ / next-cohort note. |
 
 ## Status (student)
 

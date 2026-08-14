@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 
 from fastapi import HTTPException, status
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.models.auth import User
@@ -15,6 +15,8 @@ from app.models.help_room import (
     HelpPost,
     HelpPostOut,
     HelpRankOut,
+    HelpReachOut,
+    HelpReachOutOut,
     HelpReply,
     HelpReplyOut,
 )
@@ -131,6 +133,20 @@ def serialize_reply(db: Session, reply: HelpReply, viewer: User) -> HelpReplyOut
         .first()
         is not None
     )
+    reached = (
+        db.query(HelpReachOut)
+        .filter(
+            HelpReachOut.reply_id == reply.id,
+            HelpReachOut.from_user_id == viewer.id,
+        )
+        .first()
+        is not None
+    )
+    reachable = (
+        (not reply.anonymous)
+        and reply.author_user_id != viewer.id
+        and marked
+    )
     return HelpReplyOut(
         id=reply.id,
         post_id=reply.post_id,
@@ -141,6 +157,8 @@ def serialize_reply(db: Session, reply: HelpReply, viewer: User) -> HelpReplyOut
         is_mine=reply.author_user_id == viewer.id,
         helpful_count=helpful_count,
         marked_helpful_by_me=marked,
+        reachable=reachable,
+        reached_out_by_me=reached,
     )
 
 
@@ -160,6 +178,17 @@ def serialize_post(
     replies: list[HelpReplyOut] = []
     if include_replies:
         replies = [serialize_reply(db, row, viewer) for row in replies_query.limit(100).all()]
+    similar = 0
+    if post.chapter:
+        similar = (
+            db.query(HelpPost)
+            .filter(
+                HelpPost.course_id == post.course_id,
+                HelpPost.chapter == post.chapter,
+                HelpPost.id != post.id,
+            )
+            .count()
+        )
     return HelpPostOut(
         id=post.id,
         course_id=post.course_id,
@@ -171,6 +200,7 @@ def serialize_post(
         created_at=post.created_at,
         is_mine=post.author_user_id == viewer.id,
         reply_count=reply_count,
+        similar_chapter_count=similar,
         replies=replies,
     )
 
@@ -225,7 +255,22 @@ def toggle_helpful(db: Session, *, reply: HelpReply, user: User) -> HelpfulMarkO
         db.commit()
         marked = True
     count = db.query(HelpfulMark).filter(HelpfulMark.reply_id == reply.id).count()
-    return HelpfulMarkOut(reply_id=reply.id, marked=marked, helpful_count=count)
+    reached = (
+        db.query(HelpReachOut)
+        .filter(
+            HelpReachOut.reply_id == reply.id,
+            HelpReachOut.from_user_id == user.id,
+        )
+        .first()
+        is not None
+    )
+    return HelpfulMarkOut(
+        reply_id=reply.id,
+        marked=marked,
+        helpful_count=count,
+        reachable=(not reply.anonymous) and marked,
+        reached_out_by_me=reached,
+    )
 
 
 def get_reply(db: Session, reply_id: int) -> HelpReply:
@@ -273,6 +318,123 @@ def list_ranks(db: Session, *, course_id: int, limit: int = 15) -> list[HelpRank
     return out
 
 
+def create_reach_out(
+    db: Session,
+    *,
+    reply: HelpReply,
+    post: HelpPost,
+    user: User,
+    note: str,
+) -> HelpReachOut:
+    if reply.author_user_id == user.id:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="You cannot reach out to your own reply.",
+        )
+    if reply.anonymous:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                "This classmate posted quietly. You can still mark the aha, "
+                "but they stay unnamed."
+            ),
+        )
+    marked = (
+        db.query(HelpfulMark)
+        .filter(
+            HelpfulMark.reply_id == reply.id,
+            HelpfulMark.rater_user_id == user.id,
+        )
+        .first()
+    )
+    if marked is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Mark “this unlocked it” first — reach-out is for a real aha, not cold DMs.",
+        )
+    existing = (
+        db.query(HelpReachOut)
+        .filter(
+            HelpReachOut.reply_id == reply.id,
+            HelpReachOut.from_user_id == user.id,
+        )
+        .one_or_none()
+    )
+    text = (note or "").strip()[:500]
+    if not text:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Add a short thanks / compare-notes note.",
+        )
+    if existing:
+        existing.note = text
+        db.commit()
+        db.refresh(existing)
+        return existing
+    row = HelpReachOut(
+        course_id=post.course_id,
+        reply_id=reply.id,
+        from_user_id=user.id,
+        to_user_id=reply.author_user_id,
+        note=text,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def serialize_reach_out(
+    db: Session, row: HelpReachOut, viewer: User
+) -> HelpReachOutOut:
+    post_title = "Stuck Room"
+    reply = db.get(HelpReply, row.reply_id)
+    if reply is not None:
+        post = db.get(HelpPost, reply.post_id)
+        if post is not None:
+            post_title = post.title
+    from_user = db.get(User, row.from_user_id)
+    to_user = db.get(User, row.to_user_id)
+    return HelpReachOutOut(
+        id=row.id,
+        course_id=row.course_id,
+        reply_id=row.reply_id,
+        post_title=post_title,
+        note=row.note,
+        from_display=(
+            (from_user.display_name if from_user else None)
+            or (from_user.email if from_user else None)
+            or "Classmate"
+        ),
+        to_display=(
+            (to_user.display_name if to_user else None)
+            or (to_user.email if to_user else None)
+            or "Classmate"
+        ),
+        is_incoming=row.to_user_id == viewer.id,
+        created_at=row.created_at,
+    )
+
+
+def list_reach_outs(
+    db: Session, *, course_id: int, viewer: User
+) -> list[HelpReachOutOut]:
+    rows = (
+        db.query(HelpReachOut)
+        .filter(
+            HelpReachOut.course_id == course_id,
+            or_(
+                HelpReachOut.to_user_id == viewer.id,
+                HelpReachOut.from_user_id == viewer.id,
+            ),
+        )
+        .order_by(HelpReachOut.created_at.desc(), HelpReachOut.id.desc())
+        .limit(40)
+        .all()
+    )
+    return [serialize_reach_out(db, row, viewer) for row in rows]
+
+
 def delete_own_post(db: Session, *, post: HelpPost, user: User) -> None:
     if post.author_user_id != user.id:
         raise HTTPException(
@@ -284,6 +446,9 @@ def delete_own_post(db: Session, *, post: HelpPost, user: User) -> None:
         for row in db.query(HelpReply.id).filter(HelpReply.post_id == post.id).all()
     ]
     if reply_ids:
+        db.query(HelpReachOut).filter(HelpReachOut.reply_id.in_(reply_ids)).delete(
+            synchronize_session=False
+        )
         db.query(HelpfulMark).filter(HelpfulMark.reply_id.in_(reply_ids)).delete(
             synchronize_session=False
         )

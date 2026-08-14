@@ -44,6 +44,9 @@ export default function ProfessorWorkspace() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [meetingDrafts, setMeetingDrafts] = useState({});
+  const [insightFilter, setInsightFilter] = useState("all");
+  const [openInsight, setOpenInsight] = useState(null);
+  const [cohortNotes, setCohortNotes] = useState({});
   const fileInputRef = useRef(null);
 
   function meetingDraft(clusterId) {
@@ -92,6 +95,15 @@ export default function ProfessorWorkspace() {
       );
       setCommandCenter(clusters);
       setReviewInsights(insights);
+      setCohortNotes((prev) => {
+        const next = { ...prev };
+        for (const topic of insights.topics || []) {
+          if (next[topic.topic_key] === undefined) {
+            next[topic.topic_key] = topic.next_cohort_note || "";
+          }
+        }
+        return next;
+      });
       setCanvasInfo(canvas);
       setTaLoad(load);
     } catch (err) {
@@ -139,6 +151,79 @@ export default function ProfessorWorkspace() {
         },
       });
       setMessage(`FAQ draft #${entry.id} created for cluster ${cluster.cluster_id}`);
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function setInsightStatus(topic, reviewStatus) {
+    setBusy(true);
+    setError("");
+    try {
+      const updated = await api("/analytics/review-insights", {
+        method: "PATCH",
+        token,
+        body: {
+          course_id: activeCourse.id,
+          topic_key: topic.topic_key,
+          review_status: reviewStatus,
+          next_cohort_note: cohortNotes[topic.topic_key] ?? topic.next_cohort_note ?? "",
+        },
+      });
+      setReviewInsights(updated);
+      setMessage(
+        reviewStatus === "covered"
+          ? `Marked ${topic.label} covered for this review`
+          : reviewStatus === "emphasize"
+            ? `Will emphasize ${topic.label} in review`
+            : `Watching ${topic.label}`,
+      );
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveCohortNote(topic) {
+    setBusy(true);
+    setError("");
+    try {
+      const updated = await api("/analytics/review-insights", {
+        method: "PATCH",
+        token,
+        body: {
+          course_id: activeCourse.id,
+          topic_key: topic.topic_key,
+          review_status: topic.review_status || "watch",
+          next_cohort_note: (cohortNotes[topic.topic_key] || "").trim(),
+        },
+      });
+      setReviewInsights(updated);
+      setMessage(`Saved next-cohort note for ${topic.label}`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function draftInsightFaq(topic) {
+    setBusy(true);
+    setError("");
+    try {
+      const entry = await api("/knowledge/from-insight", {
+        method: "POST",
+        token,
+        body: {
+          course_id: activeCourse.id,
+          topic_key: topic.topic_key,
+        },
+      });
+      setMessage(`FAQ draft #${entry.id} created from “${topic.label}” for the next cohort`);
       await load();
     } catch (err) {
       setError(err.message);
@@ -498,62 +583,175 @@ export default function ProfessorWorkspace() {
         <div className="bh-card-title">
           <h2>Chapter &amp; topic review insights</h2>
           <span className="bh-pill bh-pill-green">
-            {(reviewInsights?.topics || []).filter((topic) => topic.emphasize).length}{" "}
+            {(reviewInsights?.topics || []).filter(
+              (topic) => topic.review_status === "emphasize" || topic.emphasize,
+            ).length}{" "}
             to emphasize
           </span>
         </div>
         <p className="bh-card-note">
           {reviewInsights?.message ||
-            "End-of-chapter board: Quiet ask categories plus student-labeled Stuck Room chapters — what to review and what to explain better next time."}
+            "End-of-chapter board: Quiet ask questions plus Stuck Room chapters — what to review now and what to explain better for the next cohort."}
         </p>
         <p className="mt-2 text-xs text-aui-deep/65">
-          This is not a live student chat. Staff do not sit in Stuck Room;
-          samples are question titles/texts only. Sensitive asks stay out.
+          Staff do not sit in Stuck Room. Mark a topic covered after review, or
+          draft a FAQ so coming students get a tighter explanation.
         </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {[
+            { id: "all", label: "All" },
+            { id: "chapter", label: "Stuck Room chapters" },
+            { id: "ask_category", label: "Ask categories" },
+            { id: "emphasize", label: "Emphasize" },
+            { id: "covered", label: "Covered" },
+          ].map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              className={`btn-ghost px-3 py-1.5 text-xs ${
+                insightFilter === option.id ? "border-aui-forest text-aui-forest" : ""
+              }`}
+              onClick={() => setInsightFilter(option.id)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
         {(reviewInsights?.topics || []).length === 0 ? (
           <p className="mt-3 text-sm text-aui-deep/60">
             No signals yet for {activeCourse.code}. Once students Quiet ask or
             post in Stuck Room, topics land here.
           </p>
         ) : (
-          <table className="bh-table mt-3">
-            <thead>
-              <tr>
-                <th>Topic</th>
-                <th>Source</th>
-                <th>Quiet asks</th>
-                <th>Stuck posts</th>
-                <th>Review note</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reviewInsights.topics.map((topic) => (
-                <tr key={`${topic.bucket}-${topic.label}`}>
-                  <td>
-                    <p className="font-semibold">{topic.label}</p>
-                    <ul className="mt-1 space-y-0.5 text-xs text-aui-deep/70">
-                      {topic.sample_questions.map((sample) => (
+          <ul className="mt-4 space-y-3">
+            {(reviewInsights.topics || [])
+              .filter((topic) => {
+                if (insightFilter === "all") return true;
+                if (insightFilter === "chapter" || insightFilter === "ask_category") {
+                  return topic.bucket === insightFilter;
+                }
+                return topic.review_status === insightFilter;
+              })
+              .map((topic) => (
+                <li
+                  key={topic.topic_key}
+                  className="rounded-xl border border-[#e3e8e4] bg-[#fafcfa] px-4 py-4"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold text-aui-deep/55">
+                        {topic.bucket === "chapter"
+                          ? "Stuck Room chapter"
+                          : "Ask category"}{" "}
+                        · {topic.office_hours_count} Quiet asks ·{" "}
+                        {topic.stuck_post_count} stuck posts
+                      </p>
+                      <h3 className="font-display mt-1 text-lg font-semibold">
+                        {topic.label}
+                      </h3>
+                      <p className="mt-1 text-sm text-aui-deep/75">{topic.review_hint}</p>
+                      {topic.review_status === "covered" ? (
+                        <span className="bh-pill bh-pill-green mt-2 inline-block">
+                          covered
+                        </span>
+                      ) : topic.review_status === "emphasize" || topic.emphasize ? (
+                        <span className="bh-pill bh-pill-amber mt-2 inline-block">
+                          emphasize
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="btn-ghost px-3 py-1.5 text-xs"
+                        onClick={() =>
+                          setOpenInsight(
+                            openInsight === topic.topic_key ? null : topic.topic_key,
+                          )
+                        }
+                      >
+                        {openInsight === topic.topic_key ? "Hide questions" : "Open question board"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className="btn-ghost px-3 py-1.5 text-xs"
+                        onClick={() => setInsightStatus(topic, "emphasize")}
+                      >
+                        Emphasize in review
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className="btn-ghost px-3 py-1.5 text-xs"
+                        onClick={() => setInsightStatus(topic, "covered")}
+                      >
+                        Mark covered
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className="btn-primary px-3 py-1.5 text-xs"
+                        onClick={() => draftInsightFaq(topic)}
+                      >
+                        Draft FAQ for next cohort
+                      </button>
+                    </div>
+                  </div>
+                  {openInsight === topic.topic_key ? (
+                    <div className="mt-3 space-y-3 rounded-xl border border-aui-forest/20 bg-white p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-aui-deep/55">
+                        Asked questions
+                      </p>
+                      <ul className="space-y-1.5 text-sm text-aui-deep/85">
+                        {(topic.questions || []).length === 0 ? (
+                          <li>No stored questions for this topic.</li>
+                        ) : (
+                          (topic.questions || []).map((question, index) => (
+                            <li key={`${question.source}-${question.request_id || question.stuck_post_id || index}`}>
+                              <span className="bh-pill bh-pill-gray mr-1">
+                                {question.source === "stuck_room" ? "Stuck Room" : "Quiet ask"}
+                              </span>
+                              {question.text}
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wide text-aui-deep/55">
+                        Note for coming students / related chapters
+                        <textarea
+                          className="field-glass mt-1 min-h-16 w-full px-3 py-2 text-sm font-normal normal-case tracking-normal"
+                          placeholder="What to explain differently next time…"
+                          value={cohortNotes[topic.topic_key] ?? topic.next_cohort_note ?? ""}
+                          onChange={(event) =>
+                            setCohortNotes((prev) => ({
+                              ...prev,
+                              [topic.topic_key]: event.target.value,
+                            }))
+                          }
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className="btn-ghost px-3 py-1.5 text-xs"
+                        onClick={() => saveCohortNote(topic)}
+                      >
+                        Save note
+                      </button>
+                    </div>
+                  ) : (
+                    <ul className="mt-3 space-y-1 text-sm text-aui-deep/80">
+                      {(topic.sample_questions || []).map((sample) => (
                         <li key={sample} className="line-clamp-2">
                           • {sample}
                         </li>
                       ))}
                     </ul>
-                  </td>
-                  <td>
-                    {topic.bucket === "chapter" ? "Stuck Room chapter" : "Ask category"}
-                    {topic.emphasize ? (
-                      <span className="bh-pill bh-pill-amber ml-1">emphasize</span>
-                    ) : null}
-                  </td>
-                  <td>{topic.office_hours_count}</td>
-                  <td>{topic.stuck_post_count}</td>
-                  <td className="max-w-[22rem] text-sm text-aui-deep/80">
-                    {topic.review_hint}
-                  </td>
-                </tr>
+                  )}
+                </li>
               ))}
-            </tbody>
-          </table>
+          </ul>
         )}
       </section>
 

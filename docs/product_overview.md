@@ -130,12 +130,17 @@ instead a **course-scoped thread**:
    homework write-up
 3. Unique **“this unlocked it”** marks (no self-votes) become **helpful points**
    and a course rank
-4. Grades, integrity, and crises are blocked → use **Quiet ask**
+4. Unique **“this unlocked it”** marks (no self-votes) become **helpful points**
+   and a course rank
+5. After an aha, an identified helper can get a **compare-notes handshake**
+   (named, not a chat; staff never see it). Quiet replies stay unnamed.
+6. Grades, integrity, and crises are blocked → use **Quiet ask**
 
 Staff (TA/professor) **do not read the social room**. Professors get aggregated
 **review insights** instead.
 
-API: `GET|POST /help-room/`, replies + helpful marks, `GET /help-room/ranks/`.
+API: `GET|POST /help-room/`, replies + helpful marks, reach-outs,
+`GET /help-room/ranks/`.
 
 ## Review insights (professor chapter board)
 
@@ -144,10 +149,13 @@ API: `GET|POST /help-room/`, replies + helpful marks, `GET /help-room/ranks/`.
 - Quiet ask / office-hours questions by Analyzer category (sensitive excluded)
 - Stuck Room posts by student-labeled chapter
 
-Each topic shows counts, sample question titles, and a **review hint** (emphasize
-in the next session, tighten the explanation for the next cohort / related
-chapter). This reuses the existing question corpus — it is not a second empty
-database.
+Each topic is a **question board**: counts, sample asks, full question list,
+review status (**watch / emphasize / covered**), a note for coming students /
+related chapters, and **Draft FAQ for next cohort** (`POST /knowledge/from-insight`).
+Sensitive asks stay out. This reuses the existing question corpus — it is not a
+second empty database.
+
+`GET|PATCH /analytics/review-insights` (professor auth).
 
 ## TA staffing loop
 

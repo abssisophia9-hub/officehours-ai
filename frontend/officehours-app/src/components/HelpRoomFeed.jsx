@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api/client.js";
 
+const DEFAULT_REACH =
+  "Your perspective unlocked it for me — thanks. If you're open to it, I'd like to compare notes.";
+
 export default function HelpRoomFeed({ token, courseId, courseCode }) {
   const [posts, setPosts] = useState([]);
   const [ranks, setRanks] = useState([]);
+  const [reachOuts, setReachOuts] = useState([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [title, setTitle] = useState("");
@@ -13,16 +17,19 @@ export default function HelpRoomFeed({ token, courseId, courseCode }) {
   const [replyDrafts, setReplyDrafts] = useState({});
   const [replyAnon, setReplyAnon] = useState({});
   const [replyBusy, setReplyBusy] = useState(null);
+  const [reachBusy, setReachBusy] = useState(null);
 
   const load = useCallback(async () => {
     if (!courseId || !token) return;
     try {
-      const [feed, board] = await Promise.all([
+      const [feed, board, handshakes] = await Promise.all([
         api(`/help-room/?course_id=${courseId}`, { token }),
         api(`/help-room/ranks/?course_id=${courseId}`, { token }),
+        api(`/help-room/reach-outs/?course_id=${courseId}`, { token }),
       ]);
       setPosts(feed);
       setRanks(board);
+      setReachOuts(handshakes);
       setError("");
     } catch (err) {
       setError(err.message);
@@ -103,6 +110,8 @@ export default function HelpRoomFeed({ token, courseId, courseCode }) {
                   ...reply,
                   marked_helpful_by_me: result.marked,
                   helpful_count: result.helpful_count,
+                  reachable: result.reachable,
+                  reached_out_by_me: result.reached_out_by_me,
                 }
               : reply,
           ),
@@ -115,6 +124,22 @@ export default function HelpRoomFeed({ token, courseId, courseCode }) {
     }
   }
 
+  async function reachOut(replyId) {
+    setReachBusy(replyId);
+    try {
+      await api(`/help-room/replies/${replyId}/reach-out`, {
+        method: "POST",
+        token,
+        body: { note: DEFAULT_REACH },
+      });
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setReachBusy(null);
+    }
+  }
+
   async function removeMine(postId) {
     try {
       await api(`/help-room/${postId}`, { method: "DELETE", token });
@@ -124,6 +149,8 @@ export default function HelpRoomFeed({ token, courseId, courseCode }) {
     }
   }
 
+  const incoming = reachOuts.filter((row) => row.is_incoming);
+
   return (
     <section id="stuck-room" className="bh-card mt-5 scroll-mt-6">
       <div className="bh-card-title">
@@ -132,10 +159,31 @@ export default function HelpRoomFeed({ token, courseId, courseCode }) {
       <p className="bh-card-note">
         Course-only thread for {courseCode}: post what you are stuck on, and
         classmates share a simpler approach or a missing perspective — the “aha”
-        that was one sentence away. This is not Quiet ask (staff) and not
+        that was one sentence away. After an aha, you can thank an identified
+        helper and compare notes. This is not Quiet ask (staff) and not
         Classmate notes (files). Do not paste homework answers. Grades, integrity,
         and personal crises stay on Quiet ask.
       </p>
+
+      {incoming.length > 0 ? (
+        <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50 p-3 sm:p-4">
+          <p className="text-sm font-semibold text-sky-950">Compare-notes pings</p>
+          <p className="mt-1 text-xs text-sky-900/80">
+            Someone said your perspective unlocked it. This is a named handshake,
+            not a public chat — staff never see it.
+          </p>
+          <ul className="mt-3 space-y-2 text-sm text-sky-950">
+            {incoming.map((row) => (
+              <li key={row.id}>
+                <span className="font-semibold">{row.from_display}</span>
+                {" · "}
+                {row.post_title}
+                <p className="mt-0.5 text-xs text-sky-900/80">{row.note}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {ranks.length > 0 ? (
         <div className="mt-4 rounded-xl border border-aui-forest/20 bg-[#f3faf5] p-3 sm:p-4">
@@ -240,6 +288,13 @@ export default function HelpRoomFeed({ token, courseId, courseCode }) {
                   ) : null}
                 </div>
                 <p className="whitespace-pre-wrap text-sm text-aui-deep">{post.body}</p>
+                {post.similar_chapter_count > 0 ? (
+                  <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-950">
+                    {post.similar_chapter_count} other classmate
+                    {post.similar_chapter_count === 1 ? " is" : "s are"} stuck on{" "}
+                    {post.chapter} — you are not the only one.
+                  </p>
+                ) : null}
 
                 <div className="mt-3 space-y-3 rounded-xl bg-[#f7faf7] p-3">
                   <p className="text-xs font-semibold uppercase tracking-wide text-aui-deep/55">
@@ -259,21 +314,40 @@ export default function HelpRoomFeed({ token, courseId, courseCode }) {
                           </span>
                           <span className="text-aui-deep/80"> — {reply.body}</span>
                         </p>
-                        <button
-                          type="button"
-                          disabled={reply.is_mine}
-                          className={`mt-1 btn-ghost px-3 py-1 text-xs ${
-                            reply.marked_helpful_by_me
-                              ? "border-aui-forest text-aui-forest"
-                              : ""
-                          }`}
-                          onClick={() => markHelpful(reply.id)}
-                        >
-                          {reply.marked_helpful_by_me
-                            ? "Unlocked it"
-                            : "This unlocked it"}{" "}
-                          · {reply.helpful_count}
-                        </button>
+                        <div className="mt-1 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            disabled={reply.is_mine}
+                            className={`btn-ghost px-3 py-1 text-xs ${
+                              reply.marked_helpful_by_me
+                                ? "border-aui-forest text-aui-forest"
+                                : ""
+                            }`}
+                            onClick={() => markHelpful(reply.id)}
+                          >
+                            {reply.marked_helpful_by_me
+                              ? "Unlocked it"
+                              : "This unlocked it"}{" "}
+                            · {reply.helpful_count}
+                          </button>
+                          {reply.reachable && !reply.reached_out_by_me ? (
+                            <button
+                              type="button"
+                              disabled={reachBusy === reply.id}
+                              className="btn-primary px-3 py-1 text-xs"
+                              onClick={() => reachOut(reply.id)}
+                            >
+                              {reachBusy === reply.id
+                                ? "Sending…"
+                                : "Thanks — compare notes?"}
+                            </button>
+                          ) : null}
+                          {reply.reached_out_by_me ? (
+                            <span className="self-center text-xs text-aui-forest">
+                              Handshake sent
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                     ))
                   )}

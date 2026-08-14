@@ -94,7 +94,8 @@ Vocabulary: [`glossary.md`](glossary.md).
 | **Not a Reddit chat** | Course-scoped stuck threads; no live chat, no homework dumps |
 | **Helpful points** | Unique “this unlocked it” marks on replies (no self-votes) → ranks |
 | **Staff stay out of the room** | Students post/reply; professors get `GET /analytics/review-insights` |
-| **Review insights** | Quiet-ask categories + Stuck Room chapters → emphasize in review / next cohort |
+| **Compare-notes handshake** | After “unlocked it”, identified helper can be thanked (not a chat) |
+| **Review insights** | Question board: emphasize / covered / next-cohort note / draft FAQ |
 
 ---
 

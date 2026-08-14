@@ -119,6 +119,80 @@ def create_faq_from_cluster(
     return entry
 
 
+def create_faq_from_insight(
+    db: Session,
+    *,
+    course_id: int,
+    topic_key: str,
+) -> KnowledgeEntry | None:
+    """Pending FAQ from a review-insight topic so the next cohort gets a better explanation."""
+    from app.services.analytics_service import build_review_insights
+
+    insights = build_review_insights(db, course_id=course_id)
+    topic = next((item for item in insights.topics if item.topic_key == topic_key), None)
+    if topic is None or not topic.questions:
+        return None
+    if topic.cluster_id is not None:
+        clustered = create_faq_from_cluster(
+            db,
+            cluster_id=topic.cluster_id,
+            course_id=course_id,
+            course=insights.course_code,
+        )
+        if clustered is not None:
+            clustered.professor_note = (
+                f"Drafted from review insight “{topic.label}” for the next cohort / related chapter."
+            )
+            db.commit()
+            db.refresh(clustered)
+            return clustered
+
+    texts = [item.text for item in topic.questions if item.text]
+    summary = summarize_request_cluster(texts)
+    title = str(summary.get("title") or topic.label)
+    question_text = f"FAQ: {title} ({topic.label})"
+    joined = "\n".join(f"- {text.strip()}" for text in texts[:8])
+    draft = draft_kb_with_model(
+        question_text=question_text,
+        category=topic.label,
+        tags=list(summary.get("keywords") or []),
+        learning_style="unknown",
+        urgency="medium",
+        code_snippet=None,
+    )
+    source_request_id = next(
+        (item.request_id for item in topic.questions if item.request_id),
+        None,
+    )
+    entry = KnowledgeEntry(
+        question_text=question_text,
+        answer_draft=(
+            f"Review-insight topic ({topic.total_signal} signals).\n\n"
+            f"Representative asks:\n{joined}\n\n"
+            f"Draft FAQ answer:\n{draft['answer_draft']}"
+        ),
+        student_hint=str(draft["student_hint"]),
+        category="faq",
+        tags=_serialize_tags(["faq", "review-insight", *list(summary.get("keywords") or [])]),
+        urgency="medium",
+        difficulty="medium",
+        learning_style="unknown",
+        drafter_backend=str(draft.get("drafter_backend") or "review_insight_faq"),
+        status="pending_review",
+        source_request_id=source_request_id,
+        cluster_id=topic.cluster_id,
+        course_id=course_id,
+        professor_note=(
+            f"Auto-drafted from review insight “{topic.label}” — tighten this "
+            "explanation for coming students / related chapters."
+        ),
+    )
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return entry
+
+
 def ingest_course_material(
     db: Session,
     *,

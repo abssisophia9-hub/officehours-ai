@@ -13,8 +13,10 @@ from app.ai.summarizer import summarize_request_cluster
 from app.models.auth import Course
 from app.models.help_room import (
     HelpPost,
+    ReviewInsightQuestionOut,
     ReviewInsightTopicOut,
     ReviewInsightsOut,
+    ReviewTopicNote,
 )
 from app.models.knowledge import (
     ClusterCommandCenterOut,
@@ -262,16 +264,26 @@ def build_review_insights(db: Session, *, course_id: int) -> ReviewInsightsOut:
     )
 
     by_label: dict[str, dict] = {}
+    notes = {
+        row.topic_key: row
+        for row in db.query(ReviewTopicNote)
+        .filter(ReviewTopicNote.course_id == course_id)
+        .all()
+    }
 
     def bucket(label: str, kind: str) -> dict:
         key = f"{kind}:{label.lower()}"
         if key not in by_label:
             by_label[key] = {
+                "topic_key": key,
                 "label": label,
                 "bucket": kind,
                 "office_hours_count": 0,
                 "stuck_post_count": 0,
                 "samples": [],
+                "questions": [],
+                "request_ids": [],
+                "cluster_ids": [],
             }
         return by_label[key]
 
@@ -283,35 +295,71 @@ def build_review_insights(db: Session, *, course_id: int) -> ReviewInsightsOut:
         ) or is_sensitive_category(request.oracle_category):
             continue
         public_requests += 1
-        row = bucket(category.replace("_", " "), "ask_category")
+        display = category.replace("_", " ")
+        row = bucket(display, "ask_category")
         row["office_hours_count"] += 1
+        row["request_ids"].append(request.id)
+        if request.cluster_id is not None:
+            row["cluster_ids"].append(request.cluster_id)
         text = (request.text or "").strip()
-        if text and text not in row["samples"] and len(row["samples"]) < 3:
+        if text and text not in row["samples"] and len(row["samples"]) < 8:
             row["samples"].append(text[:220])
+        if text and len(row["questions"]) < 12:
+            row["questions"].append(
+                ReviewInsightQuestionOut(
+                    source="quiet_ask",
+                    text=text[:400],
+                    request_id=request.id,
+                    cluster_id=request.cluster_id,
+                )
+            )
 
     for post in posts:
         label = post.chapter or "Unspecified chapter"
         row = bucket(label, "chapter")
         row["stuck_post_count"] += 1
         sample = (post.title or "").strip()
-        if sample and sample not in row["samples"] and len(row["samples"]) < 3:
+        if sample and sample not in row["samples"] and len(row["samples"]) < 8:
             row["samples"].append(sample[:220])
+        if sample and len(row["questions"]) < 12:
+            row["questions"].append(
+                ReviewInsightQuestionOut(
+                    source="stuck_room",
+                    text=sample[:400],
+                    stuck_post_id=post.id,
+                )
+            )
 
     topics: list[ReviewInsightTopicOut] = []
     for row in by_label.values():
         oh = row["office_hours_count"]
         stuck = row["stuck_post_count"]
         total = oh + stuck
+        note = notes.get(row["topic_key"])
+        cluster_id = None
+        if row["cluster_ids"]:
+            cluster_id = Counter(row["cluster_ids"]).most_common(1)[0][0]
+        status = (note.review_status if note else None) or (
+            "emphasize" if total >= 2 or oh >= 2 or stuck >= 2 else "watch"
+        )
         topics.append(
             ReviewInsightTopicOut(
+                topic_key=row["topic_key"],
                 label=row["label"],
                 bucket=row["bucket"],
                 office_hours_count=oh,
                 stuck_post_count=stuck,
                 total_signal=total,
-                sample_questions=row["samples"],
+                sample_questions=row["samples"][:3],
+                questions=row["questions"],
+                request_ids=row["request_ids"],
+                cluster_id=cluster_id,
                 review_hint=_review_hint(row["label"], oh, stuck),
-                emphasize=total >= 2 or oh >= 2 or stuck >= 2,
+                emphasize=status == "emphasize" or (
+                    note is None and (total >= 2 or oh >= 2 or stuck >= 2)
+                ),
+                review_status=status,
+                next_cohort_note=note.next_cohort_note if note else None,
             )
         )
     topics.sort(key=lambda item: (-item.total_signal, item.label.lower()))
@@ -337,6 +385,49 @@ def build_review_insights(db: Session, *, course_id: int) -> ReviewInsightsOut:
         stuck_post_total=len(posts),
         message=message,
     )
+
+
+REVIEW_STATUSES = {"watch", "emphasize", "covered"}
+
+
+def upsert_review_topic_note(
+    db: Session,
+    *,
+    course_id: int,
+    topic_key: str,
+    review_status: str,
+    next_cohort_note: str | None,
+) -> ReviewTopicNote:
+    status = (review_status or "watch").strip().lower()
+    if status not in REVIEW_STATUSES:
+        status = "watch"
+    key = (topic_key or "").strip()[:200]
+    note = (
+        db.query(ReviewTopicNote)
+        .filter(
+            ReviewTopicNote.course_id == course_id,
+            ReviewTopicNote.topic_key == key,
+        )
+        .one_or_none()
+    )
+    text = (next_cohort_note or "").strip()[:2000] or None
+    now = datetime.now(timezone.utc)
+    if note is None:
+        note = ReviewTopicNote(
+            course_id=course_id,
+            topic_key=key,
+            review_status=status,
+            next_cohort_note=text,
+            updated_at=now,
+        )
+        db.add(note)
+    else:
+        note.review_status = status
+        note.next_cohort_note = text
+        note.updated_at = now
+    db.commit()
+    db.refresh(note)
+    return note
 
 
 def _review_hint(label: str, office_hours_count: int, stuck_post_count: int) -> str:

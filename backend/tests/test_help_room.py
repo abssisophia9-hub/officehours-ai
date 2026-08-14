@@ -170,6 +170,25 @@ def test_reply_helpful_marks_rank_and_no_self_vote():
         headers=_headers(sara),
     )
     assert again.json()["helpful_count"] == 1
+    assert again.json()["reachable"] is True
+
+    handshake = client.post(
+        f"/help-room/replies/{reply_id}/reach-out",
+        headers=_headers(sara),
+        json={
+            "note": "Your walk metaphor unlocked it — want to compare notes before the quiz?"
+        },
+    )
+    assert handshake.status_code == 201, handshake.text
+    assert handshake.json()["is_incoming"] is False
+    assert "unlocked" in handshake.json()["note"].lower()
+
+    inbox = client.get(
+        f"/help-room/reach-outs/?course_id={course_id}",
+        headers=_headers(youssef),
+    ).json()
+    assert any(row["from_display"] and "unlocked" in row["note"].lower() for row in inbox)
+    assert any(row["is_incoming"] for row in inbox)
 
     ranks = client.get(
         f"/help-room/ranks/?course_id={course_id}",
@@ -263,3 +282,34 @@ def test_professor_review_insights_from_asks_and_stuck_room():
     assert any(topic["stuck_post_count"] >= 1 for topic in body["topics"])
     assert any(topic["office_hours_count"] >= 1 for topic in body["topics"])
     assert "review" in body["message"].lower() or "emphas" in body["message"].lower()
+    hashing = next(topic for topic in body["topics"] if topic["stuck_post_count"] >= 1)
+    assert hashing["questions"]
+    assert hashing["topic_key"]
+
+    covered = client.patch(
+        "/analytics/review-insights",
+        headers=_headers(prof),
+        json={
+            "course_id": course_id,
+            "topic_key": hashing["topic_key"],
+            "review_status": "covered",
+            "next_cohort_note": "Show chaining vs probing with one board drawing next year.",
+        },
+    )
+    assert covered.status_code == 200, covered.text
+    saved = next(
+        topic
+        for topic in covered.json()["topics"]
+        if topic["topic_key"] == hashing["topic_key"]
+    )
+    assert saved["review_status"] == "covered"
+    assert "board drawing" in saved["next_cohort_note"]
+
+    faq = client.post(
+        "/knowledge/from-insight",
+        headers=_headers(prof),
+        json={"course_id": course_id, "topic_key": hashing["topic_key"]},
+    )
+    assert faq.status_code == 201, faq.text
+    assert faq.json()["status"] == "pending_review"
+    assert "FAQ" in faq.json()["question_text"] or faq.json()["question_text"]

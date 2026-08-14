@@ -12,6 +12,8 @@ from app.models.help_room import (
     HelpPostCreate,
     HelpPostOut,
     HelpRankOut,
+    HelpReachOutCreate,
+    HelpReachOutOut,
     HelpReplyCreate,
     HelpReplyOut,
 )
@@ -20,12 +22,15 @@ from app.services.access_control import get_membership, require_course_role
 from app.services.help_room_service import (
     add_reply,
     create_post,
+    create_reach_out,
     delete_own_post,
     get_post,
     get_reply,
     list_posts,
     list_ranks,
+    list_reach_outs,
     serialize_post,
+    serialize_reach_out,
     serialize_reply,
     toggle_helpful,
 )
@@ -87,6 +92,16 @@ def ranks(
     return list_ranks(db, course_id=course_id)
 
 
+@router.get("/reach-outs/", response_model=list[HelpReachOutOut])
+def reach_outs(
+    course_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    _require_student(db, user, course_id)
+    return list_reach_outs(db, course_id=course_id, viewer=user)
+
+
 @router.post(
     "/{post_id}/replies",
     response_model=HelpReplyOut,
@@ -120,6 +135,30 @@ def mark_helpful(
     post = get_post(db, reply.post_id)
     _require_student(db, user, post.course_id)
     return toggle_helpful(db, reply=reply, user=user)
+
+
+@router.post(
+    "/replies/{reply_id}/reach-out",
+    response_model=HelpReachOutOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def reach_out(
+    reply_id: int,
+    payload: HelpReachOutCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    reply = get_reply(db, reply_id)
+    post = get_post(db, reply.post_id)
+    _require_student(db, user, post.course_id)
+    row = create_reach_out(
+        db,
+        reply=reply,
+        post=post,
+        user=user,
+        note=payload.note,
+    )
+    return serialize_reach_out(db, row, user)
 
 
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
