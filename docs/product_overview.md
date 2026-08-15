@@ -118,28 +118,27 @@ KB stays separate.
 API: `GET|POST /peer-notes/`, like/comment/download under `/peer-notes/{id}/…`
 (auth + course membership required).
 
-## Stuck Room (classmate help threads)
+## Stuck Room (course community)
 
-A **Reddit-style live chat is the wrong shape** for a course: integrity risk,
-moderation load, and it overlaps Quiet ask + classmate notes. Stuck Room is
-instead a **course-scoped thread**:
+Stuck Room is a **course-scoped community** in the shape of a subreddit — not a
+live chat, and not a comment box on the dashboard:
 
-1. Student posts what they are stuck on (optional chapter label, optional
-   “Classmate” anonymity)
-2. Classmates reply with a simpler approach or missing perspective — not the
-   homework write-up
-3. Unique **“this unlocked it”** marks (no self-votes) become **helpful points**
-   and a course rank
-4. Unique **“this unlocked it”** marks (no self-votes) become **helpful points**
-   and a course rank
+1. Dedicated page (`/student/room`) named like `r/CSC3323`
+2. Hot / New / Top / Rising feed, flair (`stuck`, `aha`, `vent`, `find_peer`),
+   and **same-here** scores (Reddit-style upvotes on the *post*, not helper karma)
+3. Click into a **thread** with nested comments
+4. Unique **“this unlocked it”** marks on comments (no self-votes) become
+   **helpful points** / helper karma and a course rank
 5. After an aha, an identified helper can get a **compare-notes handshake**
    (named, not a chat; staff never see it). Quiet replies stay unnamed.
 6. Grades, integrity, and crises are blocked → use **Quiet ask**
+7. `vent` is academic stress (“this chapter is a lot”), not a mental-health crisis
 
 Staff (TA/professor) **do not read the social room**. Professors get aggregated
 **review insights** instead.
 
-API: `GET|POST /help-room/`, replies + helpful marks, reach-outs,
+API: `GET|POST /help-room/`, `GET /help-room/community/`, `GET /help-room/{id}`,
+`POST /help-room/{id}/same-here`, nested replies, helpful marks, reach-outs,
 `GET /help-room/ranks/`.
 
 ## Review insights (professor chapter board)

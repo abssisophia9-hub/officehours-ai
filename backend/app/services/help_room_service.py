@@ -1,19 +1,24 @@
-"""Stuck Room — course-scoped peer help threads with helpful-mark ranking."""
+"""Stuck Room — course-scoped peer community with ranks, not likes."""
 
 from __future__ import annotations
 
 import re
+from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
-from app.models.auth import User
+from app.models.auth import Course, CourseMembership, User
 from app.models.help_room import (
+    POST_FLAIRS,
+    HelpCommunityOut,
     HelpfulMark,
     HelpfulMarkOut,
     HelpPost,
     HelpPostOut,
+    HelpPostVote,
+    HelpPostVoteOut,
     HelpRankOut,
     HelpReachOut,
     HelpReachOutOut,
@@ -31,6 +36,7 @@ _SENSITIVE_PATTERNS = (
     r"\b(depression|panic attack|mental health crisis)\b",
 )
 _SENSITIVE_RE = re.compile("|".join(_SENSITIVE_PATTERNS), re.IGNORECASE)
+_SORTS = ("hot", "new", "top", "rising")
 
 
 def normalize_chapter(value: str | None) -> str | None:
@@ -38,6 +44,29 @@ def normalize_chapter(value: str | None) -> str | None:
     if not cleaned:
         return None
     return cleaned[:80]
+
+
+def normalize_flair(value: str | None) -> str:
+    key = (value or "stuck").strip().lower().replace(" ", "_")
+    aliases = {
+        "im_stuck": "stuck",
+        "i'm_stuck": "stuck",
+        "stress": "vent",
+        "peer": "find_peer",
+        "find-peer": "find_peer",
+    }
+    key = aliases.get(key, key)
+    if key not in POST_FLAIRS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Pick a flair: stuck, aha, vent, or find_peer.",
+        )
+    return key
+
+
+def community_name(code: str | None) -> str:
+    slug = re.sub(r"[^A-Za-z0-9]+", "", code or "course") or "course"
+    return f"r/{slug}"
 
 
 def _reject_sensitive(text: str) -> None:
@@ -62,6 +91,60 @@ def _author_display(db: Session, user_id: int, anonymous: bool, viewer: User) ->
     )
 
 
+def _aware(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value
+
+
+def _course_karma(db: Session, user_id: int, course_id: int) -> int:
+    return int(
+        db.query(func.count(HelpfulMark.id))
+        .join(HelpReply, HelpReply.id == HelpfulMark.reply_id)
+        .join(HelpPost, HelpPost.id == HelpReply.post_id)
+        .filter(
+            HelpPost.course_id == course_id,
+            HelpReply.author_user_id == user_id,
+        )
+        .scalar()
+        or 0
+    )
+
+
+def _same_here_count(db: Session, post_id: int) -> int:
+    return db.query(HelpPostVote).filter(HelpPostVote.post_id == post_id).count()
+
+
+def _same_here_by_me(db: Session, post_id: int, viewer_id: int) -> bool:
+    return (
+        db.query(HelpPostVote)
+        .filter(HelpPostVote.post_id == post_id, HelpPostVote.user_id == viewer_id)
+        .first()
+        is not None
+    )
+
+
+def _unlocked_count(db: Session, post_id: int) -> int:
+    return (
+        db.query(func.count(HelpfulMark.id))
+        .join(HelpReply, HelpReply.id == HelpfulMark.reply_id)
+        .filter(HelpReply.post_id == post_id)
+        .scalar()
+        or 0
+    )
+
+
+def _hot_score(
+    post: HelpPost, same_here: int, reply_count: int, unlocked: int
+) -> float:
+    age_hours = max(
+        0.25,
+        (datetime.now(timezone.utc) - _aware(post.created_at)).total_seconds() / 3600,
+    )
+    gravity = same_here + reply_count + (3 * unlocked)
+    return gravity / ((age_hours + 2) ** 1.4)
+
+
 def create_post(
     db: Session,
     *,
@@ -71,6 +154,7 @@ def create_post(
     body: str,
     chapter: str | None,
     anonymous: bool,
+    flair: str | None = "stuck",
 ) -> HelpPost:
     title_clean = (title or "").strip()
     body_clean = (body or "").strip()
@@ -91,6 +175,7 @@ def create_post(
         title=title_clean[:200],
         body=body_clean[:4000],
         chapter=normalize_chapter(chapter),
+        flair=normalize_flair(flair),
         anonymous=bool(anonymous),
     )
     db.add(post)
@@ -109,15 +194,99 @@ def get_post(db: Session, post_id: int) -> HelpPost:
     return post
 
 
-def list_posts(db: Session, *, course_id: int, viewer: User) -> list[HelpPostOut]:
-    rows = (
-        db.query(HelpPost)
-        .filter(HelpPost.course_id == course_id)
-        .order_by(HelpPost.created_at.desc(), HelpPost.id.desc())
-        .limit(80)
-        .all()
+def get_community(db: Session, *, course_id: int) -> HelpCommunityOut:
+    course = db.get(Course, course_id)
+    classmate_count = (
+        db.query(func.count(CourseMembership.id))
+        .filter(
+            CourseMembership.course_id == course_id,
+            CourseMembership.role == "student",
+        )
+        .scalar()
+        or 0
     )
-    return [serialize_post(db, post, viewer, include_replies=True) for post in rows]
+    post_count = db.query(HelpPost).filter(HelpPost.course_id == course_id).count()
+    comment_count = (
+        db.query(func.count(HelpReply.id))
+        .join(HelpPost, HelpPost.id == HelpReply.post_id)
+        .filter(HelpPost.course_id == course_id)
+        .scalar()
+        or 0
+    )
+    helper_count = len(list_ranks(db, course_id=course_id, limit=50))
+    code = course.code if course else None
+    return HelpCommunityOut(
+        course_id=course_id,
+        course_code=code,
+        course_title=course.title if course else None,
+        community_name=community_name(code),
+        classmate_count=int(classmate_count),
+        post_count=int(post_count),
+        comment_count=int(comment_count),
+        helper_count=int(helper_count),
+    )
+
+
+def list_posts(
+    db: Session,
+    *,
+    course_id: int,
+    viewer: User,
+    sort: str = "hot",
+    flair: str | None = None,
+) -> list[HelpPostOut]:
+    key = (sort or "hot").strip().lower()
+    if key not in _SORTS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Sort must be hot, new, top, or rising.",
+        )
+    query = db.query(HelpPost).filter(HelpPost.course_id == course_id)
+    if flair:
+        query = query.filter(HelpPost.flair == normalize_flair(flair))
+    rows = query.order_by(HelpPost.created_at.desc(), HelpPost.id.desc()).limit(80).all()
+    serialized = [
+        serialize_post(db, post, viewer, include_replies=False) for post in rows
+    ]
+    if key == "new":
+        return serialized
+    if key == "top":
+        return sorted(
+            serialized,
+            key=lambda item: (
+                item.same_here_count,
+                item.unlocked_count,
+                item.reply_count,
+                item.id,
+            ),
+            reverse=True,
+        )
+    if key == "rising":
+        cutoff = datetime.now(timezone.utc).timestamp() - (36 * 3600)
+        recent = [
+            item
+            for post, item in zip(rows, serialized)
+            if _aware(post.created_at).timestamp() >= cutoff
+        ]
+        pool = recent or serialized
+        return sorted(
+            pool,
+            key=lambda item: (item.same_here_count + item.reply_count, item.id),
+            reverse=True,
+        )
+    return sorted(
+        serialized,
+        key=lambda item: (
+            _hot_score(
+                next(post for post in rows if post.id == item.id),
+                item.same_here_count,
+                item.reply_count,
+                item.unlocked_count,
+            ),
+            item.id,
+        ),
+        reverse=True,
+    )
 
 
 def serialize_reply(db: Session, reply: HelpReply, viewer: User) -> HelpReplyOut:
@@ -147,19 +316,46 @@ def serialize_reply(db: Session, reply: HelpReply, viewer: User) -> HelpReplyOut
         and reply.author_user_id != viewer.id
         and marked
     )
+    show_karma = (not reply.anonymous) or reply.author_user_id == viewer.id
+    post = db.get(HelpPost, reply.post_id)
+    karma = (
+        _course_karma(db, reply.author_user_id, post.course_id)
+        if show_karma and post is not None
+        else 0
+    )
     return HelpReplyOut(
         id=reply.id,
         post_id=reply.post_id,
+        parent_reply_id=reply.parent_reply_id,
         body=reply.body,
         anonymous=reply.anonymous,
-        author_display=_author_display(db, reply.author_user_id, reply.anonymous, viewer),
+        author_display=_author_display(
+            db, reply.author_user_id, reply.anonymous, viewer
+        ),
+        author_karma=karma,
         created_at=reply.created_at,
         is_mine=reply.author_user_id == viewer.id,
         helpful_count=helpful_count,
         marked_helpful_by_me=marked,
         reachable=reachable,
         reached_out_by_me=reached,
+        children=[],
     )
+
+
+def _reply_tree(
+    db: Session, replies: list[HelpReply], viewer: User
+) -> list[HelpReplyOut]:
+    serialized = {row.id: serialize_reply(db, row, viewer) for row in replies}
+    roots: list[HelpReplyOut] = []
+    for row in replies:
+        node = serialized[row.id]
+        parent_id = row.parent_reply_id
+        if parent_id and parent_id in serialized:
+            serialized[parent_id].children.append(node)
+        else:
+            roots.append(node)
+    return roots
 
 
 def serialize_post(
@@ -174,10 +370,11 @@ def serialize_post(
         .filter(HelpReply.post_id == post.id)
         .order_by(HelpReply.created_at.asc(), HelpReply.id.asc())
     )
-    reply_count = replies_query.count()
+    all_replies = replies_query.limit(200).all()
+    reply_count = len(all_replies)
     replies: list[HelpReplyOut] = []
     if include_replies:
-        replies = [serialize_reply(db, row, viewer) for row in replies_query.limit(100).all()]
+        replies = _reply_tree(db, all_replies, viewer)
     similar = 0
     if post.chapter:
         similar = (
@@ -189,17 +386,27 @@ def serialize_post(
             )
             .count()
         )
+    show_karma = (not post.anonymous) or post.author_user_id == viewer.id
     return HelpPostOut(
         id=post.id,
         course_id=post.course_id,
         title=post.title,
         body=post.body,
         chapter=post.chapter,
+        flair=post.flair or "stuck",
         anonymous=post.anonymous,
-        author_display=_author_display(db, post.author_user_id, post.anonymous, viewer),
+        author_display=_author_display(
+            db, post.author_user_id, post.anonymous, viewer
+        ),
+        author_karma=(
+            _course_karma(db, post.author_user_id, post.course_id) if show_karma else 0
+        ),
         created_at=post.created_at,
         is_mine=post.author_user_id == viewer.id,
         reply_count=reply_count,
+        same_here_count=_same_here_count(db, post.id),
+        same_here_by_me=_same_here_by_me(db, post.id, viewer.id),
+        unlocked_count=int(_unlocked_count(db, post.id)),
         similar_chapter_count=similar,
         replies=replies,
     )
@@ -212,6 +419,7 @@ def add_reply(
     author: User,
     body: str,
     anonymous: bool,
+    parent_reply_id: int | None = None,
 ) -> HelpReply:
     text = (body or "").strip()
     if not text:
@@ -220,8 +428,17 @@ def add_reply(
             detail="Share a perspective or approach — empty replies are not allowed.",
         )
     _reject_sensitive(text)
+    parent_id = parent_reply_id
+    if parent_id is not None:
+        parent = db.get(HelpReply, parent_id)
+        if parent is None or parent.post_id != post.id:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="That comment is not on this thread.",
+            )
     reply = HelpReply(
         post_id=post.id,
+        parent_reply_id=parent_id,
         author_user_id=author.id,
         body=text[:4000],
         anonymous=bool(anonymous),
@@ -230,6 +447,32 @@ def add_reply(
     db.commit()
     db.refresh(reply)
     return reply
+
+
+def toggle_same_here(db: Session, *, post: HelpPost, user: User) -> HelpPostVoteOut:
+    if post.author_user_id == user.id:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Same-here is for classmates who hit the same snag — not your own post.",
+        )
+    existing = (
+        db.query(HelpPostVote)
+        .filter(HelpPostVote.post_id == post.id, HelpPostVote.user_id == user.id)
+        .one_or_none()
+    )
+    if existing:
+        db.delete(existing)
+        db.commit()
+        marked = False
+    else:
+        db.add(HelpPostVote(post_id=post.id, user_id=user.id))
+        db.commit()
+        marked = True
+    return HelpPostVoteOut(
+        post_id=post.id,
+        marked=marked,
+        same_here_count=_same_here_count(db, post.id),
+    )
 
 
 def toggle_helpful(db: Session, *, reply: HelpReply, user: User) -> HelpfulMarkOut:
@@ -453,5 +696,6 @@ def delete_own_post(db: Session, *, post: HelpPost, user: User) -> None:
             synchronize_session=False
         )
     db.query(HelpReply).filter(HelpReply.post_id == post.id).delete()
+    db.query(HelpPostVote).filter(HelpPostVote.post_id == post.id).delete()
     db.delete(post)
     db.commit()

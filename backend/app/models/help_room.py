@@ -24,6 +24,9 @@ class HelpPost(Base):
     title: Mapped[str] = mapped_column(String, nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
     chapter: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    flair: Mapped[str] = mapped_column(
+        String, nullable=False, default="stuck", server_default="stuck"
+    )
     anonymous: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
@@ -35,6 +38,7 @@ class HelpReply(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     post_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    parent_reply_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     author_user_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     body: Mapped[str] = mapped_column(Text, nullable=False)
     anonymous: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
@@ -57,6 +61,25 @@ class HelpfulMark(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
     )
+
+
+class HelpPostVote(Base):
+    """Same-here upvote on a stuck post (Reddit-style score, not helper karma)."""
+
+    __tablename__ = "help_post_votes"
+    __table_args__ = (
+        UniqueConstraint("post_id", "user_id", name="uq_help_post_vote"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    post_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow
+    )
+
+
+POST_FLAIRS = ("stuck", "aha", "vent", "find_peer")
 
 
 class HelpReachOut(Base):
@@ -101,26 +124,31 @@ class HelpPostCreate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     body: str = Field(min_length=1, max_length=4000)
     chapter: str | None = Field(default=None, max_length=80)
+    flair: str = Field(default="stuck", max_length=20)
     anonymous: bool = False
 
 
 class HelpReplyCreate(BaseModel):
     body: str = Field(min_length=1, max_length=4000)
     anonymous: bool = False
+    parent_reply_id: int | None = None
 
 
 class HelpReplyOut(BaseModel):
     id: int
     post_id: int
+    parent_reply_id: int | None = None
     body: str
     anonymous: bool
     author_display: str
+    author_karma: int = 0
     created_at: datetime
     is_mine: bool = False
     helpful_count: int = 0
     marked_helpful_by_me: bool = False
     reachable: bool = False
     reached_out_by_me: bool = False
+    children: list["HelpReplyOut"] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -131,15 +159,40 @@ class HelpPostOut(BaseModel):
     title: str
     body: str
     chapter: str | None = None
+    flair: str = "stuck"
     anonymous: bool
     author_display: str
+    author_karma: int = 0
     created_at: datetime
     is_mine: bool = False
     reply_count: int = 0
+    same_here_count: int = 0
+    same_here_by_me: bool = False
+    unlocked_count: int = 0
     similar_chapter_count: int = 0
     replies: list[HelpReplyOut] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
+
+
+HelpReplyOut.model_rebuild()
+
+
+class HelpPostVoteOut(BaseModel):
+    post_id: int
+    marked: bool
+    same_here_count: int
+
+
+class HelpCommunityOut(BaseModel):
+    course_id: int
+    course_code: str | None = None
+    course_title: str | None = None
+    community_name: str
+    classmate_count: int = 0
+    post_count: int = 0
+    comment_count: int = 0
+    helper_count: int = 0
 
 
 class HelpfulMarkOut(BaseModel):

@@ -70,6 +70,18 @@ def ensure_schema(engine: Engine) -> None:
             engine, "courses", columns, "canvas_course_id", "VARCHAR"
         )
 
+    if "help_posts" in table_names:
+        columns = {column["name"] for column in inspector.get_columns("help_posts")}
+        _add_column_if_missing(
+            engine, "help_posts", columns, "flair", "VARCHAR DEFAULT 'stuck'"
+        )
+
+    if "help_replies" in table_names:
+        columns = {column["name"] for column in inspector.get_columns("help_replies")}
+        _add_column_if_missing(
+            engine, "help_replies", columns, "parent_reply_id", "INTEGER"
+        )
+
 
 def _add_column_if_missing(
     engine: Engine,

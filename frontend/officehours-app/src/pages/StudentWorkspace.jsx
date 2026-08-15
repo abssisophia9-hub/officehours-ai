@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Navigate } from "react-router";
+import { Link, Navigate } from "react-router";
 import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import HelpRoomFeed from "../components/HelpRoomFeed.jsx";
@@ -512,20 +512,16 @@ export default function StudentWorkspace() {
                 <a href="#ask" className="btn-primary inline-flex px-4 py-2 text-xs">
                   Go to Quiet ask
                 </a>
-                <a href="#stuck-room" className="btn-ghost inline-flex px-4 py-2 text-xs">
+                <Link to="/student/room" className="btn-ghost inline-flex px-4 py-2 text-xs">
                   Open Stuck Room
-                </a>
+                </Link>
               </div>
             </div>
           ) : null}
         </section>
       </div>
 
-      <HelpRoomFeed
-        token={token}
-        courseId={activeCourse.id}
-        courseCode={activeCourse.code}
-      />
+      <HelpRoomFeed courseCode={activeCourse.code} />
 
       <PeerNotesFeed
         token={token}

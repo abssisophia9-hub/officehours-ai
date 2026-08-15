@@ -91,7 +91,7 @@ Vocabulary: [`glossary.md`](glossary.md).
 
 | Decision / feature | What we shipped |
 | --- | --- |
-| **Not a Reddit chat** | Course-scoped stuck threads; no live chat, no homework dumps |
+| **Course community (not a live chat)** | Dedicated `/student/room` with Hot/New/Top, flair, same-here, nested comments; no homework dumps |
 | **Helpful points** | Unique “this unlocked it” marks on replies (no self-votes) → ranks |
 | **Staff stay out of the room** | Students post/reply; professors get `GET /analytics/review-insights` |
 | **Compare-notes handshake** | After “unlocked it”, identified helper can be thanked (not a chat) |

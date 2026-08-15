@@ -313,3 +313,124 @@ def test_professor_review_insights_from_asks_and_stuck_room():
     assert faq.status_code == 201, faq.text
     assert faq.json()["status"] == "pending_review"
     assert "FAQ" in faq.json()["question_text"] or faq.json()["question_text"]
+
+
+def test_community_flair_nested_comments_same_here_and_sort():
+    sara = _login("s.elidrissi@aui.ma")
+    youssef = _login("y.amrani@aui.ma")
+    course_id = _shared_student_course(sara, youssef)
+
+    bad_flair = client.post(
+        "/help-room/",
+        headers=_headers(sara),
+        json={
+            "course_id": course_id,
+            "title": "Wrong flair",
+            "body": "This should bounce.",
+            "flair": "homework",
+        },
+    )
+    assert bad_flair.status_code == 422
+
+    stuck = client.post(
+        "/help-room/",
+        headers=_headers(sara),
+        json={
+            "course_id": course_id,
+            "title": "Recursion stack overflow on merge",
+            "body": "I think my base case never fires.",
+            "chapter": "Recursion",
+            "flair": "stuck",
+        },
+    )
+    assert stuck.status_code == 201, stuck.text
+    stuck_id = stuck.json()["id"]
+    assert stuck.json()["flair"] == "stuck"
+    assert stuck.json()["same_here_count"] == 0
+
+    vent = client.post(
+        "/help-room/",
+        headers=_headers(youssef),
+        json={
+            "course_id": course_id,
+            "title": "This chapter is a lot before the quiz",
+            "body": "I keep rereading AVL rotations and it still feels one insight away.",
+            "chapter": "AVL",
+            "flair": "vent",
+            "anonymous": True,
+        },
+    )
+    assert vent.status_code == 201, vent.text
+    vent_id = vent.json()["id"]
+
+    self_vote = client.post(
+        f"/help-room/{stuck_id}/same-here",
+        headers=_headers(sara),
+    )
+    assert self_vote.status_code == 422
+
+    voted = client.post(
+        f"/help-room/{stuck_id}/same-here",
+        headers=_headers(youssef),
+    )
+    assert voted.status_code == 200, voted.text
+    assert voted.json()["marked"] is True
+    assert voted.json()["same_here_count"] == 1
+
+    parent = client.post(
+        f"/help-room/{stuck_id}/replies",
+        headers=_headers(youssef),
+        json={
+            "body": "Print n before the recursive call — if n never hits 0, the split is wrong.",
+            "anonymous": False,
+        },
+    )
+    assert parent.status_code == 201, parent.text
+    parent_id = parent.json()["id"]
+
+    child = client.post(
+        f"/help-room/{stuck_id}/replies",
+        headers=_headers(sara),
+        json={
+            "body": "That was the missing check — thank you.",
+            "parent_reply_id": parent_id,
+        },
+    )
+    assert child.status_code == 201, child.text
+    assert child.json()["parent_reply_id"] == parent_id
+
+    thread = client.get(
+        f"/help-room/{stuck_id}",
+        headers=_headers(sara),
+    )
+    assert thread.status_code == 200, thread.text
+    tree = thread.json()["replies"]
+    assert len(tree) == 1
+    assert tree[0]["id"] == parent_id
+    assert len(tree[0]["children"]) == 1
+    assert tree[0]["children"][0]["id"] == child.json()["id"]
+
+    community = client.get(
+        f"/help-room/community/?course_id={course_id}",
+        headers=_headers(sara),
+    ).json()
+    assert community["community_name"].startswith("r/")
+    assert community["post_count"] >= 2
+    assert community["comment_count"] >= 2
+    assert community["classmate_count"] >= 2
+
+    top = client.get(
+        f"/help-room/?course_id={course_id}&sort=top",
+        headers=_headers(sara),
+    ).json()
+    assert top[0]["id"] == stuck_id
+    assert top[0]["same_here_count"] == 1
+
+    vents = client.get(
+        f"/help-room/?course_id={course_id}&flair=vent",
+        headers=_headers(sara),
+    ).json()
+    assert all(item["flair"] == "vent" for item in vents)
+    assert any(item["id"] == vent_id for item in vents)
+    anon = next(item for item in vents if item["id"] == vent_id)
+    assert anon["author_display"] == "Classmate"

@@ -82,7 +82,7 @@ const SECTION_NAV = {
   student: [
     { id: "ask", label: "Ask for Help", icon: "ask" },
     { id: "agent", label: "Study Agent", icon: "agent" },
-    { id: "stuck-room", label: "Stuck Room", icon: "stuck" },
+    { id: "stuck-room", label: "Stuck Room", icon: "stuck", to: "/student/room" },
     { id: "peer-notes", label: "Classmate Notes", icon: "notes" },
   ],
   ta: [
@@ -135,17 +135,28 @@ export default function AppShell() {
             {ICONS.dashboard}
             Dashboard
           </NavLink>
-          {sections.map((section) => (
-            <button
-              key={section.id}
-              type="button"
-              className="bh-nav-item"
-              onClick={() => scrollToSection(section.id)}
-            >
-              {ICONS[section.icon]}
-              {section.label}
-            </button>
-          ))}
+          {sections.map((section) =>
+            section.to ? (
+              <NavLink
+                key={section.id}
+                to={section.to}
+                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+              >
+                {ICONS[section.icon]}
+                {section.label}
+              </NavLink>
+            ) : (
+              <button
+                key={section.id}
+                type="button"
+                className="bh-nav-item"
+                onClick={() => scrollToSection(section.id)}
+              >
+                {ICONS[section.icon]}
+                {section.label}
+              </button>
+            ),
+          )}
           <NavLink
             to="/"
             end

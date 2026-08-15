@@ -4,6 +4,7 @@ import AppShell from "./shell/AppShell.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import CourseHomePage from "./pages/CourseHomePage.jsx";
 import StudentWorkspace from "./pages/StudentWorkspace.jsx";
+import StuckRoomPage from "./pages/StuckRoomPage.jsx";
 import TaWorkspace from "./pages/TaWorkspace.jsx";
 import ProfessorWorkspace from "./pages/ProfessorWorkspace.jsx";
 import CanvasSimulatorPage from "./pages/CanvasSimulatorPage.jsx";
@@ -38,6 +39,7 @@ export default function App() {
       >
         <Route index element={<CourseHomePage />} />
         <Route path="student" element={<StudentWorkspace />} />
+        <Route path="student/room" element={<StuckRoomPage />} />
         <Route path="ta" element={<TaWorkspace />} />
         <Route path="professor" element={<ProfessorWorkspace />} />
       </Route>
