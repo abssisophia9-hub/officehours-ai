@@ -45,6 +45,6 @@ emails, real advising transcripts, or paid/closed student records.
 
 ## Survey note
 
-Public pages do **not** replace human post-demo surveys. Likert evidence still
-needs participants on `:5180` (`docs/surveys/unified_product_post_demo_survey.md`).
-Do not invent survey responses from scraped text.
+Public pages do **not** replace human Likert surveys. A **legacy** kiosk
+pilot already exists. New survey collection is **not required** before the
+capstone presentation.

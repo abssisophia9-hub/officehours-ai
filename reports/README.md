@@ -8,7 +8,7 @@
   - `main.tex` — LaTeX final report (Ask Triage, Help Coach, Rooms, evidence caveats)
   - `classifier_evaluation.*` / `matcher_evaluation.json` / `gold_label_evaluation.json`
   - `ask_triage_latency.json` — from `backend/scripts/measure_ask_triage_latency.py`
-  - `survey_evaluation_summary.md` / `.json` — **legacy** kiosk pilot summary
+  - `survey_evaluation_summary.md` / `.json` — **legacy** kiosk pilot (already collected; no new round required)
 - `paper_draft/` — optional publication draft (empty until final report is solid)
 
 Defense notes (not LaTeX): [`docs/fyp_evidence.md`](../docs/fyp_evidence.md).

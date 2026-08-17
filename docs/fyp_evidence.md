@@ -31,7 +31,7 @@ overload** and **improve student comfort** seeking academic help during finals?
 | `classifier_evaluation.json` (~84.6% CV, n=156) | Stratified CV on **synthetic / curated** labels | Proof on real AUI student text |
 | `matcher_evaluation.json` (~87.5% holdout) | Silver expertise-overlap labels | Gold TA judgment |
 | `gold_label_evaluation.json` (n=80) | Seed + curated held-out from public OH research; Analyzer ~75%, Matcher ~79% | Independent campus TA judgments (`human_gold`) |
-| Survey summary (n=8 students / n=4 professors) | **Legacy kiosk + professor-dashboard** pilot | Eval of Ask Triage / Help Coach / `:5180` product |
+| Survey summary (n=8 students / n=4 professors) | **Legacy** kiosk + dashboard pilot (already collected) | Not a required new round for the capstone presentation |
 | KB hit-rate endpoint | Runtime Study Agent ceiling | Not yet a published longitudinal table |
 
 ## Gaps supervisors will ask about
@@ -39,14 +39,13 @@ overload** and **improve student comfort** seeking academic help during finals?
 1. **Gold labels** — n=80 curated held-out set from public uni OH research
    (`docs/research/office_hours_public_sources.md`); still collect real TA
    `human_gold` when possible.
-2. **Surveys** — still need live participants on `:5180`
-   (`docs/surveys/unified_product_post_demo_survey.md`). Scraped public pages
-   are **not** survey responses.
+2. **Surveys** — a legacy pilot already exists. **No new survey collection** is
+   required before the capstone presentation, and surveys are not a post-product
+   submission. Optional templates remain in `docs/surveys/`.
 3. **Canvas LTI 1.3** — production needs signed launches; today is unsigned JIT demo.
 4. **Open demo APIs** — some list endpoints are convenient for local demos; not
    campus-hardened ACLs.
-5. **Screenshots in final LaTeX** — mid-report kiosk PNGs still in appendix until
-   a `:5180` capture pack is added.
+5. **Screenshots** — unified-app pack lives in `demo/screenshots/product-*.png`.
 
 ## Defense checklist (day-of)
 
@@ -61,9 +60,8 @@ overload** and **improve student comfort** seeking academic help during finals?
 
 ## Recommended next evidence (priority)
 
-1. Rewrite/keep `reports/final_report/main.tex` synced with this product (done in
-   evidence-harden pass).
-2. Real gold labels + re-run `evaluate_gold_labels.py`.
-3. Unified-app screenshots + optional short demo video.
-4. New survey round on `:5180`.
-5. Publish one latency + KB hit-rate table after a Canvas sync demo.
+1. Keep `reports/final_report/main.tex` synced with the shipped product.
+2. Optional: real TA `human_gold` labels when a lab is available.
+3. Production: Canvas LTI 1.3 (launch is an unsigned simulator today).
+
+New user surveys are **not** on this list for the capstone.

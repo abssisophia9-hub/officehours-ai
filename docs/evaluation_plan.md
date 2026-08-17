@@ -1,45 +1,49 @@
 # Evaluation Plan
 
-> Demo path today: unified product app (`./scripts/run_product.sh`, port **5180**).
-> Defense evidence package: [`fyp_evidence.md`](fyp_evidence.md).
-> Survey templates under `docs/surveys/` include a unified-app draft; older
-> kiosk/dashboard instruments are legacy pilots.
+This file is the **historical** pilot evaluation plan. It is kept so the original
+study design remains readable. **New campus surveys are not required for
+graduation.** See [surveys/README.md](surveys/README.md) and
+[fyp_evidence.md](fyp_evidence.md).
 
-## Research Question
-Can an AI-assisted office-hours triage system reduce faculty communication overload and improve student comfort in seeking academic help during final exam periods?
+| Item | Detail |
+| --- | --- |
+| **When surveys were used** | Optional. Historical paper forms exist under `docs/surveys/`. |
+| **Historical Likert** | 5-point (1 = strongly disagree, 5 = strongly agree) |
+| **Historical scales** | Perceived Usefulness (PU) and Perceived Ease of Use (PEOU) from TAM |
+| **Historical extra items** | Trust, fairness, wait-time perception, AI-helpfulness, privacy comfort |
+| **Historical analysis** | Mean, SD, Cronbach’s α, optional paired t-test / Wilcoxon, thematic coding of free text |
 
-## Evaluation Methods
+## Historical data collection
 
-### 1. Technical Evaluation
-- Analyzer CV on labeled CSVs → `reports/final_report/classifier_evaluation.json`
-- Matcher silver holdout → `reports/final_report/matcher_evaluation.json`
-- Human gold (grow beyond seed) → `scripts/evaluate_gold_labels.py`
-- Ask Triage latency smoke → `scripts/measure_ask_triage_latency.py` →
-  `reports/final_report/ask_triage_latency.json`
-- Clustering quality (silhouette / manual gallery) — backlog
-- Study Agent KB hit-rate — `GET /analytics/kb-hit-rate` after Canvas sync demos
+| Wave | Instrument | Audience |
+| --- | --- | --- |
+| Pre | [pre_survey.md](surveys/pre_survey.md) | Students + TAs (historical) |
+| Post | [post_survey.md](surveys/post_survey.md) | Students + TAs (historical) |
+| Professor | [professor_interview.md](surveys/professor_interview.md) | Course instructors (historical) |
+| Optional unified demo | [surveys/unified_product_post_demo_survey.md](surveys/unified_product_post_demo_survey.md) | Students, TAs, professors after a `:5180` demo — includes Rooms (named classmate forum + Hilbert leaderboard) |
 
-### 2. User Evaluation
-- Simulated finals-week demo (`demo/demo_script.md`) on **`:5180`**
-- Legacy pilot surveys (`docs/surveys/`) — kiosk/dashboard era; label as such
-- Recommended: refresh surveys for Ask Triage, Help Coach, dual roles, group meetings,
-  and **Rooms** (`docs/surveys/unified_product_post_demo_survey.md`)
-- Public university OH research supports **gold-label themes**, not Likert scores
-  (`docs/research/office_hours_public_sources.md`)
+## Metrics (logs, not surveys)
 
-### 3. Metrics
-| Metric | Target | Status |
-|---|---|---|
-| Analyzer CV accuracy | ≥ 80% on labeled set | ~84.6% (synthetic union) |
-| Matcher silver holdout | report with caveats | ~87.5% (not gold) |
-| Human gold agreement | grow n ≥ 40 held-out | seed n=12 illustrative only |
-| Student comfort survey | Likert ≥ 4.0 | legacy pilot met target |
-| Faculty workload survey | Likert ≥ 4.0 | legacy pilot met target |
-| Ask Triage latency | report p50/p95 | measure script |
-| Faculty time-to-triage vs baseline | qualitative / future study | not instrumented |
+| Metric | Source | Success idea |
+| --- | --- | --- |
+| Wait time | `requests.created_at` → `helped_at` | Mean wait ↓ vs baseline / control |
+| Queue length | Snapshot of waiting requests | Peak and average queue ↓ |
+| Time-to-first-help | Same as wait, plus TA `helping` timestamps | Faster first contact |
+| Repeat visitors | Distinct students with >1 request | Engagement, not a vanity metric |
+| Resolution rate | `status=helped` / total | High completion |
+| AI deflection | Ask Triage resolved / total Ask Triage chats | Honest rate; not a KPI to maximize |
+| Clustering quality | Manual audit of `request_groups` | Groups make sense to a TA |
+| Fairness | Wait time by student / topic | No systematic delay for a subgroup |
 
-## Reporting
-Primary graded narrative: `reports/final_report/main.tex`.  
-Honesty ceilings: `docs/fyp_evidence.md`, `docs/agent_performance.md`.
+## Historical protocol (do not treat as a remaining gate)
 
-Survey deployment: `docs/surveys/README.md`.
+1. IRB / department ethics approval if collecting identifiable survey answers.
+2. Baseline week: office hours as usual, log wait if possible.
+3. Intervention week: run the system, same course if possible.
+4. Pre-survey at the start of the intervention window.
+5. Post-survey + professor interview at the end.
+6. Export logs (anonymize student identifiers before sharing outside the course).
+7. Analyze Likert + logs; write Results + Limitations.
+
+**Capstone evidence** is the running product, tests, logs, and this repository —
+not a new survey campaign. See [fyp_evidence.md](fyp_evidence.md).
