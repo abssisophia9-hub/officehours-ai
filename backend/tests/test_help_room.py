@@ -434,3 +434,93 @@ def test_community_flair_nested_comments_same_here_and_sort():
     assert any(item["id"] == vent_id for item in vents)
     anon = next(item for item in vents if item["id"] == vent_id)
     assert anon["author_display"] == "Classmate"
+
+
+def test_rooms_forum_types_votes_interest_accept_and_profile():
+    sara = _login("s.elidrissi@aui.ma")
+    youssef = _login("y.amrani@aui.ma")
+    course_id = _shared_student_course(sara, youssef)
+
+    created = client.post(
+        "/help-room/",
+        headers=_headers(sara),
+        json={
+            "course_id": course_id,
+            "title": "Need a second pair of eyes on Dijkstra parent updates",
+            "body": "I relax edges but dist[u] never drops. Not asking for the write-up.",
+            "chapter": "Shortest paths",
+            "room_type": "problem",
+            "tags": ["Graphs", "QuizPrep"],
+        },
+    )
+    assert created.status_code == 201, created.text
+    body = created.json()
+    assert body["room_type"] == "problem"
+    assert body["status"] == "open"
+    assert "Graphs" in body["tags"]
+    post_id = body["id"]
+
+    down = client.post(
+        f"/help-room/{post_id}/vote",
+        headers=_headers(youssef),
+        json={"value": -1},
+    )
+    assert down.status_code == 200, down.text
+    assert down.json()["score"] == -1
+    up = client.post(
+        f"/help-room/{post_id}/vote",
+        headers=_headers(youssef),
+        json={"value": 1},
+    )
+    assert up.json()["score"] == 1
+    assert up.json()["my_vote"] == 1
+
+    interest = client.post(
+        f"/help-room/{post_id}/interest",
+        headers=_headers(youssef),
+        json={"note": "I can walk the relaxation order with you."},
+    )
+    assert interest.status_code == 201, interest.text
+
+    reply = client.post(
+        f"/help-room/{post_id}/replies",
+        headers=_headers(youssef),
+        json={
+            "body": "Relax only if dist[u] + w < dist[v], then set parent.",
+        },
+    )
+    assert reply.status_code == 201, reply.text
+    reply_id = reply.json()["id"]
+
+    accepted = client.post(
+        f"/help-room/replies/{reply_id}/accept",
+        headers=_headers(sara),
+    )
+    assert accepted.status_code == 200, accepted.text
+    assert accepted.json()["status"] == "solved"
+    assert any(item.get("accepted") for item in accepted.json()["replies"])
+
+    pulse = client.get(
+        f"/help-room/community/?course_id={course_id}",
+        headers=_headers(sara),
+    ).json()
+    assert pulse["chapters"]
+
+    me = client.get("/auth/me", headers=_headers(youssef)).json()
+    profile = client.get(
+        f"/help-room/profile/{me['id']}?course_id={course_id}",
+        headers=_headers(sara),
+    )
+    assert profile.status_code == 200, profile.text
+    card = profile.json()
+    assert card["handle"]
+    assert card["accepted"] >= 1
+    assert card["tier"]
+    assert "hilbert_weight" in card
+
+    board = client.get(
+        f"/help-room/ranks/?course_id={course_id}",
+        headers=_headers(sara),
+    ).json()
+    assert board[0]["node_points"] >= 1
+    assert board[0]["hilbert_weight"] >= 0

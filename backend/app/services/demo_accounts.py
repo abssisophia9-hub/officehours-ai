@@ -12,6 +12,8 @@ Science & Engineering (SSE). A typical full-time undergrad load is about
 
 from __future__ import annotations
 
+import json
+
 from sqlalchemy.orm import Session
 
 from app.models.auth import Course, CourseMembership, User
@@ -115,6 +117,10 @@ DEMO_USERS = [
         "email": "a.chen@aui.ma",
         "display_name": "Alice Chen",
         "student_id": "118110",
+        "handle": "a.chen",
+        "country": "Morocco",
+        "bio": "TA in Data Structures; student everywhere else.",
+        "skills": ["C++", "Data Structures", "Office hours"],
         "memberships": [
             _membership("CSC 2302", "ta"),
             _membership("CSC 3323", "student"),
@@ -161,6 +167,10 @@ DEMO_USERS = [
         "email": "s.elidrissi@aui.ma",
         "display_name": "Sara El Idrissi",
         "student_id": "117400",
+        "handle": "s.elidrissi",
+        "country": "Morocco",
+        "bio": "SSE undergrad. I get stuck on the last invariant, then the aha is usually one missing check.",
+        "skills": ["Python", "Data Structures", "Algorithms", "Discrete Math"],
         # Typical AUI undergrad load: ~6–7 courses / term (SSE + MTH + liberal arts).
         # CSC 3351 (OS) is intentionally left for Canvas auto-provision demos only.
         "memberships": [
@@ -177,6 +187,10 @@ DEMO_USERS = [
         "email": "y.amrani@aui.ma",
         "display_name": "Youssef Amrani",
         "student_id": "117401",
+        "handle": "y.amrani",
+        "country": "Morocco",
+        "bio": "Happy to walk traces and hashing walks. Ask if you want a second pair of eyes, not a write-up.",
+        "skills": ["Algorithms", "Hashing", "Graph theory"],
         "memberships": [
             _membership("CSC 3323", "student"),
             _membership("CSC 3374", "student"),
@@ -221,12 +235,17 @@ def ensure_demo_accounts(db: Session) -> None:
             courses_by_code[code] = course
 
         user = db.query(User).filter(User.email == spec["email"]).one_or_none()
+        skills = spec.get("skills") or []
         if user is None:
             user = User(
                 email=spec["email"],
                 password_hash=hash_password(DEMO_PASSWORD),
                 display_name=spec["display_name"],
                 student_id=spec["student_id"],
+                handle=spec.get("handle"),
+                bio=spec.get("bio"),
+                country=spec.get("country") or "Morocco",
+                skills_json=json.dumps(skills) if skills else None,
                 is_active=True,
             )
             db.add(user)
@@ -235,6 +254,13 @@ def ensure_demo_accounts(db: Session) -> None:
             user.display_name = spec["display_name"]
             user.student_id = spec["student_id"]
             user.is_active = True
+            if spec.get("handle"):
+                user.handle = spec["handle"]
+            if spec.get("bio"):
+                user.bio = spec["bio"]
+            user.country = spec.get("country") or user.country or "Morocco"
+            if skills:
+                user.skills_json = json.dumps(skills)
             db.add(user)
 
         for membership in spec["memberships"]:

@@ -118,28 +118,24 @@ KB stays separate.
 API: `GET|POST /peer-notes/`, like/comment/download under `/peer-notes/{id}/…`
 (auth + course membership required).
 
-## Stuck Room (course community)
+## Stuck Room / AUI Rooms
 
-Stuck Room is a **course-scoped community** in the shape of a subreddit — not a
-live chat, and not a comment box on the dashboard:
+A **course-scoped classmate forum** (Stack Overflow hybrid, not a live chat):
 
-1. Dedicated page (`/student/room`) named like `r/CSC3323`
-2. Hot / New / Top / Rising feed, flair (`stuck`, `aha`, `vent`, `find_peer`),
-   and **same-here** scores (Reddit-style upvotes on the *post*, not helper karma)
-3. Click into a **thread** with nested comments
-4. Unique **“this unlocked it”** marks on comments (no self-votes) become
-   **helpful points** / helper karma and a course rank
-5. After an aha, an identified helper can get a **compare-notes handshake**
-   (named, not a chat; staff never see it). Quiet replies stay unnamed.
-6. Grades, integrity, and crises are blocked → use **Quiet ask**
-7. `vent` is academic stress (“this chapter is a lot”), not a mental-health crisis
+1. **Create a Room** wizard: title + Markdown description → Problem / Discussion /
+   Article → chapter grid, plus tags and file attachments
+2. Card feed with type + Open/Solved badges, up/down votes, chapter field,
+   hashtags, author avatar, and **Express Interest**
+3. Left rail: Rooms / Fields / Leaderboard + chapter counts
+4. Right rail: Community Pulse (classmates, active rooms, resolution) +
+   Initialize Room
+5. Profile: ROOMS score, Hilbert Weight ŵ, Node Points, stat tiles
+6. Podium leaderboard ranked by ŵ (quality over volume)
+7. Unique **“this unlocked it”** / accepted solutions still credit true help
+8. Grades, integrity, and crises → **Quiet ask**. Staff do not sit in the room.
 
-Staff (TA/professor) **do not read the social room**. Professors get aggregated
-**review insights** instead.
-
-API: `GET|POST /help-room/`, `GET /help-room/community/`, `GET /help-room/{id}`,
-`POST /help-room/{id}/same-here`, nested replies, helpful marks, reach-outs,
-`GET /help-room/ranks/`.
+API: `GET|POST /help-room/`, community pulse, votes, interest, files, profiles,
+ranks.
 
 ## Review insights (professor chapter board)
 

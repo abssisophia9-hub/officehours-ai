@@ -75,11 +75,37 @@ def ensure_schema(engine: Engine) -> None:
         _add_column_if_missing(
             engine, "help_posts", columns, "flair", "VARCHAR DEFAULT 'stuck'"
         )
+        _add_column_if_missing(
+            engine, "help_posts", columns, "room_type", "VARCHAR DEFAULT 'problem'"
+        )
+        _add_column_if_missing(
+            engine, "help_posts", columns, "status", "VARCHAR DEFAULT 'open'"
+        )
+        _add_column_if_missing(engine, "help_posts", columns, "tags_json", "TEXT")
 
     if "help_replies" in table_names:
         columns = {column["name"] for column in inspector.get_columns("help_replies")}
         _add_column_if_missing(
             engine, "help_replies", columns, "parent_reply_id", "INTEGER"
+        )
+        _add_column_if_missing(
+            engine, "help_replies", columns, "accepted", "BOOLEAN DEFAULT 0"
+        )
+
+    if "help_post_votes" in table_names:
+        columns = {column["name"] for column in inspector.get_columns("help_post_votes")}
+        _add_column_if_missing(
+            engine, "help_post_votes", columns, "value", "INTEGER DEFAULT 1"
+        )
+
+    if "users" in table_names:
+        columns = {column["name"] for column in inspector.get_columns("users")}
+        _add_column_if_missing(engine, "users", columns, "handle", "VARCHAR")
+        _add_column_if_missing(engine, "users", columns, "bio", "VARCHAR")
+        _add_column_if_missing(engine, "users", columns, "country", "VARCHAR")
+        _add_column_if_missing(engine, "users", columns, "skills_json", "TEXT")
+        _add_column_if_missing(
+            engine, "users", columns, "profile_views", "INTEGER DEFAULT 0"
         )
 
 

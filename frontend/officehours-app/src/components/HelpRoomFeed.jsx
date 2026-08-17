@@ -6,11 +6,12 @@ export default function HelpRoomFeed({ courseCode }) {
     <section id="stuck-room" className="sr-teaser scroll-mt-6">
       <div className="sr-teaser-banner" />
       <div className="sr-teaser-body">
-        <p className="sr-kicker">Stuck Room · classmates only</p>
+        <p className="sr-kicker">AUI Rooms · classmates only</p>
         <h2>{name}</h2>
         <p>
-          A course community — not a comment box. Post what you are stuck on, upvote
-          “same here,” nest comments, and rank classmates who actually unlocked it.
+          Stack Overflow for this course: Problem / Discussion / Article rooms,
+          chapter fields, Express Interest, and a Hilbert-weighted classmate
+          leaderboard.
         </p>
         <Link to="/student/room" className="btn-primary mt-4 inline-flex px-5 py-2.5 text-sm">
           Enter {name}

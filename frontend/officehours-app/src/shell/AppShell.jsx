@@ -82,7 +82,7 @@ const SECTION_NAV = {
   student: [
     { id: "ask", label: "Ask for Help", icon: "ask" },
     { id: "agent", label: "Study Agent", icon: "agent" },
-    { id: "stuck-room", label: "Stuck Room", icon: "stuck", to: "/student/room" },
+    { id: "stuck-room", label: "Rooms", icon: "stuck", to: "/student/room" },
     { id: "peer-notes", label: "Classmate Notes", icon: "notes" },
   ],
   ta: [

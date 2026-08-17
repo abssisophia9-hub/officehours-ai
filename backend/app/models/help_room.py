@@ -27,6 +27,13 @@ class HelpPost(Base):
     flair: Mapped[str] = mapped_column(
         String, nullable=False, default="stuck", server_default="stuck"
     )
+    room_type: Mapped[str] = mapped_column(
+        String, nullable=False, default="problem", server_default="problem"
+    )
+    status: Mapped[str] = mapped_column(
+        String, nullable=False, default="open", server_default="open"
+    )
+    tags_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     anonymous: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
@@ -42,6 +49,7 @@ class HelpReply(Base):
     author_user_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     body: Mapped[str] = mapped_column(Text, nullable=False)
     anonymous: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    accepted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
     )
@@ -74,12 +82,73 @@ class HelpPostVote(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     post_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     user_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    value: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow
+    )
+
+
+class HelpPostFile(Base):
+    __tablename__ = "help_post_files"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    post_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    original_filename: Mapped[str] = mapped_column(String, nullable=False)
+    stored_filename: Mapped[str] = mapped_column(String, nullable=False)
+    content_type: Mapped[str | None] = mapped_column(String, nullable=True)
+    byte_size: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow
+    )
+
+
+class HelpInterest(Base):
+    """Express interest — offer to help on a room, not a DM thread."""
+
+    __tablename__ = "help_interests"
+    __table_args__ = (UniqueConstraint("post_id", "from_user_id", name="uq_help_interest"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    post_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    from_user_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    note: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow
+    )
+
+
+class HelpFollow(Base):
+    __tablename__ = "help_follows"
+    __table_args__ = (
+        UniqueConstraint("course_id", "follower_id", "followee_id", name="uq_help_follow"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    course_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    follower_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    followee_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
     )
 
 
 POST_FLAIRS = ("stuck", "aha", "vent", "find_peer")
+ROOM_TYPES = ("problem", "discussion", "article")
+ROOM_STATUSES = ("open", "solved")
+FLAIR_TO_ROOM_TYPE = {
+    "stuck": "problem",
+    "aha": "article",
+    "vent": "discussion",
+    "find_peer": "discussion",
+    "problem": "problem",
+    "discussion": "discussion",
+    "article": "article",
+}
+ROOM_TYPE_TO_FLAIR = {
+    "problem": "stuck",
+    "discussion": "vent",
+    "article": "aha",
+}
 
 
 class HelpReachOut(Base):
@@ -122,9 +191,11 @@ class ReviewTopicNote(Base):
 class HelpPostCreate(BaseModel):
     course_id: int = Field(ge=1)
     title: str = Field(min_length=1, max_length=200)
-    body: str = Field(min_length=1, max_length=4000)
+    body: str = Field(min_length=1, max_length=8000)
     chapter: str | None = Field(default=None, max_length=80)
-    flair: str = Field(default="stuck", max_length=20)
+    flair: str | None = Field(default=None, max_length=20)
+    room_type: str = Field(default="problem", max_length=20)
+    tags: list[str] = Field(default_factory=list)
     anonymous: bool = False
 
 
@@ -141,16 +212,36 @@ class HelpReplyOut(BaseModel):
     body: str
     anonymous: bool
     author_display: str
+    author_user_id: int | None = None
     author_karma: int = 0
     created_at: datetime
     is_mine: bool = False
     helpful_count: int = 0
     marked_helpful_by_me: bool = False
+    accepted: bool = False
     reachable: bool = False
     reached_out_by_me: bool = False
     children: list["HelpReplyOut"] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class HelpFileOut(BaseModel):
+    id: int
+    original_filename: str
+    byte_size: int
+    content_type: str | None = None
+    download_url: str
+
+
+class HelpInterestOut(BaseModel):
+    id: int
+    post_id: int
+    from_display: str
+    from_user_id: int
+    note: str
+    created_at: datetime
+    is_mine: bool = False
 
 
 class HelpPostOut(BaseModel):
@@ -160,16 +251,28 @@ class HelpPostOut(BaseModel):
     body: str
     chapter: str | None = None
     flair: str = "stuck"
+    room_type: str = "problem"
+    status: str = "open"
+    tags: list[str] = Field(default_factory=list)
     anonymous: bool
     author_display: str
+    author_handle: str | None = None
+    author_user_id: int | None = None
     author_karma: int = 0
     created_at: datetime
     is_mine: bool = False
     reply_count: int = 0
     same_here_count: int = 0
     same_here_by_me: bool = False
+    score: int = 0
+    up_count: int = 0
+    down_count: int = 0
+    my_vote: int = 0
     unlocked_count: int = 0
     similar_chapter_count: int = 0
+    interest_count: int = 0
+    interested_by_me: bool = False
+    files: list[HelpFileOut] = Field(default_factory=list)
     replies: list[HelpReplyOut] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
@@ -182,6 +285,22 @@ class HelpPostVoteOut(BaseModel):
     post_id: int
     marked: bool
     same_here_count: int
+    score: int = 0
+    up_count: int = 0
+    down_count: int = 0
+    my_vote: int = 0
+
+
+class HelpVoteRequest(BaseModel):
+    value: int = Field(description="1 upvote, -1 downvote, 0 clear")
+
+
+class HelpInterestCreate(BaseModel):
+    note: str = Field(
+        default="I can help with this room — happy to compare notes.",
+        min_length=1,
+        max_length=400,
+    )
 
 
 class HelpCommunityOut(BaseModel):
@@ -193,6 +312,56 @@ class HelpCommunityOut(BaseModel):
     post_count: int = 0
     comment_count: int = 0
     helper_count: int = 0
+    open_count: int = 0
+    solved_count: int = 0
+    resolution_rate: float = 0.0
+    chapters: list["HelpChapterOut"] = Field(default_factory=list)
+
+
+class HelpChapterOut(BaseModel):
+    label: str
+    post_count: int = 0
+
+
+HelpCommunityOut.model_rebuild()
+
+
+class HelpRankOut(BaseModel):
+    rank: int
+    user_id: int
+    display_name: str
+    handle: str | None = None
+    helpful_points: int
+    reply_count: int
+    node_points: int = 0
+    hilbert_weight: float = 0.0
+    rooms_score: float = 0.0
+    tier: str = "Newcomer"
+    stars: int = 0
+
+
+class HelpProfileOut(BaseModel):
+    user_id: int
+    display_name: str
+    handle: str
+    bio: str | None = None
+    country: str | None = None
+    role_label: str
+    skills: list[str] = Field(default_factory=list)
+    rooms: int = 0
+    solutions: int = 0
+    accepted: int = 0
+    helpful_votes: int = 0
+    followers: int = 0
+    following: int = 0
+    profile_views: int = 0
+    node_points: int = 0
+    hilbert_weight: float = 0.0
+    rooms_score: float = 0.0
+    tier: str = "Newcomer"
+    stars: int = 0
+    followed_by_me: bool = False
+    is_me: bool = False
 
 
 class HelpfulMarkOut(BaseModel):
@@ -223,14 +392,6 @@ class HelpReachOutOut(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class HelpRankOut(BaseModel):
-    rank: int
-    user_id: int
-    display_name: str
-    helpful_points: int
-    reply_count: int
 
 
 class ReviewInsightQuestionOut(BaseModel):

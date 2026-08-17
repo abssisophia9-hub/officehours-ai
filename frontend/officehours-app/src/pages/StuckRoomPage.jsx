@@ -1,167 +1,84 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router";
-import { api } from "../api/client.js";
+import { api, apiUpload } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
+import { MarkdownBody, avatarHue, initials, timeAgo } from "../lib/rooms.jsx";
 
-const DEFAULT_REACH =
-  "Your perspective unlocked it for me — thanks. If you're open to it, I'd like to compare notes.";
-
-const FLAIRS = [
-  { id: "stuck", label: "I'm stuck", hint: "Missing one insight" },
-  { id: "aha", label: "Aha", hint: "I figured it out — sharing the angle" },
-  { id: "vent", label: "This chapter is a lot", hint: "Academic stress, not a crisis" },
-  { id: "find_peer", label: "Find a peer", hint: "Looking for someone to compare notes" },
+const ROOM_TYPES = [
+  {
+    id: "problem",
+    label: "Problem",
+    hint: "An issue or failure that needs a resolution — the missing check, not the write-up.",
+  },
+  {
+    id: "discussion",
+    label: "Discussion",
+    hint: "Architecture, design review, or a general course topic.",
+  },
+  {
+    id: "article",
+    label: "Article",
+    hint: "A tutorial or technical guideline you want classmates to reuse.",
+  },
 ];
 
-const SORTS = [
-  { id: "hot", label: "Hot" },
-  { id: "new", label: "New" },
-  { id: "top", label: "Top" },
-  { id: "rising", label: "Rising" },
+const SUGGESTED_TAGS = [
+  "QuizPrep",
+  "StudyGroup",
+  "SSE",
+  "AUI",
+  "OfficeHours",
+  "TraceWalk",
 ];
 
-const RULES = [
-  "Share the stuck point, not the homework write-up.",
-  "“This unlocked it” is for a real aha — not likes.",
-  "Grades, integrity, and crises go to Quiet ask.",
-  "Staff are not in this room. Compare-notes stays between classmates.",
-];
-
-function timeAgo(iso) {
-  const ms = Date.now() - new Date(iso).getTime();
-  const mins = Math.max(1, Math.round(ms / 60000));
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.round(hours / 24);
-  return `${days}d ago`;
-}
-
-function flairMeta(id) {
-  return FLAIRS.find((item) => item.id === id) || FLAIRS[0];
-}
-
-function mapTree(replies, replyId, updater) {
-  return (replies || []).map((reply) => {
-    if (reply.id === replyId) return updater(reply);
-    return { ...reply, children: mapTree(reply.children, replyId, updater) };
-  });
-}
-
-function VoteRail({ count, active, disabled, onToggle, label }) {
+function Avatar({ name, seed, size = 36 }) {
+  const hue = avatarHue(seed || name);
   return (
-    <div className="sr-vote">
-      <button
-        type="button"
-        className={`sr-vote-btn${active ? " is-on" : ""}`}
-        disabled={disabled}
-        aria-label={label}
-        onClick={onToggle}
-      >
-        ▲
-      </button>
-      <span className={`sr-vote-count${active ? " is-on" : ""}`}>{count}</span>
-    </div>
+    <span
+      className="rf-avatar"
+      style={{
+        width: size,
+        height: size,
+        fontSize: size * 0.36,
+        background: `hsl(${hue} 42% 32%)`,
+      }}
+    >
+      {initials(name)}
+    </span>
   );
 }
 
-function Comment({
-  reply,
-  depth,
-  replyDrafts,
-  setReplyDrafts,
-  replyAnon,
-  setReplyAnon,
-  replyBusy,
-  reachBusy,
-  onReply,
-  onHelpful,
-  onReach,
-}) {
-  const [open, setOpen] = useState(false);
-  const indent = Math.min(depth, 6);
-
+function Stars({ count }) {
   return (
-    <div className={`sr-comment${depth > 0 ? " is-nested" : ""}`} style={{ marginLeft: indent * 14 }}>
-      <div className="sr-comment-rail" />
-      <div className="sr-comment-body">
-        <p className="sr-meta">
-          <span className="sr-author">{reply.author_display}</span>
-          {reply.author_karma > 0 ? (
-            <span className="sr-karma">{reply.author_karma} helper karma</span>
-          ) : null}
-          {reply.anonymous ? <span>quiet</span> : null}
-          <span>{timeAgo(reply.created_at)}</span>
-        </p>
-        <p className="sr-comment-text">{reply.body}</p>
-        <div className="sr-comment-actions">
-          <button
-            type="button"
-            disabled={reply.is_mine}
-            className={`sr-text-btn${reply.marked_helpful_by_me ? " is-on" : ""}`}
-            onClick={() => onHelpful(reply.id)}
-          >
-            {reply.marked_helpful_by_me ? "Unlocked it" : "This unlocked it"} · {reply.helpful_count}
-          </button>
-          <button type="button" className="sr-text-btn" onClick={() => setOpen((value) => !value)}>
-            Reply
-          </button>
-          {reply.reachable && !reply.reached_out_by_me ? (
-            <button
-              type="button"
-              className="sr-text-btn sr-text-btn-strong"
-              disabled={reachBusy === reply.id}
-              onClick={() => onReach(reply.id)}
-            >
-              {reachBusy === reply.id ? "Sending…" : "Thanks — compare notes?"}
-            </button>
-          ) : null}
-          {reply.reached_out_by_me ? <span className="sr-handshake">Handshake sent</span> : null}
-        </div>
-        {open ? (
-          <form className="sr-inline-reply" onSubmit={(event) => onReply(event, reply.id)}>
-            <textarea
-              className="field-glass min-h-16 w-full px-3 py-2 text-sm"
-              placeholder="Reply to this perspective — not the finished write-up…"
-              value={replyDrafts[`c-${reply.id}`] || ""}
-              onChange={(event) =>
-                setReplyDrafts((prev) => ({ ...prev, [`c-${reply.id}`]: event.target.value }))
-              }
-              required
-            />
-            <label className="sr-anon">
-              <input
-                type="checkbox"
-                className="accent-aui-forest"
-                checked={Boolean(replyAnon[`c-${reply.id}`])}
-                onChange={(event) =>
-                  setReplyAnon((prev) => ({ ...prev, [`c-${reply.id}`]: event.target.checked }))
-                }
-              />
-              Reply as Classmate
-            </label>
-            <button type="submit" disabled={replyBusy === `c-${reply.id}`} className="btn-primary px-3 py-1.5 text-xs">
-              {replyBusy === `c-${reply.id}` ? "Posting…" : "Comment"}
-            </button>
-          </form>
-        ) : null}
-        {(reply.children || []).map((child) => (
-          <Comment
-            key={child.id}
-            reply={child}
-            depth={depth + 1}
-            replyDrafts={replyDrafts}
-            setReplyDrafts={setReplyDrafts}
-            replyAnon={replyAnon}
-            setReplyAnon={setReplyAnon}
-            replyBusy={replyBusy}
-            reachBusy={reachBusy}
-            onReply={onReply}
-            onHelpful={onHelpful}
-            onReach={onReach}
-          />
-        ))}
-      </div>
+    <span className="rf-stars" aria-label={`${count} stars`}>
+      {"★".repeat(count)}
+      {"☆".repeat(Math.max(0, 5 - count))}
+    </span>
+  );
+}
+
+function VoteColumn({ score, mine, disabled, onVote }) {
+  return (
+    <div className="rf-vote">
+      <button
+        type="button"
+        className={`rf-vote-btn${mine === 1 ? " is-up" : ""}`}
+        disabled={disabled}
+        aria-label="Upvote"
+        onClick={() => onVote(1)}
+      >
+        ▲
+      </button>
+      <span className={`rf-vote-n${mine ? " is-on" : ""}`}>{score}</span>
+      <button
+        type="button"
+        className={`rf-vote-btn${mine === -1 ? " is-down" : ""}`}
+        disabled={disabled}
+        aria-label="Downvote"
+        onClick={() => onVote(-1)}
+      >
+        ▼
+      </button>
     </div>
   );
 }
@@ -169,53 +86,54 @@ function Comment({
 export default function StuckRoomPage() {
   const { token, activeCourse } = useAuth();
   const [params, setParams] = useSearchParams();
+  const view = params.get("view") || "rooms";
   const threadId = params.get("post");
-  const composing = params.get("view") === "submit";
+  const profileId = params.get("user");
 
   const [community, setCommunity] = useState(null);
   const [posts, setPosts] = useState([]);
   const [thread, setThread] = useState(null);
   const [ranks, setRanks] = useState([]);
-  const [reachOuts, setReachOuts] = useState([]);
-  const [sort, setSort] = useState("hot");
-  const [flairFilter, setFlairFilter] = useState("");
+  const [profile, setProfile] = useState(null);
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [chapterFilter, setChapterFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [sort, setSort] = useState("hot");
+
+  const [step, setStep] = useState(1);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [roomType, setRoomType] = useState("problem");
   const [chapter, setChapter] = useState("");
-  const [flair, setFlair] = useState("stuck");
+  const [tagDraft, setTagDraft] = useState("");
+  const [tags, setTags] = useState([]);
+  const [files, setFiles] = useState([]);
   const [anonymous, setAnonymous] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [replyDrafts, setReplyDrafts] = useState({});
-  const [replyAnon, setReplyAnon] = useState({});
   const [replyBusy, setReplyBusy] = useState(null);
-  const [reachBusy, setReachBusy] = useState(null);
 
   const courseId = activeCourse?.id;
-  const incoming = useMemo(
-    () => reachOuts.filter((row) => row.is_incoming),
-    [reachOuts],
-  );
 
   const loadFeed = useCallback(async () => {
     if (!courseId || !token) return;
-    const flairQuery = flairFilter ? `&flair=${flairFilter}` : "";
+    const qs = new URLSearchParams({ course_id: String(courseId), sort });
+    if (chapterFilter) qs.set("chapter", chapterFilter);
+    if (typeFilter) qs.set("room_type", typeFilter);
     try {
-      const [meta, feed, board, handshakes] = await Promise.all([
+      const [meta, feed, board] = await Promise.all([
         api(`/help-room/community/?course_id=${courseId}`, { token }),
-        api(`/help-room/?course_id=${courseId}&sort=${sort}${flairQuery}`, { token }),
+        api(`/help-room/?${qs}`, { token }),
         api(`/help-room/ranks/?course_id=${courseId}`, { token }),
-        api(`/help-room/reach-outs/?course_id=${courseId}`, { token }),
       ]);
       setCommunity(meta);
       setPosts(feed);
       setRanks(board);
-      setReachOuts(handshakes);
       setError("");
     } catch (err) {
       setError(err.message);
     }
-  }, [courseId, token, sort, flairFilter]);
+  }, [courseId, token, sort, chapterFilter, typeFilter]);
 
   const loadThread = useCallback(async () => {
     if (!threadId || !token) {
@@ -223,21 +141,35 @@ export default function StuckRoomPage() {
       return;
     }
     try {
-      const item = await api(`/help-room/${threadId}`, { token });
-      setThread(item);
-      setError("");
+      setThread(await api(`/help-room/${threadId}`, { token }));
     } catch (err) {
       setError(err.message);
     }
   }, [threadId, token]);
 
+  const loadProfile = useCallback(async () => {
+    if (!profileId || !token || !courseId) {
+      setProfile(null);
+      return;
+    }
+    try {
+      setProfile(
+        await api(`/help-room/profile/${profileId}?course_id=${courseId}`, { token }),
+      );
+    } catch (err) {
+      setError(err.message);
+    }
+  }, [profileId, token, courseId]);
+
   useEffect(() => {
     loadFeed();
   }, [loadFeed]);
-
   useEffect(() => {
     loadThread();
   }, [loadThread]);
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   if (!activeCourse) return <Navigate to="/" replace />;
   if (activeCourse.role !== "student") {
@@ -246,22 +178,64 @@ export default function StuckRoomPage() {
 
   const name = community?.community_name || `r/${String(activeCourse.code || "").replace(/\s+/g, "")}`;
 
-  function openThread(id) {
-    setParams({ post: String(id) });
+  function go(next) {
+    setParams(next);
   }
 
-  function openSubmit() {
-    setParams({ view: "submit" });
+  function addTag(raw) {
+    const tokenTag = String(raw || "")
+      .replace(/[^A-Za-z0-9_]/g, "")
+      .slice(0, 40);
+    if (!tokenTag || tags.includes(tokenTag)) return;
+    setTags((prev) => [...prev, tokenTag].slice(0, 8));
+    setTagDraft("");
   }
 
-  function backToFeed() {
-    setParams({});
+  async function vote(postId, value, isMine) {
+    if (isMine) return;
+    try {
+      const result = await api(`/help-room/${postId}/vote`, {
+        method: "POST",
+        token,
+        body: { value },
+      });
+      const patch = (item) =>
+        item.id === postId
+          ? {
+              ...item,
+              score: result.score,
+              up_count: result.up_count,
+              down_count: result.down_count,
+              my_vote: result.my_vote,
+              same_here_count: result.same_here_count,
+              same_here_by_me: result.my_vote === 1,
+            }
+          : item;
+      setPosts((prev) => prev.map(patch));
+      setThread((prev) => (prev ? patch(prev) : prev));
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
-  async function submitPost(event) {
+  async function expressInterest(postId) {
+    try {
+      await api(`/help-room/${postId}/interest`, {
+        method: "POST",
+        token,
+        body: { note: "I can help with this room — happy to compare notes." },
+      });
+      await loadFeed();
+      await loadThread();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function publishRoom(event) {
     event.preventDefault();
-    if (!title.trim() || !body.trim()) {
-      setError("Give it a title, then describe the stuck point.");
+    if (!title.trim() || !body.trim() || !chapter) {
+      setError("Title, description, and a chapter are required to publish.");
       return;
     }
     setBusy(true);
@@ -274,18 +248,25 @@ export default function StuckRoomPage() {
           course_id: courseId,
           title: title.trim(),
           body: body.trim(),
-          chapter: chapter.trim() || null,
-          flair,
+          chapter,
+          room_type: roomType,
+          tags,
           anonymous,
         },
       });
+      for (const file of files) {
+        const form = new FormData();
+        form.append("file", file);
+        await apiUpload(`/help-room/${created.id}/files`, { token, formData: form });
+      }
       setTitle("");
       setBody("");
       setChapter("");
-      setFlair("stuck");
-      setAnonymous(false);
+      setTags([]);
+      setFiles([]);
+      setStep(1);
       await loadFeed();
-      setParams({ post: String(created.id) });
+      go({ post: String(created.id) });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -293,31 +274,10 @@ export default function StuckRoomPage() {
     }
   }
 
-  async function voteSameHere(postId, isMine) {
-    if (isMine) return;
-    try {
-      const result = await api(`/help-room/${postId}/same-here`, { method: "POST", token });
-      setPosts((prev) =>
-        prev.map((post) =>
-          post.id === postId
-            ? { ...post, same_here_by_me: result.marked, same_here_count: result.same_here_count }
-            : post,
-        ),
-      );
-      setThread((prev) =>
-        prev && prev.id === postId
-          ? { ...prev, same_here_by_me: result.marked, same_here_count: result.same_here_count }
-          : prev,
-      );
-    } catch (err) {
-      setError(err.message);
-    }
-  }
-
-  async function submitReply(event, parentReplyId) {
+  async function submitReply(event, parentId) {
     event.preventDefault();
     if (!thread) return;
-    const key = parentReplyId ? `c-${parentReplyId}` : `p-${thread.id}`;
+    const key = parentId ? `c-${parentId}` : `p-${thread.id}`;
     const text = (replyDrafts[key] || "").trim();
     if (!text) return;
     setReplyBusy(key);
@@ -325,11 +285,7 @@ export default function StuckRoomPage() {
       await api(`/help-room/${thread.id}/replies`, {
         method: "POST",
         token,
-        body: {
-          body: text,
-          anonymous: Boolean(replyAnon[key]),
-          parent_reply_id: parentReplyId || null,
-        },
+        body: { body: text, parent_reply_id: parentId || null },
       });
       setReplyDrafts((prev) => ({ ...prev, [key]: "" }));
       await loadThread();
@@ -343,402 +299,790 @@ export default function StuckRoomPage() {
 
   async function markHelpful(replyId) {
     try {
-      const result = await api(`/help-room/replies/${replyId}/helpful`, {
-        method: "POST",
-        token,
-      });
-      setThread((prev) =>
-        prev
-          ? {
-              ...prev,
-              replies: mapTree(prev.replies, replyId, (reply) => ({
-                ...reply,
-                marked_helpful_by_me: result.marked,
-                helpful_count: result.helpful_count,
-                reachable: result.reachable,
-                reached_out_by_me: result.reached_out_by_me,
-              })),
-            }
-          : prev,
-      );
-      const board = await api(`/help-room/ranks/?course_id=${courseId}`, { token });
-      setRanks(board);
-    } catch (err) {
-      setError(err.message);
-    }
-  }
-
-  async function reachOut(replyId) {
-    setReachBusy(replyId);
-    try {
-      await api(`/help-room/replies/${replyId}/reach-out`, {
-        method: "POST",
-        token,
-        body: { note: DEFAULT_REACH },
-      });
+      await api(`/help-room/replies/${replyId}/helpful`, { method: "POST", token });
       await loadThread();
       await loadFeed();
     } catch (err) {
       setError(err.message);
-    } finally {
-      setReachBusy(null);
     }
   }
 
-  async function removeMine(postId) {
+  async function acceptSolution(replyId) {
     try {
-      await api(`/help-room/${postId}`, { method: "DELETE", token });
-      setPosts((prev) => prev.filter((post) => post.id !== postId));
-      if (String(postId) === String(threadId)) backToFeed();
+      const updated = await api(`/help-room/replies/${replyId}/accept`, {
+        method: "POST",
+        token,
+      });
+      setThread(updated);
+      await loadFeed();
     } catch (err) {
       setError(err.message);
     }
   }
 
-  const initials = (activeCourse.code || "OH").replace(/\s+/g, "").slice(0, 2).toUpperCase();
+  const chapters = community?.chapters || [];
+  const resolutionPct = Math.round((community?.resolution_rate || 0) * 100);
 
   return (
-    <div className="sr-page">
-      <div className="sr-banner">
-        <div className="sr-banner-wash" />
-      </div>
-
-      <div className="sr-head">
-        <div className="sr-avatar" aria-hidden="true">
-          {initials}
-        </div>
-        <div className="sr-head-copy">
-          <p className="sr-kicker">Stuck Room · classmates only</p>
-          <h1>{name}</h1>
-          <p>
-            {activeCourse.code} — {activeCourse.title}. Share what you are stuck on, rank the
-            people who truly unlocked it, and find a peer when the chapter is a lot.
-          </p>
-        </div>
-        <button type="button" className="btn-primary px-5 py-2.5 text-sm" onClick={openSubmit}>
-          Create post
-        </button>
-      </div>
-
-      <div className="sr-layout">
+    <div className="rf-page">
+      <header className="rf-top">
         <div>
-          {error ? <p className="sr-error">{error}</p> : null}
+          <p className="rf-kicker">AUI Rooms · {activeCourse.code} classmates only</p>
+          <h1>{name}</h1>
+        </div>
+        <button type="button" className="btn-primary px-5 py-2.5 text-sm" onClick={() => go({ view: "create" })}>
+          Initialize Room
+        </button>
+      </header>
 
-          {threadId && thread ? (
-            <article className="sr-card sr-thread">
-              <button type="button" className="sr-back" onClick={backToFeed}>
-                ← Back to {name}
-              </button>
-              <div className="sr-post">
-                <VoteRail
-                  count={thread.same_here_count}
-                  active={thread.same_here_by_me}
-                  disabled={thread.is_mine}
-                  label="Same here"
-                  onToggle={() => voteSameHere(thread.id, thread.is_mine)}
-                />
-                <div className="sr-post-main">
-                  <p className="sr-meta">
-                    <span className={`sr-flair sr-flair-${thread.flair}`}>{flairMeta(thread.flair).label}</span>
-                    <span>Posted by {thread.author_display}</span>
-                    {thread.author_karma > 0 ? (
-                      <span className="sr-karma">{thread.author_karma} helper karma</span>
-                    ) : null}
-                    <span>{timeAgo(thread.created_at)}</span>
-                    {thread.chapter ? <span>{thread.chapter}</span> : null}
-                    {thread.is_mine ? (
-                      <button type="button" className="sr-text-btn sr-danger" onClick={() => removeMine(thread.id)}>
-                        Delete
-                      </button>
-                    ) : null}
-                  </p>
-                  <h2>{thread.title}</h2>
-                  <p className="sr-body">{thread.body}</p>
-                  {thread.similar_chapter_count > 0 ? (
-                    <p className="sr-solidarity">
-                      {thread.similar_chapter_count} other classmate
-                      {thread.similar_chapter_count === 1 ? " is" : "s are"} on {thread.chapter}{" "}
-                      — you are not the only one.
-                    </p>
-                  ) : null}
-                  <p className="sr-meta">
-                    <span>{thread.reply_count} comment{thread.reply_count === 1 ? "" : "s"}</span>
-                    <span>{thread.unlocked_count} aha mark{thread.unlocked_count === 1 ? "" : "s"}</span>
-                  </p>
-                </div>
-              </div>
+      {error ? <p className="rf-error">{error}</p> : null}
 
-              <form className="sr-composer sr-composer-inline" onSubmit={(event) => submitReply(event, null)}>
-                <p className="sr-composer-label">Comment as a classmate</p>
-                <textarea
-                  className="field-glass min-h-20 w-full px-3 py-2 text-sm"
-                  placeholder="A simpler approach, a missing check, or a study-peer offer…"
-                  value={replyDrafts[`p-${thread.id}`] || ""}
-                  onChange={(event) =>
-                    setReplyDrafts((prev) => ({ ...prev, [`p-${thread.id}`]: event.target.value }))
-                  }
-                  required
-                />
-                <div className="sr-composer-row">
-                  <label className="sr-anon">
-                    <input
-                      type="checkbox"
-                      className="accent-aui-forest"
-                      checked={Boolean(replyAnon[`p-${thread.id}`])}
-                      onChange={(event) =>
-                        setReplyAnon((prev) => ({ ...prev, [`p-${thread.id}`]: event.target.checked }))
-                      }
-                    />
-                    Comment as Classmate
-                  </label>
-                  <button type="submit" disabled={replyBusy === `p-${thread.id}`} className="btn-primary px-4 py-2 text-sm">
-                    {replyBusy === `p-${thread.id}` ? "Posting…" : "Comment"}
-                  </button>
-                </div>
-              </form>
-
-              <div className="sr-comments">
-                {(thread.replies || []).length === 0 ? (
-                  <p className="bh-card-note">No comments yet. The first perspective often is the aha.</p>
-                ) : (
-                  (thread.replies || []).map((reply) => (
-                    <Comment
-                      key={reply.id}
-                      reply={reply}
-                      depth={0}
-                      replyDrafts={replyDrafts}
-                      setReplyDrafts={setReplyDrafts}
-                      replyAnon={replyAnon}
-                      setReplyAnon={setReplyAnon}
-                      replyBusy={replyBusy}
-                      reachBusy={reachBusy}
-                      onReply={submitReply}
-                      onHelpful={markHelpful}
-                      onReach={reachOut}
-                    />
-                  ))
-                )}
-              </div>
-            </article>
-          ) : composing ? (
-            <form className="sr-card sr-submit" onSubmit={submitPost}>
-              <button type="button" className="sr-back" onClick={backToFeed}>
-                ← Cancel
-              </button>
-              <h2>Create a post</h2>
-              <p className="bh-card-note">
-                This is a course community, not a homework dump. Staff never sit in the room.
-              </p>
-              <div className="sr-flair-picks">
-                {FLAIRS.map((item) => (
+      <div className="rf-layout">
+        <aside className="rf-left">
+          <nav className="rf-side-nav">
+            <button type="button" className={view === "rooms" && !threadId && !profileId ? "is-on" : ""} onClick={() => go({})}>
+              Rooms
+            </button>
+            <button type="button" className={view === "fields" ? "is-on" : ""} onClick={() => go({ view: "fields" })}>
+              Fields
+            </button>
+            <button
+              type="button"
+              className={view === "leaderboard" ? "is-on" : ""}
+              onClick={() => go({ view: "leaderboard" })}
+            >
+              Leaderboard
+            </button>
+          </nav>
+          <div className="rf-card">
+            <h3>Chapters</h3>
+            <ul className="rf-chapter-list">
+              <li>
+                <button type="button" className={!chapterFilter ? "is-on" : ""} onClick={() => setChapterFilter("")}>
+                  All chapters <span>{community?.post_count || 0}</span>
+                </button>
+              </li>
+              {chapters.map((item) => (
+                <li key={item.label}>
                   <button
-                    key={item.id}
                     type="button"
-                    className={`sr-flair-pick sr-flair-${item.id}${flair === item.id ? " is-on" : ""}`}
-                    onClick={() => setFlair(item.id)}
+                    className={chapterFilter === item.label ? "is-on" : ""}
+                    onClick={() => {
+                      setChapterFilter(item.label);
+                      go({});
+                    }}
                   >
-                    <strong>{item.label}</strong>
-                    <span>{item.hint}</span>
+                    {item.label} <span>{item.post_count}</span>
                   </button>
-                ))}
-              </div>
-              <input
-                className="field-glass w-full px-4 py-2.5 text-sm"
-                placeholder="Title"
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                required
-              />
-              <input
-                className="field-glass w-full px-4 py-2.5 text-sm"
-                placeholder="Chapter / topic (optional)"
-                value={chapter}
-                onChange={(event) => setChapter(event.target.value)}
-              />
-              <textarea
-                className="field-glass min-h-36 w-full px-4 py-2.5 text-sm"
-                placeholder="What have you already tried? What feels one insight away?"
-                value={body}
-                onChange={(event) => setBody(event.target.value)}
-                required
-              />
-              <label className="sr-anon">
-                <input
-                  type="checkbox"
-                  className="accent-aui-forest"
-                  checked={anonymous}
-                  onChange={(event) => setAnonymous(event.target.checked)}
-                />
-                Post as Classmate (hide my name)
-              </label>
-              <button type="submit" disabled={busy} className="btn-primary px-5 py-2.5 text-sm">
-                {busy ? "Posting…" : "Post"}
-              </button>
-            </form>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
+
+        <div className="rf-main">
+          {profileId && profile ? (
+            <ProfilePanel
+              profile={profile}
+              onFollow={async () => {
+                const next = await api(
+                  `/help-room/profile/${profile.user_id}/follow?course_id=${courseId}`,
+                  { method: "POST", token },
+                );
+                setProfile(next);
+              }}
+              onBack={() => go({})}
+            />
+          ) : view === "create" ? (
+            <CreateWizard
+              step={step}
+              setStep={setStep}
+              title={title}
+              setTitle={setTitle}
+              body={body}
+              setBody={setBody}
+              roomType={roomType}
+              setRoomType={setRoomType}
+              chapter={chapter}
+              setChapter={setChapter}
+              chapters={chapters}
+              tags={tags}
+              tagDraft={tagDraft}
+              setTagDraft={setTagDraft}
+              addTag={addTag}
+              setTags={setTags}
+              files={files}
+              setFiles={setFiles}
+              anonymous={anonymous}
+              setAnonymous={setAnonymous}
+              busy={busy}
+              onCancel={() => go({})}
+              onPublish={publishRoom}
+            />
+          ) : view === "leaderboard" ? (
+            <LeaderboardPanel ranks={ranks} onOpen={(id) => go({ user: String(id) })} />
+          ) : view === "fields" ? (
+            <FieldsGrid
+              chapters={chapters}
+              onPick={(label) => {
+                setChapterFilter(label);
+                go({});
+              }}
+            />
+          ) : threadId && thread ? (
+            <ThreadView
+              thread={thread}
+              name={name}
+              onBack={() => go({})}
+              onVote={vote}
+              onInterest={expressInterest}
+              onProfile={(id) => go({ user: String(id) })}
+              replyDrafts={replyDrafts}
+              setReplyDrafts={setReplyDrafts}
+              replyBusy={replyBusy}
+              onReply={submitReply}
+              onHelpful={markHelpful}
+              onAccept={acceptSolution}
+            />
           ) : (
-            <>
-              <div className="sr-toolbar">
-                <div className="sr-sorts">
-                  {SORTS.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={`sr-sort${sort === item.id ? " is-on" : ""}`}
-                      onClick={() => setSort(item.id)}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-                <div className="sr-filters">
-                  <button
-                    type="button"
-                    className={`sr-chip${!flairFilter ? " is-on" : ""}`}
-                    onClick={() => setFlairFilter("")}
-                  >
-                    All
-                  </button>
-                  {FLAIRS.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={`sr-chip sr-flair-${item.id}${flairFilter === item.id ? " is-on" : ""}`}
-                      onClick={() => setFlairFilter(item.id)}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {posts.length === 0 ? (
-                <div className="sr-card sr-empty">
-                  <h2>No posts in {name} yet</h2>
-                  <p>
-                    Be the first to say what you are stuck on — classmates already solved the
-                    same snag, and asking here is often easier than waiting days alone.
-                  </p>
-                  <button type="button" className="btn-primary mt-4 px-5 py-2.5 text-sm" onClick={openSubmit}>
-                    Create the first post
-                  </button>
-                </div>
-              ) : (
-                <div className="sr-feed">
-                  {posts.map((post) => (
-                    <article key={post.id} className="sr-card sr-row">
-                      <VoteRail
-                        count={post.same_here_count}
-                        active={post.same_here_by_me}
-                        disabled={post.is_mine}
-                        label="Same here"
-                        onToggle={() => voteSameHere(post.id, post.is_mine)}
-                      />
-                      <button type="button" className="sr-row-main" onClick={() => openThread(post.id)}>
-                        <p className="sr-meta">
-                          <span className={`sr-flair sr-flair-${post.flair}`}>{flairMeta(post.flair).label}</span>
-                          <span>Posted by {post.author_display}</span>
-                          {post.author_karma > 0 ? (
-                            <span className="sr-karma">{post.author_karma} helper karma</span>
-                          ) : null}
-                          <span>{timeAgo(post.created_at)}</span>
-                          {post.chapter ? <span>{post.chapter}</span> : null}
-                        </p>
-                        <h2>{post.title}</h2>
-                        <p className="sr-preview">{post.body}</p>
-                        <p className="sr-meta">
-                          <span>
-                            {post.reply_count} comment{post.reply_count === 1 ? "" : "s"}
-                          </span>
-                          <span>
-                            {post.unlocked_count} aha{post.unlocked_count === 1 ? "" : "s"}
-                          </span>
-                        </p>
-                      </button>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </>
+            <Feed
+              posts={posts}
+              sort={sort}
+              setSort={setSort}
+              typeFilter={typeFilter}
+              setTypeFilter={setTypeFilter}
+              onOpen={(id) => go({ post: String(id) })}
+              onVote={vote}
+              onInterest={expressInterest}
+              onProfile={(id) => go({ user: String(id) })}
+              onCreate={() => go({ view: "create" })}
+              courseCode={activeCourse.code}
+            />
           )}
         </div>
 
-        <aside className="sr-side">
-          <section className="sr-card">
-            <h3>About community</h3>
-            <p>
-              A course subreddit for {activeCourse.code}: stuck points, ahas, academic stress,
-              and finding a peer. Not Quiet ask. Not file notes. Not a staff chat.
-            </p>
-            <dl className="sr-stats">
+        <aside className="rf-right">
+          <div className="rf-card rf-pulse">
+            <h3>Community Pulse</h3>
+            <dl>
               <div>
                 <dt>{community?.classmate_count ?? "—"}</dt>
                 <dd>Classmates</dd>
               </div>
               <div>
-                <dt>{community?.post_count ?? posts.length}</dt>
-                <dd>Posts</dd>
+                <dt>{community?.open_count ?? community?.post_count ?? 0}</dt>
+                <dd>Active rooms</dd>
               </div>
               <div>
-                <dt>{community?.helper_count ?? ranks.length}</dt>
-                <dd>Helpers</dd>
+                <dt>{resolutionPct}%</dt>
+                <dd>Resolution</dd>
               </div>
             </dl>
-          </section>
-
-          <section className="sr-card">
-            <h3>{name} rules</h3>
-            <ol>
-              {RULES.map((rule, index) => (
-                <li key={rule}>
-                  <span>{index + 1}</span>
-                  {rule}
-                </li>
-              ))}
+            <button type="button" className="btn-primary mt-4 w-full px-4 py-2.5 text-sm" onClick={() => go({ view: "create" })}>
+              Initialize Room
+            </button>
+          </div>
+          <div className="rf-card">
+            <h3>Room rules</h3>
+            <ol className="rf-rules">
+              <li>Share the stuck point, not the homework write-up.</li>
+              <li>Accept a solution only when it truly unlocked it.</li>
+              <li>Grades, integrity, and crises go to Quiet ask.</li>
+              <li>Staff are not in this room.</li>
             </ol>
-          </section>
-
-          <section className="sr-card">
-            <h3>Top helpers</h3>
-            <p className="bh-card-note">
-              Ranked by unique “this unlocked it” marks — the true-help signal, not upvotes.
+            <p className="rf-quiet">
+              Need staff? <Link to="/student#ask">Quiet ask</Link>
             </p>
-            {ranks.length === 0 ? (
-              <p className="mt-2 text-sm text-aui-deep/70">No helper karma yet.</p>
-            ) : (
-              <ol className="sr-ranks">
-                {ranks.slice(0, 8).map((row) => (
-                  <li key={row.user_id}>
-                    <span className="sr-rank-n">#{row.rank}</span>
-                    <span className="sr-rank-name">{row.display_name}</span>
-                    <span className="sr-rank-pts">{row.helpful_points}</span>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </section>
-
-          {incoming.length > 0 ? (
-            <section className="sr-card sr-inbox">
-              <h3>Compare-notes pings</h3>
-              <p className="bh-card-note">Named handshake after an aha. Staff never see this.</p>
-              <ul>
-                {incoming.map((row) => (
-                  <li key={row.id}>
-                    <strong>{row.from_display}</strong>
-                    <span>{row.post_title}</span>
-                    <p>{row.note}</p>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-
-          <p className="sr-quiet">
-            Need staff instead?{" "}
-            <Link to="/student#ask">Quiet ask</Link>
-          </p>
+          </div>
         </aside>
       </div>
+    </div>
+  );
+}
+
+function Feed({
+  posts,
+  sort,
+  setSort,
+  typeFilter,
+  setTypeFilter,
+  onOpen,
+  onVote,
+  onInterest,
+  onProfile,
+  onCreate,
+  courseCode,
+}) {
+  return (
+    <>
+      <div className="rf-toolbar">
+        {["hot", "new", "top"].map((key) => (
+          <button key={key} type="button" className={sort === key ? "is-on" : ""} onClick={() => setSort(key)}>
+            {key[0].toUpperCase() + key.slice(1)}
+          </button>
+        ))}
+        <span className="rf-toolbar-gap" />
+        <button type="button" className={!typeFilter ? "is-on" : ""} onClick={() => setTypeFilter("")}>
+          All
+        </button>
+        {ROOM_TYPES.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={typeFilter === item.id ? "is-on" : ""}
+            onClick={() => setTypeFilter(item.id)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+      {posts.length === 0 ? (
+        <div className="rf-card">
+          <h2>No rooms yet in {courseCode}</h2>
+          <p className="bh-card-note">Initialize a Problem, Discussion, or Article so classmates can offer help.</p>
+          <button type="button" className="btn-primary mt-4 px-5 py-2.5 text-sm" onClick={onCreate}>
+            Initialize Room
+          </button>
+        </div>
+      ) : (
+        <div className="rf-feed">
+          {posts.map((post) => (
+            <RoomCard
+              key={post.id}
+              post={post}
+              onOpen={() => onOpen(post.id)}
+              onVote={(value) => onVote(post.id, value, post.is_mine)}
+              onInterest={() => onInterest(post.id)}
+              onProfile={() => post.author_user_id && onProfile(post.author_user_id)}
+            />
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+function RoomCard({ post, onOpen, onVote, onInterest, onProfile }) {
+  return (
+    <article className="rf-card rf-room-card">
+      <VoteColumn score={post.score} mine={post.my_vote} disabled={post.is_mine} onVote={onVote} />
+      <div className="rf-room-body">
+        <div className="rf-badges">
+          <span className={`rf-type rf-type-${post.room_type}`}>{post.room_type}</span>
+          <span className={`rf-status rf-status-${post.status}`}>{post.status}</span>
+          {post.chapter ? <span className="rf-field">{post.chapter}</span> : null}
+        </div>
+        <button type="button" className="rf-title-btn" onClick={onOpen}>
+          <h2>{post.title}</h2>
+        </button>
+        <p className="rf-snippet">{post.body}</p>
+        {post.tags?.length ? (
+          <p className="rf-tags">
+            {post.tags.map((tag) => (
+              <span key={tag}>#{tag}</span>
+            ))}
+          </p>
+        ) : null}
+        <div className="rf-meta-row">
+          <button type="button" className="rf-author" onClick={onProfile} disabled={!post.author_user_id}>
+            <Avatar name={post.author_display} seed={post.author_handle || post.author_display} size={28} />
+            <span>{post.author_display}</span>
+            {post.author_handle ? <em>@{post.author_handle}</em> : null}
+          </button>
+          <span>{timeAgo(post.created_at)}</span>
+          <span>
+            {post.reply_count} solution{post.reply_count === 1 ? "" : "s"}
+          </span>
+          {!post.is_mine ? (
+            <button
+              type="button"
+              className={`rf-interest${post.interested_by_me ? " is-on" : ""}`}
+              onClick={onInterest}
+            >
+              {post.interested_by_me ? "Interest sent" : "Express Interest"}
+            </button>
+          ) : (
+            <span className="rf-interest-count">{post.interest_count} interested</span>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function ThreadView({
+  thread,
+  name,
+  onBack,
+  onVote,
+  onInterest,
+  onProfile,
+  replyDrafts,
+  setReplyDrafts,
+  replyBusy,
+  onReply,
+  onHelpful,
+  onAccept,
+}) {
+  return (
+    <article className="rf-card">
+      <button type="button" className="rf-back" onClick={onBack}>
+        ← Back to {name}
+      </button>
+      <div className="rf-room-card rf-thread-head">
+        <VoteColumn
+          score={thread.score}
+          mine={thread.my_vote}
+          disabled={thread.is_mine}
+          onVote={(value) => onVote(thread.id, value, thread.is_mine)}
+        />
+        <div className="rf-room-body">
+          <div className="rf-badges">
+            <span className={`rf-type rf-type-${thread.room_type}`}>{thread.room_type}</span>
+            <span className={`rf-status rf-status-${thread.status}`}>{thread.status}</span>
+            {thread.chapter ? <span className="rf-field">{thread.chapter}</span> : null}
+          </div>
+          <h2>{thread.title}</h2>
+          <MarkdownBody text={thread.body} />
+          {thread.tags?.length ? (
+            <p className="rf-tags">
+              {thread.tags.map((tag) => (
+                <span key={tag}>#{tag}</span>
+              ))}
+            </p>
+          ) : null}
+          {thread.files?.length ? (
+            <ul className="rf-files">
+              {thread.files.map((file) => (
+                <li key={file.id}>{file.original_filename}</li>
+              ))}
+            </ul>
+          ) : null}
+          <div className="rf-meta-row">
+            <button type="button" className="rf-author" onClick={() => thread.author_user_id && onProfile(thread.author_user_id)}>
+              <Avatar name={thread.author_display} seed={thread.author_handle} size={28} />
+              {thread.author_display}
+            </button>
+            <span>{timeAgo(thread.created_at)}</span>
+            {!thread.is_mine ? (
+              <button type="button" className="rf-interest" onClick={() => onInterest(thread.id)}>
+                {thread.interested_by_me ? "Interest sent" : "Express Interest"}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <form className="rf-composer" onSubmit={(event) => onReply(event, null)}>
+        <textarea
+          className="field-glass min-h-20 w-full px-3 py-2 text-sm"
+          placeholder="Offer a solution or perspective — not the finished write-up."
+          value={replyDrafts[`p-${thread.id}`] || ""}
+          onChange={(event) =>
+            setReplyDrafts((prev) => ({ ...prev, [`p-${thread.id}`]: event.target.value }))
+          }
+          required
+        />
+        <button type="submit" className="btn-primary px-4 py-2 text-sm" disabled={replyBusy === `p-${thread.id}`}>
+          {replyBusy === `p-${thread.id}` ? "Posting…" : "Post solution"}
+        </button>
+      </form>
+
+      <div className="rf-comments">
+        {(thread.replies || []).map((reply) => (
+          <Comment
+            key={reply.id}
+            reply={reply}
+            depth={0}
+            canAccept={thread.is_mine && thread.room_type === "problem"}
+            replyDrafts={replyDrafts}
+            setReplyDrafts={setReplyDrafts}
+            replyBusy={replyBusy}
+            onReply={onReply}
+            onHelpful={onHelpful}
+            onAccept={onAccept}
+            onProfile={onProfile}
+          />
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function Comment({
+  reply,
+  depth,
+  canAccept,
+  replyDrafts,
+  setReplyDrafts,
+  replyBusy,
+  onReply,
+  onHelpful,
+  onAccept,
+  onProfile,
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rf-comment" style={{ marginLeft: Math.min(depth, 5) * 16 }}>
+      <button type="button" className="rf-author" onClick={() => reply.author_user_id && onProfile(reply.author_user_id)}>
+        <Avatar name={reply.author_display} seed={reply.author_display} size={26} />
+        <strong>{reply.author_display}</strong>
+      </button>
+      {reply.accepted ? <span className="rf-accepted">Accepted</span> : null}
+      <p>{reply.body}</p>
+      <div className="rf-comment-actions">
+        <button type="button" disabled={reply.is_mine} onClick={() => onHelpful(reply.id)}>
+          {reply.marked_helpful_by_me ? "Helpful" : "Helpful vote"} · {reply.helpful_count}
+        </button>
+        <button type="button" onClick={() => setOpen((value) => !value)}>
+          Reply
+        </button>
+        {canAccept && !reply.is_mine ? (
+          <button type="button" onClick={() => onAccept(reply.id)}>
+            Accept solution
+          </button>
+        ) : null}
+      </div>
+      {open ? (
+        <form onSubmit={(event) => onReply(event, reply.id)}>
+          <textarea
+            className="field-glass mt-2 min-h-16 w-full px-3 py-2 text-sm"
+            value={replyDrafts[`c-${reply.id}`] || ""}
+            onChange={(event) =>
+              setReplyDrafts((prev) => ({ ...prev, [`c-${reply.id}`]: event.target.value }))
+            }
+            required
+          />
+          <button type="submit" className="btn-ghost mt-2 px-3 py-1.5 text-xs" disabled={replyBusy === `c-${reply.id}`}>
+            Comment
+          </button>
+        </form>
+      ) : null}
+      {(reply.children || []).map((child) => (
+        <Comment
+          key={child.id}
+          reply={child}
+          depth={depth + 1}
+          canAccept={canAccept}
+          replyDrafts={replyDrafts}
+          setReplyDrafts={setReplyDrafts}
+          replyBusy={replyBusy}
+          onReply={onReply}
+          onHelpful={onHelpful}
+          onAccept={onAccept}
+          onProfile={onProfile}
+        />
+      ))}
+    </div>
+  );
+}
+
+function CreateWizard({
+  step,
+  setStep,
+  title,
+  setTitle,
+  body,
+  setBody,
+  roomType,
+  setRoomType,
+  chapter,
+  setChapter,
+  chapters,
+  tags,
+  tagDraft,
+  setTagDraft,
+  addTag,
+  setTags,
+  files,
+  setFiles,
+  anonymous,
+  setAnonymous,
+  busy,
+  onCancel,
+  onPublish,
+}) {
+  return (
+    <form className="rf-wizard" onSubmit={onPublish}>
+      <div className="rf-wizard-main">
+        <button type="button" className="rf-back" onClick={onCancel}>
+          ← Cancel
+        </button>
+        <p className="rf-kicker">Create a Room · Step {step} of 3</p>
+        {step === 1 ? (
+          <>
+            <h2>General information</h2>
+            <input
+              className="field-glass w-full px-4 py-2.5 text-sm"
+              placeholder="Title"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              required
+            />
+            <textarea
+              className="field-glass min-h-48 w-full px-4 py-2.5 text-sm"
+              placeholder="Description (Markdown supported: **bold**, `code`, lists)"
+              value={body}
+              onChange={(event) => setBody(event.target.value)}
+              required
+            />
+            <label className="rf-anon">
+              <input type="checkbox" className="accent-aui-forest" checked={anonymous} onChange={(event) => setAnonymous(event.target.checked)} />
+              Publish as Classmate
+            </label>
+          </>
+        ) : null}
+        {step === 2 ? (
+          <>
+            <h2>Classification type</h2>
+            <div className="rf-type-grid">
+              {ROOM_TYPES.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`rf-type-pick${roomType === item.id ? " is-on" : ""}`}
+                  onClick={() => setRoomType(item.id)}
+                >
+                  <strong>{item.label}</strong>
+                  <span>{item.hint}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : null}
+        {step === 3 ? (
+          <>
+            <h2>Select course chapter</h2>
+            <div className="rf-chapter-grid">
+              {chapters.map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  className={chapter === item.label ? "is-on" : ""}
+                  onClick={() => setChapter(item.label)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : null}
+        <div className="rf-wizard-nav">
+          {step > 1 ? (
+            <button type="button" className="btn-ghost px-4 py-2 text-sm" onClick={() => setStep(step - 1)}>
+              Back
+            </button>
+          ) : null}
+          {step < 3 ? (
+            <button
+              type="button"
+              className="btn-primary px-5 py-2 text-sm"
+              onClick={() => {
+                if (step === 1 && (!title.trim() || !body.trim())) return;
+                setStep(step + 1);
+              }}
+            >
+              Continue
+            </button>
+          ) : (
+            <button type="submit" className="btn-primary px-5 py-2 text-sm" disabled={busy || !chapter}>
+              {busy ? "Publishing…" : "Publish Room"}
+            </button>
+          )}
+        </div>
+      </div>
+      <aside className="rf-wizard-side">
+        <div className="rf-card">
+          <h3>Room tags</h3>
+          <p className="bh-card-note">Hashtags for discoverability inside this course.</p>
+          <div className="rf-tag-row">
+            <input
+              className="field-glass px-3 py-2 text-sm"
+              placeholder="#Hashing"
+              value={tagDraft}
+              onChange={(event) => setTagDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  addTag(tagDraft);
+                }
+              }}
+            />
+            <button type="button" className="btn-ghost px-3 py-2 text-xs" onClick={() => addTag(tagDraft)}>
+              Add
+            </button>
+          </div>
+          <div className="rf-tags">
+            {tags.map((tag) => (
+              <button key={tag} type="button" onClick={() => setTags(tags.filter((item) => item !== tag))}>
+                #{tag} ×
+              </button>
+            ))}
+          </div>
+          <div className="rf-suggest">
+            {SUGGESTED_TAGS.map((tag) => (
+              <button key={tag} type="button" onClick={() => addTag(tag)}>
+                #{tag}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="rf-card">
+          <h3>Attachments</h3>
+          <p className="bh-card-note">CSV, PDF, MATLAB, STEP, PNG, ZIP · 10 MB max</p>
+          <label className="rf-drop">
+            Drop files or browse
+            <input
+              type="file"
+              multiple
+              hidden
+              onChange={(event) => setFiles([...files, ...Array.from(event.target.files || [])])}
+            />
+          </label>
+          <ul className="rf-files">
+            {files.map((file) => (
+              <li key={file.name}>
+                {file.name} · {Math.round(file.size / 1024)} KB
+              </li>
+            ))}
+          </ul>
+        </div>
+      </aside>
+    </form>
+  );
+}
+
+function FieldsGrid({ chapters, onPick }) {
+  return (
+    <div className="rf-card">
+      <h2>Fields</h2>
+      <p className="bh-card-note">Course chapters — the AUI equivalent of the engineering-discipline grid.</p>
+      <div className="rf-chapter-grid mt-4">
+        {chapters.map((item) => (
+          <button key={item.label} type="button" onClick={() => onPick(item.label)}>
+            <strong>{item.label}</strong>
+            <span>{item.post_count} rooms</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LeaderboardPanel({ ranks, onOpen }) {
+  const top = ranks.slice(0, 3);
+  const rest = ranks.slice(3);
+  return (
+    <div className="rf-card">
+      <h2>Leaderboard</h2>
+      <p className="bh-card-note">
+        Ranked by Hilbert Weight ŵ (quality over volume). Score(W) is ŵ; Base is Node Points.
+      </p>
+      <div className="rf-podium">
+        {top.map((row, index) => (
+          <button key={row.user_id} type="button" className={`rf-podium-slot place-${index + 1}`} onClick={() => onOpen(row.user_id)}>
+            <Avatar name={row.display_name} seed={row.handle} size={index === 0 ? 72 : 56} />
+            <strong>{row.display_name}</strong>
+            <span className="rf-tier">{row.tier}</span>
+            <Stars count={row.stars} />
+            <em>{row.rooms_score.toFixed(3)}</em>
+          </button>
+        ))}
+      </div>
+      <table className="rf-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Classmate</th>
+            <th>Level</th>
+            <th>Points</th>
+            <th>Score(W)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ranks.map((row) => (
+            <tr key={row.user_id}>
+              <td>{row.rank}</td>
+              <td>
+                <button type="button" className="rf-author" onClick={() => onOpen(row.user_id)}>
+                  <Avatar name={row.display_name} seed={row.handle} size={28} />
+                  {row.display_name}
+                </button>
+              </td>
+              <td>{row.tier}</td>
+              <td>
+                ⚡ {row.node_points}
+              </td>
+              <td>
+                {row.hilbert_weight.toFixed(3)}
+                <small>Base {row.node_points}</small>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {rest.length === 0 ? <p className="bh-card-note mt-3">View All Rankings — everyone in this course is already listed.</p> : null}
+    </div>
+  );
+}
+
+function ProfilePanel({ profile, onFollow, onBack }) {
+  const tiles = [
+    ["Rooms", profile.rooms],
+    ["Solutions", profile.solutions],
+    ["Accepted", profile.accepted],
+    ["Helpful votes", profile.helpful_votes],
+    ["Followers", profile.followers],
+    ["Following", profile.following],
+    ["Profile views", profile.profile_views],
+    ["Legacy score", profile.node_points],
+  ];
+  return (
+    <div className="rf-card">
+      <button type="button" className="rf-back" onClick={onBack}>
+        ← Back to rooms
+      </button>
+      <div className="rf-profile-head">
+        <Avatar name={profile.display_name} seed={profile.handle} size={84} />
+        <div>
+          <h2>{profile.display_name}</h2>
+          <p>
+            @{profile.handle} · {profile.role_label}
+          </p>
+          {profile.bio ? <p className="rf-bio">{profile.bio}</p> : null}
+          {!profile.is_me ? (
+            <button type="button" className="btn-primary mt-3 px-4 py-2 text-sm" onClick={onFollow}>
+              {profile.followed_by_me ? "Following" : "Follow"}
+            </button>
+          ) : null}
+        </div>
+        <div className="rf-scorebox">
+          <p className="rf-kicker">ROOMS score</p>
+          <strong>{profile.rooms_score.toFixed(3)}</strong>
+          <span className="rf-tier">{profile.tier}</span>
+          <Stars count={profile.stars} />
+          <p>
+            Hilbert Weight ŵ {profile.hilbert_weight.toFixed(3)}
+            <br />
+            Node Points {profile.node_points}
+          </p>
+        </div>
+      </div>
+      <div className="rf-tiles">
+        {tiles.map(([label, value]) => (
+          <div key={label}>
+            <dt>{value}</dt>
+            <dd>{label}</dd>
+          </div>
+        ))}
+      </div>
+      {profile.skills?.length ? (
+        <p className="rf-tags mt-4">
+          {profile.skills.map((skill) => (
+            <span key={skill}>{skill}</span>
+          ))}
+        </p>
+      ) : null}
     </div>
   );
 }
