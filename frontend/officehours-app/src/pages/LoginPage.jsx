@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate, useNavigate } from "react-router";
+import { Link, Navigate, useNavigate } from "react-router";
 import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
@@ -90,8 +90,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="aui-shell flex min-h-screen items-center justify-center px-5 py-10">
-      <div className="fade-up grid w-full max-w-5xl items-stretch gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+    <div className="aui-shell flex min-h-screen flex-col px-5 py-6 sm:py-10">
+      <div className="oh-land-login-bar">
+        <Link to="/" className="oh-land-login-back">
+          ← How it works
+        </Link>
+        <span className="oh-land-login-hint">AUI email · role per course</span>
+      </div>
+      <div className="fade-up mx-auto grid w-full max-w-5xl flex-1 items-center gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <form onSubmit={handleSubmit} className="glass-panel p-8 sm:p-10">
           <img
             src="/aui-logo.png"
