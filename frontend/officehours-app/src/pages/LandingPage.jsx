@@ -20,14 +20,12 @@ const CHAPTERS = [
         <p>
           <span className="oh-land-drop">F</span>
           inals week at AUI, the same question is asked twenty times. Students
-          who will not raise a hand wait until it is too late. TAs drown in a
-          pile, not a queue. Professors never see the pattern until the exam
-          already happened.
+          who will not raise a hand wait. TAs drown in a pile, not a queue.
+          Professors miss the pattern until the exam already happened.
         </p>
         <p>
-          OfficeHours AI is the campus product that turns that chaos into a
-          path: a student asks, a TA helps, a professor keeps the gate on what
-          the class learns next.
+          OfficeHours AI turns that chaos into a path: a student asks, a TA
+          helps, a professor keeps the gate on what the class learns next.
         </p>
       </>
     ),
