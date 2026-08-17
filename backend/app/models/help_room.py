@@ -196,12 +196,18 @@ class HelpPostCreate(BaseModel):
     flair: str | None = Field(default=None, max_length=20)
     room_type: str = Field(default="problem", max_length=20)
     tags: list[str] = Field(default_factory=list)
-    anonymous: bool = False
+    anonymous: bool = Field(
+        default=False,
+        description="Ignored. Rooms are named so helpers can appear on the leaderboard.",
+    )
 
 
 class HelpReplyCreate(BaseModel):
     body: str = Field(min_length=1, max_length=4000)
-    anonymous: bool = False
+    anonymous: bool = Field(
+        default=False,
+        description="Ignored. Rooms are named so helpers can appear on the leaderboard.",
+    )
     parent_reply_id: int | None = None
 
 

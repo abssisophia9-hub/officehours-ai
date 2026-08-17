@@ -108,7 +108,6 @@ export default function StuckRoomPage() {
   const [tagDraft, setTagDraft] = useState("");
   const [tags, setTags] = useState([]);
   const [files, setFiles] = useState([]);
-  const [anonymous, setAnonymous] = useState(false);
   const [busy, setBusy] = useState(false);
   const [replyDrafts, setReplyDrafts] = useState({});
   const [replyBusy, setReplyBusy] = useState(null);
@@ -251,7 +250,6 @@ export default function StuckRoomPage() {
           chapter,
           room_type: roomType,
           tags,
-          anonymous,
         },
       });
       for (const file of files) {
@@ -419,8 +417,6 @@ export default function StuckRoomPage() {
               setTags={setTags}
               files={files}
               setFiles={setFiles}
-              anonymous={anonymous}
-              setAnonymous={setAnonymous}
               busy={busy}
               onCancel={() => go({})}
               onPublish={publishRoom}
@@ -493,6 +489,7 @@ export default function StuckRoomPage() {
             <h3>Room rules</h3>
             <ol className="rf-rules">
               <li>Share the stuck point, not the homework write-up.</li>
+              <li>Rooms are named — helpers show on the leaderboard.</li>
               <li>Accept a solution only when it truly unlocked it.</li>
               <li>Grades, integrity, and crises go to Quiet ask.</li>
               <li>Staff are not in this room.</li>
@@ -804,8 +801,6 @@ function CreateWizard({
   setTags,
   files,
   setFiles,
-  anonymous,
-  setAnonymous,
   busy,
   onCancel,
   onPublish,
@@ -834,21 +829,10 @@ function CreateWizard({
               onChange={(event) => setBody(event.target.value)}
               required
             />
-            <label className="rf-anon">
-              <input
-                type="checkbox"
-                className="accent-aui-forest"
-                checked={anonymous}
-                onChange={(event) => setAnonymous(event.target.checked)}
-              />
-              <span>
-                <strong>Hide my name</strong>
-                <em>
-                  This room is already classmates only. If you check this, others
-                  see Anonymous — not your name.
-                </em>
-              </span>
-            </label>
+            <p className="bh-card-note">
+              Rooms are named. Helping here puts you on the course leaderboard.
+              Need to ask staff privately? Use Quiet ask.
+            </p>
           </>
         ) : null}
         {step === 2 ? (

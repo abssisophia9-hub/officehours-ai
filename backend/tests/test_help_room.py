@@ -131,8 +131,10 @@ def test_reply_helpful_marks_rank_and_no_self_vote():
         f"/help-room/?course_id={course_id}",
         headers=_headers(youssef),
     ).json()
-    anon = next(item for item in feed_y if item["id"] == post_id)
-    assert anon["author_display"] == "Anonymous"
+    named = next(item for item in feed_y if item["id"] == post_id)
+    assert named["anonymous"] is False
+    assert named["author_display"] != "Anonymous"
+    assert named["author_user_id"]
 
     reply = client.post(
         f"/help-room/{post_id}/replies",
@@ -432,8 +434,14 @@ def test_community_flair_nested_comments_same_here_and_sort():
     ).json()
     assert all(item["flair"] == "vent" for item in vents)
     assert any(item["id"] == vent_id for item in vents)
-    anon = next(item for item in vents if item["id"] == vent_id)
-    assert anon["author_display"] == "Anonymous"
+    named = next(item for item in vents if item["id"] == vent_id)
+    assert named["author_display"] != "Anonymous"
+    assert named["author_user_id"]
+    board = client.get(
+        f"/help-room/ranks/?course_id={course_id}",
+        headers=_headers(sara),
+    ).json()
+    assert any(row["user_id"] == named["author_user_id"] for row in board)
 
 
 def test_rooms_forum_types_votes_interest_accept_and_profile():

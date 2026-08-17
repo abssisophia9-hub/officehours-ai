@@ -123,8 +123,9 @@ API: `GET|POST /peer-notes/`, like/comment/download under `/peer-notes/{id}/…`
 A **course-scoped classmate forum** (Stack Overflow hybrid, not a live chat):
 
 1. **Create a Room** wizard: title + Markdown description → Problem / Discussion /
-   Article → chapter grid, plus tags and file attachments. Optional **Hide my
-   name** (classmates see Anonymous — the room is already students-only).
+   Article → chapter grid, plus tags and file attachments. Rooms are **named** —
+   helpers show on the leaderboard. Privacy with staff is **Quiet ask**, not
+   an anonymous Rooms toggle.
 2. Card feed with type + Open/Solved badges, up/down votes, chapter field,
    hashtags, author avatar, and **Express Interest**
 3. Left rail: Rooms / Chapters / Leaderboard + chapter counts

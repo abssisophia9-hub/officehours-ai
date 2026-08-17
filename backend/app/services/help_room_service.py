@@ -170,8 +170,9 @@ def _reject_sensitive(text: str) -> None:
 
 
 def _author_display(db: Session, user_id: int, anonymous: bool, viewer: User) -> str:
-    if anonymous and user_id != viewer.id:
-        return "Anonymous"
+    # Rooms are named on purpose: helpers must be visible on the leaderboard.
+    # Quiet ask is the anonymous path to staff.
+    _ = (anonymous, viewer)
     author = db.get(User, user_id)
     return (
         (author.display_name if author else None)
@@ -267,6 +268,8 @@ def create_post(
     room_type: str | None = None,
     tags: list[str] | None = None,
 ) -> HelpPost:
+    # Rooms stay named so helpers can appear on the leaderboard.
+    _ = anonymous
     title_clean = (title or "").strip()
     body_clean = (body or "").strip()
     if not title_clean:
@@ -296,7 +299,7 @@ def create_post(
         room_type=resolved_type,
         status="open",
         tags_json=json.dumps(tag_list) if tag_list else None,
-        anonymous=bool(anonymous),
+        anonymous=False,
     )
     db.add(post)
     db.commit()
@@ -474,12 +477,8 @@ def serialize_reply(db: Session, reply: HelpReply, viewer: User) -> HelpReplyOut
         .first()
         is not None
     )
-    reachable = (
-        (not reply.anonymous)
-        and reply.author_user_id != viewer.id
-        and marked
-    )
-    show_karma = (not reply.anonymous) or reply.author_user_id == viewer.id
+    reachable = reply.author_user_id != viewer.id and marked
+    show_karma = True
     post = db.get(HelpPost, reply.post_id)
     karma = (
         _course_karma(db, reply.author_user_id, post.course_id)
@@ -491,11 +490,11 @@ def serialize_reply(db: Session, reply: HelpReply, viewer: User) -> HelpReplyOut
         post_id=reply.post_id,
         parent_reply_id=reply.parent_reply_id,
         body=reply.body,
-        anonymous=reply.anonymous,
+        anonymous=False,
         author_display=_author_display(
             db, reply.author_user_id, reply.anonymous, viewer
         ),
-        author_user_id=None if (reply.anonymous and reply.author_user_id != viewer.id) else reply.author_user_id,
+        author_user_id=reply.author_user_id,
         author_karma=karma,
         created_at=reply.created_at,
         is_mine=reply.author_user_id == viewer.id,
@@ -551,10 +550,10 @@ def serialize_post(
             )
             .count()
         )
-    show_karma = (not post.anonymous) or post.author_user_id == viewer.id
+    show_karma = True
     score, up_count, down_count, my_vote = _vote_stats(db, post.id, viewer.id)
     author = db.get(User, post.author_user_id)
-    hide_author = post.anonymous and post.author_user_id != viewer.id
+    hide_author = False
     interest_count = db.query(HelpInterest).filter(HelpInterest.post_id == post.id).count()
     interested = (
         db.query(HelpInterest)
@@ -588,7 +587,7 @@ def serialize_post(
         room_type=room_type,
         status=getattr(post, "status", None) or "open",
         tags=_tags_from_post(post),
-        anonymous=post.anonymous,
+        anonymous=False,
         author_display=_author_display(
             db, post.author_user_id, post.anonymous, viewer
         ),
@@ -624,6 +623,7 @@ def add_reply(
     anonymous: bool,
     parent_reply_id: int | None = None,
 ) -> HelpReply:
+    _ = anonymous
     text = (body or "").strip()
     if not text:
         raise HTTPException(
@@ -644,7 +644,7 @@ def add_reply(
         parent_reply_id=parent_id,
         author_user_id=author.id,
         body=text[:4000],
-        anonymous=bool(anonymous),
+        anonymous=False,
     )
     db.add(reply)
     db.commit()
@@ -742,7 +742,7 @@ def toggle_helpful(db: Session, *, reply: HelpReply, user: User) -> HelpfulMarkO
         reply_id=reply.id,
         marked=marked,
         helpful_count=count,
-        reachable=(not reply.anonymous) and marked,
+        reachable=marked,
         reached_out_by_me=reached,
     )
 
@@ -851,14 +851,6 @@ def create_reach_out(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="You cannot reach out to your own reply.",
-        )
-    if reply.anonymous:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=(
-                "This classmate posted quietly. You can still mark the aha, "
-                "but they stay unnamed."
-            ),
         )
     marked = (
         db.query(HelpfulMark)
