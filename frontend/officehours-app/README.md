@@ -2,7 +2,7 @@
 
 This is the **packaged multi-role product** your supervisor should test:
 
-- one login screen
+- guest opening page (Three.js campus path: student → TA → professor) then **Sign in**
 - role detection from course membership (student / TA / professor)
 - course switcher (a user can belong to multiple courses with different roles)
 - **Ask Triage** on submit · **Help Coach** in the TA workspace · Study Agent +

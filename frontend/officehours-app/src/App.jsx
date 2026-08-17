@@ -1,6 +1,7 @@
-import { Navigate, Route, Routes } from "react-router";
+import { Navigate, Route, Routes, useLocation } from "react-router";
 import { useAuth } from "./auth/AuthContext.jsx";
 import AppShell from "./shell/AppShell.jsx";
+import LandingPage from "./pages/LandingPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import CourseHomePage from "./pages/CourseHomePage.jsx";
 import StudentWorkspace from "./pages/StudentWorkspace.jsx";
@@ -10,16 +11,22 @@ import ProfessorWorkspace from "./pages/ProfessorWorkspace.jsx";
 import CanvasSimulatorPage from "./pages/CanvasSimulatorPage.jsx";
 import CanvasLaunchPage from "./pages/CanvasLaunchPage.jsx";
 
-function Protected({ children }) {
+function LoadingScreen() {
+  return (
+    <div className="aui-shell flex min-h-screen items-center justify-center">
+      <div className="glass-panel px-8 py-6 text-aui-deep">Loading OfficeHours AI…</div>
+    </div>
+  );
+}
+
+function GuestHomeOrApp({ children }) {
   const { user, loading } = useAuth();
-  if (loading) {
-    return (
-      <div className="aui-shell flex min-h-screen items-center justify-center">
-        <div className="glass-panel px-8 py-6 text-aui-deep">Loading OfficeHours AI…</div>
-      </div>
-    );
+  const location = useLocation();
+  if (loading) return <LoadingScreen />;
+  if (!user) {
+    if (location.pathname === "/") return <LandingPage />;
+    return <Navigate to="/login" replace />;
   }
-  if (!user) return <Navigate to="/login" replace />;
   return children;
 }
 
@@ -32,9 +39,9 @@ export default function App() {
       <Route
         path="/"
         element={
-          <Protected>
+          <GuestHomeOrApp>
             <AppShell />
-          </Protected>
+          </GuestHomeOrApp>
         }
       >
         <Route index element={<CourseHomePage />} />

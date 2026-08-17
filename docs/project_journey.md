@@ -140,7 +140,7 @@ Signed-in workspace for that role
 
 ## What a supervisor demos now
 
-1. `./scripts/run_product.sh` → http://127.0.0.1:5180  
+1. `./scripts/run_product.sh` → http://127.0.0.1:5180 (landing path, then Sign in)  
 2. Student `s.elidrissi@aui.ma` / `aui-demo` → Quiet ask or Identify me → message / face-to-face / online  
 3. TA+student `a.chen@aui.ma` → TA workspace on CSC 2302; switch course picker to a student course  
 4. Student Rooms (`/student/room` on CSC 3323) → Create a Room, Express Interest, leaderboard (named)  
