@@ -10,7 +10,7 @@ npm ci
 npm run dev
 ```
 
-Demo password: `aui-demo`  
+Demo password: `aui-demo` **when** `OFFICEHOURS_DEMO=true`  
 Accounts: `s.elidrissi@aui.ma`, `a.chen@aui.ma`, `a.benali@aui.ma`  
 (AUI email shape: `Initial.Lastname@aui.ma` — role is from membership, not email.)
 

@@ -19,10 +19,10 @@ overload** and **improve student comfort** seeking academic help during finals?
 | Professor remains the Study Agent publication gate | KB `pending_review` → approve → `/agent/ask` |
 | TA staffing + Help Coach mid-session | `/ta/claim/`, `/ta/assist/` |
 | Privacy-preserving Quiet ask + request-code status | student workspace, `GET /requests/{id}/status` |
-| Stuck Room classmate community + helpful-point ranks | `/student/room` + `/help-room/`; students only; not a staff chat |
-| Professor chapter/topic review insights | `GET /analytics/review-insights` (asks + stuck posts) |
-| Canvas is the intended community enrollment path | `/canvas/launch` **simulator** (unsigned demo) |
-| Automated regression | ~123 backend pytest cases + CI builds |
+| **Rooms** classmate forum + Hilbert ranks | `/student/room` + `/help-room/`; named helpers; Canvas-module chapters; students only |
+| Professor chapter/topic review insights | `GET /analytics/review-insights` (asks + Rooms posts) |
+| Canvas is the intended community enrollment **and** chapter source | `/canvas/launch` **simulator** (unsigned demo); live modules when credentials are set |
+| Automated regression | ~133 backend pytest cases + CI builds |
 
 ## Metric honesty (read before citing)
 
@@ -54,6 +54,7 @@ overload** and **improve student comfort** seeking academic help during finals?
 - [ ] Show Quiet ask → Ask Triage breakdown → status code
 - [ ] Alice: claim → Help Coach → reply **or** group meeting
 - [ ] Benali: approve KB → Study Agent only answers approved material
+- [ ] Student Rooms: named post, Canvas/demo chapter pick, leaderboard shows names
 - [ ] `/canvas-demo`: say clearly **unsigned simulator**, LTI next
 - [ ] Cite CV/silver metrics with caveats; do **not** cite seed gold 100% as quality
 - [ ] Point to this page + `agent_performance.md` for ceilings

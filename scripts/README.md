@@ -2,7 +2,7 @@
 
 | Script | Purpose |
 | --- | --- |
-| `run_product.sh` | Start backend + unified product app (`:8000` + `:5180`) |
+| `run_product.sh` | Start backend + unified product app (`:8000` + `:5180`). Defaults `OFFICEHOURS_DEMO=true`. |
 | `generate_architecture_diagrams.py` | Regenerate PNGs under `diagrams/` (Ask Triage labels) |
 
 ```bash

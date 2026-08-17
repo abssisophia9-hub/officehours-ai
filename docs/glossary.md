@@ -7,7 +7,7 @@ say `oracle_*` are noted where they differ.
 
 | Role | Who | Workspace |
 | --- | --- | --- |
-| **Student** | Enrolled learner | Ask · Study Agent · Stuck Room · classmate notes · status lookup |
+| **Student** | Enrolled learner | Ask · Study Agent · **Rooms** · classmate notes · status lookup |
 | **TA** | Course teaching assistant | Queue · Help Coach · staffing · optional group meeting |
 | **Professor** | Course instructor | Clusters · **review insights** · KB gate · Canvas sync · group meetings · metrics |
 
@@ -38,8 +38,10 @@ The same login can be TA in one course and student in another.
 | **Similar badge / Help Coach** | TA | Cue to help as a group |
 | **Shared group meeting** | TA or professor | One title + when + place on **all** linked request statuses |
 | **FAQ / KB approve** | Professor | Later students get the answer via Study Agent |
-| **Stuck Room / Rooms** | Students (course-scoped) | Stack Overflow hybrid: Problem/Discussion/Article rooms, Canvas-module chapters (demo syllabus only if `OFFICEHOURS_DEMO`), Express Interest, Hilbert-weighted ranks. Staff do not sit in the room. Rooms are named so helpers can appear on the board; Quiet ask is the anonymous path to staff. |
-| **Review insights** | Professor | End-of-chapter question board from Quiet asks + Stuck Room chapters — emphasize / cover / draft FAQ / next-cohort note. |
+| **Rooms** (API still `/help-room/`) | Students (course-scoped) | Stack Overflow hybrid: named Problem/Discussion/Article rooms, Canvas-module chapters, Express Interest, Hilbert-weighted ranks. Staff do not sit in the room. Quiet ask is the anonymous path to staff. Demo syllabus only if `OFFICEHOURS_DEMO=true`. |
+| **Hilbert Weight ŵ / Node Points / ROOMS score** | Students (per course) | Quality-over-volume reputation. Score(W) is ŵ; Base is Node Points; podium uses ROOMS score. |
+| **Express Interest** | Students | Offer to help on a room without it being a private chat. |
+| **Review insights** | Professor | End-of-chapter question board from Quiet asks + Rooms chapters — emphasize / cover / draft FAQ / next-cohort note. |
 
 ## Status (student)
 

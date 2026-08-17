@@ -6,7 +6,7 @@ This is the **packaged multi-role product** your supervisor should test:
 - role detection from course membership (student / TA / professor)
 - course switcher (a user can belong to multiple courses with different roles)
 - **Ask Triage** on submit · **Help Coach** in the TA workspace · Study Agent +
-  Stuck Room + classmate notes
+  **Rooms** + classmate notes
 
 Legacy separate kiosk/dashboard apps remain as optional web shells only
 (**no** physical hardware path), but **this app is the product**.
@@ -26,13 +26,16 @@ npm run dev
 
 Open **one** app: http://127.0.0.1:5180
 
+`./scripts/run_product.sh` sets `OFFICEHOURS_DEMO=true` (demo accounts + sample
+Rooms chapters). Community deploy: `OFFICEHOURS_DEMO=false` and live Canvas.
+
 Or use the helper:
 
 ```bash
 ./scripts/run_product.sh
 ```
 
-## Demo accounts (password `aui-demo`)
+## Demo accounts (password `aui-demo`, only if `OFFICEHOURS_DEMO=true`)
 
 AUI format: `Initial.Lastname@aui.ma` — role comes from course membership.
 

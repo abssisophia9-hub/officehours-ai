@@ -2,8 +2,8 @@
 
 | Doc | Purpose |
 | --- | --- |
-| [`product_overview.md`](product_overview.md) | How to demo the packaged product |
-| [`glossary.md`](glossary.md) | Ask Triage · Help Coach · roles · status |
+| [`product_overview.md`](product_overview.md) | How to demo the packaged product **and** community deploy (`OFFICEHOURS_DEMO`) |
+| [`glossary.md`](glossary.md) | Ask Triage · Help Coach · **Rooms** · roles · status |
 | [`project_journey.md`](project_journey.md) | Day 1 → current product history |
 | [`system_architecture.md`](system_architecture.md) | Components, flow, diagrams |
 | [`ai_nlp_design.md`](ai_nlp_design.md) | Custom-trained Ask Triage + Help Coach |

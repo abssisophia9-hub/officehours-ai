@@ -53,6 +53,7 @@ Visit:
 ### Auth / Canvas
 
 - `POST /auth/login`, `GET /auth/me`, `POST /auth/logout`
+- `GET /auth/config` — `{ demo, canvas_mode }` (no auth; login UI hides demo chips when false)
 - `GET /courses/mine`, `GET /courses/`
 - `POST /canvas/launch` — JIT provision user/course/membership (demo unsigned)
 
@@ -79,6 +80,15 @@ Visit:
   Canvas sync / status routes
 - `POST /agent/ask` — approved KB only
 - `GET|POST /peer-notes/…` — classmate notes (like / comment / download; not agent training)
+
+### Rooms (classmate forum)
+
+- `GET /help-room/community/?course_id=` — pulse + chapter grid (`chapter_source`)
+- `GET|POST /help-room/` — rooms (named; `anonymous` is ignored)
+- `POST /help-room/{id}/vote`, `/interest`, `/files`
+- `POST /help-room/{id}/replies`, `/replies/{id}/helpful`, `/replies/{id}/accept`
+- `GET /help-room/profile/{user_id}`, `GET /help-room/ranks/`
+- Chapters: live Canvas modules, or demo syllabus if `OFFICEHOURS_DEMO=true`
 
 ### Actions / meetings / analytics / feedback
 
@@ -110,6 +120,10 @@ Optional environment variables:
   `OFFICEHOURS_SYNTHESIZER_MODEL`, `OFFICEHOURS_TEACHING_BANK`,
   `OFFICEHOURS_LEARNING_STYLE_BACKEND`, `OFFICEHOURS_LEARNING_STYLE_MODEL`
 - `OFFICEHOURS_ALLOW_EXTERNAL_LLM=false` — FYP default
+- `OFFICEHOURS_DEMO=true|false` — seed Sara/Youssef + sample chapter outlines +
+  local Canvas mirror. **False for community deploy.**
+- `OFFICEHOURS_CANVAS_MODE=live|local|none` — optional override; live wins when
+  `CANVAS_BASE_URL` + `CANVAS_ACCESS_TOKEN` are set
 
 ## Train models
 

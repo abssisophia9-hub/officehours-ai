@@ -13,6 +13,10 @@ several courses and switch between them.
 **A TA is also a student on campus.** The same account can be TA in one course
 and student in others — the course picker switches the workspace with the role.
 
+**Demo vs deploy:** `./scripts/run_product.sh` turns `OFFICEHOURS_DEMO=true`
+(Sara/Youssef, sample chapters, local Canvas mirror). A campus rollout sets
+`OFFICEHOURS_DEMO=false` and live Canvas — no hardcoded people or chapter lists.
+
 Primary app:
 
 - `frontend/officehours-app` (dev port **5180**)
@@ -26,6 +30,7 @@ Full history: [`project_journey.md`](project_journey.md).
 
 ## Demo accounts
 
+Only when `OFFICEHOURS_DEMO=true` (default in `./scripts/run_product.sh`).
 Password for all: `aui-demo`
 
 AUI emails look like `S.Abssi@aui.ma` (first initial + `.` + last name).
@@ -54,7 +59,8 @@ Dual-TA sections (primary + backup Matcher): CSC 2302 (Alice/Bob), CSC 3323
 1. Run `./scripts/run_product.sh` (or start backend + `officehours-app`)
 2. Open **http://127.0.0.1:5180**
 3. Sign in as student → **Quiet ask** or **Identify me** → pick message / face-to-face / online;
-   optionally post in **Stuck Room** and mark a classmate reply “this unlocked it”
+   optionally open **Rooms** (`/student/room`) and accept a classmate solution
+   that unlocked it — helpers are **named** so they appear on the leaderboard
 4. Sign in as Alice (`a.chen@aui.ma`) → TA queue filters **Assigned to me** /
    **I'm backup** / **All** → switch course picker to a **student** course
 5. Sign in as professor (`a.benali@aui.ma`) → **TA load** panel + command center:
@@ -118,14 +124,14 @@ KB stays separate.
 API: `GET|POST /peer-notes/`, like/comment/download under `/peer-notes/{id}/…`
 (auth + course membership required).
 
-## Stuck Room / AUI Rooms
+## Rooms (classmate forum)
 
-A **course-scoped classmate forum** (Stack Overflow hybrid, not a live chat):
+A **course-scoped classmate forum** (Stack Overflow hybrid, not a live chat).
+The nav label is **Rooms**; the API is still `/help-room/`.
 
 1. **Create a Room** wizard: title + Markdown description → Problem / Discussion /
    Article → chapter grid, plus tags and file attachments. Rooms are **named** —
-   helpers show on the leaderboard. Privacy with staff is **Quiet ask**, not
-   an anonymous Rooms toggle.
+   helpers show on the leaderboard. Privacy with staff is **Quiet ask**.
 2. Card feed with type + Open/Solved badges, up/down votes, chapter field,
    hashtags, author avatar, and **Express Interest**
 3. Left rail: Rooms / Chapters / Leaderboard + chapter counts
@@ -143,6 +149,8 @@ only** (`OFFICEHOURS_DEMO=true`).
 On a community deploy: `OFFICEHOURS_DEMO=false`, set `CANVAS_BASE_URL` +
 `CANVAS_ACCESS_TOKEN`, and let Canvas/LTI provision people and modules.
 `GET /help-room/community/` `chapter_source` is `canvas`, `posted`, or `empty`.
+`GET /auth/config` reports `{ demo, canvas_mode }` so the login screen hides
+demo chips outside walkthroughs.
 
 API: `GET|POST /help-room/`, community pulse, votes, interest, files, profiles,
 ranks.
@@ -152,7 +160,7 @@ ranks.
 `GET /analytics/review-insights?course_id=` (professor auth) groups:
 
 - Quiet ask / office-hours questions by Analyzer category (sensitive excluded)
-- Stuck Room posts by student-labeled chapter
+- Rooms posts by student-labeled chapter (Canvas module)
 
 Each topic is a **question board**: counts, sample asks, full question list,
 review status (**watch / emphasize / covered**), a note for coming students /
@@ -218,8 +226,9 @@ Each course has a `canvas_course_id`. Professors sync LMS content with
 
 - **Live Canvas:** set `CANVAS_BASE_URL` + `CANVAS_ACCESS_TOKEN` — pulls pages
   and text files from Canvas REST API into the course KB.
-- **Local mirror (default for demos):** seeded Canvas-style files per course
-  (same ingest path) so supervisors can test without AUI Canvas credentials.
+- **Local mirror (demo only):** when `OFFICEHOURS_DEMO=true` and live Canvas
+  credentials are absent, seeded Canvas-style files per course (same ingest
+  path) so supervisors can test without AUI Canvas credentials.
 
 Manual paste still works via `POST /knowledge/materials` (professor auth,
 required `course_id`). Chunks are course-scoped and searchable by

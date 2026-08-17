@@ -5,7 +5,7 @@ Generated visuals for the **unified product + Canvas** era. Narrative:
 
 | File | Description |
 | --- | --- |
-| `architecture.png` | Product app + FastAPI + Canvas + Analyzer/Matcher/Synthesizer + curation |
+| `architecture.png` | Product app + FastAPI + Canvas + Analyzer/Matcher/Synthesizer + Rooms + curation |
 | `workflow.png` | Identity + help mode → Ask Triage → TA → professor → KB / meetings |
 | `oracle_agents.png` | Ask Triage Analyzer / Matcher / Synthesizer (filename historical) |
 | `product_deployment.png` | Canvas-first community deploy vs portal / manual |

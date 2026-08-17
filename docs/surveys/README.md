@@ -3,7 +3,7 @@
 > **Note:** these templates were written for mid-report demos that used the
 > **legacy** student kiosk + professor dashboard. Prefer demos on the unified
 > product app (`:5180`) today; keep or adapt questions for Ask Triage, Help Coach,
-> dual roles, and group meetings when you run a new eval round.
+> dual roles, group meetings, and **Rooms** when you run a new eval round.
 
 This folder contains survey templates for evaluating the OfficeHours AI demo.
 
@@ -13,7 +13,7 @@ This folder contains survey templates for evaluating the OfficeHours AI demo.
 
 ## Forms
 
-- `unified_product_post_demo_survey.md` — **current product** (Ask Triage, Help Coach, dual roles)
+- `unified_product_post_demo_survey.md` — **current product** (Ask Triage, Help Coach, dual roles, Rooms)
 - `student_post_demo_survey.md` — legacy student kiosk comfort / anonymity
 - `professor_post_demo_survey.md` — legacy professor dashboard workload / trust
 

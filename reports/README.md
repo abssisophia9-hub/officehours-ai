@@ -5,7 +5,7 @@
   - `main.tex` — LaTeX report with demo screenshots
   - `progress_checklist.md`
 - `final_report/` — final project report (**keep synced with the unified product**)
-  - `main.tex` — LaTeX final report (Ask Triage, Help Coach, evidence caveats)
+  - `main.tex` — LaTeX final report (Ask Triage, Help Coach, Rooms, evidence caveats)
   - `classifier_evaluation.*` / `matcher_evaluation.json` / `gold_label_evaluation.json`
   - `ask_triage_latency.json` — from `backend/scripts/measure_ask_triage_latency.py`
   - `survey_evaluation_summary.md` / `.json` — **legacy** kiosk pilot summary

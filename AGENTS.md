@@ -69,3 +69,4 @@ folder (`student-kiosk` 5173, `professor-dashboard` 5174, `ta-dashboard` 5175).
 
 See [`docs/glossary.md`](docs/glossary.md). Intake pipeline is **Ask Triage**
 (implementation often still named `oracle_*`). TA mid-session AI is **Help Coach**.
+Student classmate forum is **Rooms** (API `/help-room/`).

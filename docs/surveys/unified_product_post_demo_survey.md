@@ -15,7 +15,9 @@ Likert items: 1 = strongly disagree … 5 = strongly agree.
 5. Checking status with my request code felt private enough.
 6. I would be more likely to seek help during finals with this tool.
 7. (If shown) The Study Agent’s “I don’t know — ask a human” behavior felt honest.
-8. Free text: what would you change?
+8. Rooms felt like a classmate forum (not staff watching).
+9. I understood that helping in Rooms puts my name on the course leaderboard.
+10. Free text: what would you change?
 
 ## TA form
 
@@ -31,9 +33,10 @@ Likert items: 1 = strongly disagree … 5 = strongly agree.
 1. Clusters and recommendation cards reduced repeated 1:1 handling in the demo.
 2. I remained in control of what enters the student Study Agent KB.
 3. Canvas materials sync (or mirror) was understandable for demos.
-4. Shared group meetings for repeated concepts look useful.
-5. Perceived workload reduction vs answering each ask separately.
-6. Free text: what must be true before you trust this with a real course?
+4. Review insights from Quiet asks + Rooms chapters looked usable for the next session.
+5. Shared group meetings for repeated concepts look useful.
+6. Perceived workload reduction vs answering each ask separately.
+7. Free text: what must be true before you trust this with a real course?
 
 ## Deploy notes
 

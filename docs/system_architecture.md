@@ -22,16 +22,17 @@ history: [`project_journey.md`](project_journey.md) · training: [`training_data
 ## Components
 
 1. **Product app** — login, course picker, student ask (identity + help mode +
-   status lookup), Study Agent, Stuck Room, classmate notes, TA queue + Help Coach,
+   status lookup), Study Agent, **Rooms**, classmate notes, TA queue + Help Coach,
    professor command center + review insights, Canvas simulator, account menu
-2. **Backend API** — auth, requests, Ask Triage pipeline, Help Coach, clustering,
-   knowledge, peer notes, help-room, Canvas launch/sync, TA roster/staffing, analytics,
+2. **Backend API** — auth (`GET /auth/config` reports demo vs deploy), requests, Ask Triage pipeline, Help Coach, clustering,
+   knowledge, peer notes, **Rooms** (`/help-room/`), Canvas launch/sync, TA roster/staffing, analytics,
    action plans / group meetings, feedback, `.ics`
 3. **Ask Triage AI (custom-trained)** — Analyzer / Matcher / Synthesizer at
    intake (implementation: `oracle_service.py` / `oracle_*` fields)
 4. **Help Coach AI** — TA mid-session assist (`help_coach_service.py`)
 5. **Canvas integration** — JIT launch provisioning + materials → course KB
-   (LTI signatures still TODO for production)
+   **and Rooms chapter grid**. Live API when credentials are set; local mirror
+   only if `OFFICEHOURS_DEMO=true`. LTI signatures still TODO for production.
 6. **Action orchestration** — cluster group meetings + agenda / status / calendar
 
 ## End-to-end data flow (current)
@@ -52,6 +53,10 @@ history: [`project_journey.md`](project_journey.md) · training: [`training_data
 11. Professor approves/edits/rejects KB — **only approved** answers reach
     `/agent/ask` (Study Agent)
 12. Student checks status by request code (reply and/or group meeting)
+13. Students may open a **Room** in the course forum (named). Chapters are
+    Canvas modules (or the demo syllabus when `OFFICEHOURS_DEMO=true`).
+    Accepted solutions feed Hilbert ranks. Professors see chapter aggregates
+    on review insights — they do not sit in the room.
 
 ## Diagrams
 
@@ -81,6 +86,9 @@ backend/venv/bin/python scripts/generate_architecture_diagrams.py
 
 ## Production enrollment (decision)
 
-**Primary:** Canvas LTI launch (course + role from LMS).  
+**Primary:** Canvas LTI launch (course + role from LMS). Rooms chapters =
+that course’s Canvas modules.  
+**Demo only:** `OFFICEHOURS_DEMO=true` seeds accounts + sample syllabi + local
+Canvas mirror (`./scripts/run_product.sh`).  
 **Not primary:** AUI portal / SIS sync.  
 **Support only:** manual admin fixes.

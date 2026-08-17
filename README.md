@@ -25,8 +25,8 @@ enrollment as the main model). Physical kiosk / barcode / NFC hardware is
 
 Start here:
 
-- [`docs/product_overview.md`](docs/product_overview.md) — how to demo
-- [`docs/glossary.md`](docs/glossary.md) — Ask Triage · Help Coach · roles · status
+- [`docs/product_overview.md`](docs/product_overview.md) — how to demo **and** how to deploy
+- [`docs/glossary.md`](docs/glossary.md) — Ask Triage · Help Coach · **Rooms** · roles · status
 - [`docs/fyp_evidence.md`](docs/fyp_evidence.md) — what to claim in a defense
 - [`docs/README.md`](docs/README.md) — full documentation index
 - [`docs/project_journey.md`](docs/project_journey.md) — day 1 → current product
@@ -35,7 +35,9 @@ Start here:
 
 ```bash
 ./scripts/run_product.sh
-# → http://127.0.0.1:5180   password for seeded accounts: aui-demo
+# → http://127.0.0.1:5180
+# Demo walkthrough: OFFICEHOURS_DEMO=true (default in that script), password aui-demo
+# Community deploy: OFFICEHOURS_DEMO=false + live Canvas credentials
 ```
 
 ## Agents (custom-trained)
@@ -70,6 +72,8 @@ to ask for help.
 - Shared **group meetings** for repeated clusters (same time/place on every
   student’s request status)
 - Professor-approved knowledge base + student Study Agent
+- **Rooms** — course-scoped classmate forum (Problem / Discussion / Article),
+  Canvas-module chapters, named helpers on a Hilbert-weighted leaderboard
 - Classmate peer notes (study feed — does not train the agent)
 - Account menu: tour, report bug/issue (`POST /feedback/bugs`), log out
 - Canvas materials sync + launch provisioning (LTI hardening next)

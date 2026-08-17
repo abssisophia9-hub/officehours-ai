@@ -1,12 +1,13 @@
 # Ethics & Privacy Considerations
 
 ## Core Principles
-- **Student anonymity by default** — students may submit requests without identifying themselves
-- **Opt-in identification** — only when a student wants a direct follow-up (e.g., 1:1 meeting) do they provide identifying info
+- **Student anonymity for staff asks** — Quiet ask stores no name/ID; Identify me is opt-in
+- **Rooms are named** — classmate help is public inside the course so helpers can appear on the leaderboard. Quiet ask is the anonymous path, not a hide-name toggle in Rooms.
+- **Opt-in identification** — only when a student wants a direct staff follow-up (e.g., 1:1 meeting) do they provide identifying info
 - **Professor stays in control of published answers** — Study Agent only reads **approved** KB; AI does not auto-change grades or publish FAQ without review
 - **Data minimization** — store only what's needed for triage; student ID is
   optional and only kept when the student chooses identified submission
-- **Stuck Room is classmates, not staff surveillance** — professors see
+- **Rooms is classmates, not staff surveillance** — professors see
   aggregated chapter/topic insights, not a live student chat; grades/integrity/
   crises are blocked from the room and sent to Quiet ask
 

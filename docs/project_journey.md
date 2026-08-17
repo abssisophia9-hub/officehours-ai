@@ -11,7 +11,8 @@ Use this with [`product_overview.md`](product_overview.md),
 **role is per course** (a TA can also be a student elsewhere), they ask quietly
 or identified, optionally request a face-to-face / online meeting, and
 **Ask Triage** agents help under a professor KB gate — with **Help Coach** for
-TAs and **shared group meetings** for repeated concepts.
+TAs, **Rooms** for named classmate help, and **shared group meetings** for
+repeated concepts.
 
 Vocabulary: [`glossary.md`](glossary.md).
 
@@ -87,15 +88,22 @@ Vocabulary: [`glossary.md`](glossary.md).
 | **Classmate notes** | Peer upload/like/comment/download under Study Agent (not agent training) |
 | **Account menu** | Tour, report bug/issue (`POST /feedback/bugs`), log out |
 
-### Phase 8 — Stuck Room + professor review insights
+### Phase 8 — Course community + professor review insights
 
 | Decision / feature | What we shipped |
 | --- | --- |
-| **Course community (not a live chat)** | Dedicated `/student/room` with Hot/New/Top, flair, same-here, nested comments; no homework dumps |
-| **Helpful points** | Unique “this unlocked it” marks on replies (no self-votes) → ranks |
+| **Course community (not a live chat)** | `/student/room` — first as threads, then as a classmate forum |
 | **Staff stay out of the room** | Students post/reply; professors get `GET /analytics/review-insights` |
-| **Compare-notes handshake** | After “unlocked it”, identified helper can be thanked (not a chat) |
 | **Review insights** | Question board: emphasize / covered / next-cohort note / draft FAQ |
+
+### Phase 9 — Rooms as an AUI Stack Overflow hybrid
+
+| Decision / feature | What we shipped |
+| --- | --- |
+| **Typed rooms** | Problem / Discussion / Article + Open/Solved + Express Interest |
+| **Named helpers** | No hide-my-name in Rooms. Hilbert Weight ŵ / Node Points / podium ranks. Quiet ask stays the anonymous path to staff. |
+| **Chapters from Canvas** | Production grid = Canvas modules. Sample CSC/MTH outlines only if `OFFICEHOURS_DEMO=true`. |
+| **Demo gate** | `OFFICEHOURS_DEMO` seeds Sara/Youssef and the local Canvas mirror. Community deploy leaves it off. |
 
 ---
 
@@ -135,10 +143,11 @@ Signed-in workspace for that role
 1. `./scripts/run_product.sh` → http://127.0.0.1:5180  
 2. Student `s.elidrissi@aui.ma` / `aui-demo` → Quiet ask or Identify me → message / face-to-face / online  
 3. TA+student `a.chen@aui.ma` → TA workspace on CSC 2302; switch course picker to a student course  
-4. Professor `a.benali@aui.ma` → command center, Canvas sync, approve KB  
-5. Optional: `/canvas-demo` → launch as Karim (TA in OS, student in Data Structures)
+4. Student Rooms (`/student/room` on CSC 3323) → Create a Room, Express Interest, leaderboard (named)  
+5. Professor `a.benali@aui.ma` → command center, Canvas sync, approve KB, review insights  
+6. Optional: `/canvas-demo` → launch as Karim (TA in OS, student in Data Structures)
 
-Password for all seeded accounts: **`aui-demo`**.
+Password for all **demo** accounts (`OFFICEHOURS_DEMO=true`): **`aui-demo`**.
 
 Full account table: [`product_overview.md`](product_overview.md).
 
@@ -169,7 +178,7 @@ Defense claims / ceilings: [`fyp_evidence.md`](fyp_evidence.md).
 1. Replace unsigned `POST /canvas/launch` with **real Canvas LTI 1.3**  
 2. Collect ≥40 held-out TA **gold labels** and re-run eval  
 3. Re-survey on the unified app (`docs/surveys/unified_product_post_demo_survey.md`)  
-4. Keep growing course KB from Canvas modules (agent quality ceiling)  
+4. Keep growing course KB **and Rooms chapters** from Canvas modules  
 5. Retrain Analyzer / Matcher / Synthesizer on CSC-covered labels ([`agent_performance.md`](agent_performance.md))  
 6. Optional tabular signals (learning style / stress) from external CSVs — bridge, not drop-in text training  
 
@@ -181,7 +190,9 @@ Defense claims / ceilings: [`fyp_evidence.md`](fyp_evidence.md).
 | --- | --- |
 | Product UI | `frontend/officehours-app/` |
 | Auth + memberships | `backend/app/models/auth.py`, `routes/auth.py` |
-| Demo seed | `backend/app/services/demo_accounts.py` |
+| Demo seed | `backend/app/services/demo_accounts.py` (`OFFICEHOURS_DEMO`) |
+| Demo switch | `backend/app/services/demo_mode.py` |
+| Rooms | `backend/app/services/help_room_service.py`, `room_chapters.py` |
 | Canvas launch | `backend/app/services/canvas_launch_service.py` |
 | Ask + help mode | `backend/app/routes/requests.py` |
 | Ask Triage (`oracle_service.py`) | `backend/app/services/oracle_service.py` |
