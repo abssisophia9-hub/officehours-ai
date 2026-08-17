@@ -22,14 +22,29 @@ const ROOM_TYPES = [
   },
 ];
 
-const SUGGESTED_TAGS = [
-  "QuizPrep",
-  "StudyGroup",
-  "SSE",
-  "AUI",
-  "OfficeHours",
-  "TraceWalk",
-];
+function chapterSourceNote(source) {
+  switch (source) {
+    case "canvas":
+      return "These chapters are this course’s Canvas modules. You pick one — you don’t type the list.";
+    case "demo-syllabus+canvas":
+      return "Demo only: sample syllabus plus the local Canvas mirror. On deploy, this list is the real course’s Canvas modules.";
+    case "demo-syllabus":
+      return "Demo only: sample syllabus for this seeded course. On deploy, chapters come from Canvas modules.";
+    case "posted":
+      return "No Canvas modules yet. These labels are from rooms classmates already opened. Ask your professor to sync Canvas.";
+    case "empty":
+      return "No chapters yet. They appear when this course’s Canvas modules are linked. Ask your professor to sync Canvas.";
+    default:
+      return "Chapters come from this course’s Canvas modules once the LMS course is linked.";
+  }
+}
+
+function tagsFromChapters(chapterList) {
+  return (chapterList || [])
+    .map((item) => String(item.label || "").replace(/[^A-Za-z0-9]+/g, ""))
+    .filter(Boolean)
+    .slice(0, 8);
+}
 
 function Avatar({ name, seed, size = 36 }) {
   const hue = avatarHue(seed || name);
@@ -354,11 +369,7 @@ export default function StuckRoomPage() {
           </nav>
           <div className="rf-card">
             <h3>Chapters</h3>
-            <p className="bh-card-note">
-              {community?.chapter_source === "syllabus+canvas"
-                ? "Syllabus outline for this course, plus Canvas modules from the linked LMS course."
-                : "Syllabus outline for this course. Canvas modules join this list when the course is linked."}
-            </p>
+            <p className="bh-card-note">{chapterSourceNote(community?.chapter_source)}</p>
             <ul className="rf-chapter-list">
               <li>
                 <button type="button" className={!chapterFilter ? "is-on" : ""} onClick={() => setChapterFilter("")}>
@@ -856,11 +867,10 @@ function CreateWizard({
         {step === 3 ? (
           <>
             <h2>Select course chapter</h2>
-            <p className="bh-card-note">
-              {chapterSource === "syllabus+canvas"
-                ? "These chapters come from this course’s syllabus, plus Canvas modules from the linked LMS course. You pick one — you don’t type the list."
-                : "These chapters come from this course’s syllabus. Canvas modules join the list when the professor links the LMS course. You pick one — you don’t type the list."}
-            </p>
+            <p className="bh-card-note">{chapterSourceNote(chapterSource)}</p>
+            {chapters.length === 0 ? (
+              <p className="rf-error">Ask your professor to sync Canvas modules before publishing.</p>
+            ) : (
             <div className="rf-chapter-grid">
               {chapters.map((item) => (
                 <button
@@ -876,6 +886,7 @@ function CreateWizard({
                 </button>
               ))}
             </div>
+            )}
           </>
         ) : null}
         <div className="rf-wizard-nav">
@@ -909,7 +920,7 @@ function CreateWizard({
           <div className="rf-tag-row">
             <input
               className="field-glass px-3 py-2 text-sm"
-              placeholder="#Hashing"
+              placeholder="#tag"
               value={tagDraft}
               onChange={(event) => setTagDraft(event.target.value)}
               onKeyDown={(event) => {
@@ -931,7 +942,7 @@ function CreateWizard({
             ))}
           </div>
           <div className="rf-suggest">
-            {SUGGESTED_TAGS.map((tag) => (
+            {tagsFromChapters(chapters).map((tag) => (
               <button key={tag} type="button" onClick={() => addTag(tag)}>
                 #{tag}
               </button>
@@ -967,11 +978,7 @@ function FieldsGrid({ chapters, chapterSource, onPick }) {
   return (
     <div className="rf-card">
       <h2>Course chapters</h2>
-      <p className="bh-card-note">
-        {chapterSource === "syllabus+canvas"
-          ? "Syllabus outline for this course, plus Canvas modules from the linked LMS course. Students do not add chapters here."
-          : "Syllabus outline for this course. Canvas modules join this list when the course is linked. Students do not add chapters here."}
-      </p>
+      <p className="bh-card-note">{chapterSourceNote(chapterSource)}</p>
       <div className="rf-chapter-grid mt-4">
         {chapters.map((item) => (
           <button key={item.label} type="button" onClick={() => onPick(item.label)}>

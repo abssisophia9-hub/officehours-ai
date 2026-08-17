@@ -5,6 +5,8 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 export OFFICEHOURS_CLUSTERING_BACKEND="${OFFICEHOURS_CLUSTERING_BACKEND:-lexical}"
 export OFFICEHOURS_ALLOW_EXTERNAL_LLM="${OFFICEHOURS_ALLOW_EXTERNAL_LLM:-false}"
+# Local FYP walkthroughs. Community deploy: OFFICEHOURS_DEMO=false and live Canvas.
+export OFFICEHOURS_DEMO="${OFFICEHOURS_DEMO:-true}"
 
 cd "$ROOT/backend"
 if [[ ! -x venv/bin/uvicorn ]]; then
@@ -31,8 +33,13 @@ echo ""
 echo "OfficeHours AI product is starting:"
 echo "  Backend API : http://127.0.0.1:8000"
 echo "  Product app : http://127.0.0.1:5180"
-echo "  Demo password: aui-demo"
-echo "  Logins: s.elidrissi@aui.ma | a.chen@aui.ma | a.benali@aui.ma"
-echo "  (AUI emails: Initial.Last@aui.ma — role from course membership)"
+echo "  Demo mode     : ${OFFICEHOURS_DEMO} (set OFFICEHOURS_DEMO=false for community deploy)"
+if [[ "${OFFICEHOURS_DEMO}" == "true" || "${OFFICEHOURS_DEMO}" == "1" ]]; then
+  echo "  Demo password: aui-demo"
+  echo "  Logins: s.elidrissi@aui.ma | a.chen@aui.ma | a.benali@aui.ma"
+  echo "  (AUI emails: Initial.Last@aui.ma — role from course membership)"
+else
+  echo "  Community deploy: users/courses from Canvas; chapters from Canvas modules."
+fi
 echo ""
 wait

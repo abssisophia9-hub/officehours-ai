@@ -123,9 +123,19 @@ OFFICEHOURS_CLUSTERING_BACKEND=lexical python3 scripts/train_learning_style.py
 
 See [`docs/training_data.md`](../docs/training_data.md).
 
+## Demo vs community deploy
+
+- **Demo / FYP walkthrough:** `OFFICEHOURS_DEMO=true` (default in
+  `./scripts/run_product.sh`). Seeds Sara/Youssef/Alice, sample courses, and a
+  sample chapter outline. Local Canvas mirror fills modules.
+- **AUI community deploy:** `OFFICEHOURS_DEMO=false`. Do **not** seed demo
+  people. Set `CANVAS_BASE_URL` + `CANVAS_ACCESS_TOKEN`. Users and courses come
+  from Canvas launch; Rooms chapters are that course’s Canvas modules.
+
 ## Seed demo data
 
 ```bash
+export OFFICEHOURS_DEMO=true
 cd backend
 python3 scripts/seed_demo_data.py --reset --limit 20
 ```

@@ -39,7 +39,11 @@ from app.models.help_room import (
     HelpReplyOut,
 )
 from app.services.canvas_service import list_canvas_module_names
-from app.services.room_chapters import chapters_for_course, merge_course_chapters
+from app.services.room_chapters import (
+    chapters_for_course,
+    merge_course_chapters,
+    resolve_chapter_source,
+)
 from app.services.room_reputation import compute_reputation
 
 # Quiet ask already covers private/staff topics. Stuck Room is for course concepts.
@@ -379,7 +383,11 @@ def get_community(db: Session, *, course_id: int) -> HelpCommunityOut:
         open_count=int(open_count),
         solved_count=int(solved_count),
         resolution_rate=resolution,
-        chapter_source="syllabus+canvas" if canvas_modules else "syllabus",
+        chapter_source=resolve_chapter_source(
+            syllabus=syllabus,
+            canvas_modules=canvas_modules,
+            posted=bool(counts),
+        ),
         chapters=chapter_out,
     )
 

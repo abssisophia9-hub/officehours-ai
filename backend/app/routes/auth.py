@@ -22,6 +22,8 @@ from app.services.auth_service import (
     verify_password,
 )
 from app.services.demo_accounts import ensure_demo_accounts
+from app.services.demo_mode import demo_mode
+from app.services.canvas_service import canvas_mode
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 courses_router = APIRouter(prefix="/courses", tags=["courses"])
@@ -79,6 +81,12 @@ def get_current_user(
     if user is None:
         raise HTTPException(status_code=401, detail="User not found.")
     return user
+
+
+@router.get("/config")
+def auth_config():
+    """Public: whether this process is a demo seed or a community deploy."""
+    return {"demo": demo_mode(), "canvas_mode": canvas_mode()}
 
 
 @router.post("/login", response_model=LoginResponse)

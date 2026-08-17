@@ -58,6 +58,13 @@ folder (`student-kiosk` 5173, `professor-dashboard` 5174, `ta-dashboard` 5175).
   `Base.metadata.create_all`). Override with the `DATABASE_URL` env var. Tests
   set `DATABASE_URL=sqlite:///:memory:`.
 
+### Demo vs community deploy
+
+- Local FYP helper `./scripts/run_product.sh` sets `OFFICEHOURS_DEMO=true`
+  (Sara/Youssef accounts, sample chapter outlines, local Canvas mirror).
+- Community deploy: `OFFICEHOURS_DEMO=false`, live Canvas credentials. Users
+  and chapters come from the linked LMS course — not a hardcoded catalog.
+
 ### Product vocabulary
 
 See [`docs/glossary.md`](docs/glossary.md). Intake pipeline is **Ask Triage**

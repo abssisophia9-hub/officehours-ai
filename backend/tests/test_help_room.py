@@ -513,12 +513,18 @@ def test_rooms_forum_types_votes_interest_accept_and_profile():
         headers=_headers(sara),
     ).json()
     assert pulse["chapters"]
-    assert pulse["chapter_source"] in ("syllabus", "syllabus+canvas")
+    assert pulse["chapter_source"] in (
+        "canvas",
+        "demo-syllabus",
+        "demo-syllabus+canvas",
+        "posted",
+        "empty",
+    )
     divide = next(
         (item for item in pulse["chapters"] if "divide" in item["label"].lower()),
         None,
     )
-    if pulse["chapter_source"] == "syllabus+canvas":
+    if "canvas" in pulse["chapter_source"] or "syllabus" in pulse["chapter_source"]:
         assert divide is not None
         assert divide["source"] in ("both", "canvas", "syllabus")
 

@@ -31,6 +31,7 @@ from sqlalchemy.orm import Session
 
 from app.models.auth import Course
 from app.models.knowledge import KnowledgeEntry
+from app.services.demo_mode import demo_mode
 from app.services.knowledge_service import ingest_course_material
 
 # Module-structured Canvas mirror keyed by canvas_course_id.
@@ -172,7 +173,12 @@ def canvas_mode() -> str:
     token = (os.getenv("CANVAS_ACCESS_TOKEN") or "").strip()
     if base and token:
         return "live"
-    return (os.getenv("OFFICEHOURS_CANVAS_MODE") or "local").strip().lower() or "local"
+    explicit = (os.getenv("OFFICEHOURS_CANVAS_MODE") or "").strip().lower()
+    if explicit:
+        return explicit
+    if demo_mode():
+        return "local"
+    return "none"
 
 
 def canvas_course_snapshot(canvas_course_id: str) -> dict[str, Any] | None:
@@ -190,6 +196,8 @@ def canvas_course_snapshot(canvas_course_id: str) -> dict[str, Any] | None:
                 "title": str(detail.get("name") or f"Canvas course {canvas_course_id}"),
                 "term": None,
             }
+        return None
+    if canvas_mode() != "local":
         return None
     spec = LOCAL_CANVAS_COURSES.get(str(canvas_course_id))
     if spec is None:
@@ -230,10 +238,14 @@ def canvas_status(db: Session, course: Course) -> dict[str, Any]:
             "Live Canvas API connected."
             if mode == "live"
             else (
-                "Using local AUI Canvas mirror for this course "
-                "(set CANVAS_BASE_URL + CANVAS_ACCESS_TOKEN for live sync)."
-                if canvas_id
-                else "No canvas_course_id on this course yet."
+                "Using local AUI Canvas mirror for this demo course "
+                "(set CANVAS_BASE_URL + CANVAS_ACCESS_TOKEN for a community deploy)."
+                if mode == "local" and canvas_id
+                else (
+                    "No canvas_course_id on this course yet."
+                    if not canvas_id
+                    else "Canvas is not configured. Set CANVAS_BASE_URL + CANVAS_ACCESS_TOKEN, or OFFICEHOURS_DEMO=true for the local mirror."
+                )
             )
         ),
     }
@@ -259,6 +271,8 @@ def list_canvas_module_names(course: Course | None) -> list[str]:
         return []
     if canvas_mode() == "live":
         return _list_live_module_names(str(canvas_id))
+    if canvas_mode() != "local":
+        return []
     spec = LOCAL_CANVAS_COURSES.get(str(canvas_id)) or {}
     names: list[str] = []
     for module in spec.get("modules", []):
@@ -288,6 +302,8 @@ def _list_live_module_names(canvas_course_id: str) -> list[str]:
 def list_canvas_files_by_id(canvas_course_id: str) -> list[CanvasFile]:
     if canvas_mode() == "live":
         return _list_live_canvas_files(canvas_course_id)
+    if canvas_mode() != "local":
+        return []
     spec = LOCAL_CANVAS_COURSES.get(canvas_course_id)
     if spec is None:
         return []

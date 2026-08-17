@@ -75,9 +75,9 @@ source:
 
 | Source | When | What happens |
 | --- | --- | --- |
-| **Demo seed** (local) | App startup / login | `ensure_demo_accounts()` creates AUI-style users + courses + memberships |
+| **Demo seed** (local, `OFFICEHOURS_DEMO=true`) | App startup / login | `ensure_demo_accounts()` creates AUI-style users + courses + memberships. **Off for community deploy.** |
 | **Canvas launch** (intended SaaS path) | Click **Open OfficeHours AI** inside a Canvas course | Auto-provision course + membership from Canvas role, mint session |
-| **Live Canvas materials** | Professor syncs | `CANVAS_BASE_URL` + `CANVAS_ACCESS_TOKEN` (else local AUI Canvas mirror) |
+| **Live Canvas materials** | Professor syncs | `CANVAS_BASE_URL` + `CANVAS_ACCESS_TOKEN`. Local AUI Canvas mirror only when `OFFICEHOURS_DEMO=true`. |
 
 **Community recommendation:** Canvas LTI 1.3 as primary. Not AUI portal scraping.
 Manual admin entry only as a rare support escape hatch.
@@ -136,10 +136,13 @@ A **course-scoped classmate forum** (Stack Overflow hybrid, not a live chat):
 7. Unique **“this unlocked it”** / accepted solutions still credit true help
 8. Grades, integrity, and crises → **Quiet ask**. Staff do not sit in the room.
 
-**Chapters** are not typed by students. Each course has a syllabus outline
-(seeded per course code). When the course is linked to Canvas, module names
-merge into that list (`GET /help-room/community/` `chapter_source`:
-`syllabus` or `syllabus+canvas`). Professors do not edit the list inside Rooms.
+**Chapters** come from this course’s **Canvas modules** (live LMS). Students
+pick one; they do not type the list. A hardcoded CSC/MTH outline is **demo
+only** (`OFFICEHOURS_DEMO=true`).
+
+On a community deploy: `OFFICEHOURS_DEMO=false`, set `CANVAS_BASE_URL` +
+`CANVAS_ACCESS_TOKEN`, and let Canvas/LTI provision people and modules.
+`GET /help-room/community/` `chapter_source` is `canvas`, `posted`, or `empty`.
 
 API: `GET|POST /help-room/`, community pulse, votes, interest, files, profiles,
 ranks.

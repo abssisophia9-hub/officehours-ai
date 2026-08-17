@@ -1,38 +1,22 @@
 """Course chapter catalogs for the AUI Rooms community.
 
-The inspo used a large engineering-discipline grid. Here the grid is the
-active course's chapters — CSC 3323 is algorithms, CSC 2302 is data
-structures — so discoverability stays inside the class, not a campus-wide
-#BiomedicalEngineering feed.
+Production: the grid is this course's **Canvas modules**. Students pick one;
+they do not type a list; we do not ship a hardcoded CSC/MTH outline.
 
-Source of truth, in order:
-1. Syllabus outline seeded per course code (this file) — the standing chapter
-   list when Canvas is empty or unlinked.
-2. Canvas module names for the linked LMS course, merged in when present.
-   Live Canvas uses the modules API; demos use the local AUI mirror.
-Students do not type this list. Professors do not edit it inside Rooms.
+Demo (``OFFICEHOURS_DEMO=true``): a sample syllabus per seeded course code
+plus the local Canvas mirror, so FYP walkthroughs have a full grid.
 """
 
 from __future__ import annotations
 
 import re
 
-DEFAULT_CHAPTERS = (
-    "Recursion",
-    "Sorting",
-    "Hashing",
-    "Trees & AVL",
-    "Heaps",
-    "Graphs",
-    "Greedy",
-    "Dynamic Programming",
-    "Complexity",
-    "Proofs",
-    "Quiz prep",
-    "Project",
-)
+from app.services.demo_mode import demo_mode
 
-COURSE_CHAPTERS: dict[str, tuple[str, ...]] = {
+DEFAULT_CHAPTERS = ()
+
+# Sample outlines used only when OFFICEHOURS_DEMO=true.
+DEMO_COURSE_CHAPTERS: dict[str, tuple[str, ...]] = {
     "CSC 2302": (
         "Arrays & lists",
         "Stacks & queues",
@@ -134,8 +118,15 @@ COURSE_CHAPTERS: dict[str, tuple[str, ...]] = {
 }
 
 
+def demo_syllabus_chapters(code: str | None) -> list[str]:
+    if not demo_mode():
+        return []
+    return list(DEMO_COURSE_CHAPTERS.get((code or "").strip(), ()))
+
+
 def chapters_for_course(code: str | None) -> list[str]:
-    return list(COURSE_CHAPTERS.get((code or "").strip(), DEFAULT_CHAPTERS))
+    """Demo syllabus chapters, or empty in production."""
+    return demo_syllabus_chapters(code)
 
 
 _MODULE_PREFIX = re.compile(r"^module\s+\d+\s*[—–\-:]+\s*", re.I)
@@ -186,3 +177,22 @@ def merge_course_chapters(
         index_by_key[key] = len(merged)
         merged.append((label, "canvas"))
     return merged
+
+
+def resolve_chapter_source(
+    *,
+    syllabus: list[str],
+    canvas_modules: list[str],
+    posted: bool,
+) -> str:
+    has_syllabus = bool(syllabus)
+    has_canvas = bool(canvas_modules)
+    if has_syllabus and has_canvas:
+        return "demo-syllabus+canvas"
+    if has_canvas:
+        return "canvas"
+    if has_syllabus:
+        return "demo-syllabus"
+    if posted:
+        return "posted"
+    return "empty"

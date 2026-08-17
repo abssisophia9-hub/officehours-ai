@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router";
+import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 // AUI emails are Initial.Lastname@aui.ma — role comes from course membership, not email.
@@ -24,10 +25,31 @@ const DEMO_ACCOUNTS = [
 export default function LoginPage() {
   const { user, login, loading } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("s.elidrissi@aui.ma");
-  const [password, setPassword] = useState("aui-demo");
+  const [demo, setDemo] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    api("/auth/config")
+      .then((config) => {
+        if (cancelled) return;
+        const on = Boolean(config?.demo);
+        setDemo(on);
+        if (on) {
+          setEmail((current) => current || "s.elidrissi@aui.ma");
+          setPassword((current) => current || "aui-demo");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setDemo(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (!loading && user) {
     const first = user.courses[0];
@@ -120,14 +142,21 @@ export default function LoginPage() {
             {busy ? "Signing in…" : "Sign in"}
           </button>
 
-          <p className="mt-4 text-center text-sm font-medium text-aui-deep/60">
-            Coming from your LMS?{" "}
-            <a href="/canvas-demo" className="font-semibold text-aui-forest underline">
-              Open from Canvas (one-click demo)
-            </a>
-          </p>
+          {demo ? (
+            <p className="mt-4 text-center text-sm font-medium text-aui-deep/60">
+              Coming from your LMS?{" "}
+              <a href="/canvas-demo" className="font-semibold text-aui-forest underline">
+                Open from Canvas (one-click demo)
+              </a>
+            </p>
+          ) : (
+            <p className="mt-4 text-center text-sm font-medium text-aui-deep/60">
+              Sign in with the account provisioned from your Canvas course.
+            </p>
+          )}
         </form>
 
+        {demo ? (
         <aside className="glass-panel glass-panel-deep p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-50/85">
             Demo accounts
@@ -136,7 +165,8 @@ export default function LoginPage() {
             Password: aui-demo
           </h2>
           <p className="mt-2 text-sm font-medium text-emerald-50/80">
-            Same email shape for every role. Tap to fill the form.
+            Same email shape for every role. Tap to fill the form. Not used on a
+            community deploy.
           </p>
           <ul className="mt-6 space-y-3">
             {DEMO_ACCOUNTS.map((account) => (
@@ -164,6 +194,21 @@ export default function LoginPage() {
             ))}
           </ul>
         </aside>
+        ) : (
+        <aside className="glass-panel glass-panel-deep p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-50/85">
+            AUI community
+          </p>
+          <h2 className="font-display mt-2 text-3xl font-semibold">
+            Your Canvas course
+          </h2>
+          <p className="mt-2 text-sm font-medium text-emerald-50/80">
+            Courses, chapters, and classmates come from the linked Canvas
+            course — not a hardcoded catalog. Ask your professor to open
+            OfficeHours from Canvas and sync modules.
+          </p>
+        </aside>
+        )}
       </div>
     </div>
   );

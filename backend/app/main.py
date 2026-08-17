@@ -37,6 +37,7 @@ from app.routes.requests import router as requests_router
 from app.routes.ta import router as ta_router
 from app.database.session import SessionLocal
 from app.services.demo_accounts import ensure_demo_accounts
+from app.services.demo_mode import demo_mode
 
 Base.metadata.create_all(bind=engine)
 ensure_schema(engine)
@@ -77,7 +78,7 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "demo": demo_mode()}
 
 
 app.include_router(auth_router)

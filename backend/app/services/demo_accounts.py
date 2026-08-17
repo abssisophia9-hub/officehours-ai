@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.models.auth import Course, CourseMembership, User
 from app.services.auth_service import hash_password
+from app.services.demo_mode import demo_mode
 
 DEMO_PASSWORD = "aui-demo"
 
@@ -201,7 +202,13 @@ DEMO_USERS = [
 
 
 def ensure_demo_accounts(db: Session) -> None:
-    """Create or repair demo users/courses (idempotent, migrates old emails/codes)."""
+    """Create or repair demo users/courses (idempotent, migrates old emails/codes).
+
+    No-op unless ``OFFICEHOURS_DEMO`` is on. Production AUI deploy must not
+    invent Sara/Youssef or sample courses — Canvas/LTI provisions those.
+    """
+    if not demo_mode():
+        return
     _migrate_legacy_emails(db)
     _migrate_legacy_course_codes(db)
 
