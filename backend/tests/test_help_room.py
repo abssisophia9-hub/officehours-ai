@@ -132,7 +132,7 @@ def test_reply_helpful_marks_rank_and_no_self_vote():
         headers=_headers(youssef),
     ).json()
     anon = next(item for item in feed_y if item["id"] == post_id)
-    assert anon["author_display"] == "Classmate"
+    assert anon["author_display"] == "Anonymous"
 
     reply = client.post(
         f"/help-room/{post_id}/replies",
@@ -433,7 +433,7 @@ def test_community_flair_nested_comments_same_here_and_sort():
     assert all(item["flair"] == "vent" for item in vents)
     assert any(item["id"] == vent_id for item in vents)
     anon = next(item for item in vents if item["id"] == vent_id)
-    assert anon["author_display"] == "Classmate"
+    assert anon["author_display"] == "Anonymous"
 
 
 def test_rooms_forum_types_votes_interest_accept_and_profile():
@@ -505,6 +505,14 @@ def test_rooms_forum_types_votes_interest_accept_and_profile():
         headers=_headers(sara),
     ).json()
     assert pulse["chapters"]
+    assert pulse["chapter_source"] in ("syllabus", "syllabus+canvas")
+    divide = next(
+        (item for item in pulse["chapters"] if "divide" in item["label"].lower()),
+        None,
+    )
+    if pulse["chapter_source"] == "syllabus+canvas":
+        assert divide is not None
+        assert divide["source"] in ("both", "canvas", "syllabus")
 
     me = client.get("/auth/me", headers=_headers(youssef)).json()
     profile = client.get(

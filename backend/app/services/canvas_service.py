@@ -246,6 +246,45 @@ def list_course_files(course: Course) -> list[CanvasFile]:
     return list_canvas_files_by_id(str(canvas_id))
 
 
+def list_canvas_module_names(course: Course | None) -> list[str]:
+    """Module titles from the linked Canvas course (live API or local mirror).
+
+    Used by Rooms as the LMS half of the chapter grid. Empty when the course
+    has no canvas_course_id or the mirror/API has no modules.
+    """
+    if course is None:
+        return []
+    canvas_id = getattr(course, "canvas_course_id", None)
+    if not canvas_id:
+        return []
+    if canvas_mode() == "live":
+        return _list_live_module_names(str(canvas_id))
+    spec = LOCAL_CANVAS_COURSES.get(str(canvas_id)) or {}
+    names: list[str] = []
+    for module in spec.get("modules", []):
+        name = str(module.get("name") or "").strip()
+        if name:
+            names.append(name)
+    return names
+
+
+def _list_live_module_names(canvas_course_id: str) -> list[str]:
+    base = (os.getenv("CANVAS_BASE_URL") or "").rstrip("/") + "/"
+    token = (os.getenv("CANVAS_ACCESS_TOKEN") or "").strip()
+    if not token:
+        return []
+    modules = _canvas_get_json(
+        urljoin(base, f"api/v1/courses/{canvas_course_id}/modules?per_page=50"),
+        {"Authorization": f"Bearer {token}", "Accept": "application/json"},
+    )
+    names: list[str] = []
+    for module in modules:
+        name = str(module.get("name") or "").strip()
+        if name:
+            names.append(name)
+    return names
+
+
 def list_canvas_files_by_id(canvas_course_id: str) -> list[CanvasFile]:
     if canvas_mode() == "live":
         return _list_live_canvas_files(canvas_course_id)

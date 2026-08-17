@@ -38,7 +38,8 @@ from app.models.help_room import (
     HelpReply,
     HelpReplyOut,
 )
-from app.services.room_chapters import chapters_for_course
+from app.services.canvas_service import list_canvas_module_names
+from app.services.room_chapters import chapters_for_course, merge_course_chapters
 from app.services.room_reputation import compute_reputation
 
 # Quiet ask already covers private/staff topics. Stuck Room is for course concepts.
@@ -170,7 +171,7 @@ def _reject_sensitive(text: str) -> None:
 
 def _author_display(db: Session, user_id: int, anonymous: bool, viewer: User) -> str:
     if anonymous and user_id != viewer.id:
-        return "Classmate"
+        return "Anonymous"
     author = db.get(User, user_id)
     return (
         (author.display_name if author else None)
@@ -344,7 +345,10 @@ def get_community(db: Session, *, course_id: int) -> HelpCommunityOut:
         .count()
     )
     code = course.code if course else None
-    catalog = chapters_for_course(code)
+    syllabus = chapters_for_course(code)
+    canvas_modules = list_canvas_module_names(course)
+    catalog = merge_course_chapters(syllabus, canvas_modules)
+    catalog_labels = {label for label, _source in catalog}
     chapter_rows = (
         db.query(HelpPost.chapter, func.count(HelpPost.id))
         .filter(HelpPost.course_id == course_id, HelpPost.chapter.isnot(None))
@@ -353,11 +357,12 @@ def get_community(db: Session, *, course_id: int) -> HelpCommunityOut:
     )
     counts = {label: int(n) for label, n in chapter_rows if label}
     chapter_out = [
-        HelpChapterOut(label=label, post_count=counts.get(label, 0)) for label in catalog
+        HelpChapterOut(label=label, post_count=counts.get(label, 0), source=source)
+        for label, source in catalog
     ]
     for label, n in counts.items():
-        if label not in catalog:
-            chapter_out.append(HelpChapterOut(label=label, post_count=n))
+        if label not in catalog_labels:
+            chapter_out.append(HelpChapterOut(label=label, post_count=n, source="posted"))
     resolution = round(solved_count / post_count, 3) if post_count else 0.0
     return HelpCommunityOut(
         course_id=course_id,
@@ -371,6 +376,7 @@ def get_community(db: Session, *, course_id: int) -> HelpCommunityOut:
         open_count=int(open_count),
         solved_count=int(solved_count),
         resolution_rate=resolution,
+        chapter_source="syllabus+canvas" if canvas_modules else "syllabus",
         chapters=chapter_out,
     )
 

@@ -344,7 +344,7 @@ export default function StuckRoomPage() {
               Rooms
             </button>
             <button type="button" className={view === "fields" ? "is-on" : ""} onClick={() => go({ view: "fields" })}>
-              Fields
+              Chapters
             </button>
             <button
               type="button"
@@ -356,6 +356,11 @@ export default function StuckRoomPage() {
           </nav>
           <div className="rf-card">
             <h3>Chapters</h3>
+            <p className="bh-card-note">
+              {community?.chapter_source === "syllabus+canvas"
+                ? "Syllabus outline for this course, plus Canvas modules from the linked LMS course."
+                : "Syllabus outline for this course. Canvas modules join this list when the course is linked."}
+            </p>
             <ul className="rf-chapter-list">
               <li>
                 <button type="button" className={!chapterFilter ? "is-on" : ""} onClick={() => setChapterFilter("")}>
@@ -406,6 +411,7 @@ export default function StuckRoomPage() {
               chapter={chapter}
               setChapter={setChapter}
               chapters={chapters}
+              chapterSource={community?.chapter_source}
               tags={tags}
               tagDraft={tagDraft}
               setTagDraft={setTagDraft}
@@ -424,6 +430,7 @@ export default function StuckRoomPage() {
           ) : view === "fields" ? (
             <FieldsGrid
               chapters={chapters}
+              chapterSource={community?.chapter_source}
               onPick={(label) => {
                 setChapterFilter(label);
                 go({});
@@ -789,6 +796,7 @@ function CreateWizard({
   chapter,
   setChapter,
   chapters,
+  chapterSource,
   tags,
   tagDraft,
   setTagDraft,
@@ -827,8 +835,19 @@ function CreateWizard({
               required
             />
             <label className="rf-anon">
-              <input type="checkbox" className="accent-aui-forest" checked={anonymous} onChange={(event) => setAnonymous(event.target.checked)} />
-              Publish as Classmate
+              <input
+                type="checkbox"
+                className="accent-aui-forest"
+                checked={anonymous}
+                onChange={(event) => setAnonymous(event.target.checked)}
+              />
+              <span>
+                <strong>Hide my name</strong>
+                <em>
+                  This room is already classmates only. If you check this, others
+                  see Anonymous — not your name.
+                </em>
+              </span>
             </label>
           </>
         ) : null}
@@ -853,6 +872,11 @@ function CreateWizard({
         {step === 3 ? (
           <>
             <h2>Select course chapter</h2>
+            <p className="bh-card-note">
+              {chapterSource === "syllabus+canvas"
+                ? "These chapters come from this course’s syllabus, plus Canvas modules from the linked LMS course. You pick one — you don’t type the list."
+                : "These chapters come from this course’s syllabus. Canvas modules join the list when the professor links the LMS course. You pick one — you don’t type the list."}
+            </p>
             <div className="rf-chapter-grid">
               {chapters.map((item) => (
                 <button
@@ -862,6 +886,9 @@ function CreateWizard({
                   onClick={() => setChapter(item.label)}
                 >
                   {item.label}
+                  {item.source === "canvas" || item.source === "both" ? (
+                    <small className="rf-src">Canvas</small>
+                  ) : null}
                 </button>
               ))}
             </div>
@@ -952,16 +979,23 @@ function CreateWizard({
   );
 }
 
-function FieldsGrid({ chapters, onPick }) {
+function FieldsGrid({ chapters, chapterSource, onPick }) {
   return (
     <div className="rf-card">
-      <h2>Fields</h2>
-      <p className="bh-card-note">Course chapters — the AUI equivalent of the engineering-discipline grid.</p>
+      <h2>Course chapters</h2>
+      <p className="bh-card-note">
+        {chapterSource === "syllabus+canvas"
+          ? "Syllabus outline for this course, plus Canvas modules from the linked LMS course. Students do not add chapters here."
+          : "Syllabus outline for this course. Canvas modules join this list when the course is linked. Students do not add chapters here."}
+      </p>
       <div className="rf-chapter-grid mt-4">
         {chapters.map((item) => (
           <button key={item.label} type="button" onClick={() => onPick(item.label)}>
             <strong>{item.label}</strong>
-            <span>{item.post_count} rooms</span>
+            <span>
+              {item.post_count} rooms
+              {item.source === "canvas" || item.source === "both" ? " · Canvas" : ""}
+            </span>
           </button>
         ))}
       </div>

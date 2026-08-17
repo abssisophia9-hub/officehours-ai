@@ -315,12 +315,14 @@ class HelpCommunityOut(BaseModel):
     open_count: int = 0
     solved_count: int = 0
     resolution_rate: float = 0.0
+    chapter_source: str = "syllabus"
     chapters: list["HelpChapterOut"] = Field(default_factory=list)
 
 
 class HelpChapterOut(BaseModel):
     label: str
     post_count: int = 0
+    source: str = "syllabus"
 
 
 HelpCommunityOut.model_rebuild()

@@ -123,16 +123,22 @@ API: `GET|POST /peer-notes/`, like/comment/download under `/peer-notes/{id}/…`
 A **course-scoped classmate forum** (Stack Overflow hybrid, not a live chat):
 
 1. **Create a Room** wizard: title + Markdown description → Problem / Discussion /
-   Article → chapter grid, plus tags and file attachments
+   Article → chapter grid, plus tags and file attachments. Optional **Hide my
+   name** (classmates see Anonymous — the room is already students-only).
 2. Card feed with type + Open/Solved badges, up/down votes, chapter field,
    hashtags, author avatar, and **Express Interest**
-3. Left rail: Rooms / Fields / Leaderboard + chapter counts
+3. Left rail: Rooms / Chapters / Leaderboard + chapter counts
 4. Right rail: Community Pulse (classmates, active rooms, resolution) +
    Initialize Room
 5. Profile: ROOMS score, Hilbert Weight ŵ, Node Points, stat tiles
 6. Podium leaderboard ranked by ŵ (quality over volume)
 7. Unique **“this unlocked it”** / accepted solutions still credit true help
 8. Grades, integrity, and crises → **Quiet ask**. Staff do not sit in the room.
+
+**Chapters** are not typed by students. Each course has a syllabus outline
+(seeded per course code). When the course is linked to Canvas, module names
+merge into that list (`GET /help-room/community/` `chapter_source`:
+`syllabus` or `syllabus+canvas`). Professors do not edit the list inside Rooms.
 
 API: `GET|POST /help-room/`, community pulse, votes, interest, files, profiles,
 ranks.
