@@ -3,9 +3,9 @@ const ROLE_COPY = [
     id: "student",
     label: "Student",
     kicker: "01 · Student",
-    tools: "Quiet ask · Rooms",
+    tools: "Quiet ask · Study Agent · Rooms",
     title: "You do not perform in front of the room.",
-    lead: "Private path to staff, or a named room for classmates. The product starts with the stuck student.",
+    lead: "Private path to staff, a course Study Agent, or a named room. The product starts with the stuck student.",
     body: (
       <>
         <p>

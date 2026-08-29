@@ -3122,7 +3122,7 @@ html:has(.oh-open) {
   grid-template-columns: minmax(18rem, 0.92fr) minmax(22rem, 1.08fr);
   gap: 2.4rem;
   align-items: center;
-  min-height: calc(100vh - 6.6rem);
+  min-height: calc(100vh - 4.5rem);
   padding: 1.6rem 6vw 2.2rem;
 }
 
@@ -3229,6 +3229,249 @@ html:has(.oh-open) {
   );
   opacity: 0.45;
   pointer-events: none;
+}
+
+.oh-open-stitch {
+  display: grid;
+  grid-template-columns: minmax(16rem, 0.9fr) minmax(20rem, 1.1fr);
+  gap: 2rem;
+  align-items: start;
+  padding: 3rem 6vw;
+  scroll-margin-top: 5.2rem;
+}
+
+.oh-open-stitch-copy h2,
+.oh-open-desk-head h2,
+.oh-open-close h2 {
+  margin: 0 0 0.7rem;
+  font-size: clamp(1.8rem, 3.4vw, 2.7rem);
+  line-height: 1.08;
+}
+
+.oh-open-stitch-copy p,
+.oh-open-desk-head p,
+.oh-open-close p {
+  max-width: 36rem;
+  line-height: 1.5;
+  color: #3d5348;
+}
+
+.oh-open-course-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1.2rem;
+}
+
+.oh-open-course-switch button {
+  text-align: left;
+  border: 1px solid rgba(22, 51, 40, 0.12);
+  background: #fffdf7;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.7rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.oh-open-course-switch button small {
+  display: block;
+  color: #6d8177;
+  font-size: 0.72rem;
+}
+
+.oh-open-course-switch button.is-on {
+  outline: 2px solid #d4f58a;
+  background: #eaf6c8;
+}
+
+.oh-open-loom {
+  display: grid;
+  grid-template-columns: 0.7fr auto 1fr;
+  gap: 0.8rem;
+  align-items: stretch;
+}
+
+.oh-open-lms,
+.oh-open-loom-out article,
+.oh-open-pane {
+  background: #fffdf7;
+  border: 1px solid rgba(22, 51, 40, 0.08);
+  border-radius: 1rem;
+  padding: 1rem 1.05rem;
+  box-shadow: 0 12px 28px rgba(29, 58, 42, 0.06);
+}
+
+.oh-open-lms {
+  background: #1d3a2a;
+  color: #eaf6c8;
+}
+
+.oh-open-lms ul {
+  list-style: none;
+  margin: 0.7rem 0 0;
+  padding: 0;
+}
+
+.oh-open-lms button {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 0.45rem 0;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.oh-open-lms button.is-on {
+  opacity: 1;
+  color: #d4f58a;
+}
+
+.oh-open-loom-label {
+  margin: 0;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6d8177;
+}
+
+.oh-open-lms .oh-open-loom-label {
+  color: #9fb4a8;
+}
+
+.oh-open-loom-course {
+  margin: 0.25rem 0 0;
+  font-weight: 800;
+  font-size: 1.15rem;
+}
+
+.oh-open-loom-split {
+  align-self: center;
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #1d3a2a;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.oh-open-loom-out {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.oh-open-loom-out h3,
+.oh-open-pane h3 {
+  margin: 0.25rem 0 0.35rem;
+  font-size: 1.1rem;
+}
+
+.oh-open-desk {
+  padding: 2.4rem 6vw 2.6rem;
+  scroll-margin-top: 5.2rem;
+}
+
+.oh-open-desk-head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.2rem;
+  align-items: center;
+  margin-bottom: 1.2rem;
+}
+
+.oh-open-desk-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.oh-open-desk-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.oh-open-pane-kicker {
+  margin: 0 0 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6d8177;
+}
+
+.oh-open-toggle {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.7rem;
+}
+
+.oh-open-toggle button {
+  border: none;
+  background: #efe9dc;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 750;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.oh-open-toggle button.is-on {
+  background: #d4f58a;
+}
+
+.oh-open-chat {
+  margin: 0 0 0.55rem;
+  padding: 0.55rem 0.7rem;
+  background: #efe9dc;
+  border-radius: 0.7rem 0.7rem 0.7rem 0.2rem;
+  font-size: 0.92rem;
+}
+
+.oh-open-chat.is-reply {
+  background: #eaf6c8;
+  border-radius: 0.7rem 0.7rem 0.2rem 0.7rem;
+}
+
+.oh-open-fine {
+  margin: 0.4rem 0 0;
+  font-size: 0.78rem;
+  color: #6d8177;
+}
+
+.oh-open-triage {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.oh-open-triage li {
+  margin: 0.45rem 0;
+}
+
+.oh-open-stamp-btn {
+  margin-top: 0.8rem;
+  border: none;
+  background: #1d3a2a;
+  color: #d4f58a;
+  font: inherit;
+  font-weight: 750;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.45rem;
+  cursor: pointer;
+}
+
+.oh-open-close {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 2.8rem 6vw 3.2rem;
+  scroll-margin-top: 5.2rem;
 }
 
 .oh-open-legend {
@@ -4160,8 +4403,23 @@ html:has(.oh-open) {
     padding: 0.4rem 4vw;
   }
 
-  .oh-open-lime {
+  .oh-open-lime,
+  .oh-open-stitch,
+  .oh-open-loom,
+  .oh-open-desk-head,
+  .oh-open-desk-grid,
+  .oh-open-desk-grid-2,
+  .oh-open-close {
     grid-template-columns: 1fr;
+  }
+
+  .oh-open-loom-split {
+    writing-mode: horizontal-tb;
+    transform: none;
+    text-align: center;
+  }
+
+  .oh-open-lime {
     padding: 2rem 6vw;
   }
 

@@ -2,42 +2,47 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import RoleFigure, { ROLES } from "./RoleFigure.jsx";
 
-const STEPS = [
-  { n: "01", id: "student", title: "Student asks", note: "Quiet ask, Identify me, or a named Room." },
-  { n: "02", id: "ta", title: "TA claims it", note: "Ask Triage routes a queue, not a pile." },
-  { n: "03", id: "professor", title: "Professor keeps the gate", note: "Insights first. Stamp before the Study Agent speaks." },
-  { n: "04", id: "join", title: "Sign in as yourself", note: "One AUI email. Role is per course." },
-];
-
-const TOOLS = [
+const COURSES = [
   {
-    href: "#student",
-    title: "Quiet ask",
-    kicker: "01 · Student",
-    action: "Meet the student →",
-    body: "Go to staff without putting your name on a board. Identify me only when you want a meeting.",
+    code: "CSC 2302",
+    title: "Data Structures",
+    modules: [
+      {
+        name: "Hashing",
+        room: "Hash collisions on insert — anyone?",
+        agent: "A hash table maps a key to a bucket. Collisions are normal; we chain or probe. Approved FAQ + Canvas Module 4.",
+      },
+      {
+        name: "Trees",
+        room: "BST vs heap — which one for Dijkstra?",
+        agent: "A BST orders by key. A heap is a priority queue. The course agent only says this because the professor stamped it.",
+      },
+    ],
   },
   {
-    href: "#student",
-    title: "Rooms",
-    kicker: "01 · Classmates",
-    action: "See how Rooms work →",
-    body: "Named classmate help. Staff stay out. What helps can surface later on the Hilbert board.",
-  },
-  {
-    href: "#professor",
-    title: "KB gate",
-    kicker: "03 · Professor",
-    action: "Meet the professor →",
-    body: "Review insights, then stamp a FAQ. The Study Agent does not speak until you do.",
+    code: "CSC 3323",
+    title: "Analysis of Algorithms",
+    modules: [
+      {
+        name: "Divide & Conquer",
+        room: "Merge sort recurrence — how to unwind it?",
+        agent: "T(n) = 2T(n/2) + Θ(n) solves to Θ(n log n). Pulled from the approved FAQ for this course only.",
+      },
+    ],
   },
 ];
 
 export default function OpeningTrio({ variant = "live" }) {
   const [pinned, setPinned] = useState(null);
   const [fromScroll, setFromScroll] = useState("student");
+  const [courseIdx, setCourseIdx] = useState(0);
+  const [moduleIdx, setModuleIdx] = useState(0);
+  const [quiet, setQuiet] = useState(true);
+  const [stamped, setStamped] = useState(false);
   const ignoreObserver = useRef(false);
   const currentId = pinned || fromScroll;
+  const course = COURSES[courseIdx];
+  const module = course.modules[moduleIdx];
 
   useEffect(() => {
     const nodes = [...document.querySelectorAll("[data-oh-role]")];
@@ -52,7 +57,7 @@ export default function OpeningTrio({ variant = "live" }) {
         setFromScroll(on.target.getAttribute("data-oh-role"));
         setPinned(null);
       },
-      { threshold: [0.45, 0.7], rootMargin: "-22% 0px -40% 0px" },
+      { threshold: [0.4, 0.7], rootMargin: "-20% 0px -40% 0px" },
     );
     nodes.forEach((node) => io.observe(node));
     return () => io.disconnect();
@@ -68,30 +73,35 @@ export default function OpeningTrio({ variant = "live" }) {
     }, 900);
   }
 
+  function pickCourse(index) {
+    setCourseIdx(index);
+    setModuleIdx(0);
+    setStamped(false);
+  }
+
   return (
     <div className={`oh-open-story oh-open-story-${variant}`}>
       <main className="oh-open-hero" id="hero">
         <div className="oh-open-copy">
-          <p className="oh-open-kicker">Al Akhawayn University · Campus product</p>
+          <p className="oh-open-kicker">Al Akhawayn University · Linked to Canvas</p>
           <h1 className="font-display">
-            Get unstuck without the office-hours{" "}
-            <span className="oh-open-mark">lottery.</span>
+            Each course has its own agent.{" "}
+            <span className="oh-open-mark">Staff stay the humans.</span>
           </h1>
           <div className="oh-open-body">
             <p>
-              <span className="oh-open-drop">F</span>
-              inals week, the same question is asked twenty times. Students who
-              will not raise a hand wait. TAs drown in a <em>pile</em>, not a
-              queue. Professors miss the pattern until the exam already happened.
+              <span className="oh-open-drop">O</span>
+              fficeHours opens from Canvas. Modules become Rooms chapters. A{" "}
+              <mark>Course Study Agent</mark> answers only what that course’s
+              professor stamped — never another syllabus, never classmate notes.
             </p>
             <p>
-              OfficeHours turns that into a path you can read before you sign in:{" "}
-              <mark>Quiet ask</mark>, a <mark>TA queue</mark>, and a professor{" "}
-              <em>gate</em>. Click a person. Scroll the rest.
+              The three people are the product: a stuck student, a TA with{" "}
+              <mark>Ask Triage</mark> and Help Coach, a professor who keeps the{" "}
+              <em>KB gate</em>. Click a person. Scroll the rest.
             </p>
           </div>
         </div>
-
         <div className="oh-open-picture" aria-label="Student, TA, and professor">
           {ROLES.map((role) => (
             <RoleFigure
@@ -105,148 +115,207 @@ export default function OpeningTrio({ variant = "live" }) {
         </div>
       </main>
 
-      <section className="oh-open-about" id="about">
-        <div className="oh-open-about-copy">
-          <p className="oh-open-kicker">About OfficeHours</p>
-          <h2 className="font-display">A path, not a pile.</h2>
+      <section className="oh-open-stitch" id="canvas">
+        <div className="oh-open-stitch-copy">
+          <p className="oh-open-kicker">Canvas LMS · one course at a time</p>
+          <h2 className="font-display">The course you opened is the world the agent sees.</h2>
           <p>
-            This is not a chatbot demo and not a jobs board. It is the office-hours
-            loop for AUI: a stuck student, a TA with a real queue, a professor who
-            decides what the class is allowed to learn next.
+            Launch from Canvas or sign in with your AUI email. Memberships decide
+            your role. Syncing a module does two things at once: it names a Rooms
+            chapter, and it feeds the Study Agent — still behind the professor stamp.
           </p>
-          <p>
-            One login. Role is <mark>per course</mark>. A TA on campus is also a
-            student. Canvas memberships switch the workspace. Staff do not lurk in{" "}
-            <em>Rooms</em>.
-          </p>
-        </div>
-        <blockquote className="oh-open-mission">
-          <p>
-            A stuck student asks. A TA claims the card. A professor keeps the gate
-            on what is <span>meaningful</span> enough to teach again.
-          </p>
-          <small>Every FAQ still needs a human stamp before the Study Agent may repeat it.</small>
-          <footer>
-            <span>2026</span>
-            <span>AUI</span>
-            <span>1 login</span>
-          </footer>
-        </blockquote>
-      </section>
-
-      <section className="oh-open-path" id="path">
-        <div className="oh-open-path-head">
-          <div>
-            <p className="oh-open-kicker oh-open-kicker-on-dark">The path</p>
-            <h2>
-              From stuck to stamped — <span>clear.</span>
-            </h2>
+          <div className="oh-open-course-switch" role="tablist" aria-label="Demo courses">
+            {COURSES.map((item, index) => (
+              <button
+                key={item.code}
+                type="button"
+                role="tab"
+                aria-selected={courseIdx === index}
+                className={courseIdx === index ? "is-on" : ""}
+                onClick={() => pickCourse(index)}
+              >
+                {item.code}
+                <small>{item.title}</small>
+              </button>
+            ))}
           </div>
-          <p className="oh-open-path-aside">4 STEPS · AUI CAMPUS</p>
-        </div>
-        <ol className="oh-open-steps">
-          {STEPS.map((step, index) => (
-            <li key={step.n}>
-              <a href={`#${step.id}`}>
-                <span className={`oh-open-step-n ${index === 3 ? "is-last" : ""}`}>{step.n}</span>
-                <strong>{step.title}</strong>
-                <span>{step.note}</span>
-              </a>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section className="oh-open-tools" id="tools">
-        <h2 className="font-display">What you can do before you log in.</h2>
-        <ul>
-          {TOOLS.map((tool) => (
-            <li key={tool.title}>
-              <a href={tool.href} className="oh-open-tool">
-                <strong>{tool.title}</strong>
-                <span className="oh-open-tool-kicker">{tool.kicker}</span>
-                <p>{tool.body}</p>
-                <span className="oh-open-tool-go">{tool.action}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <div id="roles" className="oh-open-roles">
-        <div className="oh-open-legend" role="navigation" aria-label="Roles">
-          {ROLES.map((role) => (
-            <button
-              key={role.id}
-              type="button"
-              className={`oh-open-role-tab ${currentId === role.id ? "is-on" : ""}`}
-              onClick={() => selectRole(role.id)}
-            >
-              {role.label}
-            </button>
-          ))}
         </div>
 
-        {ROLES.map((role) => (
-          <section
-            key={role.id}
-            id={role.id}
-            data-oh-role={role.id}
-            className={`oh-open-chapter ${currentId === role.id ? "is-on" : ""}`}
-          >
-            <article className="oh-open-card">
-              <p className="oh-open-kicker">{role.kicker}</p>
-              <h2 className="font-display">{role.title}</h2>
-              <p className="oh-open-lead">{role.lead}</p>
-              <div className="oh-open-chapter-body">{role.body}</div>
+        <div className="oh-open-loom">
+          <div className="oh-open-lms">
+            <p className="oh-open-loom-label">From Canvas</p>
+            <p className="oh-open-loom-course">{course.code}</p>
+            <ul>
+              {course.modules.map((item, index) => (
+                <li key={item.name}>
+                  <button
+                    type="button"
+                    className={moduleIdx === index ? "is-on" : ""}
+                    onClick={() => {
+                      setModuleIdx(index);
+                      setStamped(false);
+                    }}
+                  >
+                    {item.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className="oh-open-loom-split" aria-hidden="true">
+            becomes
+          </p>
+          <div className="oh-open-loom-out">
+            <article>
+              <p className="oh-open-loom-label">Rooms chapter</p>
+              <h3>{module.name}</h3>
+              <p>{module.room}</p>
             </article>
-            <RoleFigure
-              role={role}
-              size="xl"
-              active
-              onClick={() => selectRole(role.id)}
-            />
-          </section>
-        ))}
-      </div>
+            <article>
+              <p className="oh-open-loom-label">Course Study Agent</p>
+              <h3>{course.code} only</h3>
+              <p>{stamped ? module.agent : "Waiting on the professor stamp. The agent does not guess."}</p>
+            </article>
+          </div>
+        </div>
+      </section>
 
-      <section className="oh-open-lime" id="join">
+      <section className="oh-open-desk" id="student" data-oh-role="student">
+        <div className="oh-open-desk-head">
+          <RoleFigure role="student" size="lg" active onClick={() => selectRole("student")} />
+          <div>
+            <p className="oh-open-kicker">01 · Student</p>
+            <h2 className="font-display">You do not perform in front of the room.</h2>
+            <p className="oh-open-lead">
+              Quiet ask or Identify me. Rooms for classmates. A Study Agent that
+              belongs to this course — not a campus-wide chatbot.
+            </p>
+          </div>
+        </div>
+        <div className="oh-open-desk-grid">
+          <article className="oh-open-pane">
+            <div className="oh-open-toggle">
+              <button type="button" className={quiet ? "is-on" : ""} onClick={() => setQuiet(true)}>
+                Quiet ask
+              </button>
+              <button type="button" className={quiet ? "" : "is-on"} onClick={() => setQuiet(false)}>
+                Identify me
+              </button>
+            </div>
+            <p className="oh-open-pane-kicker">{quiet ? "Staff see a request code" : "Sara · CSC 2302"}</p>
+            <p>
+              {quiet
+                ? "No name on a public board. The private path when the question is sensitive, or you are not ready to be seen."
+                : "You want a meeting — message, face-to-face, or online. Staff can find you."}
+            </p>
+          </article>
+          <article className="oh-open-pane oh-open-pane-agent">
+            <p className="oh-open-pane-kicker">Course Study Agent · {course.code}</p>
+            <p className="oh-open-chat">“Why do hash collisions happen?”</p>
+            <p className="oh-open-chat is-reply">
+              {stamped
+                ? module.agent
+                : "I don’t have an approved answer in this course yet. Ask a TA, or open a Room."}
+            </p>
+            <p className="oh-open-fine">Classmate notes never train this agent.</p>
+          </article>
+          <article className="oh-open-pane">
+            <p className="oh-open-pane-kicker">Rooms · Hilbert ŵ</p>
+            <p>
+              Named classmate help. Express Interest. Accept a solution. Quality
+              over volume on the leaderboard. Staff do not lurk here.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section className="oh-open-desk" id="ta" data-oh-role="ta">
+        <div className="oh-open-desk-head">
+          <RoleFigure role="ta" size="lg" active onClick={() => selectRole("ta")} />
+          <div>
+            <p className="oh-open-kicker">02 · Teaching assistant</p>
+            <h2 className="font-display">A queue, not a pile.</h2>
+            <p className="oh-open-lead">
+              Ask Triage runs Analyzer, Matcher, and Synthesizer on the way in.
+              You claim the card. Help Coach sits with you — it never publishes
+              to the Study Agent.
+            </p>
+          </div>
+        </div>
+        <div className="oh-open-desk-grid oh-open-desk-grid-2">
+          <article className="oh-open-pane">
+            <p className="oh-open-pane-kicker">Ask Triage</p>
+            <ul className="oh-open-triage">
+              <li>
+                <strong>Analyzer</strong> Hashing · medium
+              </li>
+              <li>
+                <strong>Matcher</strong> Alice primary · Karim backup
+              </li>
+              <li>
+                <strong>Synthesizer</strong> Hint drafted — you still own the reply
+              </li>
+            </ul>
+          </article>
+          <article className="oh-open-pane">
+            <p className="oh-open-pane-kicker">Help Coach · dual-TA load</p>
+            <p>
+              Similar open asks, Socratic steps, a draft you can rewrite. Same
+              concept twice? Propose one group meeting. When you are done, send
+              the teaching note to the professor’s gate.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section className="oh-open-desk" id="professor" data-oh-role="professor">
+        <div className="oh-open-desk-head">
+          <RoleFigure role="professor" size="lg" active onClick={() => selectRole("professor")} />
+          <div>
+            <p className="oh-open-kicker">03 · Professor</p>
+            <h2 className="font-display">You stay the gate.</h2>
+            <p className="oh-open-lead">
+              Review insights mix Quiet asks and Rooms chapters. Sync Canvas
+              materials. Nothing the student agent says is yours until you stamp it.
+            </p>
+          </div>
+        </div>
+        <div className="oh-open-desk-grid oh-open-desk-grid-2">
+          <article className="oh-open-pane">
+            <p className="oh-open-pane-kicker">Review insights · {module.name}</p>
+            <p>
+              The week confused people on {module.name.toLowerCase()}. Emphasize
+              in review, or draft a FAQ for the next cohort.
+            </p>
+          </article>
+          <article className="oh-open-pane">
+            <p className="oh-open-pane-kicker">KB gate</p>
+            <p>{stamped ? "Stamped. The Course Study Agent may say this next time." : "Pending. The agent stays quiet."}</p>
+            <button type="button" className="oh-open-stamp-btn" onClick={() => setStamped((on) => !on)}>
+              {stamped ? "Unstamp (demo)" : "Stamp for Study Agent"}
+            </button>
+          </article>
+        </div>
+      </section>
+
+      <section className="oh-open-close" id="join">
         <div>
-          <p className="oh-open-kicker">The product · one login</p>
-          <h2>Help is already on campus.</h2>
-          <p className="oh-open-lime-quote">
-            Stop choosing between waiting in the hallway and never asking —
-            a quiet path, or a named room.
+          <p className="oh-open-kicker">One login · role per course</p>
+          <h2 className="font-display">Open from Canvas, or sign in as yourself.</h2>
+          <p>
+            A TA on campus is also a student. One AUI email. The workspace
+            switches when the course does. The agent switches with it.
           </p>
         </div>
-        <div className="oh-open-lime-panel">
-          <p>AUI email. Role is per course. A TA can also be a student.</p>
-          <Link className="oh-open-signin oh-open-signin-on-lime" to="/login">
+        <p className="oh-open-cta-row">
+          <Link className="oh-open-signin" to="/login">
             Sign in
           </Link>
-        </div>
+          <Link className="oh-open-ghost" to="/canvas-demo">
+            See the Canvas launch
+          </Link>
+        </p>
       </section>
-
-      <footer className="oh-open-end">
-        <div>
-          <p className="oh-open-end-brand">OfficeHours</p>
-          <p>The campus office-hours product for Al Akhawayn University. Quiet ask, Rooms, a TA queue, a professor gate.</p>
-          <small>Al Akhawayn University · Ifrane, Morocco</small>
-        </div>
-        <div>
-          <p className="oh-open-kicker oh-open-kicker-on-dark">By the numbers</p>
-          <p className="oh-open-stat">1<span>login</span></p>
-          <p className="oh-open-stat">3<span>roles per course</span></p>
-          <p className="oh-open-stat">∞<span>until you stamp it</span></p>
-        </div>
-        <div>
-          <p className="oh-open-kicker oh-open-kicker-on-dark">Navigate</p>
-          <a href="#hero">Home</a>
-          <a href="#about">About</a>
-          <a href="#path">Path</a>
-          <Link to="/login">Sign in</Link>
-        </div>
-      </footer>
     </div>
   );
 }
