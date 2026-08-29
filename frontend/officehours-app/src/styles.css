@@ -2968,6 +2968,55 @@ html:has(.vd) {
   }
 }
 
+/* ---------- Microsoft (Entra ID) sign-in ---------- */
+
+.ms-signin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1.5px solid rgba(22, 51, 40, 0.25);
+  border-radius: 0.6rem;
+  background: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #163328;
+  text-decoration: none;
+}
+
+.ms-signin:hover {
+  border-color: #1d3a2a;
+  box-shadow: 0 4px 14px rgba(29, 58, 42, 0.12);
+}
+
+.ms-signin svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: none;
+}
+
+.ms-signin-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 1.4rem 0 -0.9rem;
+  color: #6d8177;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ms-signin-divider::before,
+.ms-signin-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(22, 51, 40, 0.15);
+}
+
 /* ---------- Opening (Option 3 live): three people, one picture ---------- */
 
 html:has(.oh-open) {
