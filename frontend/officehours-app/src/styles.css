@@ -3045,10 +3045,71 @@ html:has(.oh-open) {
 }
 
 .oh-open-nav-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   background: #1d3a2a;
   color: #fff !important;
   padding: 0.55rem 0.95rem;
   border-radius: 0.45rem;
+}
+
+.oh-open-door {
+  display: inline-block;
+  width: 0.72rem;
+  height: 0.72rem;
+  border: 1.5px solid currentColor;
+  border-left-width: 0;
+  position: relative;
+}
+
+.oh-open-door::before {
+  content: "";
+  position: absolute;
+  left: -0.38rem;
+  top: 50%;
+  width: 0.42rem;
+  height: 1.5px;
+  background: currentColor;
+  transform: translateY(-50%);
+}
+
+.oh-open-ticker {
+  margin: 0;
+  overflow: hidden;
+  background: #1d3a2a;
+  color: #d4f58a;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.oh-open-ticker-track {
+  display: flex;
+  width: max-content;
+  animation: oh-ticker 32s linear infinite;
+}
+
+.oh-open-ticker-copy {
+  display: flex;
+  gap: 1.6rem;
+  padding: 0.55rem 0;
+}
+
+.oh-open-ticker-copy span {
+  padding: 0 0.8rem;
+}
+
+.oh-open-ticker-copy span + span::before {
+  content: "·";
+  margin-right: 1.6rem;
+  opacity: 0.7;
+}
+
+@keyframes oh-ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
 .oh-open-hero {
@@ -3056,7 +3117,7 @@ html:has(.oh-open) {
   grid-template-columns: minmax(18rem, 0.92fr) minmax(22rem, 1.08fr);
   gap: 2.4rem;
   align-items: center;
-  min-height: calc(100vh - 4.4rem);
+  min-height: calc(100vh - 6.6rem);
   padding: 1.6rem 6vw 2.2rem;
 }
 
@@ -3106,15 +3167,21 @@ html:has(.oh-open) {
   color: #1d3a2a;
 }
 
-.oh-open-now {
-  margin: 1.2rem 0 0;
-  padding: 0.7rem 0.85rem;
-  max-width: 34rem;
-  background: rgba(255, 253, 247, 0.88);
-  border: 1px solid rgba(22, 51, 40, 0.08);
-  border-radius: 0.7rem;
-  font-size: 0.92rem;
-  color: #3d5348;
+.oh-open-body mark {
+  background: #d4f58a;
+  padding: 0 0.18em;
+}
+
+.oh-open-body em,
+.oh-open-about-copy em {
+  font-style: italic;
+  color: #3a7355;
+  font-weight: 650;
+}
+
+.oh-open-about-copy mark {
+  background: #d4f58a;
+  padding: 0 0.18em;
 }
 
 .oh-open-picture {
@@ -3679,6 +3746,353 @@ html:has(.oh-open) {
   height: 3.1rem;
 }
 
+.oh-open-about,
+.oh-open-path,
+.oh-open-tools,
+.oh-open-lime {
+  scroll-margin-top: 6.8rem;
+}
+
+.oh-open-about {
+  display: grid;
+  grid-template-columns: minmax(18rem, 1.05fr) minmax(16rem, 0.95fr);
+  gap: 2.4rem;
+  align-items: center;
+  padding: 4rem 6vw 4.4rem;
+}
+
+.oh-open-about-copy h2,
+.oh-open-tools h2 {
+  margin: 0 0 1rem;
+  font-size: clamp(2rem, 3.6vw, 3.1rem);
+  line-height: 1.02;
+}
+
+.oh-open-about-copy p {
+  max-width: 36rem;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: #3d5348;
+}
+
+.oh-open-mission {
+  margin: 0;
+  padding: 1.6rem 1.5rem 1.3rem;
+  background: #1d3a2a;
+  color: #f4efe6;
+  border-radius: 1.1rem;
+  min-height: 16rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 22px 44px rgba(29, 58, 42, 0.18);
+}
+
+.oh-open-mission::before {
+  content: "“";
+  font-family: "Fraunces", serif;
+  font-size: 3.2rem;
+  line-height: 0.7;
+  color: #d4f58a;
+}
+
+.oh-open-mission p {
+  margin: 0.4rem 0 0;
+  font-size: 1.45rem;
+  line-height: 1.25;
+  font-weight: 650;
+}
+
+.oh-open-mission span {
+  color: #d4f58a;
+}
+
+.oh-open-mission small {
+  display: block;
+  margin-top: 1rem;
+  color: #c9d6ce;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.oh-open-mission footer {
+  display: flex;
+  gap: 1.2rem;
+  margin-top: auto;
+  padding-top: 1.4rem;
+  color: #d4f58a;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+.oh-open-path {
+  padding: 3.6rem 6vw 3.2rem;
+  background: #1d3a2a;
+  color: #f4efe6;
+}
+
+.oh-open-kicker-on-dark {
+  color: #9fb4a8;
+}
+
+.oh-open-path-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-end;
+  margin-bottom: 2.2rem;
+}
+
+.oh-open-path h2 {
+  margin: 0;
+  font-family: "Outfit", sans-serif;
+  font-weight: 800;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  letter-spacing: -0.04em;
+  line-height: 0.98;
+}
+
+.oh-open-path h2 span {
+  color: transparent;
+  -webkit-text-stroke: 1.5px #d4f58a;
+}
+
+.oh-open-path-aside {
+  margin: 0;
+  color: #d4f58a;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+}
+
+.oh-open-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  position: relative;
+}
+
+.oh-open-steps::before {
+  content: "";
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  top: 2.15rem;
+  height: 2px;
+  background: #d4f58a;
+}
+
+.oh-open-steps a {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+}
+
+.oh-open-step-n {
+  font-family: "Outfit", sans-serif;
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke: 1.5px #d4f58a;
+}
+
+.oh-open-step-n.is-last {
+  color: #d4f58a;
+  -webkit-text-stroke: 0;
+}
+
+.oh-open-steps strong {
+  font-size: 1.05rem;
+}
+
+.oh-open-steps a span:last-child {
+  color: #c9d6ce;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.oh-open-tools {
+  padding: 3.6rem 6vw 3.4rem;
+}
+
+.oh-open-tools ul {
+  list-style: none;
+  margin: 1.4rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.oh-open-tool {
+  display: flex;
+  flex-direction: column;
+  min-height: 16rem;
+  padding: 1.2rem 1.15rem 1.1rem;
+  background: #fffdf7;
+  border-radius: 1rem;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid rgba(22, 51, 40, 0.08);
+  box-shadow: 0 12px 28px rgba(29, 58, 42, 0.06);
+}
+
+.oh-open-tool strong {
+  font-size: 1.25rem;
+  color: #163328;
+}
+
+.oh-open-tool-kicker {
+  margin-top: 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6d8177;
+}
+
+.oh-open-tool-meta {
+  margin-top: 0.45rem;
+  font-size: 0.85rem;
+  color: #3d5348;
+}
+
+.oh-open-tool p {
+  margin: 0.7rem 0 1rem;
+  color: #3d5348;
+  line-height: 1.4;
+}
+
+.oh-open-tool-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: auto;
+}
+
+.oh-open-tool-tags span {
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: #efe9dc;
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.oh-open-tool-go {
+  margin-top: 0.9rem;
+  font-weight: 750;
+  color: #146345;
+}
+
+.oh-open-lime {
+  padding: 3.4rem 6vw 3.2rem;
+  background:
+    repeating-linear-gradient(
+      -28deg,
+      rgba(29, 58, 42, 0.05) 0 2px,
+      transparent 2px 14px
+    ),
+    #d4f58a;
+  color: #163328;
+}
+
+.oh-open-lime h2 {
+  margin: 0;
+  font-family: "Outfit", sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.8rem, 3.4vw, 2.8rem);
+  letter-spacing: -0.04em;
+  max-width: 22ch;
+}
+
+.oh-open-lime-quote {
+  max-width: 38rem;
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+
+.oh-open-signin-on-lime {
+  background: #1d3a2a;
+  color: #d4f58a;
+}
+
+.oh-open-lime-note {
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #3d5348;
+}
+
+.oh-open-end {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 0.7fr;
+  gap: 2rem;
+  padding: 3rem 6vw 2.4rem;
+  background:
+    radial-gradient(rgba(212, 245, 138, 0.08) 1px, transparent 1px),
+    #14291c;
+  background-size: 18px 18px, auto;
+  color: #e8efe9;
+}
+
+.oh-open-end-brand {
+  font-family: "Outfit", sans-serif;
+  font-weight: 800;
+  font-size: 1.6rem;
+  margin: 0 0 0.6rem;
+}
+
+.oh-open-end p {
+  max-width: 28rem;
+  line-height: 1.45;
+  color: #c9d6ce;
+}
+
+.oh-open-end small {
+  display: block;
+  margin-top: 1rem;
+  color: #8aa196;
+}
+
+.oh-open-stat {
+  margin: 0.35rem 0;
+  color: #d4f58a;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.oh-open-stat span {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9fb4a8;
+  font-weight: 750;
+}
+
+.oh-open-end a {
+  display: block;
+  color: #e8efe9;
+  text-decoration: none;
+  margin: 0.25rem 0;
+}
+
+.oh-open-end a:hover {
+  color: #d4f58a;
+}
+
 @media (max-width: 900px) {
   .oh-open-hero,
   .oh-open-chapter {
@@ -3721,6 +4135,21 @@ html:has(.oh-open) {
     --art-w: 10.8rem;
     --art-h: 12.6rem;
   }
+
+  .oh-open-about,
+  .oh-open-tools ul,
+  .oh-open-steps,
+  .oh-open-end {
+    grid-template-columns: 1fr;
+  }
+
+  .oh-open-steps::before {
+    display: none;
+  }
+
+  .oh-open-legend-hint {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3731,6 +4160,10 @@ html:has(.oh-open) {
 
   .oh-fig {
     transition: none;
+  }
+
+  .oh-open-ticker-track {
+    animation: none;
   }
 }
 
