@@ -13,29 +13,23 @@ const TOOLS = [
   {
     href: "#student",
     title: "Quiet ask",
-    kicker: "Student",
-    meta: "Private · staff only",
-    tags: ["Identify me", "No public board"],
-    action: "See the student →",
-    body: "Go to staff without putting your name on a board.",
+    kicker: "01 · Student",
+    action: "Meet the student →",
+    body: "Go to staff without putting your name on a board. Identify me only when you want a meeting.",
   },
   {
     href: "#student",
     title: "Rooms",
-    kicker: "Classmates",
-    meta: "Named · Hilbert-ready",
-    tags: ["Peer help", "Staff stay out"],
-    action: "See Rooms →",
-    body: "Classmates help classmates. That help can surface later.",
+    kicker: "01 · Classmates",
+    action: "See how Rooms work →",
+    body: "Named classmate help. Staff stay out. What helps can surface later on the Hilbert board.",
   },
   {
     href: "#professor",
     title: "KB gate",
-    kicker: "Professor",
-    meta: "Stamp · Study Agent",
-    tags: ["Insights", "Canvas chapters"],
-    action: "See the gate →",
-    body: "Nothing enters the student knowledge base until you say so.",
+    kicker: "03 · Professor",
+    action: "Meet the professor →",
+    body: "Review insights, then stamp a FAQ. The Study Agent does not speak until you do.",
   },
 ];
 
@@ -43,7 +37,6 @@ export default function OpeningTrio({ variant = "live" }) {
   const [pinned, setPinned] = useState(null);
   const [fromScroll, setFromScroll] = useState("student");
   const currentId = pinned || fromScroll;
-  const current = ROLES.find((role) => role.id === currentId) || ROLES[0];
 
   useEffect(() => {
     const nodes = [...document.querySelectorAll("[data-oh-role]")];
@@ -53,7 +46,12 @@ export default function OpeningTrio({ variant = "live" }) {
         const on = entries
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (on) setFromScroll(on.target.getAttribute("data-oh-role"));
+        if (!on) return;
+        const id = on.target.getAttribute("data-oh-role");
+        setFromScroll(id);
+        setPinned((currentPinned) =>
+          currentPinned && currentPinned !== id ? null : currentPinned,
+        );
       },
       { threshold: [0.35, 0.55, 0.75], rootMargin: "-18% 0px -35% 0px" },
     );
@@ -62,7 +60,8 @@ export default function OpeningTrio({ variant = "live" }) {
   }, []);
 
   function selectRole(id) {
-    setPinned((currentPinned) => (currentPinned === id ? null : id));
+    setPinned(id);
+    setFromScroll(id);
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -165,11 +164,6 @@ export default function OpeningTrio({ variant = "live" }) {
                 <span className="oh-open-tool-kicker">{tool.kicker}</span>
                 <span className="oh-open-tool-meta">{tool.meta}</span>
                 <p>{tool.body}</p>
-                <span className="oh-open-tool-tags">
-                  {tool.tags.map((tag) => (
-                    <span key={tag}>{tag}</span>
-                  ))}
-                </span>
                 <span className="oh-open-tool-go">{tool.action}</span>
               </a>
             </li>
@@ -177,56 +171,58 @@ export default function OpeningTrio({ variant = "live" }) {
         </ul>
       </section>
 
-      <div className="oh-open-legend" id="roles" role="navigation" aria-label="Roles">
+      <div id="roles" className="oh-open-roles">
+        <div className="oh-open-legend" role="navigation" aria-label="Roles">
+          {ROLES.map((role) => (
+            <button
+              key={role.id}
+              type="button"
+              className={`oh-open-role-tab ${currentId === role.id ? "is-on" : ""}`}
+              onClick={() => selectRole(role.id)}
+            >
+              {role.label}
+            </button>
+          ))}
+        </div>
+
         {ROLES.map((role) => (
-          <RoleFigure
+          <section
             key={role.id}
-            role={role}
-            size="sm"
-            showTools={false}
-            active={currentId === role.id}
-            onClick={() => selectRole(role.id)}
-          />
+            id={role.id}
+            data-oh-role={role.id}
+            className={`oh-open-chapter ${currentId === role.id ? "is-on" : ""}`}
+          >
+            <article className="oh-open-card">
+              <p className="oh-open-kicker">{role.kicker}</p>
+              <h2 className="font-display">{role.title}</h2>
+              <p className="oh-open-lead">{role.lead}</p>
+              <div className="oh-open-chapter-body">{role.body}</div>
+            </article>
+            <RoleFigure
+              role={role}
+              size="xl"
+              active
+              onClick={() => selectRole(role.id)}
+            />
+          </section>
         ))}
-        <p className="oh-open-legend-hint">
-          {pinned ? `Pinned · ${current.label}` : `Looking at · ${current.label}`}
-        </p>
       </div>
 
-      {ROLES.map((role) => (
-        <section
-          key={role.id}
-          id={role.id}
-          data-oh-role={role.id}
-          className={`oh-open-chapter ${currentId === role.id ? "is-on" : ""}`}
-        >
-          <article className="oh-open-card">
-            <p className="oh-open-kicker">{role.kicker}</p>
-            <h2 className="font-display">{role.title}</h2>
-            <p className="oh-open-lead">{role.lead}</p>
-            <div className="oh-open-chapter-body">{role.body}</div>
-          </article>
-          <RoleFigure
-            role={role}
-            size="xl"
-            active={currentId === role.id}
-            onClick={() => selectRole(role.id)}
-          />
-        </section>
-      ))}
-
       <section className="oh-open-lime" id="join">
-        <h2>Help is already on campus.</h2>
-        <p className="oh-open-lime-quote">
-          Stop choosing between waiting in the hallway and never asking — OfficeHours
-          lets you do both: a quiet path, or a named room.
-        </p>
-        <p className="oh-open-cta-row">
+        <div>
+          <p className="oh-open-kicker">The product · one login</p>
+          <h2>Help is already on campus.</h2>
+          <p className="oh-open-lime-quote">
+            Stop choosing between waiting in the hallway and never asking —
+            a quiet path, or a named room.
+          </p>
+        </div>
+        <div className="oh-open-lime-panel">
+          <p>AUI email. Role is per course. A TA can also be a student.</p>
           <Link className="oh-open-signin oh-open-signin-on-lime" to="/login">
             Sign in
           </Link>
-          <span className="oh-open-lime-note">AUI email · role per course · free for this demo</span>
-        </p>
+        </div>
       </section>
 
       <footer className="oh-open-end">
