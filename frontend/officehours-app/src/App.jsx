@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes, useLocation } from "react-router";
 import { useAuth } from "./auth/AuthContext.jsx";
+import { usePublicConfig } from "./config/PublicConfig.jsx";
 import AppShell from "./shell/AppShell.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
@@ -36,16 +37,23 @@ function GuestHomeOrApp({ children }) {
 }
 
 export default function App() {
+  const { demo } = usePublicConfig();
+  const showDemos = demo;
+
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/sso" element={<SsoCompletePage />} />
-      <Route path="/demo" element={<VisionDemoHub />} />
-      <Route path="/demo/board" element={<VisionDemoBoard />} />
-      <Route path="/demo/path" element={<VisionDemoPath />} />
-      <Route path="/demo/trio" element={<VisionDemoTrio />} />
-      <Route path="/canvas-demo" element={<CanvasSimulatorPage />} />
-      <Route path="/launch" element={<CanvasLaunchPage />} />
+      {showDemos ? (
+        <>
+          <Route path="/demo" element={<VisionDemoHub />} />
+          <Route path="/demo/board" element={<VisionDemoBoard />} />
+          <Route path="/demo/path" element={<VisionDemoPath />} />
+          <Route path="/demo/trio" element={<VisionDemoTrio />} />
+          <Route path="/canvas-demo" element={<CanvasSimulatorPage />} />
+          <Route path="/launch" element={<CanvasLaunchPage />} />
+        </>
+      ) : null}
       <Route
         path="/"
         element={

@@ -145,6 +145,41 @@ user on first sign-in (no usable password), mints a normal app session, and
 redirects to the SPA at `/sso#token=…`. Roles still come from course
 memberships (Canvas), not from the Microsoft account.
 
+## Canvas LTI 1.3 (real course tool)
+
+The unsigned `/canvas/launch` simulator and `/canvas-demo` / `/demo/*` pages are
+**off** when `OFFICEHOURS_DEMO` is not true. Production launch is signed LTI 1.3.
+
+Ask AUI Canvas / IT for an **LTI 1.3 developer key** plus a course-level
+**External tool** that uses it. Also set a Canvas API token so Rooms chapters
+and the course agent read **that course’s modules**, not the local demo mirror.
+
+### Developer key (paste from `GET /lti/config` once env is set)
+
+- **OpenID Connect Initiation URL:** `https://YOUR-API/lti/login`
+- **Target Link URI / Redirect URI:** `https://YOUR-API/lti/launch`
+- **JWK method:** Public JWK URL `https://YOUR-API/lti/jwks`
+- **Privacy:** Public (email must be in the launch)
+- **Placement:** Course navigation (or assignment / module)
+
+### Backend env
+
+- `OFFICEHOURS_LTI_ISSUER` — Canvas issuer, e.g. `https://canvas.aui.ma`
+- `OFFICEHOURS_LTI_CLIENT_ID` — developer key client_id
+- `OFFICEHOURS_LTI_AUTH_LOGIN_URL` — optional; defaults to
+  `{issuer}/api/lti/authorize_redirect`
+- `OFFICEHOURS_LTI_JWKS_URL` — optional; defaults to
+  `{issuer}/api/lti/security/jwks`
+- `OFFICEHOURS_LTI_LAUNCH_URL` — must match the developer key redirect URI
+- `OFFICEHOURS_LTI_DEPLOYMENT_ID` — optional; reject other deployments
+- `CANVAS_BASE_URL` + `CANVAS_ACCESS_TOKEN` — live module/page/file sync
+- `OFFICEHOURS_FRONTEND_URL` — SPA origin (launch lands on `/sso#token=…&course=`)
+- `OFFICEHOURS_DEMO=false` — hides demo routes and unsigned `/canvas/launch`
+
+Flow: student clicks **OfficeHours** in a Canvas course → OIDC login → signed
+`id_token` → we provision user + course + role → sync live modules when the
+API token is set → browser opens the matching workspace.
+
 ## Train models
 
 ```bash

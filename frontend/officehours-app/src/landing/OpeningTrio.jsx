@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import RoleFigure, { ROLES } from "./RoleFigure.jsx";
 import { SceneAlone, SceneTogether, SceneAnon, SceneDuo, SceneGuide } from "./Scenes.jsx";
+import { usePublicConfig } from "../config/PublicConfig.jsx";
 
 const COURSES = [
   {
@@ -54,6 +55,7 @@ export default function OpeningTrio({ variant = "live" }) {
   const [stamped, setStamped] = useState(false);
   const [votes, setVotes] = useState(7);
   const [stance, setStance] = useState("none");
+  const { demo } = usePublicConfig();
   const ignoreObserver = useRef(false);
   const currentId = pinned || fromScroll;
   const course = COURSES[courseIdx];
@@ -480,9 +482,13 @@ export default function OpeningTrio({ variant = "live" }) {
           <Link className="oh-open-signin" to="/login">
             Sign in
           </Link>
-          <Link className="oh-open-ghost" to="/canvas-demo">
-            Or open from Canvas
-          </Link>
+          {demo ? (
+            <Link className="oh-open-ghost" to="/canvas-demo">
+              Or open from Canvas
+            </Link>
+          ) : (
+            <span className="oh-open-ghost">Or open OfficeHours from your Canvas course</span>
+          )}
         </p>
       </section>
     </div>

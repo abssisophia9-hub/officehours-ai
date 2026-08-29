@@ -27,7 +27,7 @@ from app.services.auth_service import (
 from app.services.demo_accounts import ensure_demo_accounts
 from app.services.demo_mode import demo_mode
 from app.services.canvas_service import canvas_mode
-from app.services import microsoft_sso
+from app.services import lti13, microsoft_sso
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 courses_router = APIRouter(prefix="/courses", tags=["courses"])
@@ -94,6 +94,7 @@ def auth_config():
         "demo": demo_mode(),
         "canvas_mode": canvas_mode(),
         "microsoft": microsoft_sso.microsoft_enabled(),
+        "lti": lti13.lti_enabled(),
     }
 
 

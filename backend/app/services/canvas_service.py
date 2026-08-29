@@ -502,17 +502,27 @@ def _list_live_canvas_files(canvas_course_id: str) -> list[CanvasFile]:
 
 
 def _canvas_get_json(url: str, headers: dict[str, str]) -> list[dict[str, Any]]:
-    try:
-        request = Request(url, headers=headers)
-        with urlopen(request, timeout=20) as response:
-            import json
+    """Follow Canvas ``Link: rel=next`` pagination so a full module list is read."""
+    import json
+    import re
 
-            payload = json.loads(response.read().decode("utf-8"))
-    except (HTTPError, URLError, TimeoutError, ValueError):
-        return []
-    if isinstance(payload, list):
-        return [item for item in payload if isinstance(item, dict)]
-    return []
+    collected: list[dict[str, Any]] = []
+    next_url: str | None = url
+    pages = 0
+    while next_url and pages < 20:
+        pages += 1
+        try:
+            request = Request(next_url, headers=headers)
+            with urlopen(request, timeout=20) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+                link = response.headers.get("Link") or response.headers.get("link") or ""
+        except (HTTPError, URLError, TimeoutError, ValueError):
+            break
+        if isinstance(payload, list):
+            collected.extend(item for item in payload if isinstance(item, dict))
+        match = re.search(r'<([^>]+)>;\s*rel="next"', link)
+        next_url = match.group(1) if match else None
+    return collected
 
 
 def _canvas_get_single(url: str, headers: dict[str, str]) -> dict[str, Any] | None:

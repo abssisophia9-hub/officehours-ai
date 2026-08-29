@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from app.database.session import get_db
 from app.realtime.hub import hub
 from app.services.canvas_launch_service import launch_from_canvas
+from app.services.demo_mode import demo_mode
 
 router = APIRouter(prefix="/canvas", tags=["canvas"])
 
@@ -64,13 +65,17 @@ class CanvasLaunchOut(BaseModel):
 
 @router.post("/launch", response_model=CanvasLaunchOut, status_code=status.HTTP_201_CREATED)
 async def canvas_launch(payload: CanvasLaunchRequest, db: Session = Depends(get_db)):
-    """JIT provision from a Canvas-like launch payload.
+    """Unsigned demo launch. Production uses signed LTI 1.3 at ``/lti/launch``.
 
-    Demo default: unsigned (anyone who can POST can impersonate). Set
-    ``OFFICEHOURS_CANVAS_LAUNCH_SECRET`` to require ``demo_secret`` on the body.
-    Production path is signed Canvas LTI 1.3 — not implemented here.
+    Disabled when ``OFFICEHOURS_DEMO`` is off, unless
+    ``OFFICEHOURS_CANVAS_LAUNCH_SECRET`` is set and matches ``demo_secret``.
     """
     required = (os.getenv("OFFICEHOURS_CANVAS_LAUNCH_SECRET") or "").strip()
+    if not demo_mode() and not required:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Demo Canvas launch is off. Open OfficeHours from the Canvas LTI tool.",
+        )
     if required and (payload.demo_secret or "").strip() != required:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
