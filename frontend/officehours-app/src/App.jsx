@@ -10,6 +10,10 @@ import TaWorkspace from "./pages/TaWorkspace.jsx";
 import ProfessorWorkspace from "./pages/ProfessorWorkspace.jsx";
 import CanvasSimulatorPage from "./pages/CanvasSimulatorPage.jsx";
 import CanvasLaunchPage from "./pages/CanvasLaunchPage.jsx";
+import VisionDemoHub from "./pages/VisionDemoHub.jsx";
+import VisionDemoBoard from "./pages/VisionDemoBoard.jsx";
+import VisionDemoPath from "./pages/VisionDemoPath.jsx";
+import VisionDemoTrio from "./pages/VisionDemoTrio.jsx";
 
 function LoadingScreen() {
   return (
@@ -34,6 +38,10 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/demo" element={<VisionDemoHub />} />
+      <Route path="/demo/board" element={<VisionDemoBoard />} />
+      <Route path="/demo/path" element={<VisionDemoPath />} />
+      <Route path="/demo/trio" element={<VisionDemoTrio />} />
       <Route path="/canvas-demo" element={<CanvasSimulatorPage />} />
       <Route path="/launch" element={<CanvasLaunchPage />} />
       <Route
