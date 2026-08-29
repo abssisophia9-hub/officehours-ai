@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import RoleFigure, { ROLES } from "./RoleFigure.jsx";
 
@@ -36,6 +36,7 @@ const TOOLS = [
 export default function OpeningTrio({ variant = "live" }) {
   const [pinned, setPinned] = useState(null);
   const [fromScroll, setFromScroll] = useState("student");
+  const ignoreObserver = useRef(false);
   const currentId = pinned || fromScroll;
 
   useEffect(() => {
@@ -43,26 +44,28 @@ export default function OpeningTrio({ variant = "live" }) {
     if (!nodes.length) return undefined;
     const io = new IntersectionObserver(
       (entries) => {
+        if (ignoreObserver.current) return;
         const on = entries
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
         if (!on) return;
-        const id = on.target.getAttribute("data-oh-role");
-        setFromScroll(id);
-        setPinned((currentPinned) =>
-          currentPinned && currentPinned !== id ? null : currentPinned,
-        );
+        setFromScroll(on.target.getAttribute("data-oh-role"));
+        setPinned(null);
       },
-      { threshold: [0.35, 0.55, 0.75], rootMargin: "-18% 0px -35% 0px" },
+      { threshold: [0.45, 0.7], rootMargin: "-22% 0px -40% 0px" },
     );
     nodes.forEach((node) => io.observe(node));
     return () => io.disconnect();
   }, []);
 
   function selectRole(id) {
+    ignoreObserver.current = true;
     setPinned(id);
     setFromScroll(id);
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => {
+      ignoreObserver.current = false;
+    }, 900);
   }
 
   return (
