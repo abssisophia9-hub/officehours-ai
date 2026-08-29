@@ -125,6 +125,26 @@ Optional environment variables:
 - `OFFICEHOURS_CANVAS_MODE=live|local|none` — optional override; live wins when
   `CANVAS_BASE_URL` + `CANVAS_ACCESS_TOKEN` are set
 
+## Microsoft Entra ID sign-in (AUI accounts)
+
+`Sign in with your AUI Microsoft account` appears on the login page once these
+are set (get them from an Azure **App registration** in the AUI tenant):
+
+- `OFFICEHOURS_MS_TENANT_ID` — AUI directory (tenant) ID
+- `OFFICEHOURS_MS_CLIENT_ID` — Application (client) ID
+- `OFFICEHOURS_MS_CLIENT_SECRET` — client secret value
+- `OFFICEHOURS_MS_REDIRECT_URI` — must exactly match the registration's
+  **Web** redirect URI; defaults to `http://127.0.0.1:8000/auth/microsoft/callback`
+- `OFFICEHOURS_FRONTEND_URL` — where the browser lands after sign-in
+  (defaults to `http://127.0.0.1:5180`)
+- `OFFICEHOURS_MS_ALLOWED_DOMAIN` — allowed email domain, defaults to `aui.ma`
+
+Flow: `GET /auth/microsoft/login` redirects to the Microsoft account picker;
+the callback validates the id_token (audience + tenant + domain), creates the
+user on first sign-in (no usable password), mints a normal app session, and
+redirects to the SPA at `/sso#token=…`. Roles still come from course
+memberships (Canvas), not from the Microsoft account.
+
 ## Train models
 
 ```bash

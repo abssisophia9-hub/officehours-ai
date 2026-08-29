@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router";
-import { api } from "../api/client.js";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
+import { API_BASE, api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 // AUI emails are Initial.Lastname@aui.ma — role comes from course membership, not email.
@@ -25,11 +25,13 @@ const DEMO_ACCOUNTS = [
 export default function LoginPage() {
   const { user, login, loading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [demo, setDemo] = useState(false);
+  const [microsoft, setMicrosoft] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() => searchParams.get("sso_error") || "");
 
   useEffect(() => {
     let cancelled = false;
@@ -38,6 +40,7 @@ export default function LoginPage() {
         if (cancelled) return;
         const on = Boolean(config?.demo);
         setDemo(on);
+        setMicrosoft(Boolean(config?.microsoft));
         if (on) {
           setEmail((current) => current || "s.elidrissi@aui.ma");
           setPassword((current) => current || "aui-demo");
@@ -112,6 +115,27 @@ export default function LoginPage() {
             Sign in with your AUI email (Initial.Lastname@aui.ma). Your role is
             per course — a TA can also be a student in other courses.
           </p>
+
+          {microsoft ? (
+            <>
+              <a
+                href={`${API_BASE}/auth/microsoft/login`}
+                className="ms-signin mt-8"
+                data-testid="ms-signin"
+              >
+                <svg viewBox="0 0 21 21" aria-hidden="true" focusable="false">
+                  <rect x="1" y="1" width="9" height="9" fill="#f25022" />
+                  <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
+                  <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
+                  <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
+                </svg>
+                Sign in with your AUI Microsoft account
+              </a>
+              <p className="ms-signin-divider" aria-hidden="true">
+                <span>or use a local account</span>
+              </p>
+            </>
+          ) : null}
 
           <label className="mt-8 block text-xs font-semibold uppercase tracking-wide text-aui-deep/55">
             Email
