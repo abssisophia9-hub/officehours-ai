@@ -83,17 +83,6 @@ export default function VisionDemoBoard() {
           ))}
         </div>
       </main>
-
-      <section className="vd-chapter">
-        <article className="vd-card">
-          <p className="vd-kicker">Scroll beat · the path on the board</p>
-          <h2 className="font-display">Student slip → TA ticket → professor stamp.</h2>
-          <p>
-            Same object language when you scroll: the ask does not become a
-            job posting. It becomes help, then a queue, then a gate.
-          </p>
-        </article>
-      </section>
     </VisionChrome>
   );
 }

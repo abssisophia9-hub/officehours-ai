@@ -2625,7 +2625,6 @@ html:has(.vd) {
   font-weight: 650;
 }
 
-.vd-split,
 .vd-path-hero,
 .vd-trio-hero {
   display: grid;
@@ -2633,6 +2632,15 @@ html:has(.vd) {
   gap: 2.5rem;
   align-items: center;
   min-height: calc(100vh - 5.5rem);
+  padding: 1.5rem 6vw 3rem;
+}
+
+.vd-split {
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.95fr) minmax(22rem, 1.05fr);
+  gap: 2.5rem;
+  align-items: center;
+  min-height: calc(100vh - 7rem);
   padding: 1.5rem 6vw 3rem;
 }
 
@@ -2725,10 +2733,15 @@ html:has(.vd) {
 }
 
 .vd-chapter {
-  min-height: 70vh;
+  position: relative;
+  z-index: 2;
+  min-height: 85vh;
   display: flex;
   align-items: center;
-  padding: 2rem 6vw 4rem;
+  padding: 3rem 6vw 4rem;
+  background-color: #f7f4ec;
+  background-image: radial-gradient(rgba(22, 51, 40, 0.09) 1px, transparent 1px);
+  background-size: 18px 18px;
 }
 
 .vd-card {
@@ -2852,10 +2865,10 @@ html:has(.vd) {
 
 .vd-path-line {
   position: absolute;
-  left: 6vw;
-  right: 6vw;
-  top: 18%;
-  height: 42%;
+  left: 8%;
+  right: 8%;
+  top: 22%;
+  height: 38%;
   width: auto;
 }
 
@@ -2900,6 +2913,11 @@ html:has(.vd) {
   position: absolute;
   left: 6vw;
   bottom: 1.4rem;
+}
+
+.vd-trio-hero {
+  position: relative;
+  z-index: 1;
 }
 
 .vd-trio-stage {

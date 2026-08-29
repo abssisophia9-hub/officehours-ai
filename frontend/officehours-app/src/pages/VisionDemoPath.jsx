@@ -63,8 +63,8 @@ export default function VisionDemoPath() {
 
       <div className="vd-path-stage" ref={stage}>
         <div className="vd-path-sticky">
-          <svg className="vd-path-line" viewBox="0 0 640 280" aria-hidden="true">
-            <path d="M70 200 C 180 40, 320 40, 320 140 C 320 240, 460 240, 570 90" />
+          <svg className="vd-path-line" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M 8 30 C 28 8, 42 8, 50 22 C 58 36, 72 34, 92 12" />
           </svg>
           <div className="vd-path-stations">
             <Person
