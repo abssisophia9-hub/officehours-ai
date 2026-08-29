@@ -14,7 +14,7 @@ export default function VisionChrome({ kicker, children }) {
           <img src="/aui-logo.png" alt="" />
           <span>
             OfficeHours
-            <small>Vision demos · not the live landing</small>
+            <small>Vision demos · live opening is Option 3</small>
           </span>
         </Link>
         <nav>

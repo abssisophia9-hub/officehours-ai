@@ -18,7 +18,7 @@ const CARDS = [
     to: "/demo/trio",
     n: "03",
     title: "Three people, one picture",
-    blurb: "All three roles on screen at once. Scroll focuses; click a person.",
+    blurb: "Now the live homepage. All three roles on screen at once. Scroll focuses; click a person.",
   },
 ];
 
@@ -26,16 +26,17 @@ export default function VisionDemoHub() {
   return (
     <VisionChrome>
       <main className="vd-hub">
-        <p className="vd-kicker">Pick a direction · same product, three openings</p>
-        <h1 className="font-display">Which opening feels like OfficeHours?</h1>
+        <p className="vd-kicker">Option 3 is the live homepage · 01 and 02 stay as experiments</p>
+        <h1 className="font-display">Three people, one picture.</h1>
         <p className="vd-hub-lead">
-          BeHive makes jobs obvious with a corkboard. These demos try the same
-          trick for office hours — no toy campus. Sign in stays in the header.
+          The opening is the trio: Student, TA, and Professor at once. The
+          other two demos remain here if you want to compare. Sign in stays in
+          the header.
         </p>
         <ul className="vd-hub-grid">
           {CARDS.map((card) => (
             <li key={card.to}>
-              <Link to={card.to} className="vd-hub-card">
+              <Link to={card.to} className={`vd-hub-card${card.n === "03" ? " is-chosen" : ""}`}>
                 <span className="vd-kicker">{card.n}</span>
                 <strong>{card.title}</strong>
                 <span>{card.blurb}</span>
@@ -44,8 +45,8 @@ export default function VisionDemoHub() {
           ))}
         </ul>
         <p className="vd-hub-foot">
-          Live product landing is still the{" "}
-          <Link to="/">current homepage</Link> until you choose.
+          Live opening is now Option 3 on the{" "}
+          <Link to="/">homepage</Link>.
         </p>
       </main>
     </VisionChrome>
