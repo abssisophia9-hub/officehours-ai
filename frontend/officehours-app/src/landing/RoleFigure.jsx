@@ -47,8 +47,8 @@ const ROLE_COPY = [
     label: "Professor",
     kicker: "03 · Professor",
     tools: "Insights · KB gate",
-    title: "You stay the gate.",
-    lead: "Review insights from asks + Rooms. Stamp a FAQ before the Study Agent may repeat it.",
+    title: "A guide with a stamp.",
+    lead: "Review insights show where the class is stuck. Stamp what the agent may repeat — the community never waits on you.",
     body: (
       <>
         <p>

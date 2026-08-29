@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import RoleFigure, { ROLES } from "./RoleFigure.jsx";
+import { SceneAlone, SceneTogether, SceneAnon, SceneDuo, SceneGuide } from "./Scenes.jsx";
 
 const COURSES = [
   {
@@ -35,11 +36,14 @@ const COURSES = [
   },
 ];
 
-const CHOICES = [
-  { left: "Human", right: "Agent", note: "A classmate, a TA, a professor — or the course agent, if staff stamped an answer." },
-  { left: "Quiet", right: "Named", note: "Ask staff without a public name. Or put your name on the room so help can find you." },
-  { left: "Help", right: "Ignore", note: "Vote, Express Interest, accept a solution. Or keep walking. Both are choices." },
-];
+function Cut({ n, label }) {
+  return (
+    <div className="oh-cut" aria-hidden="true">
+      <strong>{n}</strong>
+      <span>{label}</span>
+    </div>
+  );
+}
 
 export default function OpeningTrio({ variant = "live" }) {
   const [pinned, setPinned] = useState(null);
@@ -97,7 +101,7 @@ export default function OpeningTrio({ variant = "live" }) {
 
   return (
     <div className={`oh-open-story oh-open-story-${variant}`}>
-      <main className="oh-open-hero oh-open-tone-0" id="hero">
+      <main className="oh-open-hero oh-block-cream" id="hero">
         <div className="oh-open-copy">
           <p className="oh-open-kicker">Al Akhawayn University · a campus room</p>
           <h1 className="font-display">
@@ -107,63 +111,89 @@ export default function OpeningTrio({ variant = "live" }) {
           <div className="oh-open-body">
             <p>
               <span className="oh-open-drop">T</span>
-              he barrier was never the question. It was being alone with it —
-              shared stress with no shared room. OfficeHours is classmates, TAs,
-              and professors deciding, every time: <mark>human or agent</mark>,{" "}
-              <mark>quiet or named</mark>, <mark>help or ignore</mark>.
+              he barrier was never the question. It was being alone with it.
+              OfficeHours is classmates, TAs, and professors deciding, every
+              time: <mark>human or agent</mark>, <mark>quiet or named</mark>,{" "}
+              <mark>help or ignore</mark>.
             </p>
             <p>
-              <em>Study Rooms</em> first. Peer rating, Stack Overflow-style,
-              scored in Hilbert ŵ. The course agent is one door. The community
-              is the building. Click a person. Scroll the rest.
+              <em>Study Rooms</em> first — peer help rated Stack Overflow-style
+              in Hilbert ŵ. The course agent is one door. The community is the
+              building. Scroll the chapters.
             </p>
           </div>
         </div>
-        <div className="oh-open-picture" aria-label="Student, TA, and professor">
-          {ROLES.map((role) => (
-            <RoleFigure
-              key={role.id}
-              role={role}
-              size="lg"
-              active={currentId === role.id}
-              onClick={() => selectRole(role.id)}
-            />
-          ))}
+        <div className="oh-journey" aria-label="From alone with the problem to sharing it">
+          <figure className="oh-panel is-dim">
+            <SceneAlone />
+            <figcaption>
+              <strong>2:13 AM — alone with it</strong>
+              <span>Same bug for three hours. Closed door. Nobody awake to ask.</span>
+            </figcaption>
+          </figure>
+          <span className="oh-journey-arrow" aria-hidden="true">
+            →
+          </span>
+          <figure className="oh-panel is-lit">
+            <SceneTogether />
+            <figcaption>
+              <strong>2:31 AM — shared</strong>
+              <span>She opened a Room. Two classmates were stuck on it too.</span>
+            </figcaption>
+          </figure>
         </div>
       </main>
 
-      <section className="oh-open-choice oh-open-tone-1" id="choice">
+      <Cut n="01" label="Choice at every level" />
+
+      <section className="oh-open-choice oh-block-white" id="choice">
         <div className="oh-open-choice-copy">
-          <p className="oh-open-kicker">Choice at every level</p>
-          <h2 className="font-display">No default path. You pick the door.</h2>
+          <p className="oh-open-kicker">No default path</p>
+          <h2 className="font-display">You pick the door. Every time.</h2>
           <p>
             Mutual support only works if walking past is allowed. Collective
             learning only works if the room is optional. The product removes
             the performance — not the decision.
           </p>
         </div>
-        <ul className="oh-open-pairs">
-          {CHOICES.map((item) => (
-            <li key={item.left}>
-              <p className="oh-open-pair-line">
-                <span>{item.left}</span>
-                <i aria-hidden="true">or</i>
-                <span>{item.right}</span>
-              </p>
-              <p>{item.note}</p>
-            </li>
-          ))}
+        <ul className="oh-choice-grid">
+          <li>
+            <SceneAnon />
+            <h3>Quiet or named</h3>
+            <p>
+              Ask staff as a request code — no name on any board. Or put your
+              name on it so help can find you. Same person, her call.
+            </p>
+          </li>
+          <li>
+            <SceneDuo />
+            <h3>Human and AI, side by side</h3>
+            <p>
+              A TA drafts your hint while the course agent answers what the
+              professor already stamped. Both doors stay open at once.
+            </p>
+          </li>
+          <li>
+            <SceneGuide />
+            <h3>Staff guide. They don’t gatekeep.</h3>
+            <p>
+              A professor points review at the real stuck points and stamps
+              what’s true. The doorway to classmates never closes.
+            </p>
+          </li>
         </ul>
       </section>
 
-      <section className="oh-open-rooms oh-open-tone-2" id="rooms">
+      <Cut n="02" label="Study Rooms · Hilbert ŵ" />
+
+      <section className="oh-open-rooms oh-block-lime" id="rooms">
         <div className="oh-open-rooms-copy">
-          <p className="oh-open-kicker">Study Rooms · Hilbert ŵ</p>
+          <p className="oh-open-kicker">Peer rating, Stack Overflow-style</p>
           <h2 className="font-display">Classmates help classmates. Quality over volume.</h2>
           <p>
-            A Room is named on purpose. You vote like Stack Overflow. You
-            Express Interest, or you keep scrolling. Accept a solution only
-            when it unlocked the stuck point. Staff do not lurk here.
+            A Room is named on purpose. You vote. You Express Interest, or you
+            keep scrolling. Accept a solution only when it unlocked the stuck
+            point. Staff do not lurk here.
           </p>
         </div>
 
@@ -223,7 +253,31 @@ export default function OpeningTrio({ variant = "live" }) {
         </div>
       </section>
 
-      <section className="oh-open-desk oh-open-tone-3" id="student" data-oh-role="student">
+      <Cut n="03" label="Three seats, one room" />
+
+      <section className="oh-open-trio-sec oh-block-cream" id="people">
+        <div>
+          <p className="oh-open-kicker">Student · TA · Professor</p>
+          <h2 className="font-display">The same person can sit in two seats.</h2>
+          <p>
+            A TA on campus is also a student in another course. One login, a
+            role per course. Click a person to jump to their chapter.
+          </p>
+        </div>
+        <div className="oh-open-picture" aria-label="Student, TA, and professor">
+          {ROLES.map((role) => (
+            <RoleFigure
+              key={role.id}
+              role={role}
+              size="lg"
+              active={currentId === role.id}
+              onClick={() => selectRole(role.id)}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="oh-open-desk oh-block-white" id="student" data-oh-role="student">
         <div className="oh-open-desk-head">
           <RoleFigure role="student" size="lg" active onClick={() => selectRole("student")} />
           <div>
@@ -273,7 +327,79 @@ export default function OpeningTrio({ variant = "live" }) {
         </div>
       </section>
 
-      <section className="oh-open-stitch oh-open-tone-4" id="canvas">
+      <section className="oh-open-desk oh-block-cream" id="ta" data-oh-role="ta">
+        <div className="oh-open-desk-head">
+          <RoleFigure role="ta" size="lg" active onClick={() => selectRole("ta")} />
+          <div>
+            <p className="oh-open-kicker">02 · Teaching assistant</p>
+            <h2 className="font-display">Give help without drowning in the pile.</h2>
+            <p className="oh-open-lead">
+              Students already chose a door. You choose how to answer: claim
+              the card, draft with Help Coach, or turn a cluster into one group
+              meeting.
+            </p>
+          </div>
+        </div>
+        <div className="oh-open-desk-grid oh-open-desk-grid-2">
+          <article className="oh-open-pane">
+            <p className="oh-open-pane-kicker">Ask Triage</p>
+            <ul className="oh-open-triage">
+              <li>
+                <strong>Analyzer</strong> Hashing · medium
+              </li>
+              <li>
+                <strong>Matcher</strong> Alice primary · Karim backup
+              </li>
+              <li>
+                <strong>Synthesizer</strong> Hint drafted — you still own the reply
+              </li>
+            </ul>
+          </article>
+          <article className="oh-open-pane">
+            <p className="oh-open-pane-kicker">Help Coach · dual-TA load</p>
+            <p>
+              Similar open asks, Socratic steps, a draft you can rewrite. Same
+              concept twice? Propose one group meeting. When you are done, send
+              the teaching note to the professor’s gate.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section className="oh-open-desk oh-block-white" id="professor" data-oh-role="professor">
+        <div className="oh-open-desk-head">
+          <RoleFigure role="professor" size="lg" active onClick={() => selectRole("professor")} />
+          <div>
+            <p className="oh-open-kicker">03 · Professor</p>
+            <h2 className="font-display">A guide with a stamp.</h2>
+            <p className="oh-open-lead">
+              Review insights show where the class is actually stuck. You point
+              the review there and stamp what the course agent may repeat. The
+              community never waits on you to help each other.
+            </p>
+          </div>
+        </div>
+        <div className="oh-open-desk-grid oh-open-desk-grid-2">
+          <article className="oh-open-pane">
+            <p className="oh-open-pane-kicker">Review insights · {module.name}</p>
+            <p>
+              The week confused people on {module.name.toLowerCase()}. Emphasize
+              in review, or draft a FAQ for the next cohort.
+            </p>
+          </article>
+          <article className="oh-open-pane">
+            <p className="oh-open-pane-kicker">The stamp</p>
+            <p>{stamped ? "Stamped. The Course Study Agent may say this next time." : "Pending. The agent stays quiet. Rooms stay open."}</p>
+            <button type="button" className="oh-open-stamp-btn" onClick={() => setStamped((on) => !on)}>
+              {stamped ? "Unstamp (demo)" : "Stamp for Study Agent"}
+            </button>
+          </article>
+        </div>
+      </section>
+
+      <Cut n="04" label="Canvas names the chapters" />
+
+      <section className="oh-open-stitch oh-block-cream" id="canvas">
         <div className="oh-open-stitch-copy">
           <p className="oh-open-kicker">Canvas LMS · the course you share</p>
           <h2 className="font-display">The course names the room. People fill it.</h2>
@@ -338,77 +464,9 @@ export default function OpeningTrio({ variant = "live" }) {
         </div>
       </section>
 
-      <section className="oh-open-desk oh-open-tone-5" id="ta" data-oh-role="ta">
-        <div className="oh-open-desk-head">
-          <RoleFigure role="ta" size="lg" active onClick={() => selectRole("ta")} />
-          <div>
-            <p className="oh-open-kicker">02 · Teaching assistant</p>
-            <h2 className="font-display">Give help without drowning in the pile.</h2>
-            <p className="oh-open-lead">
-              Students already chose a door. You choose how to answer: claim
-              the card, draft with Help Coach, or turn a cluster into one group
-              meeting.
-            </p>
-          </div>
-        </div>
-        <div className="oh-open-desk-grid oh-open-desk-grid-2">
-          <article className="oh-open-pane">
-            <p className="oh-open-pane-kicker">Ask Triage</p>
-            <ul className="oh-open-triage">
-              <li>
-                <strong>Analyzer</strong> Hashing · medium
-              </li>
-              <li>
-                <strong>Matcher</strong> Alice primary · Karim backup
-              </li>
-              <li>
-                <strong>Synthesizer</strong> Hint drafted — you still own the reply
-              </li>
-            </ul>
-          </article>
-          <article className="oh-open-pane">
-            <p className="oh-open-pane-kicker">Help Coach · dual-TA load</p>
-            <p>
-              Similar open asks, Socratic steps, a draft you can rewrite. Same
-              concept twice? Propose one group meeting. When you are done, send
-              the teaching note to the professor’s gate.
-            </p>
-          </article>
-        </div>
-      </section>
+      <Cut n="05" label="Walk in" />
 
-      <section className="oh-open-desk oh-open-tone-6" id="professor" data-oh-role="professor">
-        <div className="oh-open-desk-head">
-          <RoleFigure role="professor" size="lg" active onClick={() => selectRole("professor")} />
-          <div>
-            <p className="oh-open-kicker">03 · Professor</p>
-            <h2 className="font-display">See the shared stress. Keep the gate.</h2>
-            <p className="oh-open-lead">
-              Review insights mix Quiet asks and Rooms chapters. You decide
-              what the course agent may repeat. The community does not wait on
-              that stamp to help each other.
-            </p>
-          </div>
-        </div>
-        <div className="oh-open-desk-grid oh-open-desk-grid-2">
-          <article className="oh-open-pane">
-            <p className="oh-open-pane-kicker">Review insights · {module.name}</p>
-            <p>
-              The week confused people on {module.name.toLowerCase()}. Emphasize
-              in review, or draft a FAQ for the next cohort.
-            </p>
-          </article>
-          <article className="oh-open-pane">
-            <p className="oh-open-pane-kicker">KB gate</p>
-            <p>{stamped ? "Stamped. The Course Study Agent may say this next time." : "Pending. The agent stays quiet. Rooms stay open."}</p>
-            <button type="button" className="oh-open-stamp-btn" onClick={() => setStamped((on) => !on)}>
-              {stamped ? "Unstamp (demo)" : "Stamp for Study Agent"}
-            </button>
-          </article>
-        </div>
-      </section>
-
-      <section className="oh-open-close oh-open-tone-7" id="join">
+      <section className="oh-open-close" id="join">
         <div>
           <p className="oh-open-kicker">One login · role per course</p>
           <h2 className="font-display">The room is already open. Walk in.</h2>
