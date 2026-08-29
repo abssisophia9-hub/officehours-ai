@@ -9,11 +9,13 @@ const COURSES = [
     modules: [
       {
         name: "Hashing",
+        ask: "Why do hash collisions happen?",
         room: "Hash collisions on insert — anyone?",
         agent: "A hash table maps a key to a bucket. Collisions are normal; we chain or probe. Approved FAQ + Canvas Module 4.",
       },
       {
         name: "Trees",
+        ask: "BST vs heap — which one for Dijkstra?",
         room: "BST vs heap — which one for Dijkstra?",
         agent: "A BST orders by key. A heap is a priority queue. The course agent only says this because the professor stamped it.",
       },
@@ -25,6 +27,7 @@ const COURSES = [
     modules: [
       {
         name: "Divide & Conquer",
+        ask: "How do I unwind the merge-sort recurrence?",
         room: "Merge sort recurrence — how to unwind it?",
         agent: "T(n) = 2T(n/2) + Θ(n) solves to Θ(n log n). Pulled from the approved FAQ for this course only.",
       },
@@ -211,7 +214,7 @@ export default function OpeningTrio({ variant = "live" }) {
           </article>
           <article className="oh-open-pane oh-open-pane-agent">
             <p className="oh-open-pane-kicker">Course Study Agent · {course.code}</p>
-            <p className="oh-open-chat">“Why do hash collisions happen?”</p>
+            <p className="oh-open-chat">“{module.ask}”</p>
             <p className="oh-open-chat is-reply">
               {stamped
                 ? module.agent
