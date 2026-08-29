@@ -162,7 +162,6 @@ export default function OpeningTrio({ variant = "live" }) {
               <a href={tool.href} className="oh-open-tool">
                 <strong>{tool.title}</strong>
                 <span className="oh-open-tool-kicker">{tool.kicker}</span>
-                <span className="oh-open-tool-meta">{tool.meta}</span>
                 <p>{tool.body}</p>
                 <span className="oh-open-tool-go">{tool.action}</span>
               </a>
