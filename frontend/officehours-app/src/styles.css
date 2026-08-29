@@ -3245,6 +3245,9 @@ html:has(.oh-open) {
 
 .oh-open-join {
   grid-template-columns: 1fr;
+  min-height: unset;
+  padding-top: 1.6rem;
+  padding-bottom: 2.4rem;
 }
 
 .oh-open-cta-row {
@@ -3691,8 +3694,19 @@ html:has(.oh-open) {
     min-height: 18rem;
   }
 
-  .oh-open-legend-hint {
-    display: none;
+  .oh-open-legend {
+    gap: 0.7rem;
+    top: 4.15rem;
+    padding-top: 0.15rem;
+    padding-bottom: 0.2rem;
+  }
+
+  .oh-fig-sm {
+    --head: 0.82rem;
+    --torso-w: 0.95rem;
+    --torso-h: 1.2rem;
+    --art-w: 3.2rem;
+    --art-h: 3.7rem;
   }
 
   .oh-open-chapter {
