@@ -44,7 +44,8 @@ export default function VisionDemoHub() {
           ))}
         </ul>
         <p className="vd-hub-foot">
-          Live product landing is still at <Link to="/">/</Link> until you choose.
+          Live product landing is still the{" "}
+          <Link to="/">current homepage</Link> until you choose.
         </p>
       </main>
     </VisionChrome>
