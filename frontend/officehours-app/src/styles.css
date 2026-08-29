@@ -3398,7 +3398,8 @@ html:has(.oh-open) {
 }
 
 .oh-open-thread.is-passed {
-  opacity: 0.62;
+  opacity: 0.48;
+  filter: grayscale(0.4);
 }
 
 .oh-open-thread h3 {
