@@ -2977,9 +2977,83 @@ html:has(.oh-open) {
 .oh-open {
   min-height: 100vh;
   color: #163328;
-  background-color: #f7f4ec;
-  background-image: radial-gradient(rgba(22, 51, 40, 0.09) 1px, transparent 1px);
-  background-size: 18px 18px;
+  background: #faf8f3;
+}
+
+.oh-open-story {
+  background: linear-gradient(
+    180deg,
+    #faf8f3 0%,
+    #f7f4ec 8%,
+    #eef6e2 20%,
+    #e0efd4 34%,
+    #cfe3c8 50%,
+    #b3cfb4 66%,
+    #87a88c 80%,
+    #3d5c46 90%,
+    #1d3a2a 96%,
+    #15281d 100%
+  );
+}
+
+.oh-open-tone-0,
+.oh-open-tone-1,
+.oh-open-tone-2,
+.oh-open-tone-3,
+.oh-open-tone-4,
+.oh-open-tone-5,
+.oh-open-tone-6,
+.oh-open-tone-7 {
+  position: relative;
+}
+
+.oh-open-tone-0 {
+  background-image:
+    radial-gradient(rgba(22, 51, 40, 0.08) 1px, transparent 1px),
+    linear-gradient(180deg, #faf8f3 0%, rgba(247, 244, 236, 0.35) 100%);
+  background-size: 18px 18px, auto;
+}
+
+.oh-open-tone-1 {
+  background: linear-gradient(180deg, rgba(238, 246, 226, 0.2) 0%, rgba(212, 245, 138, 0.22) 100%);
+}
+
+.oh-open-tone-2 {
+  background: linear-gradient(180deg, rgba(212, 245, 138, 0.16) 0%, rgba(160, 196, 150, 0.22) 100%);
+}
+
+.oh-open-tone-3 {
+  background: linear-gradient(180deg, rgba(160, 196, 150, 0.14) 0%, rgba(120, 164, 124, 0.2) 100%);
+}
+
+.oh-open-tone-4 {
+  background: linear-gradient(180deg, rgba(120, 164, 124, 0.16) 0%, rgba(90, 140, 100, 0.22) 100%);
+}
+
+.oh-open-tone-5 {
+  background: linear-gradient(180deg, rgba(90, 140, 100, 0.18) 0%, rgba(70, 110, 82, 0.28) 100%);
+}
+
+.oh-open-tone-6 {
+  background: linear-gradient(180deg, rgba(70, 110, 82, 0.22) 0%, rgba(40, 72, 52, 0.45) 100%);
+}
+
+.oh-open-tone-6 .oh-open-kicker {
+  color: #d4f58a;
+}
+
+.oh-open-tone-6 .oh-open-desk-head h2 {
+  color: #f4f7f0;
+}
+
+.oh-open-tone-6 .oh-open-desk-head p,
+.oh-open-tone-6 .oh-open-lead {
+  color: #d5e2d6;
+}
+
+.oh-open-tone-7 {
+  background: linear-gradient(180deg, rgba(40, 72, 52, 0.35) 0%, #1d3a2a 42%, #15281d 100%);
+  color: #eef4e8;
 }
 
 .oh-open-nav {
@@ -2991,7 +3065,7 @@ html:has(.oh-open) {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.85rem 6vw;
-  background: rgba(247, 244, 236, 0.94);
+  background: rgba(250, 248, 243, 0.92);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(22, 51, 40, 0.06);
 }
@@ -3229,6 +3303,193 @@ html:has(.oh-open) {
   );
   opacity: 0.45;
   pointer-events: none;
+}
+
+.oh-open-choice,
+.oh-open-rooms {
+  padding: 3rem 6vw;
+  scroll-margin-top: 5.2rem;
+}
+
+.oh-open-choice-copy,
+.oh-open-rooms-copy {
+  max-width: 40rem;
+  margin-bottom: 1.4rem;
+}
+
+.oh-open-choice-copy h2,
+.oh-open-rooms-copy h2 {
+  margin: 0 0 0.7rem;
+  font-size: clamp(1.8rem, 3.4vw, 2.7rem);
+  line-height: 1.08;
+}
+
+.oh-open-choice-copy p,
+.oh-open-rooms-copy p {
+  max-width: 36rem;
+  line-height: 1.5;
+  color: #3d5348;
+}
+
+.oh-open-pairs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.oh-open-pairs li {
+  padding: 1.05rem 1.1rem 1.15rem;
+  background: rgba(255, 253, 247, 0.88);
+  border: 1px solid rgba(22, 51, 40, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 14px 28px rgba(29, 58, 42, 0.06);
+}
+
+.oh-open-pair-line {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 0.55rem;
+  font-family: "Outfit", sans-serif;
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
+
+.oh-open-pair-line span {
+  background: #d4f58a;
+  padding: 0.12rem 0.45rem;
+  border-radius: 0.35rem;
+}
+
+.oh-open-pair-line i {
+  font-style: italic;
+  font-weight: 650;
+  font-size: 0.78rem;
+  color: #3a7355;
+}
+
+.oh-open-pairs li > p:last-child {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: #3d5348;
+}
+
+.oh-open-room-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(12rem, 0.7fr);
+  gap: 0.9rem;
+  align-items: stretch;
+}
+
+.oh-open-thread {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  padding: 1.15rem 1.2rem 1.25rem;
+  background: rgba(255, 253, 247, 0.92);
+  border: 1px solid rgba(22, 51, 40, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 16px 36px rgba(29, 58, 42, 0.08);
+}
+
+.oh-open-thread.is-passed {
+  opacity: 0.62;
+}
+
+.oh-open-thread h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1.15rem;
+}
+
+.oh-open-thread p {
+  margin: 0;
+  line-height: 1.45;
+  color: #3d5348;
+}
+
+.oh-open-vote {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  min-width: 3.2rem;
+  border: none;
+  background: #efe9dc;
+  color: #163328;
+  font: inherit;
+  padding: 0.55rem 0.4rem;
+  border-radius: 0.7rem;
+  cursor: pointer;
+}
+
+.oh-open-vote:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.oh-open-vote strong {
+  font-size: 1.15rem;
+}
+
+.oh-open-vote small {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #3a7355;
+}
+
+.oh-open-thread-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.85rem;
+}
+
+.oh-open-thread-actions button {
+  border: none;
+  background: #efe9dc;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 750;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.oh-open-thread-actions button.is-on {
+  background: #d4f58a;
+}
+
+.oh-open-hilbert {
+  padding: 1.1rem 1.15rem;
+  background: rgba(255, 253, 247, 0.88);
+  border: 1px solid rgba(22, 51, 40, 0.08);
+  border-radius: 1rem;
+}
+
+.oh-open-hilbert ol {
+  list-style: none;
+  margin: 0.4rem 0 0.7rem;
+  padding: 0;
+}
+
+.oh-open-hilbert li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(22, 51, 40, 0.06);
+  font-weight: 650;
+}
+
+.oh-open-hilbert li strong {
+  color: #1d3a2a;
 }
 
 .oh-open-stitch {
@@ -3470,8 +3731,29 @@ html:has(.oh-open) {
   grid-template-columns: 1.2fr 0.8fr;
   gap: 1.5rem;
   align-items: center;
-  padding: 2.8rem 6vw 3.2rem;
+  padding: 3.4rem 6vw 3.8rem;
   scroll-margin-top: 5.2rem;
+}
+
+.oh-open-close .oh-open-kicker {
+  color: #d4f58a;
+}
+
+.oh-open-close h2 {
+  color: #f7f4ec;
+}
+
+.oh-open-close p {
+  color: #c5d4c8;
+}
+
+.oh-open-close .oh-open-signin {
+  background: #d4f58a;
+  color: #163328;
+}
+
+.oh-open-close .oh-open-ghost {
+  color: #d4f58a;
 }
 
 .oh-open-legend {
@@ -4409,6 +4691,8 @@ html:has(.oh-open) {
   .oh-open-desk-head,
   .oh-open-desk-grid,
   .oh-open-desk-grid-2,
+  .oh-open-pairs,
+  .oh-open-room-stage,
   .oh-open-close {
     grid-template-columns: 1fr;
   }

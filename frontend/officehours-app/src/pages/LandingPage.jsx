@@ -13,7 +13,7 @@ export default function LandingPage() {
           </span>
         </a>
         <nav aria-label="Page">
-          <a href="#canvas">Canvas</a>
+          <a href="#rooms">Rooms</a>
           <a href="#student">Student</a>
           <a href="#ta">TA</a>
           <a href="#professor">Professor</a>

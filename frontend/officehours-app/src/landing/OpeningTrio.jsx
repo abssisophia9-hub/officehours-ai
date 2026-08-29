@@ -35,6 +35,12 @@ const COURSES = [
   },
 ];
 
+const CHOICES = [
+  { left: "Human", right: "Agent", note: "A classmate, a TA, a professor — or the course agent, if staff stamped an answer." },
+  { left: "Quiet", right: "Named", note: "Ask staff without a public name. Or put your name on the room so help can find you." },
+  { left: "Help", right: "Ignore", note: "Vote, Express Interest, accept a solution. Or keep walking. Both are choices." },
+];
+
 export default function OpeningTrio({ variant = "live" }) {
   const [pinned, setPinned] = useState(null);
   const [fromScroll, setFromScroll] = useState("student");
@@ -42,6 +48,8 @@ export default function OpeningTrio({ variant = "live" }) {
   const [moduleIdx, setModuleIdx] = useState(0);
   const [quiet, setQuiet] = useState(true);
   const [stamped, setStamped] = useState(false);
+  const [votes, setVotes] = useState(7);
+  const [stance, setStance] = useState("none");
   const ignoreObserver = useRef(false);
   const currentId = pinned || fromScroll;
   const course = COURSES[courseIdx];
@@ -82,26 +90,32 @@ export default function OpeningTrio({ variant = "live" }) {
     setStamped(false);
   }
 
+  function voteUp() {
+    if (stance === "ignore") return;
+    setVotes((n) => n + 1);
+  }
+
   return (
     <div className={`oh-open-story oh-open-story-${variant}`}>
-      <main className="oh-open-hero" id="hero">
+      <main className="oh-open-hero oh-open-tone-0" id="hero">
         <div className="oh-open-copy">
-          <p className="oh-open-kicker">Al Akhawayn University · Linked to Canvas</p>
+          <p className="oh-open-kicker">Al Akhawayn University · a campus room</p>
           <h1 className="font-display">
-            Each course has its own agent.{" "}
-            <span className="oh-open-mark">Staff stay the humans.</span>
+            Choose how you get help.{" "}
+            <span className="oh-open-mark">Choose how you give it.</span>
           </h1>
           <div className="oh-open-body">
             <p>
-              <span className="oh-open-drop">O</span>
-              fficeHours opens from Canvas. Modules become Rooms chapters. A{" "}
-              <mark>Course Study Agent</mark> answers only what that course’s
-              professor stamped — never another syllabus, never classmate notes.
+              <span className="oh-open-drop">T</span>
+              he barrier was never the question. It was being alone with it —
+              shared stress with no shared room. OfficeHours is classmates, TAs,
+              and professors deciding, every time: <mark>human or agent</mark>,{" "}
+              <mark>quiet or named</mark>, <mark>help or ignore</mark>.
             </p>
             <p>
-              The three people are the product: a stuck student, a TA with{" "}
-              <mark>Ask Triage</mark> and Help Coach, a professor who keeps the{" "}
-              <em>KB gate</em>. Click a person. Scroll the rest.
+              <em>Study Rooms</em> first. Peer rating, Stack Overflow-style,
+              scored in Hilbert ŵ. The course agent is one door. The community
+              is the building. Click a person. Scroll the rest.
             </p>
           </div>
         </div>
@@ -118,14 +132,155 @@ export default function OpeningTrio({ variant = "live" }) {
         </div>
       </main>
 
-      <section className="oh-open-stitch" id="canvas">
-        <div className="oh-open-stitch-copy">
-          <p className="oh-open-kicker">Canvas LMS · one course at a time</p>
-          <h2 className="font-display">The course you opened is the world the agent sees.</h2>
+      <section className="oh-open-choice oh-open-tone-1" id="choice">
+        <div className="oh-open-choice-copy">
+          <p className="oh-open-kicker">Choice at every level</p>
+          <h2 className="font-display">No default path. You pick the door.</h2>
           <p>
-            Launch from Canvas or sign in with your AUI email. Memberships decide
-            your role. Syncing a module does two things at once: it names a Rooms
-            chapter, and it feeds the Study Agent — still behind the professor stamp.
+            Mutual support only works if walking past is allowed. Collective
+            learning only works if the room is optional. The product removes
+            the performance — not the decision.
+          </p>
+        </div>
+        <ul className="oh-open-pairs">
+          {CHOICES.map((item) => (
+            <li key={item.left}>
+              <p className="oh-open-pair-line">
+                <span>{item.left}</span>
+                <i aria-hidden="true">or</i>
+                <span>{item.right}</span>
+              </p>
+              <p>{item.note}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="oh-open-rooms oh-open-tone-2" id="rooms">
+        <div className="oh-open-rooms-copy">
+          <p className="oh-open-kicker">Study Rooms · Hilbert ŵ</p>
+          <h2 className="font-display">Classmates help classmates. Quality over volume.</h2>
+          <p>
+            A Room is named on purpose. You vote like Stack Overflow. You
+            Express Interest, or you keep scrolling. Accept a solution only
+            when it unlocked the stuck point. Staff do not lurk here.
+          </p>
+        </div>
+
+        <div className="oh-open-room-stage">
+          <article className={`oh-open-thread${stance === "ignore" ? " is-passed" : ""}`}>
+            <button type="button" className="oh-open-vote" onClick={voteUp} disabled={stance === "ignore"}>
+              <span aria-hidden="true">▲</span>
+              <strong>{votes}</strong>
+              <small>ŵ</small>
+            </button>
+            <div>
+              <p className="oh-open-pane-kicker">{course.code} · {module.name}</p>
+              <h3>{module.room}</h3>
+              <p>
+                {stance === "help"
+                  ? "You expressed interest. Your name is on this thread — help can find you."
+                  : stance === "ignore"
+                    ? "You kept walking. The room stays open for someone else."
+                    : "Share the stuck point, not the write-up. Help is named. Walking past is allowed."}
+              </p>
+              <div className="oh-open-thread-actions">
+                <button
+                  type="button"
+                  className={stance === "help" ? "is-on" : ""}
+                  onClick={() => setStance(stance === "help" ? "none" : "help")}
+                >
+                  {stance === "help" ? "Interested" : "Express Interest"}
+                </button>
+                <button
+                  type="button"
+                  className={stance === "ignore" ? "is-on" : ""}
+                  onClick={() => setStance(stance === "ignore" ? "none" : "ignore")}
+                >
+                  {stance === "ignore" ? "Passed" : "Ignore"}
+                </button>
+              </div>
+            </div>
+          </article>
+          <aside className="oh-open-hilbert">
+            <p className="oh-open-pane-kicker">Hilbert board</p>
+            <ol>
+              <li>
+                <span>Karim</span>
+                <strong>12 ŵ</strong>
+              </li>
+              <li>
+                <span>Sara</span>
+                <strong>8 ŵ</strong>
+              </li>
+              <li>
+                <span>Youssef</span>
+                <strong>5 ŵ</strong>
+              </li>
+            </ol>
+            <p className="oh-open-fine">Accepted solutions count. Noise does not.</p>
+          </aside>
+        </div>
+      </section>
+
+      <section className="oh-open-desk oh-open-tone-3" id="student" data-oh-role="student">
+        <div className="oh-open-desk-head">
+          <RoleFigure role="student" size="lg" active onClick={() => selectRole("student")} />
+          <div>
+            <p className="oh-open-kicker">01 · Student</p>
+            <h2 className="font-display">Get help without performing it.</h2>
+            <p className="oh-open-lead">
+              Quiet ask if the question is sensitive. Identify me for a meeting.
+              Rooms if a classmate can unlock it. The agent only if this course
+              stamped an answer.
+            </p>
+          </div>
+        </div>
+        <div className="oh-open-desk-grid">
+          <article className="oh-open-pane">
+            <div className="oh-open-toggle">
+              <button type="button" className={quiet ? "is-on" : ""} onClick={() => setQuiet(true)}>
+                Quiet ask
+              </button>
+              <button type="button" className={quiet ? "" : "is-on"} onClick={() => setQuiet(false)}>
+                Identify me
+              </button>
+            </div>
+            <p className="oh-open-pane-kicker">{quiet ? "Staff see a request code" : "Sara · CSC 2302"}</p>
+            <p>
+              {quiet
+                ? "No name on a public board. The private path when the question is sensitive, or you are not ready to be seen."
+                : "You want a meeting — message, face-to-face, or online. Staff can find you."}
+            </p>
+          </article>
+          <article className="oh-open-pane">
+            <p className="oh-open-pane-kicker">Or a Room</p>
+            <p>
+              Named classmate help. Vote. Express Interest. Accept a solution.
+              You can also ignore the thread and keep your night.
+            </p>
+          </article>
+          <article className="oh-open-pane oh-open-pane-agent">
+            <p className="oh-open-pane-kicker">Or the course agent · {course.code}</p>
+            <p className="oh-open-chat">“{module.ask}”</p>
+            <p className="oh-open-chat is-reply">
+              {stamped
+                ? module.agent
+                : "I don’t have an approved answer in this course yet. Ask a classmate, or a TA."}
+            </p>
+            <p className="oh-open-fine">One door. Not the building.</p>
+          </article>
+        </div>
+      </section>
+
+      <section className="oh-open-stitch oh-open-tone-4" id="canvas">
+        <div className="oh-open-stitch-copy">
+          <p className="oh-open-kicker">Canvas LMS · the course you share</p>
+          <h2 className="font-display">The course names the room. People fill it.</h2>
+          <p>
+            Launch from Canvas or sign in with your AUI email. A synced module
+            becomes a Rooms chapter. The Course Study Agent only speaks what
+            this professor stamped — never another syllabus, never classmate notes.
           </p>
           <div className="oh-open-course-switch" role="tablist" aria-label="Demo courses">
             {COURSES.map((item, index) => (
@@ -183,65 +338,16 @@ export default function OpeningTrio({ variant = "live" }) {
         </div>
       </section>
 
-      <section className="oh-open-desk" id="student" data-oh-role="student">
-        <div className="oh-open-desk-head">
-          <RoleFigure role="student" size="lg" active onClick={() => selectRole("student")} />
-          <div>
-            <p className="oh-open-kicker">01 · Student</p>
-            <h2 className="font-display">You do not perform in front of the room.</h2>
-            <p className="oh-open-lead">
-              Quiet ask or Identify me. Rooms for classmates. A Study Agent that
-              belongs to this course — not a campus-wide chatbot.
-            </p>
-          </div>
-        </div>
-        <div className="oh-open-desk-grid">
-          <article className="oh-open-pane">
-            <div className="oh-open-toggle">
-              <button type="button" className={quiet ? "is-on" : ""} onClick={() => setQuiet(true)}>
-                Quiet ask
-              </button>
-              <button type="button" className={quiet ? "" : "is-on"} onClick={() => setQuiet(false)}>
-                Identify me
-              </button>
-            </div>
-            <p className="oh-open-pane-kicker">{quiet ? "Staff see a request code" : "Sara · CSC 2302"}</p>
-            <p>
-              {quiet
-                ? "No name on a public board. The private path when the question is sensitive, or you are not ready to be seen."
-                : "You want a meeting — message, face-to-face, or online. Staff can find you."}
-            </p>
-          </article>
-          <article className="oh-open-pane oh-open-pane-agent">
-            <p className="oh-open-pane-kicker">Course Study Agent · {course.code}</p>
-            <p className="oh-open-chat">“{module.ask}”</p>
-            <p className="oh-open-chat is-reply">
-              {stamped
-                ? module.agent
-                : "I don’t have an approved answer in this course yet. Ask a TA, or open a Room."}
-            </p>
-            <p className="oh-open-fine">Classmate notes never train this agent.</p>
-          </article>
-          <article className="oh-open-pane">
-            <p className="oh-open-pane-kicker">Rooms · Hilbert ŵ</p>
-            <p>
-              Named classmate help. Express Interest. Accept a solution. Quality
-              over volume on the leaderboard. Staff do not lurk here.
-            </p>
-          </article>
-        </div>
-      </section>
-
-      <section className="oh-open-desk" id="ta" data-oh-role="ta">
+      <section className="oh-open-desk oh-open-tone-5" id="ta" data-oh-role="ta">
         <div className="oh-open-desk-head">
           <RoleFigure role="ta" size="lg" active onClick={() => selectRole("ta")} />
           <div>
             <p className="oh-open-kicker">02 · Teaching assistant</p>
-            <h2 className="font-display">A queue, not a pile.</h2>
+            <h2 className="font-display">Give help without drowning in the pile.</h2>
             <p className="oh-open-lead">
-              Ask Triage runs Analyzer, Matcher, and Synthesizer on the way in.
-              You claim the card. Help Coach sits with you — it never publishes
-              to the Study Agent.
+              Students already chose a door. You choose how to answer: claim
+              the card, draft with Help Coach, or turn a cluster into one group
+              meeting.
             </p>
           </div>
         </div>
@@ -271,15 +377,16 @@ export default function OpeningTrio({ variant = "live" }) {
         </div>
       </section>
 
-      <section className="oh-open-desk" id="professor" data-oh-role="professor">
+      <section className="oh-open-desk oh-open-tone-6" id="professor" data-oh-role="professor">
         <div className="oh-open-desk-head">
           <RoleFigure role="professor" size="lg" active onClick={() => selectRole("professor")} />
           <div>
             <p className="oh-open-kicker">03 · Professor</p>
-            <h2 className="font-display">You stay the gate.</h2>
+            <h2 className="font-display">See the shared stress. Keep the gate.</h2>
             <p className="oh-open-lead">
-              Review insights mix Quiet asks and Rooms chapters. Sync Canvas
-              materials. Nothing the student agent says is yours until you stamp it.
+              Review insights mix Quiet asks and Rooms chapters. You decide
+              what the course agent may repeat. The community does not wait on
+              that stamp to help each other.
             </p>
           </div>
         </div>
@@ -293,7 +400,7 @@ export default function OpeningTrio({ variant = "live" }) {
           </article>
           <article className="oh-open-pane">
             <p className="oh-open-pane-kicker">KB gate</p>
-            <p>{stamped ? "Stamped. The Course Study Agent may say this next time." : "Pending. The agent stays quiet."}</p>
+            <p>{stamped ? "Stamped. The Course Study Agent may say this next time." : "Pending. The agent stays quiet. Rooms stay open."}</p>
             <button type="button" className="oh-open-stamp-btn" onClick={() => setStamped((on) => !on)}>
               {stamped ? "Unstamp (demo)" : "Stamp for Study Agent"}
             </button>
@@ -301,13 +408,14 @@ export default function OpeningTrio({ variant = "live" }) {
         </div>
       </section>
 
-      <section className="oh-open-close" id="join">
+      <section className="oh-open-close oh-open-tone-7" id="join">
         <div>
           <p className="oh-open-kicker">One login · role per course</p>
-          <h2 className="font-display">Open from Canvas, or sign in as yourself.</h2>
+          <h2 className="font-display">The room is already open. Walk in.</h2>
           <p>
-            A TA on campus is also a student. One AUI email. The workspace
-            switches when the course does. The agent switches with it.
+            Shared stress. Collective learning. Mutual support. Sign in as
+            yourself — a TA on campus is also a student. One AUI email. The
+            workspace switches when the course does.
           </p>
         </div>
         <p className="oh-open-cta-row">
@@ -315,7 +423,7 @@ export default function OpeningTrio({ variant = "live" }) {
             Sign in
           </Link>
           <Link className="oh-open-ghost" to="/canvas-demo">
-            See the Canvas launch
+            Or open from Canvas
           </Link>
         </p>
       </section>
