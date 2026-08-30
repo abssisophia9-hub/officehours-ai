@@ -45,23 +45,24 @@ at runtime (`oracle_service` → `claude_client` → Analyzer / Matcher / Synthe
 
 ## P0 — campus / security / claims
 
-Auth is **uneven**. Rooms, peer notes, TA queue, Help Coach, Canvas status,
-and review-insights are locked. Intake, the Study Agent, KB stamps, and most
-analytics are not.
+**Shipped.** Campus writes and reads require a session plus membership or staff
+role. Students listing `/requests/` see **their own asks only** — not the class
+queue. Analytics without `course_id` stay inside the caller’s staff courses.
 
-| Endpoint | Auth today | Why it matters |
-| --- | --- | --- |
-| `POST /agent/ask` | none | Anyone can query any `course_id`’s approved KB and write `kb_ask_events`. Omit `course_id` → search **all** approved rows campus-wide. |
-| `POST /requests/` | none | Spam + pending-KB poison off-demo. Quiet ask still creates a real triage row. |
-| `GET /requests/`, `GET /requests/{id}` | none | Full queue + names / IDs / question text. |
-| `GET /knowledge/`, `GET /knowledge/{id}` | none | Lists **pending drafts**, not just approved FAQs. |
-| `PATCH /knowledge/{id}` | **none** | Anyone who can reach the API can **stamp or unstamp** the Study Agent. The UI sends a token; the route ignores it. |
-| `POST /knowledge/from-cluster` | none | Creates KB drafts without a professor check. |
-| `GET /analytics/*` (heatmap, clusters, oracle-metrics, kb-hit-rate, gold-labels, lifetime-confusion) | none | Course struggle + gold labels leak. Review-insights is the exception (locked). |
-| `POST /analytics/gold-labels` | none | Poison the evaluation set. |
-| `POST /actions/recommendations/` | none | Anyone can schedule a group meeting. |
-| `GET /office-hours/` + write | none | Calendar mutation. |
-| `WS /ws` | none | Live queue events to any socket. |
+| Endpoint | Auth now |
+| --- | --- |
+| `POST /agent/ask` | member + required `course_id` |
+| `POST /requests/` | member + required `course_id` |
+| `GET /requests/` | staff: course queue; student: own asks |
+| `GET /requests/{id}` | staff on that course, or the submitter |
+| `GET /requests/{id}/status` | course member (request-code receipt) |
+| `GET\|PATCH /knowledge/…` | member (approved) / professor (stamp) |
+| `POST /knowledge/from-cluster` | professor |
+| `GET /analytics/*` | staff, scoped to their courses |
+| `POST /analytics/gold-labels` | TA or professor |
+| `POST /actions/recommendations/` | authenticated staff |
+| `GET /office-hours/` + write | authenticated |
+| `WS /ws` | token + course membership |
 
 **Also P0:**
 
@@ -69,9 +70,9 @@ analytics are not.
 2. **Host wiring:** `VITE_API_BASE` must not stay `127.0.0.1:8000`; SPA fallback; `OFFICEHOURS_DEMO=false`; favicon / OG tags.
 3. **IT blockers (not code):** Microsoft app registration; Canvas LTI developer key + `CANVAS_BASE_URL` / `CANVAS_ACCESS_TOKEN`. Without these, do not claim live AUI login or live modules.
 4. **Defense wording:** cite CV / silver / gold with caveats. Do not cite seed gold as quality. Do not say “the agent understands the course” — say “it retrieves what you stamped.”
-5. **The gate the product sells is not the gate the code runs.** Professor copy says “Nothing reaches students until you approve it.” All three ingest buttons send `auto_approve: true`. `launch_from_canvas` also syncs with `auto_approve=True` on first student launch **and** every professor launch. Materials can enter `/agent/ask` with no human stamp.
+5. **The gate:** Canvas / paste / upload / LTI launch ingest default to `pending_review`. Professor UI sends `auto_approve: false`. Stamp before `/agent/ask` can quote.
 
-**Fix order for auth:** `get_current_user` + `require_course_role` on writes first (`PATCH /knowledge`, `/agent/ask`, `/requests`, `/from-cluster`, `/actions`), then reads. Demo mode can stay looser if you keep an unsigned kiosk; off-demo must not.
+Hosting leftovers: point `VITE_API_BASE` at the real API on deploy; Microsoft and Canvas credentials are IT, not code.
 
 ---
 
@@ -81,16 +82,10 @@ analytics are not.
 
 **What it is:** embed the question, retrieve approved entries, paste the best
 `answer_draft` if similarity ≥ 0.42, else refuse and push Quiet ask / Rooms.
-Frontend already sends `course_id: activeCourse.id` and shows a seek-help
-banner. The API does not require either.
-
-| Upgrade | Why |
-| --- | --- |
-| Auth + membership + **required** `course_id` | Isolation. Today omit = search every approved row. |
-| Cite **module / FAQ title**, not `#id (72% match)` | Trust. Students cannot map `#184` to “Week 4 hashing slides.” |
-| Prefill Quiet ask / Room from the failed question | Links exist; the question is not copied. That is the product moment. |
-| Show hit-rate on the student card | `GET /analytics/kb-hit-rate` exists and is unused here. Honesty: “3 of 10 asks this week had a stamped answer.” |
-| Live Canvas walker only downloads `.txt` / `.md` / `.html` | Real slides are PDF / PPTX. Manual upload already uses `material_extract.py`. Live sync should download the Canvas file URL and run the same extractor. Pages (HTML) already work. |
+Frontend sends `course_id: activeCourse.id`. The API requires membership and
+`course_id`. Misses prefill Quiet ask. The student card shows course hit-rate.
+Citations use the FAQ / material title, not `#id`. Live Canvas file sync runs
+the same PDF/DOCX extractor as manual upload.
 
 **Do not:** add an unconstrained LLM that answers from classmate notes or Rooms
 posts. That breaks the gate you already sold. Peer notes stay a human path.

@@ -33,6 +33,16 @@ NO_MATCH_HINT = (
 )
 
 
+def _cite_entry(entry) -> str:
+    title = (getattr(entry, "question_text", None) or "").strip()
+    if len(title) > 72:
+        title = title[:69] + "…"
+    source = (getattr(entry, "material_source", None) or "").strip()
+    if title and source:
+        return f"{title} ({source})"
+    return title or source or "Approved FAQ"
+
+
 def answer_from_knowledge_base(
     db: Session,
     question: str,
@@ -60,14 +70,15 @@ def answer_from_knowledge_base(
     best = sources[0]
     supporting = sources[1:]
     answer_parts = [
-        "Based on professor-approved course knowledge:",
+        f"Based on professor-approved course knowledge — {_cite_entry(best.entry)}:",
         best.entry.answer_draft.strip(),
     ]
     if supporting:
         related = "; ".join(
-            f"#{hit.entry.id} ({hit.similarity:.0%} match)" for hit in supporting
+            f"{_cite_entry(hit.entry)} ({hit.similarity:.0%} match)"
+            for hit in supporting
         )
-        answer_parts.append(f"Related approved entries: {related}.")
+        answer_parts.append(f"Related approved material: {related}.")
 
     confidence = min(0.98, max(hit.similarity for hit in sources))
     return AgentAskResponse(

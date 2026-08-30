@@ -57,12 +57,12 @@ Dual-TA sections (primary + backup Matcher): CSC 2302 (Alice/Bob), CSC 3323
 ## What a supervisor does
 
 1. Run `./scripts/run_product.sh` (or start backend + `officehours-app`)
-2. Open **http://127.0.0.1:5180** — guest landing walks Student → TA → Professor (Three.js path), then **Sign in**
+2. Open **http://127.0.0.1:5180** — opening story (Student → TA → Professor), then **Sign in**
 3. Sign in as student → **Quiet ask** or **Identify me** → pick message / face-to-face / online;
    optionally open **Rooms** (`/student/room`) and accept a classmate solution
    that unlocked it — helpers are **named** so they appear on the leaderboard
-4. Sign in as Alice (`a.chen@aui.ma`) → TA queue filters **Assigned to me** /
-   **I'm backup** / **All** → switch course picker to a **student** course
+4. Sign in as Alice (`a.chen@aui.ma`) → TA desk filter **My desk (assigned, backup, open)**
+   — she is staff on CSC 2302, not a classmate in that section
 5. Sign in as professor (`a.benali@aui.ma`) → **TA load** panel + command center:
    - dual-TA primary/backup counts
    - repeated topic clusters (group review vs FAQ)

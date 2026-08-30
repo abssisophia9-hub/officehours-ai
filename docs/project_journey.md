@@ -76,7 +76,7 @@ Vocabulary: [`glossary.md`](glossary.md).
 | **Help mode** | `message` · `face_to_face` · `online_meeting` → TA-facing recommended action |
 | **TA is staff** | Assigned to a course they already took — not a classmate in that section |
 | **Community deployment** | **Canvas LTI** is the recommended source of enrollments (not AUI portal scraping, not manual entry as the main path) |
-| Docs / diagrams / demo | Journey doc + diagrams + dual-role demo accounts |
+| Docs / diagrams / demo | Journey doc + diagrams + per-course role demo accounts |
 
 ### Phase 7 — TA staffing, Help Coach, peer notes, shared meetings
 

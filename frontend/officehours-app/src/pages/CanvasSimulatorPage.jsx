@@ -22,7 +22,7 @@ const PERSONAS = [
     ],
   },
   {
-    // TAs are also students: Karim TAs OS and takes Data Structures as a student.
+    // Cross-course only: Karim staffs CSC 2302 (already took it) and is a student elsewhere.
     id: "karim",
     label: "Karim Bennis (TA on 2302)",
     email: "k.bennis@aui.ma",

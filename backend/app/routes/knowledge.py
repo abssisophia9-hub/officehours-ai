@@ -410,9 +410,9 @@ def escalations(
 ):
     if course_id is not None:
         require_course_role(db, user, course_id, roles={"professor", "ta"})
-    else:
-        require_staff_anywhere(db, user)
-    return build_escalation_feed(db, course=course, course_id=course_id)
+        return build_escalation_feed(db, course=course, course_id=course_id)
+    allowed = require_staff_anywhere(db, user)
+    return build_escalation_feed(db, course=course, course_ids=allowed)
 
 
 @router.get("/analytics/clusters", response_model=ClusterCommandCenterOut)
@@ -424,18 +424,22 @@ def cluster_command_center(
 ):
     if course_id is not None:
         require_course_role(db, user, course_id, roles={"professor", "ta"})
-    else:
-        require_staff_anywhere(db, user)
-    return build_cluster_command_center(db, course=course, course_id=course_id)
+        return build_cluster_command_center(db, course=course, course_id=course_id)
+    allowed = require_staff_anywhere(db, user)
+    return build_cluster_command_center(db, course=course, course_ids=allowed)
 
 
 @router.get("/analytics/oracle-metrics")
 def oracle_metrics(
+    course_id: int | None = Query(default=None),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    require_staff_anywhere(db, user)
-    return build_oracle_metrics(db)
+    if course_id is not None:
+        require_course_role(db, user, course_id, roles={"professor", "ta"})
+        return build_oracle_metrics(db, course_ids=[course_id])
+    allowed = require_staff_anywhere(db, user)
+    return build_oracle_metrics(db, course_ids=allowed)
 
 
 @router.get("/analytics/kb-hit-rate", response_model=KbHitRateReport)
@@ -447,9 +451,9 @@ def kb_hit_rate(
     """Per-course KB agent hit-rate (hit = answered from approved materials)."""
     if course_id is not None:
         require_course_member(db, user, course_id)
-    else:
-        require_staff_anywhere(db, user)
-    return build_kb_hit_rate_report(db, course_id=course_id)
+        return build_kb_hit_rate_report(db, course_id=course_id)
+    allowed = require_staff_anywhere(db, user)
+    return build_kb_hit_rate_report(db, course_ids=allowed)
 
 
 @router.post(
@@ -482,20 +486,29 @@ def get_gold_labels(
 ):
     if course_id is not None:
         require_course_role(db, user, course_id, roles={"ta", "professor"})
-    else:
-        require_staff_anywhere(db, user)
-    return list_gold_labels(db, department=department, course_id=course_id, limit=limit)
+        return list_gold_labels(
+            db, department=department, course_id=course_id, limit=limit
+        )
+    allowed = require_staff_anywhere(db, user)
+    return list_gold_labels(
+        db, department=department, course_ids=allowed, limit=limit
+    )
 
 
 @router.get("/analytics/lifetime-confusion")
 def lifetime_confusion(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
+    course_id: int | None = Query(default=None),
     limit: int = Query(default=8, ge=1, le=25),
 ):
-    require_staff_anywhere(db, user)
+    if course_id is not None:
+        require_course_role(db, user, course_id, roles={"professor", "ta"})
+        scoped = [course_id]
+    else:
+        scoped = require_staff_anywhere(db, user)
     return {
-        "topics": lifetime_confusion_topics(db, limit=limit),
+        "topics": lifetime_confusion_topics(db, limit=limit, course_ids=scoped),
         "message": (
             "Lifetime agent foundation: approved KB topics that confuse students "
             "most this semester. Professor curation remains the gate."

@@ -44,6 +44,8 @@ class Request(Base):
     work_status: Mapped[str] = mapped_column(String, nullable=False, default="open")
     claimed_by: Mapped[str | None] = mapped_column(String, nullable=True)
     claimed_by_user_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    # Submitter (even Quiet ask). Used for "my asks"; never exposed as identity.
+    created_by_user_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     helped_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # Direct async reply from a TA (message mode) — visible on student status.

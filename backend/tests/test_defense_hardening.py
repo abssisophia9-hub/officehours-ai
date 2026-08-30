@@ -160,3 +160,92 @@ def test_help_coach_is_on_select_not_list():
         headers=student["headers"],
     )
     assert denied.status_code == 403
+
+
+def test_student_sees_only_own_asks_not_classmate_queue():
+    sara = _login("s.elidrissi@aui.ma")
+    youssef = _login("y.amrani@aui.ma")
+    alice = _login("a.chen@aui.ma")
+    course_id = _course(sara["user"], "CSC 3374")
+    created = client.post(
+        "/requests/",
+        headers=sara["headers"],
+        json={
+            "text": "Why does a Python list used as a queue make dequeue O(n)?",
+            "anonymous": True,
+            "course": "CSC 3374",
+            "course_id": course_id,
+        },
+    )
+    assert created.status_code == 201, created.text
+    rid = created.json()["id"]
+
+    mine = client.get(
+        f"/requests/?course_id={course_id}",
+        headers=sara["headers"],
+    )
+    assert mine.status_code == 200
+    assert rid in [row["id"] for row in mine.json()]
+
+    classmate = client.get(
+        f"/requests/?course_id={course_id}",
+        headers=youssef["headers"],
+    )
+    assert classmate.status_code == 200
+    assert rid not in [row["id"] for row in classmate.json()]
+
+    hidden = client.get(f"/requests/{rid}", headers=youssef["headers"])
+    assert hidden.status_code == 404
+
+    receipt = client.get(f"/requests/{rid}/status", headers=youssef["headers"])
+    assert receipt.status_code == 200
+    assert receipt.json()["request_code"] == rid
+
+    # Alice staffs 2302, not 3374 — she must not read the full row.
+    assert client.get(f"/requests/{rid}", headers=alice["headers"]).status_code == 404
+
+    prof = _login("a.benali@aui.ma")
+    full = client.get(f"/requests/{rid}", headers=prof["headers"])
+    assert full.status_code == 200
+    assert full.json()["id"] == rid
+
+
+def test_agent_cites_faq_title_not_entry_id():
+    from app.database.session import SessionLocal
+    from app.models.knowledge import KnowledgeEntry
+    from app.services.kb_agent_service import answer_from_knowledge_base
+
+    student = _login("s.elidrissi@aui.ma")
+    course_id = _course(student["user"], "CSC 3374")
+    db = SessionLocal()
+    try:
+        primary = KnowledgeEntry(
+            question_text="Week 4 hashing slides — open addressing",
+            answer_draft="Open addressing stores a colliding key in the next free slot.",
+            student_hint="Walk the next buckets.",
+            status="approved",
+            course_id=course_id,
+            material_source="slides",
+        )
+        related = KnowledgeEntry(
+            question_text="Week 4 hashing slides — linear probing",
+            answer_draft="Linear probing walks consecutive buckets until empty.",
+            student_hint="Start at the hash index.",
+            status="approved",
+            course_id=course_id,
+            material_source="slides",
+        )
+        db.add_all([primary, related])
+        db.commit()
+        body = answer_from_knowledge_base(
+            db,
+            "Week 4 hashing slides — open addressing",
+            course_id=course_id,
+        )
+    finally:
+        db.close()
+    assert body.should_seek_help is False
+    assert "Week 4 hashing slides" in body.answer
+    assert "#" not in body.answer.split(":")[0]
+    assert "Related approved material:" in body.answer
+    assert "#1 (" not in body.answer

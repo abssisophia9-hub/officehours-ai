@@ -262,17 +262,17 @@ def build_oracle_public_payload(oracle: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def lifetime_confusion_topics(db: Session, *, limit: int = 8) -> list[dict[str, Any]]:
+def lifetime_confusion_topics(
+    db: Session, *, limit: int = 8, course_ids: list[int] | None = None
+) -> list[dict[str, Any]]:
     """
     Lifetime agent foundation: aggregate approved KB categories/tags that
     confuse students most across the semester.
     """
-    entries = (
-        db.query(KnowledgeEntry)
-        .filter(KnowledgeEntry.status == "approved")
-        .order_by(KnowledgeEntry.id.desc())
-        .all()
-    )
+    query = db.query(KnowledgeEntry).filter(KnowledgeEntry.status == "approved")
+    if course_ids is not None:
+        query = query.filter(KnowledgeEntry.course_id.in_(course_ids or [-1]))
+    entries = query.order_by(KnowledgeEntry.id.desc()).all()
     counts: dict[str, dict[str, Any]] = {}
     for entry in entries:
         key = (entry.category or "uncategorized").strip() or "uncategorized"

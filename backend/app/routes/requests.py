@@ -5,6 +5,7 @@ Routes for submitting and retrieving student requests.
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from app.ai.clustering import assign_cluster_id
@@ -13,7 +14,10 @@ from app.models.auth import User
 from app.routes.auth import get_current_user
 from app.services.access_control import (
     require_course_member,
+    require_course_role,
+    require_staff_anywhere,
     user_course_ids,
+    user_staff_course_ids,
 )
 from app.models.action import RecommendationDecision
 from app.models.request import (
@@ -149,6 +153,7 @@ async def create_request(
         request_data["cluster_id"] = assign_cluster_id(payload.text, existing_requests)
 
     db_request = Request(**request_data)
+    db_request.created_by_user_id = user.id
     db.add(db_request)
     db.commit()
     db.refresh(db_request)
@@ -250,8 +255,37 @@ async def create_request(
     return to_request_out(db_request, oracle=public_oracle, db=db)
 
 
-def _require_request_access(db: Session, user: User, db_request: Request) -> None:
+def _is_request_owner(user: User, db_request: Request) -> bool:
+    return getattr(db_request, "created_by_user_id", None) == user.id
+
+
+def _is_staff_on_request(db: Session, user: User, db_request: Request) -> bool:
     if db_request.course_id is None:
+        return False
+    try:
+        require_course_role(db, user, db_request.course_id, roles={"ta", "professor"})
+    except HTTPException:
+        return False
+    return True
+
+
+def _require_request_access(db: Session, user: User, db_request: Request) -> None:
+    """Full request body: staff on that course, or the student who submitted it."""
+    if _is_request_owner(user, db_request) or _is_staff_on_request(db, user, db_request):
+        return
+    if db_request.course_id is None:
+        require_staff_anywhere(db, user)
+        return
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Request not found",
+    )
+
+
+def _require_status_access(db: Session, user: User, db_request: Request) -> None:
+    """Request-code receipt: any course member can look up status, not the full row."""
+    if db_request.course_id is None:
+        require_staff_anywhere(db, user)
         return
     require_course_member(db, user, db_request.course_id)
 
@@ -264,11 +298,28 @@ def list_requests(
 ):
     query = db.query(Request)
     if course_id is not None:
-        require_course_member(db, user, course_id)
+        _course, membership = require_course_member(db, user, course_id)
         query = query.filter(Request.course_id == course_id)
+        if membership.role == "student":
+            query = query.filter(Request.created_by_user_id == user.id)
     else:
-        allowed = user_course_ids(db, user)
-        query = query.filter(Request.course_id.in_(allowed or [-1]))
+        staff_ids = user_staff_course_ids(db, user)
+        student_ids = [
+            cid for cid in user_course_ids(db, user) if cid not in set(staff_ids)
+        ]
+        clauses = []
+        if staff_ids:
+            clauses.append(Request.course_id.in_(staff_ids))
+        if student_ids:
+            clauses.append(
+                and_(
+                    Request.course_id.in_(student_ids),
+                    Request.created_by_user_id == user.id,
+                )
+            )
+        if not clauses:
+            return []
+        query = query.filter(or_(*clauses))
     return [to_request_out(item, db=db) for item in query.order_by(Request.id).all()]
 
 
@@ -284,7 +335,7 @@ def get_request_status(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Request not found",
         )
-    _require_request_access(db, user, db_request)
+    _require_status_access(db, user, db_request)
 
     decisions = db.query(RecommendationDecision).order_by(RecommendationDecision.id).all()
     return build_request_status(db_request, decisions)

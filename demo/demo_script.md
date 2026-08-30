@@ -31,14 +31,15 @@ Primary path for supervisors and FYP demos. Vocabulary:
    Show **Ask Triage** breakdown (Analyzer / Matcher / hint) and request code status.  
    Open **Rooms** (`CSC 3323`) → Create a Room (named) → chapter from the demo
    Canvas/syllabus grid → Express Interest / accept a solution → leaderboard.
-2. **TA (+ student)** — `a.chen@aui.ma` on CSC 2302  
-   Claim → start helping → **Help Coach** draft / Socratic → Reply or propose a
-   **shared group meeting** for a repeated cluster. Switch course picker to a
-   student course to show dual role.
+2. **TA (staff)** — `a.chen@aui.ma` on CSC 2302  
+   Desk filter → claim → start helping → **Help Coach** draft / Socratic → Reply
+   or propose a **shared group meeting** for a repeated cluster. Alice is staff
+   on 2302 (a course she already took), not a classmate in that section.
 3. **Professor** — `a.benali@aui.ma`  
    Clusters / recommendations → **review insights** (Rooms chapters + Quiet asks)
    → approve KB → optional Canvas sync / materials.
-4. Optional: `/canvas-demo` → launch as Karim (TA in one course, student in another).
+4. Optional: `/canvas-demo` → launch as Karim (staff on one Canvas course,
+   student on a different course).
 
 ## Talking points
 
