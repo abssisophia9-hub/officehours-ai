@@ -88,9 +88,13 @@ source:
 **Community recommendation:** Canvas LTI 1.3 as primary. Not AUI portal scraping.
 Manual admin entry only as a rare support escape hatch.
 
-> **Demo honesty:** today’s `POST /canvas/launch` and `/canvas-demo` are an
-> **unsigned** JIT simulator (optional lock via `OFFICEHOURS_CANVAS_LAUNCH_SECRET`).
-> Do not claim signed LTI in a defense. See [`fyp_evidence.md`](fyp_evidence.md).
+> **Demo honesty:** `POST /canvas/launch` and `/canvas-demo` are an **unsigned**
+> JIT simulator, and they are **off** unless `OFFICEHOURS_DEMO=true` (or a launch
+> secret is set). Production launch is signed **LTI 1.3** (`/lti/login`,
+> `/lti/launch`) once AUI IT installs the developer key. Do not claim the tool
+> is already live inside AUI Canvas until that key + `CANVAS_*` credentials
+> exist. See [`fyp_evidence.md`](fyp_evidence.md) and
+> [`session_log_opening_auth_canvas.md`](session_log_opening_auth_canvas.md).
 
 ## Asking for help (identity + meeting preference)
 

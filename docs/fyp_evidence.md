@@ -21,7 +21,7 @@ overload** and **improve student comfort** seeking academic help during finals?
 | Privacy-preserving Quiet ask + request-code status | student workspace, `GET /requests/{id}/status` |
 | **Rooms** classmate forum + Hilbert ranks | `/student/room` + `/help-room/`; named helpers; Canvas-module chapters; students only |
 | Professor chapter/topic review insights | `GET /analytics/review-insights` (asks + Rooms posts) |
-| Canvas is the intended community enrollment **and** chapter source | `/canvas/launch` **simulator** (unsigned demo); live modules when credentials are set |
+| Canvas is the intended community enrollment **and** chapter source | Signed **LTI 1.3** (`/lti/login`, `/lti/launch`) when IT installs the key; `/canvas-demo` only if `OFFICEHOURS_DEMO=true`; live modules when `CANVAS_*` credentials are set |
 | Automated regression | ~133 backend pytest cases + CI builds |
 
 ## Metric honesty (read before citing)
@@ -42,7 +42,7 @@ overload** and **improve student comfort** seeking academic help during finals?
 2. **Surveys** — a legacy pilot already exists. **No new survey collection** is
    required before the capstone presentation, and surveys are not a post-product
    submission. Optional templates remain in `docs/surveys/`.
-3. **Canvas LTI 1.3** — production needs signed launches; today is unsigned JIT demo.
+3. **Canvas LTI 1.3** — code is in; campus needs a developer key + API token. Unsigned `/canvas-demo` is demo-only.
 4. **Open demo APIs** — some list endpoints are convenient for local demos; not
    campus-hardened ACLs.
 5. **Screenshots** — unified-app pack lives in `demo/screenshots/product-*.png`.
@@ -54,7 +54,7 @@ overload** and **improve student comfort** seeking academic help during finals?
 - [ ] Alice: claim → Help Coach → reply **or** group meeting
 - [ ] Benali: approve KB → Study Agent only answers approved material
 - [ ] Student Rooms: named post, Canvas/demo chapter pick, leaderboard shows names
-- [ ] `/canvas-demo`: say clearly **unsigned simulator**, LTI next
+- [ ] `/canvas-demo`: say clearly **unsigned simulator**, only when `OFFICEHOURS_DEMO=true`; LTI is the production path
 - [ ] Cite CV/silver metrics with caveats; do **not** cite seed gold 100% as quality
 - [ ] Point to this page + `agent_performance.md` for ceilings
 
@@ -62,6 +62,6 @@ overload** and **improve student comfort** seeking academic help during finals?
 
 1. Keep `reports/final_report/main.tex` synced with the shipped product.
 2. Optional: real TA `human_gold` labels when a lab is available.
-3. Production: Canvas LTI 1.3 (launch is an unsigned simulator today).
+3. Production: Canvas LTI 1.3 (installed by IT). Unsigned simulator is demo-only.
 
 New user surveys are **not** on this list for the capstone.
