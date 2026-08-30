@@ -62,6 +62,7 @@ history: [`project_journey.md`](project_journey.md) · training: [`training_data
 
 | File | What it shows |
 | --- | --- |
+| `diagrams/platform_architecture.png` | **Complete platform** — frontend, API/auth, core services, data layer, external integrations, role paths, data flows |
 | `diagrams/architecture.png` | Unified app + API + Canvas + agents + curation |
 | `diagrams/workflow.png` | Identity / help mode → Ask Triage → TA → professor → KB |
 | `diagrams/oracle_agents.png` | Analyzer / Matcher / Synthesizer training artifacts |

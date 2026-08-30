@@ -80,6 +80,20 @@ def arrow(draw, start, end, color="#475569", width=3):
         )
 
 
+def polyline_arrow(draw, points, color="#475569", width=3):
+    for start, end in zip(points, points[1:]):
+        arrow(draw, start, end, color=color, width=width)
+
+
+def label_text(draw, xy, text, color="#1E293B", size=12, bold=False):
+    draw.text(xy, text, fill=color, font=font(size, bold=bold))
+
+
+def draw_layer_band(draw, y0, y1, label, fill, label_color="#0F172A"):
+    draw.rectangle((30, y0, 2570, y1), fill=fill, outline="#CBD5E1", width=2)
+    draw.text((42, y0 + 8), label, fill=label_color, font=font(15, bold=True))
+
+
 def save(img: Image.Image, name: str) -> None:
     for out_dir in OUT_DIRS:
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -717,7 +731,389 @@ def draw_project_journey() -> None:
     save(img, "project_journey.png")
 
 
+def draw_platform_architecture() -> None:
+    """Single-page OfficeHours platform architecture (all layers + flows)."""
+    w, h = 2600, 1680
+    img = Image.new("RGB", (w, h), "#F8FAFC")
+    draw = ImageDraw.Draw(img)
+
+    # Header
+    draw.rectangle((0, 0, w, 110), fill="#0A4F34")
+    draw.text(
+        (48, 22),
+        "OfficeHours Platform — Complete Architecture",
+        fill="#F8FAFC",
+        font=font(36, bold=True),
+    )
+    draw.text(
+        (48, 72),
+        "Peer help + AI study agent · Canvas LMS sync · role-based access · real-time Rooms",
+        fill="#A7F3D0",
+        font=font(17),
+    )
+
+    # Role legend (left rail)
+    role_box = (30, 130, 250, 320)
+    rounded_box(draw, role_box, "#FFFFFF", "#64748B", radius=14, width=2)
+    center_text(
+        draw,
+        role_box,
+        [
+            "User roles",
+            "Student → Agent + Rooms",
+            "TA → Moderation + queue",
+            "Professor → Sync + policy",
+            "Role per course membership",
+        ],
+        title_size=16,
+        body_size=13,
+    )
+
+    # ── Layer 1: Frontend ──────────────────────────────────────────────
+    draw_layer_band(draw, 130, 360, "LAYER 1 · FRONTEND", "#FEF9C3", "#854D0E")
+    frontend_boxes = [
+        (
+            (280, 170, 640, 330),
+            "#FDE68A",
+            "#B45309",
+            [
+                "Web Dashboard",
+                "(Student view)",
+                "Study Agent · Rooms",
+                "Anonymous or named posts",
+            ],
+        ),
+        (
+            (680, 170, 1040, 330),
+            "#FDE68A",
+            "#B45309",
+            [
+                "Web Dashboard",
+                "(TA view)",
+                "Moderate Rooms",
+                "Queue · Help Coach",
+            ],
+        ),
+        (
+            (1080, 170, 1440, 330),
+            "#FDE68A",
+            "#B45309",
+            [
+                "Web Dashboard",
+                "(Professor view)",
+                "Canvas sync · KB gate",
+                "Set course boundaries",
+            ],
+        ),
+        (
+            (1480, 170, 1840, 330),
+            "#FEF3C7",
+            "#D97706",
+            [
+                "Canvas LMS",
+                "Integration Point",
+                "OAuth / LTI launch",
+                "Course + role handoff",
+            ],
+        ),
+    ]
+    for box, fill, outline, lines in frontend_boxes:
+        rounded_box(draw, box, fill, outline, radius=16, width=2)
+        center_text(draw, box, lines, title_size=17, body_size=13)
+
+    draw.text(
+        (1880, 200),
+        "officehours-app :5180",
+        fill="#92400E",
+        font=font(14, bold=True),
+    )
+    draw.text(
+        (1880, 228),
+        "Unified SPA · REST + WebSocket",
+        fill="#78350F",
+        font=font(13),
+    )
+
+    # ── Layer 2: API & Auth ────────────────────────────────────────────
+    draw_layer_band(draw, 380, 560, "LAYER 2 · API & AUTHENTICATION", "#DBEAFE", "#1E40AF")
+    api_boxes = [
+        (
+            (280, 420, 780, 540),
+            "#BFDBFE",
+            "#1D4ED8",
+            [
+                "API Gateway / Server",
+                "FastAPI :8000",
+                "/requests · /agent · /help-room",
+                "/knowledge · /canvas · /ta",
+            ],
+        ),
+        (
+            (820, 420, 1420, 540),
+            "#93C5FD",
+            "#1E3A8A",
+            [
+                "Authentication & Authorization",
+                "AUI email login · Microsoft SSO",
+                "RBAC: student · TA · professor",
+                "Bearer sessions · course scope",
+            ],
+        ),
+        (
+            (1460, 420, 1960, 540),
+            "#BFDBFE",
+            "#1D4ED8",
+            [
+                "WebSocket Server",
+                "WS /ws · real-time hub",
+                "Live Rooms + queue events",
+                "TA / professor dashboards",
+            ],
+        ),
+    ]
+    for box, fill, outline, lines in api_boxes:
+        rounded_box(draw, box, fill, outline, radius=16, width=2)
+        center_text(draw, box, lines, title_size=16, body_size=13)
+
+    # Frontend → API arrows
+    for x in (460, 860, 1260):
+        arrow(draw, (x, 330), (x, 420), "#334155", 2)
+    arrow(draw, (1660, 330), (1100, 420), "#D97706", 2)
+    label_text(draw, (1680, 350), "⑥ OAuth → role", color="#B45309", size=12, bold=True)
+
+    # ── Layer 3: Core Services ─────────────────────────────────────────
+    draw_layer_band(draw, 580, 860, "LAYER 3 · CORE SERVICES", "#D1FAE5", "#047857")
+    service_boxes = [
+        (
+            (280, 620, 620, 820),
+            "#A7F3D0",
+            "#059669",
+            [
+                "Study Agent Service",
+                "LLM answers from syllabus ONLY",
+                "ISOLATED per course",
+                "No other students' notes",
+            ],
+        ),
+        (
+            (660, 620, 1000, 820),
+            "#6EE7B7",
+            "#047857",
+            [
+                "Study Rooms Service",
+                "P2P forum · chapters",
+                "anonymity flag on posts",
+                "problem · discussion · article",
+            ],
+        ),
+        (
+            (1040, 620, 1380, 820),
+            "#A7F3D0",
+            "#059669",
+            [
+                "Rating / Credibility",
+                "Upvote · downvote · helpful",
+                "Stack Overflow-style ranks",
+                "Node Points · ROOMS score",
+            ],
+        ),
+        (
+            (1420, 620, 1760, 820),
+            "#6EE7B7",
+            "#047857",
+            [
+                "Module Sync Engine",
+                "Pull Canvas modules",
+                "→ Rooms chapter grid",
+                "→ Study Agent context",
+            ],
+        ),
+        (
+            (1800, 620, 2140, 820),
+            "#A7F3D0",
+            "#059669",
+            [
+                "Moderation Service",
+                "TA: flag / filter spam",
+                "Professor: set boundaries",
+                "Sensitive-topic guardrails",
+            ],
+        ),
+    ]
+    for box, fill, outline, lines in service_boxes:
+        rounded_box(draw, box, fill, outline, radius=16, width=2)
+        center_text(draw, box, lines, title_size=15, body_size=12)
+
+    # API → services
+    arrow(draw, (530, 540), (450, 620), "#334155", 2)
+    arrow(draw, (1120, 540), (830, 620), "#334155", 2)
+    arrow(draw, (1120, 540), (1210, 620), "#334155", 2)
+    arrow(draw, (1710, 540), (1580, 620), "#334155", 2)
+    arrow(draw, (1710, 540), (1970, 620), "#334155", 2)
+
+    # Flow labels on service layer
+    label_text(draw, (700, 585), "① post question", color="#065F46", size=12, bold=True)
+    label_text(draw, (320, 585), "② ask agent", color="#065F46", size=12, bold=True)
+    label_text(draw, (1100, 585), "③ rate answer", color="#065F46", size=12, bold=True)
+    label_text(draw, (1480, 585), "⑤ professor sync", color="#065F46", size=12, bold=True)
+    label_text(draw, (1860, 585), "④ TA moderate", color="#065F46", size=12, bold=True)
+
+    # Isolation callout for Study Agent
+    iso = (280, 830, 620, 900)
+    rounded_box(draw, iso, "#ECFDF5", "#059669", radius=12, width=2)
+    center_text(
+        draw,
+        iso,
+        ["Course-isolated context", "Cannot access other courses or peer notes"],
+        title_size=13,
+        body_size=12,
+        title_color="#047857",
+    )
+
+    # ── Layer 4: Data ────────────────────────────────────────────────────
+    draw_layer_band(draw, 920, 1140, "LAYER 4 · DATA LAYER (SQLite / Postgres-ready)", "#EDE9FE", "#5B21B6")
+    data_boxes = [
+        (
+            (280, 960, 600, 1100),
+            "#DDD6FE",
+            "#6D28D9",
+            ["Course Database", "Synced from Canvas", "modules · metadata"],
+        ),
+        (
+            (640, 960, 960, 1100),
+            "#DDD6FE",
+            "#6D28D9",
+            ["User Database", "students · TAs · professors", "roles · permissions"],
+        ),
+        (
+            (1000, 960, 1320, 1100),
+            "#C4B5FD",
+            "#5B21B6",
+            ["Study Rooms Database", "posts · replies · votes", "anonymity flags"],
+        ),
+        (
+            (1360, 960, 1680, 1100),
+            "#DDD6FE",
+            "#6D28D9",
+            ["Study Agent Context Store", "professor-approved syllabus", "approved KB chunks only"],
+        ),
+        (
+            (1720, 960, 2040, 1100),
+            "#C4B5FD",
+            "#5B21B6",
+            ["User Profiles", "display name · student ID", "anonymous or named option"],
+        ),
+    ]
+    for box, fill, outline, lines in data_boxes:
+        rounded_box(draw, box, fill, outline, radius=14, width=2)
+        center_text(draw, box, lines, title_size=14, body_size=12)
+
+    # Service → database arrows (color-coded, minimal crossing)
+    db_links = [
+        ((450, 820), (440, 960), "#059669"),  # Study Agent → context store
+        ((830, 820), (1160, 960), "#047857"),  # Rooms → rooms DB
+        ((1210, 820), (1160, 960), "#047857"),  # Rating → rooms DB
+        ((1580, 820), (440, 960), "#047857"),  # Sync → course DB
+        ((1580, 820), (1520, 960), "#047857"),  # Sync → context store
+        ((1970, 820), (1160, 960), "#047857"),  # Moderation → rooms DB
+        ((1120, 540), (800, 960), "#1D4ED8"),  # Auth → user DB
+        ((1120, 540), (1880, 960), "#1D4ED8"),  # Auth → profiles
+    ]
+    for start, end, color in db_links:
+        arrow(draw, start, end, color, 2)
+
+    # ── Layer 5: External ────────────────────────────────────────────────
+    draw_layer_band(draw, 1160, 1340, "LAYER 5 · EXTERNAL INTEGRATIONS", "#F1F5F9", "#475569")
+    ext_boxes = [
+        (
+            (400, 1200, 900, 1310),
+            "#E2E8F0",
+            "#334155",
+            [
+                "Canvas LMS",
+                "OAuth / LTI · course sync",
+                "user enrollment · modules API",
+            ],
+        ),
+        (
+            (980, 1200, 1480, 1310),
+            "#FEE2E2",
+            "#DC2626",
+            [
+                "LLM Provider",
+                "Claude / GPT API",
+                "Study Agent inference",
+                "(external LLM optional)",
+            ],
+        ),
+        (
+            (1560, 1200, 2060, 1310),
+            "#E0F2FE",
+            "#0284C7",
+            [
+                "Email Service",
+                "AUI authentication identity",
+                "notifications (planned)",
+            ],
+        ),
+    ]
+    for box, fill, outline, lines in ext_boxes:
+        rounded_box(draw, box, fill, outline, radius=14, width=2)
+        center_text(draw, box, lines, title_size=15, body_size=13)
+
+    # External ↔ platform
+    arrow(draw, (650, 1200), (1660, 330), "#475569", 2)
+    arrow(draw, (650, 1200), (1580, 620), "#475569", 2)
+    arrow(draw, (650, 1200), (440, 960), "#475569", 2)
+    label_text(draw, (700, 1175), "Canvas sync + OAuth", color="#334155", size=12, bold=True)
+
+    arrow(draw, (450, 820), (1230, 1200), "#DC2626", 2)
+    label_text(draw, (820, 1120), "② queries syllabus only", color="#B91C1C", size=12, bold=True)
+
+    arrow(draw, (1120, 540), (1810, 1200), "#0284C7", 2)
+    label_text(draw, (1500, 1155), "AUI email identity", color="#0369A1", size=12, bold=True)
+
+    # ── Key highlights footer ────────────────────────────────────────────
+    footer = (30, 1360, 2570, 1650)
+    rounded_box(draw, footer, "#FFFFFF", "#0F172A", radius=18, width=3)
+    draw.text((52, 1380), "Key architecture highlights", fill="#0F172A", font=font(20, bold=True))
+
+    highlights = [
+        ("✓", "Study Agent isolated from peer help and other courses — syllabus context store only"),
+        ("✓", "Study Rooms support anonymity flag; TA moderation authority; professor policy boundaries"),
+        ("✓", "Real-time WebSocket for live Rooms and staff dashboards"),
+        ("✓", "Canvas is external dependency for auth handoff, enrollment, and module sync"),
+        ("✓", "Rating/credibility system feeds Stack Overflow-style reputation in Rooms"),
+        ("✓", "Each service owns distinct data concerns (course · users · rooms · KB context · profiles)"),
+    ]
+    y = 1420
+    for mark, text in highlights:
+        draw.text((60, y), mark, fill="#059669", font=font(16, bold=True))
+        draw.text((90, y), text, fill="#334155", font=font(14))
+        y += 36
+
+    # Data flow legend (right side of footer)
+    flow_box = (1480, 1380, 2540, 1630)
+    rounded_box(draw, flow_box, "#F0FDF4", "#059669", radius=14, width=2)
+    draw.text((1500, 1395), "Numbered data flows", fill="#047857", font=font(17, bold=True))
+    flows = [
+        "① Student posts question → Study Rooms Service → Rooms DB",
+        "② Student asks Study Agent → Context Store (syllabus only) → LLM → answer",
+        "③ Student upvotes/rates → Rating/Credibility → Rooms DB",
+        "④ TA moderates Rooms → Moderation Service filters content",
+        "⑤ Professor syncs Canvas → Module Sync → chapters + agent context",
+        "⑥ Canvas OAuth/LTI → Auth Service → role assignment (student/TA/professor)",
+    ]
+    fy = 1435
+    for line in flows:
+        draw.text((1510, fy), line, fill="#1E293B", font=font(13))
+        fy += 30
+
+    save(img, "platform_architecture.png")
+
+
 if __name__ == "__main__":
+    draw_platform_architecture()
     draw_architecture()
     draw_workflow()
     draw_oracle_agents()

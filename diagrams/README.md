@@ -5,6 +5,7 @@ Generated visuals for the **unified product + Canvas** era. Narrative:
 
 | File | Description |
 | --- | --- |
+| `platform_architecture.png` | **Complete platform** — all 5 layers, core services, databases, external integrations, role paths, and numbered data flows |
 | `architecture.png` | Product app + FastAPI + Canvas + Analyzer/Matcher/Synthesizer + Rooms + curation |
 | `workflow.png` | Identity + help mode → Ask Triage → TA → professor → KB / meetings |
 | `oracle_agents.png` | Ask Triage Analyzer / Matcher / Synthesizer (filename historical) |
