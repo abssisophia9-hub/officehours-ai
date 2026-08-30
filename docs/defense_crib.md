@@ -45,11 +45,15 @@ Password `aui-demo`. Role is per course.
 Live Matcher on a real roster is **heuristic** (tag overlap + per-course depth),
 not `matcher_classifier.joblib`.
 
-## If they ask “what’s next?”
+## Scale that is in the code: `DATABASE_URL` for Postgres, inbox + optional SMTP
+on claim/reply, `limit`/`offset` on big lists, professor **Evaluate gold now**
+(does not rewrite `.joblib` unless `OFFICEHOURS_ALLOW_RETRAIN`).
 
-Postgres + notifications for a real term. A **TA gold lab** (≥40 `human_gold`
-rows from one AUI section) — not a Likert survey. IT: Entra + LTI key + Canvas
-token. Do not add an unconstrained LLM. That breaks the gate.
+If they ask “what’s next?”
+
+A **TA gold lab** (≥40 `human_gold` rows from one AUI section) — not a Likert
+survey. IT: Entra + LTI key + Canvas token. Do not add an unconstrained LLM.
+That breaks the gate.
 
 ## Forbidden sentences
 

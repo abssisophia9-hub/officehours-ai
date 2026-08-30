@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, Navigate } from "react-router";
 import { api } from "../api/client.js";
+import { pageItems } from "../api/page.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import HelpRoomFeed from "../components/HelpRoomFeed.jsx";
 import PeerNotesFeed from "../components/PeerNotesFeed.jsx";
@@ -63,11 +64,11 @@ export default function StudentWorkspace() {
     if (!activeCourse) return;
     try {
       const [requests, approved, hitRate] = await Promise.all([
-        api(`/requests/?course_id=${activeCourse.id}`, { token }),
-        api(`/knowledge/?status=approved&course_id=${activeCourse.id}`, { token }),
+        api(`/requests/?course_id=${activeCourse.id}&limit=50`, { token }),
+        api(`/knowledge/?status=approved&course_id=${activeCourse.id}&limit=50`, { token }),
         api(`/analytics/kb-hit-rate?course_id=${activeCourse.id}`, { token }),
       ]);
-      const inCourse = requests.filter(
+      const inCourse = pageItems(requests).filter(
         (item) => !item.course || item.course === activeCourse.code,
       );
       const asks = hitRate?.total_asks || 0;
@@ -76,7 +77,7 @@ export default function StudentWorkspace() {
       setStats({
         open: inCourse.length,
         anonymous: inCourse.filter((item) => item.anonymous).length,
-        approved: approved.length,
+        approved: pageItems(approved).length,
         hitShort: asks ? `${hits}/${asks}` : "—",
         hitLabel: asks
           ? `${hits} of ${asks} asks this course hit a stamp`

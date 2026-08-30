@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router";
 import { api, apiUpload } from "../api/client.js";
+import { pageItems } from "../api/page.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 const ICONS = {
@@ -49,6 +50,8 @@ export default function ProfessorWorkspace() {
   const [cohortNotes, setCohortNotes] = useState({});
   const [hitRate, setHitRate] = useState(null);
   const [goldCount, setGoldCount] = useState(0);
+  const [retrainBusy, setRetrainBusy] = useState(false);
+  const [retrainReport, setRetrainReport] = useState(null);
   const fileInputRef = useRef(null);
 
   function meetingDraft(clusterId) {
@@ -75,8 +78,8 @@ export default function ProfessorWorkspace() {
   const load = useCallback(async () => {
     try {
       const [req, kb, clusters, canvas, load, insights, rate, gold] = await Promise.all([
-        api(`/requests/?course_id=${activeCourse.id}`, { token }),
-        api(`/knowledge/?status=pending_review&course_id=${activeCourse.id}`, { token }),
+        api(`/requests/?course_id=${activeCourse.id}&limit=50`, { token }),
+        api(`/knowledge/?status=pending_review&course_id=${activeCourse.id}&limit=50`, { token }),
         api(
           `/analytics/clusters?course_id=${activeCourse.id}&course=${encodeURIComponent(activeCourse.code)}`,
           { token },
@@ -88,12 +91,12 @@ export default function ProfessorWorkspace() {
         api(`/analytics/gold-labels?course_id=${activeCourse.id}`, { token }),
       ]);
       setRequests(
-        req.filter((item) => !item.course || item.course === activeCourse.code),
+        pageItems(req).filter((item) => !item.course || item.course === activeCourse.code),
       );
       setEntries(
-        kb.filter((item) => {
+        pageItems(kb).filter((item) => {
           if (item.course_id && item.course_id !== activeCourse.id) return false;
-          const linked = req.find((r) => r.id === item.source_request_id);
+          const linked = pageItems(req).find((r) => r.id === item.source_request_id);
           return !linked?.course || linked.course === activeCourse.code;
         }),
       );
@@ -417,6 +420,37 @@ export default function ProfessorWorkspace() {
               ? `${hitRate.total_hits || 0} hit · ${hitRate.total_misses || 0} refused · ${goldCount} TA gold labels`
               : "No student agent asks yet"}
           </p>
+          <button
+            type="button"
+            className="btn-ghost mt-2 px-3 py-1.5 text-xs"
+            disabled={retrainBusy}
+            onClick={async () => {
+              setRetrainBusy(true);
+              try {
+                const report = await api(
+                  `/analytics/retrain?course_id=${activeCourse.id}&apply_models=false`,
+                  { method: "POST", token },
+                );
+                setRetrainReport(report);
+                setMessage(
+                  report.message ||
+                    `Evaluated ${report.n_labels || 0} gold labels. Joblib not rewritten.`,
+                );
+              } catch (err) {
+                setError(err.message);
+              } finally {
+                setRetrainBusy(false);
+              }
+            }}
+          >
+            {retrainBusy ? "Evaluating…" : "Evaluate gold now"}
+          </button>
+          {retrainReport?.analyzer?.accuracy != null ? (
+            <p className="mt-1 text-[11px] text-aui-deep/70">
+              Analyzer {Math.round(retrainReport.analyzer.accuracy * 100)}% on{" "}
+              {retrainReport.n_labels} labels
+            </p>
+          ) : null}
         </article>
       </div>
 

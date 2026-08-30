@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Navigate } from "react-router";
 import { api } from "../api/client.js";
+import { pageItems, pageMeta } from "../api/page.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 const ICONS = {
@@ -59,15 +60,19 @@ export default function TaWorkspace() {
   const [goldCategory, setGoldCategory] = useState("conceptual_question");
   const [goldHintUseful, setGoldHintUseful] = useState("1");
   const [goldBusy, setGoldBusy] = useState(false);
+  const [queuePage, setQueuePage] = useState({ has_more: false, total: 0 });
 
   const loadQueue = useCallback(async () => {
     try {
       const params = new URLSearchParams({
         course_id: String(activeCourse.id),
         assignment: assignmentFilter,
+        limit: "50",
+        offset: "0",
       });
       const data = await api(`/ta/queue/?${params.toString()}`, { token });
-      setQueue(data);
+      setQueue(pageItems(data));
+      setQueuePage(pageMeta(data));
       setError("");
     } catch (err) {
       setError(err.message);
@@ -521,6 +526,12 @@ export default function TaWorkspace() {
             </tbody>
           </table>
         )}
+        {queuePage.has_more ? (
+          <p className="mt-2 text-xs text-aui-deep/70">
+            Showing {queue.length} of {queuePage.total}. Refine the desk filter
+            or raise the page size — this is a paged queue.
+          </p>
+        ) : null}
       </section>
 
       {selected && req ? (

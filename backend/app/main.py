@@ -25,6 +25,7 @@ from app.models import social as _social_model  # noqa: F401
 from app.models import peer_notes as _peer_notes_model  # noqa: F401
 from app.models import help_room as _help_room_model  # noqa: F401
 from app.models import feedback as _feedback_model  # noqa: F401
+from app.models import notification as _notification_model  # noqa: F401
 from app.realtime.hub import set_main_loop
 from app.routes.actions import router as actions_router
 from app.routes.auth import courses_router, router as auth_router
@@ -38,6 +39,7 @@ from app.routes.help_room import router as help_room_router
 from app.routes.realtime import router as realtime_router
 from app.routes.requests import router as requests_router
 from app.routes.ta import router as ta_router
+from app.routes.notifications import router as notifications_router
 from app.database.session import SessionLocal
 from app.services.demo_accounts import ensure_demo_accounts
 from app.services.demo_mode import demo_mode
@@ -111,7 +113,11 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "demo": demo_mode()}
+    return {
+        "status": "healthy",
+        "demo": demo_mode(),
+        "database": engine.dialect.name,
+    }
 
 
 app.include_router(auth_router)
@@ -126,4 +132,5 @@ app.include_router(ta_router)
 app.include_router(peer_notes_router)
 app.include_router(help_room_router)
 app.include_router(feedback_router)
+app.include_router(notifications_router)
 app.include_router(realtime_router)

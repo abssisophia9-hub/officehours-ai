@@ -35,6 +35,7 @@ from app.services.oracle_service import (
     build_oracle_public_payload,
     run_oracle_pipeline,
 )
+from app.services.pagination import clamp_page, page_or_list
 from app.services.request_serializer import to_request_out
 from app.services.request_status_service import build_request_status
 from app.services.study_buddy_service import (
@@ -290,9 +291,11 @@ def _require_status_access(db: Session, user: User, db_request: Request) -> None
     require_course_member(db, user, db_request.course_id)
 
 
-@router.get("/", response_model=list[RequestOut])
+@router.get("/")
 def list_requests(
     course_id: int | None = Query(default=None),
+    limit: int | None = Query(default=None, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
@@ -320,7 +323,9 @@ def list_requests(
         if not clauses:
             return []
         query = query.filter(or_(*clauses))
-    return [to_request_out(item, db=db) for item in query.order_by(Request.id).all()]
+    rows = [to_request_out(item, db=db) for item in query.order_by(Request.id).all()]
+    limit, offset = clamp_page(limit, offset)
+    return page_or_list(rows, limit=limit, offset=offset)
 
 
 @router.get("/{request_id}/status", response_model=RequestStatusOut)

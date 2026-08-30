@@ -120,7 +120,21 @@ def _add_column_if_missing(
 ) -> None:
     if column_name in columns:
         return
+    mapped = column_type
+    if engine.dialect.name == "postgresql":
+        mapped = {
+            "VARCHAR": "VARCHAR",
+            "TEXT": "TEXT",
+            "INTEGER": "INTEGER",
+            "BOOLEAN": "BOOLEAN",
+            "BOOLEAN DEFAULT 0": "BOOLEAN DEFAULT FALSE",
+            "INTEGER DEFAULT 0": "INTEGER DEFAULT 0",
+            "DATETIME": "TIMESTAMP WITH TIME ZONE",
+            "VARCHAR DEFAULT 'stuck'": "VARCHAR DEFAULT 'stuck'",
+            "VARCHAR DEFAULT 'problem'": "VARCHAR DEFAULT 'problem'",
+            "VARCHAR DEFAULT 'open'": "VARCHAR DEFAULT 'open'",
+        }.get(column_type, column_type)
     with engine.begin() as connection:
         connection.execute(
-            text(f"ALTER TABLE {table} ADD COLUMN {column_name} {column_type}")
+            text(f"ALTER TABLE {table} ADD COLUMN {column_name} {mapped}")
         )

@@ -35,6 +35,8 @@ from app.services.course_ta_service import build_course_ta_load
 from app.services.help_coach_service import build_help_coach, run_help_coach_assist
 from app.services.knowledge_service import to_out
 from app.services.oracle_service import ensure_default_roster
+from app.services.notify_service import notify_request_owner
+from app.services.pagination import clamp_page, page_or_list
 from app.services.request_serializer import to_request_out
 
 router = APIRouter(prefix="/ta", tags=["ta"])
@@ -89,7 +91,7 @@ def course_ta_load(
     return build_course_ta_load(db, course_id=course_id)
 
 
-@router.get("/queue/", response_model=list[TaQueueItem])
+@router.get("/queue/")
 def list_ta_queue(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
@@ -99,6 +101,8 @@ def list_ta_queue(
         description="desk | mine | backup | unassigned | all | in_progress",
     ),
     include_helped: bool = Query(default=False),
+    limit: int | None = Query(default=None, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
 ):
     if course_id is None:
         raise HTTPException(
@@ -203,7 +207,8 @@ def list_ta_queue(
                 help_coach=None,
             )
         )
-    return items
+    limit, offset = clamp_page(limit, offset)
+    return page_or_list(items, limit=limit, offset=offset)
 
 
 @router.get("/coach/", response_model=HelpCoachOut)
@@ -339,6 +344,13 @@ async def claim_request(
             "work_status": "claimed",
             "course_id": request.course_id,
         },
+    )
+    await notify_request_owner(
+        db,
+        request,
+        kind="claimed",
+        title=f"A TA claimed your ask #{request.id}",
+        body=f"{ta_name} claimed request #{request.id}. Check status with your request code.",
     )
     return TaActionResponse(
         request=to_request_out(request, db=db),
@@ -489,6 +501,13 @@ async def reply_to_student(
     await hub.broadcast(
         "ta.replied",
         {"request_id": request.id, "ta_name": ta_name, "course_id": request.course_id},
+    )
+    await notify_request_owner(
+        db,
+        request,
+        kind="replied",
+        title=f"A TA replied to ask #{request.id}",
+        body=reply[:400],
     )
     return TaActionResponse(
         request=to_request_out(request, db=db),

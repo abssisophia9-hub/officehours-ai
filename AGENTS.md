@@ -48,8 +48,9 @@ milestone archives — not product jobs.
 ### Database
 
 - Default DB is SQLite at `backend/officehours.db` (auto-created at startup via
-  `Base.metadata.create_all`). Override with the `DATABASE_URL` env var. Tests
-  set `DATABASE_URL=sqlite:///:memory:`.
+  `Base.metadata.create_all`). Override with `DATABASE_URL`. Tests set
+  `DATABASE_URL=sqlite:///:memory:`. Postgres: see `docs/ops_scale.md` and
+  `docker-compose.postgres.yml`.
 
 ### Demo vs community deploy
 

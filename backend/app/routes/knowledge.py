@@ -72,14 +72,18 @@ from app.services.knowledge_service import (
     update_entry,
 )
 from app.services.oracle_service import lifetime_confusion_topics
+from app.services.pagination import clamp_page, page_or_list
+from app.services.retrain_service import run_retrain
 
 router = APIRouter(tags=["knowledge"])
 
 
-@router.get("/knowledge/", response_model=list[KnowledgeEntryOut])
+@router.get("/knowledge/")
 def list_knowledge_entries(
     status_filter: str | None = Query(default=None, alias="status"),
     course_id: int | None = Query(default=None),
+    limit: int | None = Query(default=None, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
@@ -98,10 +102,12 @@ def list_knowledge_entries(
                     detail="Students can only list approved knowledge.",
                 )
             status_filter = "approved"
-        return [
+        rows = [
             to_out(entry)
             for entry in list_entries(db, status_filter=status_filter, course_id=course_id)
         ]
+        limit, offset = clamp_page(limit, offset)
+        return page_or_list(rows, limit=limit, offset=offset)
 
     allowed = user_course_ids(db, user)
     staff_ids = set(user_staff_course_ids(db, user))
@@ -113,7 +119,9 @@ def list_knowledge_entries(
                 continue
             want = "approved"
         entries.extend(list_entries(db, status_filter=want, course_id=cid))
-    return [to_out(entry) for entry in entries]
+    rows = [to_out(entry) for entry in entries]
+    limit, offset = clamp_page(limit, offset)
+    return page_or_list(rows, limit=limit, offset=offset)
 
 
 @router.get("/knowledge/canvas/status")
@@ -493,6 +501,21 @@ def get_gold_labels(
     return list_gold_labels(
         db, department=department, course_ids=allowed, limit=limit
     )
+
+
+@router.post("/analytics/retrain")
+def retrain_from_gold(
+    course_id: int | None = Query(default=None),
+    apply_models: bool = Query(default=False),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Evaluate gold labels. Rewrite Analyzer joblib only if ALLOW_RETRAIN + apply."""
+    if course_id is not None:
+        require_course_role(db, user, course_id, roles={"professor"})
+    else:
+        require_staff_anywhere(db, user)
+    return run_retrain(db, course_id=course_id, apply_models=apply_models)
 
 
 @router.get("/analytics/lifetime-confusion")

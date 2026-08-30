@@ -125,6 +125,11 @@ Optional environment variables:
 - `OFFICEHOURS_FRONTEND_URL` / `OFFICEHOURS_CORS_ORIGINS` — CORS allow-list
   (no `*`). WebSocket `/ws?token=&course_id=` is course-scoped.
 - `OFFICEHOURS_RATE_LIMIT=false` — tests only; leave on for a host.
+- `DATABASE_URL` — SQLite default; `postgresql://…` for campus (pool +
+  `psycopg2`). See `docs/ops_scale.md`.
+- `OFFICEHOURS_SMTP_*` — optional email when a TA claims / replies.
+- `OFFICEHOURS_ALLOW_RETRAIN=true` — required before `POST /analytics/retrain`
+  may rewrite Analyzer `.joblib`.
 - `OFFICEHOURS_CANVAS_MODE=live|local|none` — optional override; live wins when
   `CANVAS_BASE_URL` + `CANVAS_ACCESS_TOKEN` are set
 
