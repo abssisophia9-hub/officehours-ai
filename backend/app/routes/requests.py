@@ -4,11 +4,17 @@ Routes for submitting and retrieving student requests.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.ai.clustering import assign_cluster_id
 from app.database.session import get_db
+from app.models.auth import User
+from app.routes.auth import get_current_user
+from app.services.access_control import (
+    require_course_member,
+    user_course_ids,
+)
 from app.models.action import RecommendationDecision
 from app.models.request import (
     HELP_MODES,
@@ -48,7 +54,17 @@ HELP_MODE_ACTIONS = {
 
 
 @router.post("/", response_model=RequestOut, status_code=status.HTTP_201_CREATED)
-async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
+async def create_request(
+    payload: RequestCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    if payload.course_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="course_id is required.",
+        )
+    require_course_member(db, user, payload.course_id)
     request_data = payload.model_dump()
 
     help_mode = str(request_data.get("help_mode") or "message").strip().lower()
@@ -230,46 +246,75 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
     return to_request_out(db_request, oracle=public_oracle, db=db)
 
 
+def _require_request_access(db: Session, user: User, db_request: Request) -> None:
+    if db_request.course_id is None:
+        return
+    require_course_member(db, user, db_request.course_id)
+
+
 @router.get("/", response_model=list[RequestOut])
-def list_requests(db: Session = Depends(get_db)):
-    return [
-        to_request_out(item, db=db)
-        for item in db.query(Request).order_by(Request.id).all()
-    ]
+def list_requests(
+    course_id: int | None = Query(default=None),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    query = db.query(Request)
+    if course_id is not None:
+        require_course_member(db, user, course_id)
+        query = query.filter(Request.course_id == course_id)
+    else:
+        allowed = user_course_ids(db, user)
+        query = query.filter(Request.course_id.in_(allowed or [-1]))
+    return [to_request_out(item, db=db) for item in query.order_by(Request.id).all()]
 
 
 @router.get("/{request_id}/status", response_model=RequestStatusOut)
-def get_request_status(request_id: int, db: Session = Depends(get_db)):
+def get_request_status(
+    request_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     db_request = db.get(Request, request_id)
     if db_request is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Request not found",
         )
+    _require_request_access(db, user, db_request)
 
     decisions = db.query(RecommendationDecision).order_by(RecommendationDecision.id).all()
     return build_request_status(db_request, decisions)
 
 
 @router.get("/{request_id}", response_model=RequestOut)
-def get_request(request_id: int, db: Session = Depends(get_db)):
+def get_request(
+    request_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     db_request = db.get(Request, request_id)
     if db_request is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Request not found",
         )
+    _require_request_access(db, user, db_request)
     return to_request_out(db_request, db=db)
 
 
 @router.get("/{request_id}/study-buddy", response_model=StudyBuddyStatusOut)
-def study_buddy_status(request_id: int, db: Session = Depends(get_db)):
+def study_buddy_status(
+    request_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     db_request = db.get(Request, request_id)
     if db_request is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Request not found",
         )
+    _require_request_access(db, user, db_request)
     return get_study_buddy_status(db, db_request)
 
 
@@ -278,6 +323,7 @@ def study_buddy_opt_in(
     request_id: int,
     payload: StudyBuddyOptInCreate | None = None,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     db_request = db.get(Request, request_id)
     if db_request is None:
@@ -285,5 +331,6 @@ def study_buddy_opt_in(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Request not found",
         )
+    _require_request_access(db, user, db_request)
     label = payload.display_label if payload else None
     return opt_in_study_buddy(db, db_request, display_label=label)

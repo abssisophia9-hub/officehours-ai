@@ -68,6 +68,7 @@ def test_canvas_sync_feeds_course_kb_agent():
 
     answer = client.post(
         "/agent/ask",
+        headers=headers,
         json={
             "question": "How do hash tables handle collisions?",
             "course_id": course_id,
@@ -121,12 +122,14 @@ def test_materials_require_professor_auth_and_strict_course_scope():
     )
     miss = client.post(
         "/agent/ask",
+        headers=headers,
         json={"question": "How do hash tables handle collisions?", "course_id": other},
     ).json()
     assert miss["matched_count"] == 0
 
     hit = client.post(
         "/agent/ask",
+        headers=headers,
         json={
             "question": "How do hash tables handle collisions?",
             "course_id": course_id,

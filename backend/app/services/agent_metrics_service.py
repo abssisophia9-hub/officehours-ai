@@ -121,9 +121,12 @@ def list_gold_labels(
     db: Session,
     *,
     department: str | None = None,
+    course_id: int | None = None,
     limit: int = 200,
 ) -> list[AgentGoldLabel]:
     query = db.query(AgentGoldLabel).order_by(AgentGoldLabel.id.desc())
     if department:
         query = query.filter(AgentGoldLabel.department == department.strip())
+    if course_id is not None:
+        query = query.filter(AgentGoldLabel.course_id == course_id)
     return query.limit(limit).all()

@@ -56,6 +56,9 @@ export default function TaWorkspace() {
   const [meetingTitle, setMeetingTitle] = useState("");
   const [meetingWhen, setMeetingWhen] = useState("");
   const [meetingPlace, setMeetingPlace] = useState("");
+  const [goldCategory, setGoldCategory] = useState("conceptual_question");
+  const [goldHintUseful, setGoldHintUseful] = useState("1");
+  const [goldBusy, setGoldBusy] = useState(false);
 
   const loadQueue = useCallback(async () => {
     try {
@@ -516,12 +519,21 @@ export default function TaWorkspace() {
                   ? `${req.oracle_estimated_minutes} min`
                   : "n/a"}
               </li>
-              <li>
-                <strong>Learning style:</strong>{" "}
-                {selected.learning_style || req.learning_style || "n/a"}
-                {" · "}
-                <strong>Urgency:</strong> {req.urgency || "n/a"}
-              </li>
+              {selected.learning_style &&
+              selected.learning_style !== "unknown" &&
+              req.learning_style &&
+              req.learning_style !== "unknown" ? (
+                <li>
+                  <strong>Learning style:</strong>{" "}
+                  {selected.learning_style || req.learning_style}
+                  {" · "}
+                  <strong>Urgency:</strong> {req.urgency || "n/a"}
+                </li>
+              ) : (
+                <li>
+                  <strong>Urgency:</strong> {req.urgency || "n/a"}
+                </li>
+              )}
               <li>
                 <strong>Tags:</strong> {tags.length ? tags.join(", ") : "none"}
               </li>
@@ -886,6 +898,79 @@ export default function TaWorkspace() {
             >
               Needs professor
             </button>
+          </div>
+
+          <div className="mt-5 rounded-xl border border-[#d7e0d9] p-3">
+            <p className="text-sm font-semibold text-aui-ink">Gold label this ask</p>
+            <p className="mt-1 text-xs text-aui-deep/70">
+              Your judgment trains the next Analyzer / Matcher eval — not the
+              live student agent.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <select
+                className="field-glass px-3 py-2 text-xs"
+                value={goldCategory}
+                onChange={(event) => setGoldCategory(event.target.value)}
+              >
+                {[
+                  "conceptual_question",
+                  "exam_logistics",
+                  "retake_request",
+                  "accessibility_accommodation",
+                  "grading_dispute",
+                  "emotional_stress",
+                  "project_submission",
+                  "office_hours_access",
+                  "academic_integrity",
+                  "uncategorized",
+                ].map((value) => (
+                  <option key={value} value={value}>
+                    {value.replaceAll("_", " ")}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="field-glass px-3 py-2 text-xs"
+                value={goldHintUseful}
+                onChange={(event) => setGoldHintUseful(event.target.value)}
+              >
+                <option value="1">Hint was useful</option>
+                <option value="0">Hint was not useful</option>
+              </select>
+              <button
+                type="button"
+                disabled={goldBusy}
+                className="btn-ghost px-3 py-2 text-xs"
+                onClick={async () => {
+                  setGoldBusy(true);
+                  setError("");
+                  try {
+                    await api("/analytics/gold-labels", {
+                      method: "POST",
+                      token,
+                      body: {
+                        text: req.text,
+                        gold_category: goldCategory,
+                        gold_assigned_ta: req.assigned_ta || user.display_name,
+                        gold_hint_useful: Number(goldHintUseful),
+                        course_id: activeCourse.id,
+                        course_code: activeCourse.code,
+                        department: activeCourse.code.split(" ")[0],
+                        labeled_by: user.email,
+                        notes: `request #${req.id}`,
+                      },
+                    });
+                    setToast(`Gold label saved for #${req.id}`);
+                  } catch (err) {
+                    setError(err.message);
+                  } finally {
+                    setGoldBusy(false);
+                  }
+                }}
+              >
+                {goldBusy ? "Saving…" : "Save gold label"}
+              </button>
+            </div>
           </div>
         </section>
       ) : (

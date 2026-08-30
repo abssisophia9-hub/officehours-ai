@@ -42,6 +42,7 @@ def test_course_has_two_tas_and_matcher_stays_in_course():
 
     created = client.post(
         "/requests/",
+        headers={"Authorization": f"Bearer {student['token']}"},
         json={
             "text": "In CSC 2302 I am stuck on red-black tree deletion fixup rotations.",
             "anonymous": True,
@@ -65,6 +66,7 @@ def test_ta_queue_mine_vs_backup_filters():
     course = next(c for c in student["user"]["courses"] if c["code"] == "CSC 2302")
     created = client.post(
         "/requests/",
+        headers={"Authorization": f"Bearer {student['token']}"},
         json={
             "text": "Hash table chaining vs open addressing for collisions?",
             "anonymous": True,
@@ -96,6 +98,7 @@ def test_solidarity_and_study_buddy_for_non_sensitive_cluster():
     course = next(c for c in student["user"]["courses"] if c["code"] == "CSC 2302")
     first = client.post(
         "/requests/",
+        headers={"Authorization": f"Bearer {student['token']}"},
         json={
             "text": "How do AVL rotations keep BST height logarithmic after insert?",
             "anonymous": True,
@@ -106,6 +109,7 @@ def test_solidarity_and_study_buddy_for_non_sensitive_cluster():
     # Force same topic cluster so solidarity is deterministic in tests.
     second = client.post(
         "/requests/",
+        headers={"Authorization": f"Bearer {student['token']}"},
         json={
             "text": "My BST insert keeps unbalancing — how do rotations keep height logarithmic?",
             "anonymous": True,
@@ -121,6 +125,7 @@ def test_solidarity_and_study_buddy_for_non_sensitive_cluster():
 
     status = client.post(
         f"/requests/{second['id']}/study-buddy",
+        headers={"Authorization": f"Bearer {student['token']}"},
         json={"request_id": second["id"]},
     ).json()
     assert status["opted_in"] is True
@@ -129,6 +134,7 @@ def test_solidarity_and_study_buddy_for_non_sensitive_cluster():
     # Sensitive asks cannot peer-match.
     stress = client.post(
         "/requests/",
+        headers={"Authorization": f"Bearer {student['token']}"},
         json={
             "text": "I am panicking about failing and need private emotional support.",
             "anonymous": True,
@@ -138,6 +144,7 @@ def test_solidarity_and_study_buddy_for_non_sensitive_cluster():
     ).json()
     blocked = client.post(
         f"/requests/{stress['id']}/study-buddy",
+        headers={"Authorization": f"Bearer {student['token']}"},
         json={"request_id": stress["id"]},
     ).json()
     assert blocked["eligible"] is False

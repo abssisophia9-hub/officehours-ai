@@ -76,9 +76,16 @@ def test_matcher_uses_category_expertise_tags():
 
 
 def test_kb_miss_sets_should_seek_help():
+    from tests.helpers import student_auth
+
+    headers, course_id = student_auth(client)
     response = client.post(
         "/agent/ask",
-        json={"question": "What is the yoga blockchain midterm policy for CSC 9999?"},
+        headers=headers,
+        json={
+            "question": "What is the yoga blockchain midterm policy for CSC 9999?",
+            "course_id": course_id,
+        },
     ).json()
     assert response["matched_count"] == 0
     assert response["should_seek_help"] is True

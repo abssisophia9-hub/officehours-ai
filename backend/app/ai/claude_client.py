@@ -80,6 +80,7 @@ def synthesize_solution(
     similar_questions: list[dict[str, Any]],
     learning_style: str | None = None,
     code_snippet: str | None = None,
+    course: str | None = None,
 ) -> dict[str, Any]:
     """Synthesizer: RAG over teaching bank / approved KB + style ranker."""
     return synthesize_with_model(
@@ -88,4 +89,5 @@ def synthesize_solution(
         similar_questions=similar_questions,
         learning_style=learning_style,
         code_snippet=code_snippet,
+        course=course,
     )

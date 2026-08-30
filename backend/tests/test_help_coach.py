@@ -48,6 +48,7 @@ def test_queue_includes_help_coach_and_similar_badge():
 
     first = client.post(
         "/requests/",
+        headers=_auth(student),
         json={
             "text": "Red-black tree delete fixup loops forever after rotating uncle.",
             "anonymous": True,
@@ -58,6 +59,7 @@ def test_queue_includes_help_coach_and_similar_badge():
     ).json()
     second = client.post(
         "/requests/",
+        headers=_auth(student),
         json={
             "text": "My red-black deletion fixup never terminates on uncle rotation.",
             "anonymous": True,
@@ -92,6 +94,7 @@ def test_assist_draft_reply_socratic_and_rewrite():
 
     created = client.post(
         "/requests/",
+        headers=_auth(student),
         json={
             "text": "Hash table open addressing vs chaining — when does clustering hurt?",
             "anonymous": False,
@@ -146,6 +149,7 @@ def test_refresh_teaching_updates_pending_draft():
 
     created = client.post(
         "/requests/",
+        headers=_auth(student),
         json={
             "text": "Explain AVL rotations after a double imbalance on insert.",
             "anonymous": True,
@@ -179,6 +183,7 @@ def test_student_cannot_use_help_coach_on_other_course():
     course_id = _csc2302(student)
     created = client.post(
         "/requests/",
+        headers=_auth(student),
         json={
             "text": "Quick BST height question for coach auth check.",
             "anonymous": True,

@@ -55,7 +55,7 @@ export default function StudentWorkspace() {
     if (!activeCourse) return;
     try {
       const [requests, approved] = await Promise.all([
-        api("/requests/", { token }),
+        api(`/requests/?course_id=${activeCourse.id}`, { token }),
         api(`/knowledge/?status=approved&course_id=${activeCourse.id}`, { token }),
       ]);
       const inCourse = requests.filter(
@@ -509,7 +509,13 @@ export default function StudentWorkspace() {
                 perspective.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <a href="#ask" className="btn-primary inline-flex px-4 py-2 text-xs">
+                <a
+                  href="#ask"
+                  className="btn-primary inline-flex px-4 py-2 text-xs"
+                  onClick={() => {
+                    if (agentQ.trim()) setText(agentQ);
+                  }}
+                >
                   Go to Quiet ask
                 </a>
                 <Link to="/student/room" className="btn-ghost inline-flex px-4 py-2 text-xs">

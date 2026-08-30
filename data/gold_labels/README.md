@@ -3,9 +3,12 @@
 Staff (TA / professor) judgments used to evaluate Analyzer + Matcher quality
 **beyond silver/heuristic training labels**.
 
-## File
+## Files
 
-`gold_labels.csv`
+`gold_labels.csv` — curated / seed evaluation set.
+
+`ta_alice_pass.csv` — 20 labels from a first TA pass (Alice Chen, CSC 2302).
+Seeded into demo DBs. Cite as a demo-TA pass, not an AUI lab session.
 
 | Column | Meaning |
 | --- | --- |

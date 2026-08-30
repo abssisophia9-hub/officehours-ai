@@ -39,7 +39,13 @@ from app.models.knowledge import (
 )
 from app.realtime.hub import hub
 from app.routes.auth import get_current_user
-from app.services.access_control import require_course_role
+from app.services.access_control import (
+    require_course_member,
+    require_course_role,
+    require_staff_anywhere,
+    user_course_ids,
+    user_staff_course_ids,
+)
 from app.services.agent_metrics_service import (
     build_kb_hit_rate_report,
     create_gold_label,
@@ -75,16 +81,39 @@ def list_knowledge_entries(
     status_filter: str | None = Query(default=None, alias="status"),
     course_id: int | None = Query(default=None),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     if status_filter and status_filter not in {"pending_review", "approved", "rejected"}:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="status must be pending_review, approved, or rejected",
         )
-    return [
-        to_out(entry)
-        for entry in list_entries(db, status_filter=status_filter, course_id=course_id)
-    ]
+    if course_id is not None:
+        course, membership = require_course_member(db, user, course_id)
+        del course
+        if status_filter in {None, "pending_review", "rejected"} and membership.role == "student":
+            if status_filter in {"pending_review", "rejected"}:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Students can only list approved knowledge.",
+                )
+            status_filter = "approved"
+        return [
+            to_out(entry)
+            for entry in list_entries(db, status_filter=status_filter, course_id=course_id)
+        ]
+
+    allowed = user_course_ids(db, user)
+    staff_ids = set(user_staff_course_ids(db, user))
+    entries = []
+    for cid in allowed:
+        want = status_filter
+        if cid not in staff_ids:
+            if status_filter in {"pending_review", "rejected"}:
+                continue
+            want = "approved"
+        entries.extend(list_entries(db, status_filter=want, course_id=cid))
+    return [to_out(entry) for entry in entries]
 
 
 @router.get("/knowledge/canvas/status")
@@ -100,13 +129,23 @@ def get_canvas_status(
 
 
 @router.get("/knowledge/{entry_id}", response_model=KnowledgeEntryOut)
-def get_knowledge_entry(entry_id: int, db: Session = Depends(get_db)):
+def get_knowledge_entry(
+    entry_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     entry = db.get(KnowledgeEntry, entry_id)
     if entry is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Knowledge entry not found",
         )
+    if entry.course_id is None:
+        require_staff_anywhere(db, user)
+    elif entry.status == "approved":
+        require_course_member(db, user, entry.course_id)
+    else:
+        require_course_role(db, user, entry.course_id, roles={"professor", "ta"})
     return to_out(entry)
 
 
@@ -115,6 +154,7 @@ async def patch_knowledge_entry(
     entry_id: int,
     payload: KnowledgeEntryUpdate,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     entry = db.get(KnowledgeEntry, entry_id)
     if entry is None:
@@ -122,6 +162,10 @@ async def patch_knowledge_entry(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Knowledge entry not found",
         )
+    if entry.course_id is None:
+        require_staff_anywhere(db, user)
+    else:
+        require_course_role(db, user, entry.course_id, roles={"professor"})
     updated = to_out(update_entry(db, entry, payload))
     await hub.broadcast(
         "knowledge.updated",
@@ -140,7 +184,15 @@ async def patch_knowledge_entry(
     response_model=KnowledgeEntryOut,
     status_code=status.HTTP_201_CREATED,
 )
-async def faq_from_cluster(payload: FaqFromClusterRequest, db: Session = Depends(get_db)):
+async def faq_from_cluster(
+    payload: FaqFromClusterRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    if payload.course_id is not None:
+        require_course_role(db, user, payload.course_id, roles={"professor"})
+    else:
+        require_staff_anywhere(db, user)
     entry = create_faq_from_cluster(
         db,
         cluster_id=payload.cluster_id,
@@ -223,7 +275,7 @@ async def upload_course_materials(
 async def upload_course_material_file(
     course_id: int = Form(...),
     title: str | None = Form(default=None),
-    auto_approve: bool = Form(default=True),
+    auto_approve: bool = Form(default=False),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
@@ -313,7 +365,12 @@ async def sync_canvas_materials(
 
 
 @router.post("/agent/ask", response_model=AgentAskResponse)
-def ask_kb_agent(payload: AgentAskRequest, db: Session = Depends(get_db)):
+def ask_kb_agent(
+    payload: AgentAskRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    require_course_member(db, user, payload.course_id)
     response = answer_from_knowledge_base(
         db,
         payload.question,
@@ -330,8 +387,16 @@ def ask_kb_agent(payload: AgentAskRequest, db: Session = Depends(get_db)):
 
 
 @router.get("/analytics/struggle-heatmap", response_model=StruggleHeatmapOut)
-def struggle_heatmap(db: Session = Depends(get_db)):
-    return build_struggle_heatmap(db)
+def struggle_heatmap(
+    course_id: int | None = Query(default=None),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    allowed = require_staff_anywhere(db, user)
+    if course_id is not None:
+        require_course_role(db, user, course_id, roles={"professor", "ta"})
+        return build_struggle_heatmap(db, course_ids=[course_id])
+    return build_struggle_heatmap(db, course_ids=allowed)
 
 
 @router.get("/analytics/escalations", response_model=list[EscalationItem])
@@ -339,7 +404,12 @@ def escalations(
     course: str | None = Query(default=None),
     course_id: int | None = Query(default=None),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
+    if course_id is not None:
+        require_course_role(db, user, course_id, roles={"professor", "ta"})
+    else:
+        require_staff_anywhere(db, user)
     return build_escalation_feed(db, course=course, course_id=course_id)
 
 
@@ -348,12 +418,21 @@ def cluster_command_center(
     course: str | None = Query(default=None),
     course_id: int | None = Query(default=None),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
+    if course_id is not None:
+        require_course_role(db, user, course_id, roles={"professor", "ta"})
+    else:
+        require_staff_anywhere(db, user)
     return build_cluster_command_center(db, course=course, course_id=course_id)
 
 
 @router.get("/analytics/oracle-metrics")
-def oracle_metrics(db: Session = Depends(get_db)):
+def oracle_metrics(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    require_staff_anywhere(db, user)
     return build_oracle_metrics(db)
 
 
@@ -361,8 +440,13 @@ def oracle_metrics(db: Session = Depends(get_db)):
 def kb_hit_rate(
     course_id: int | None = Query(default=None),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     """Per-course KB agent hit-rate (hit = answered from approved materials)."""
+    if course_id is not None:
+        require_course_member(db, user, course_id)
+    else:
+        require_staff_anywhere(db, user)
     return build_kb_hit_rate_report(db, course_id=course_id)
 
 
@@ -371,22 +455,43 @@ def kb_hit_rate(
     response_model=GoldLabelOut,
     status_code=status.HTTP_201_CREATED,
 )
-def submit_gold_label(payload: GoldLabelCreate, db: Session = Depends(get_db)):
+def submit_gold_label(
+    payload: GoldLabelCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     """Store a human gold judgment for Analyzer / Matcher evaluation."""
+    if payload.course_id is not None:
+        require_course_role(db, user, payload.course_id, roles={"ta", "professor"})
+    else:
+        require_staff_anywhere(db, user)
+    if not payload.labeled_by:
+        payload.labeled_by = user.email
     return create_gold_label(db, payload)
 
 
 @router.get("/analytics/gold-labels", response_model=list[GoldLabelOut])
 def get_gold_labels(
     department: str | None = Query(default=None),
+    course_id: int | None = Query(default=None),
     limit: int = Query(default=200, ge=1, le=1000),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    return list_gold_labels(db, department=department, limit=limit)
+    if course_id is not None:
+        require_course_role(db, user, course_id, roles={"ta", "professor"})
+    else:
+        require_staff_anywhere(db, user)
+    return list_gold_labels(db, department=department, course_id=course_id, limit=limit)
 
 
 @router.get("/analytics/lifetime-confusion")
-def lifetime_confusion(db: Session = Depends(get_db), limit: int = Query(default=8, ge=1, le=25)):
+def lifetime_confusion(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+    limit: int = Query(default=8, ge=1, le=25),
+):
+    require_staff_anywhere(db, user)
     return {
         "topics": lifetime_confusion_topics(db, limit=limit),
         "message": (

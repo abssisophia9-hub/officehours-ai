@@ -47,6 +47,8 @@ export default function ProfessorWorkspace() {
   const [insightFilter, setInsightFilter] = useState("all");
   const [openInsight, setOpenInsight] = useState(null);
   const [cohortNotes, setCohortNotes] = useState({});
+  const [hitRate, setHitRate] = useState(null);
+  const [goldCount, setGoldCount] = useState(0);
   const fileInputRef = useRef(null);
 
   function meetingDraft(clusterId) {
@@ -72,8 +74,8 @@ export default function ProfessorWorkspace() {
 
   const load = useCallback(async () => {
     try {
-      const [req, kb, clusters, canvas, load, insights] = await Promise.all([
-        api("/requests/", { token }),
+      const [req, kb, clusters, canvas, load, insights, rate, gold] = await Promise.all([
+        api(`/requests/?course_id=${activeCourse.id}`, { token }),
         api(`/knowledge/?status=pending_review&course_id=${activeCourse.id}`, { token }),
         api(
           `/analytics/clusters?course_id=${activeCourse.id}&course=${encodeURIComponent(activeCourse.code)}`,
@@ -82,6 +84,8 @@ export default function ProfessorWorkspace() {
         api(`/knowledge/canvas/status?course_id=${activeCourse.id}`, { token }),
         api(`/ta/load/?course_id=${activeCourse.id}`, { token }),
         api(`/analytics/review-insights?course_id=${activeCourse.id}`, { token }),
+        api(`/analytics/kb-hit-rate?course_id=${activeCourse.id}`, { token }),
+        api(`/analytics/gold-labels?course_id=${activeCourse.id}`, { token }),
       ]);
       setRequests(
         req.filter((item) => !item.course || item.course === activeCourse.code),
@@ -106,6 +110,8 @@ export default function ProfessorWorkspace() {
       });
       setCanvasInfo(canvas);
       setTaLoad(load);
+      setHitRate(rate);
+      setGoldCount(Array.isArray(gold) ? gold.length : 0);
     } catch (err) {
       setError(err.message);
     }
@@ -288,7 +294,7 @@ export default function ProfessorWorkspace() {
           course_id: activeCourse.id,
           course: activeCourse.code,
           source: "slides",
-          auto_approve: true,
+          auto_approve: false,
         },
       });
       setMessage(result.message);
@@ -317,7 +323,7 @@ export default function ProfessorWorkspace() {
       for (const file of files) {
         const formData = new FormData();
         formData.append("course_id", String(activeCourse.id));
-        formData.append("auto_approve", "true");
+        formData.append("auto_approve", "false");
         formData.append("file", file);
         const result = await apiUpload("/knowledge/materials/upload", {
           token,
@@ -349,7 +355,7 @@ export default function ProfessorWorkspace() {
         token,
         body: {
           course_id: activeCourse.id,
-          auto_approve: true,
+          auto_approve: false,
         },
       });
       setMessage(result.message);
@@ -400,9 +406,17 @@ export default function ProfessorWorkspace() {
           <p className="bh-stat-note">Kept private, never grouped</p>
         </article>
         <article className="bh-stat-card">
-          <div className="bh-stat-head">Anonymous Asks {ICONS.alert}</div>
-          <p className="bh-stat-value">{anonCount}</p>
-          <p className="bh-stat-note">Identity never stored</p>
+          <div className="bh-stat-head">Agent hit-rate {ICONS.alert}</div>
+          <p className="bh-stat-value">
+            {hitRate && hitRate.total_asks
+              ? `${Math.round((hitRate.overall_hit_rate || 0) * 100)}%`
+              : "—"}
+          </p>
+          <p className="bh-stat-note">
+            {hitRate
+              ? `${hitRate.total_hits || 0} hit · ${hitRate.total_misses || 0} refused · ${goldCount} TA gold labels`
+              : "No student agent asks yet"}
+          </p>
         </article>
       </div>
 
@@ -787,7 +801,8 @@ export default function ProfessorWorkspace() {
           <span className="bh-pill bh-pill-amber">{entries.length} pending</span>
         </div>
         <p className="bh-card-note">
-          Nothing reaches students until you approve it.
+          Sync, paste, and upload land here as pending. Nothing reaches the
+          study agent until you stamp it.
         </p>
         {entries.length === 0 ? (
           <p className="bh-card-note mt-3">No pending drafts for this course.</p>
@@ -842,8 +857,9 @@ export default function ProfessorWorkspace() {
           </span>
         </div>
         <p className="bh-card-note">
-          Sync pulls module slides/pages from this course&apos;s Canvas link into
-          the same approved KB the study agent searches. Live mode uses{" "}
+          Sync pulls module slides/pages (including PDF/DOCX) into{" "}
+          <strong>pending review</strong>. Stamp them below before the study
+          agent can use them. Live mode uses{" "}
           <code className="text-xs">CANVAS_BASE_URL</code> +{" "}
           <code className="text-xs">CANVAS_ACCESS_TOKEN</code>; otherwise the
           local AUI mirror is used for demos.
@@ -882,7 +898,7 @@ export default function ProfessorWorkspace() {
         <p className="bh-card-note">
           PDF slides, DOCX/TXT/MD notes, or lecture-video transcripts
           (.vtt/.srt captions). Text is extracted, chunked, and made available
-          to the course agent immediately.
+          to pending review — stamp them above before students see them.
         </p>
         <form onSubmit={uploadFiles} className="mt-3 flex flex-wrap items-center gap-3">
           <input

@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from app.models.auth import Course, CourseMembership, User
 from app.models.request import Request
 from app.models.ta_roster import DEFAULT_TA_ROSTER, TaRoster
+from app.services.demo_mode import demo_mode
 
 # Product policy for typical AUI sections — soft cap for UX copy; matching
 # still uses every TA membership on the course.
@@ -75,8 +76,13 @@ def build_course_matcher_roster(
                 )
             if roster:
                 return roster
+        # Course is known but has no TA memberships — do not invent demo names.
+        return []
 
-    # Fallback: global demo roster (no course TAs provisioned yet).
+    if not demo_mode():
+        return []
+
+    # Demo only: global roster when no course was supplied.
     return [
         {
             "id": row.id,

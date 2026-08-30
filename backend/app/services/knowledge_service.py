@@ -201,7 +201,7 @@ def ingest_course_material(
     source: str = "slides",
     course_id: int | None = None,
     course: str | None = None,
-    auto_approve: bool = True,
+    auto_approve: bool = False,
     external_id: str | None = None,
 ) -> list[KnowledgeEntry]:
     chunks = _chunk_material(content)

@@ -1,0 +1,21 @@
+label_id,text,gold_category,gold_assigned_ta,gold_hint_useful,department,course_code,labeled_by,label_source,notes
+AL-01,"My hash table insert loops forever after I put a new node at the tail of a bucket. Is chaining supposed to stop when the next pointer is null?",conceptual_question,Alice Chen,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass — Alice Chen on CSC 2302 queue texts
+AL-02,"I drew a BST insert of 8 then 3 then 10 then 1. Why does the 1 become the left child of 3 and not of 8?",conceptual_question,Alice Chen,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass
+AL-03,"Red-black delete_fixup: after I rotate the sibling I still have a double-black leaf. Which case am I actually in?",conceptual_question,Alice Chen,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass
+AL-04,"Can you post the midterm room and what chapters are in scope for Data Structures?",exam_logistics,Priya Nair,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass
+AL-05,"I missed lab 4 because I was in the clinic. How do I request a makeup for the programming quiz?",retake_request,Sam Ortiz,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass
+AL-06,"I need extra time on the hashing quiz — I already have an ODS letter. Who confirms that for this course?",accessibility_accommodation,Sam Ortiz,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass
+AL-07,"The autograder gave me 40 on the BST project but my local tests pass. Can someone re-check the hidden tests?",grading_dispute,Sam Ortiz,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass
+AL-08,"I have been stuck on AVL rotations for three nights and I am starting to panic about the project deadline.",emotional_stress,Sam Ortiz,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass
+AL-09,"Where do I submit the pairing heap write-up — Canvas assignment or the GitHub classroom link?",project_submission,Priya Nair,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass
+AL-10,"The Hilbert lobby queue said office hours were 16:00 but the door was locked. Is there a backup slot this week?",office_hours_access,Sam Ortiz,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass
+AL-11,"A classmate sent me their red-black solution 'just to compare'. I did not paste it. Do I still need to tell the professor?",academic_integrity,Sam Ortiz,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass
+AL-12,"Why does binary search fail if I write mid = (low + high) / 2 when low and high are near Integer.MAX_VALUE?",conceptual_question,Priya Nair,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass
+AL-13,"I understand recursion on factorial but I cannot see the base case for reversing a linked list. Can we walk one example?",conceptual_question,Bob Martinez,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass
+AL-14,"Open addressing: after I delete a key do I leave a tombstone or can I just set the slot empty?",conceptual_question,Priya Nair,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass
+AL-15,"Is a left-left AVL case a single right rotation at the unbalanced node?",conceptual_question,Alice Chen,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass
+AL-16,"What is the difference between a queue implemented with two stacks and a deque? I keep mixing the APIs.",conceptual_question,Bob Martinez,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass
+AL-17,"When we say 'height of an empty tree is -1' on the slides is that required on the midterm or just a convention?",exam_logistics,Priya Nair,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass
+AL-18,"My project partner disappeared after week 3. Can I finish the hash-map assignment alone and still get full credit?",project_submission,Priya Nair,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass
+AL-19,"I think the posted solution for lab 2 uses 1-based indexing but the spec said 0-based. Which one should we follow?",grading_dispute,Sam Ortiz,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass
+AL-20,"Can I come to office hours with a printout of my rotation code even if I already asked on Quiet ask yesterday?",office_hours_access,Sam Ortiz,1,CSC,CSC 2302,a.chen@aui.ma,human_gold,Demo TA pass

@@ -17,18 +17,22 @@ def setup_function():
 
 def test_create_request_infers_learning_style_and_drafts():
     with TestClient(app) as client:
-        response = client.post(
-            "/requests/",
-            json={
-                "text": "Can you show me an example of recursion tracing?",
-                "anonymous": True,
-            },
+        from tests.helpers import post_student_request, professor_auth
+
+        response, _, course_id = post_student_request(
+            client,
+            "Can you show me an example of recursion tracing?",
+            code="CSC 2302",
         )
         assert response.status_code == 201
         request = response.json()
         assert request["learning_style"] == "example_driven"
 
-        entries = client.get("/knowledge/?status=pending_review").json()
+        staff, _ = professor_auth(client, "CSC 2302")
+        entries = client.get(
+            f"/knowledge/?status=pending_review&course_id={course_id}",
+            headers=staff,
+        ).json()
         assert len(entries) == 1
         assert entries[0]["learning_style"] == "example_driven"
         backend = entries[0]["drafter_backend"] or ""
@@ -62,6 +66,7 @@ def test_ta_resolve_keeps_entry_pending_review():
         )
         created = client.post(
             "/requests/",
+            headers={"Authorization": f"Bearer {student['token']}"},
             json={
                 "text": "Please walk me through the steps of binary search.",
                 "anonymous": True,
@@ -105,6 +110,7 @@ def test_ta_resolve_keeps_entry_pending_review():
 
         agent = client.post(
             "/agent/ask",
+            headers={"Authorization": f"Bearer {student['token']}"},
             json={
                 "question": "How do I think about binary search steps?",
                 "course_id": course_id,
@@ -113,8 +119,13 @@ def test_ta_resolve_keeps_entry_pending_review():
         assert agent["matched_count"] == 0
 
         entry_id = payload["knowledge_entry"]["id"]
+        prof = client.post(
+            "/auth/login",
+            json={"email": "a.benali@aui.ma", "password": "aui-demo"},
+        ).json()
         approved = client.patch(
             f"/knowledge/{entry_id}",
+            headers={"Authorization": f"Bearer {prof['token']}"},
             json={"status": "approved"},
         )
         assert approved.status_code == 200
@@ -133,12 +144,12 @@ def test_websocket_receives_request_created_event():
             hello = websocket.receive_json()
             assert hello["type"] == "connected"
 
-            client.post(
-                "/requests/",
-                json={
-                    "text": "Why does the red-black tree invariant matter?",
-                    "anonymous": True,
-                },
+            from tests.helpers import post_student_request
+
+            post_student_request(
+                client,
+                "Why does the red-black tree invariant matter?",
+                code="CSC 2302",
             )
 
             seen_types = set()

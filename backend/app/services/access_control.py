@@ -7,6 +7,45 @@ from sqlalchemy.orm import Session
 
 from app.models.auth import Course, CourseMembership, User
 
+MEMBER_ROLES = {"student", "ta", "professor"}
+STAFF_ROLES = {"ta", "professor"}
+
+
+def user_course_ids(db: Session, user: User) -> list[int]:
+    rows = (
+        db.query(CourseMembership.course_id)
+        .filter(CourseMembership.user_id == user.id)
+        .all()
+    )
+    return [row[0] for row in rows]
+
+
+def user_staff_course_ids(db: Session, user: User) -> list[int]:
+    rows = (
+        db.query(CourseMembership.course_id)
+        .filter(
+            CourseMembership.user_id == user.id,
+            CourseMembership.role.in_(tuple(STAFF_ROLES)),
+        )
+        .all()
+    )
+    return [row[0] for row in rows]
+
+
+def require_staff_anywhere(db: Session, user: User) -> list[int]:
+    """TA or professor on at least one course — used for campus analytics."""
+    course_ids = user_staff_course_ids(db, user)
+    if not course_ids:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Requires a TA or professor role on at least one course.",
+        )
+    return course_ids
+
+
+def require_course_member(db: Session, user: User, course_id: int):
+    return require_course_role(db, user, course_id, roles=MEMBER_ROLES)
+
 
 def get_membership(db: Session, user: User, course_id: int) -> CourseMembership:
     membership = (

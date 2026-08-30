@@ -43,8 +43,13 @@ GROUP_REVIEW_MIN = 3
 FAQ_MIN = 2
 
 
-def build_struggle_heatmap(db: Session) -> StruggleHeatmapOut:
-    requests = db.query(Request).order_by(Request.created_at).all()
+def build_struggle_heatmap(
+    db: Session, *, course_ids: list[int] | None = None
+) -> StruggleHeatmapOut:
+    query = db.query(Request)
+    if course_ids is not None:
+        query = query.filter(Request.course_id.in_(course_ids))
+    requests = query.order_by(Request.created_at).all()
     counts: dict[tuple[str, str], int] = defaultdict(int)
 
     for request in requests:

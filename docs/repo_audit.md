@@ -204,14 +204,17 @@ Highest-leverage AI work, in order:
 
 ## Suggested order if you only do five things
 
-1. Lock stamps and asks: `PATCH /knowledge`, `/agent/ask`, `/requests`,
-   analytics, `/from-cluster`, `/actions`.  
-2. Canvas / paste / upload ingest → `pending_review` until the professor
-   stamps (and stop auto-approve on LTI launch).  
-3. Matcher uses real course TAs only; do not predict demo names.  
-4. Live file sync extracts PDF / DOCX like manual upload; Synthesizer RAG
-   stays inside the course.  
-5. Sit with one TA and label ~20 real asks (`human_gold`).
+**Shipped 30 Aug 2026** (this branch):
 
-That is the AI upgrade path for all three parties. Everything else is hosting,
+1. Auth + course membership on stamps, asks, analytics, `/from-cluster`, `/actions`.  
+2. Canvas / paste / upload / LTI launch ingest → `pending_review` until stamp.  
+3. Matcher uses real course TAs only (heuristic load-balance; no demo-name
+   classifier on a scoped roster).  
+4. Live Canvas file sync extracts PDF / DOCX; Synthesizer RAG stays in-course
+   and filters the teaching bank by department.  
+5. Alice Chen demo-TA pass: 20 `human_gold` rows in
+   `data/gold_labels/ta_alice_pass.csv`, seeded on demo login, plus a Gold
+   label control on the TA workspace.
+
+That is the AI upgrade path for all three parties. Remaining items are hosting,
 IT, or polish.

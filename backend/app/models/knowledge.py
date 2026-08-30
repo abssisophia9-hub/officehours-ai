@@ -93,7 +93,7 @@ class CourseMaterialIngest(BaseModel):
         default="slides",
         description="slides | notes | canvas | canvas_export | syllabus",
     )
-    auto_approve: bool = True
+    auto_approve: bool = False
 
 
 class CourseMaterialIngestOut(BaseModel):
@@ -106,7 +106,7 @@ class CourseMaterialIngestOut(BaseModel):
 
 class CanvasSyncRequest(BaseModel):
     course_id: int = Field(ge=1)
-    auto_approve: bool = True
+    auto_approve: bool = False
 
 
 class CanvasSyncOut(BaseModel):
@@ -179,7 +179,7 @@ class KnowledgeSearchHit(BaseModel):
 class AgentAskRequest(BaseModel):
     question: str = Field(min_length=3, max_length=4000)
     top_k: int = Field(default=3, ge=1, le=8)
-    course_id: int | None = None
+    course_id: int = Field(ge=1)
 
 
 class AgentAskResponse(BaseModel):

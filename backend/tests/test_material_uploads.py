@@ -95,7 +95,7 @@ def test_upload_txt_feeds_course_agent():
     response = client.post(
         "/knowledge/materials/upload",
         headers=headers,
-        data={"course_id": str(course_id), "title": "Week 6 — AVL notes"},
+        data={"course_id": str(course_id), "title": "Week 6 — AVL notes", "auto_approve": "true"},
         files={"file": ("avl_notes.txt", body.encode(), "text/plain")},
     )
     assert response.status_code == 201, response.text
@@ -104,6 +104,7 @@ def test_upload_txt_feeds_course_agent():
 
     answer = client.post(
         "/agent/ask",
+        headers=headers,
         json={
             "question": "How do AVL rotations rebalance the tree?",
             "course_id": course_id,
@@ -119,7 +120,7 @@ def test_upload_pdf_extracts_text():
     response = client.post(
         "/knowledge/materials/upload",
         headers=headers,
-        data={"course_id": str(course_id), "title": "Week 7 — Dijkstra slides"},
+        data={"course_id": str(course_id), "title": "Week 7 — Dijkstra slides", "auto_approve": "true"},
         files={"file": ("dijkstra.pdf", pdf, "application/pdf")},
     )
     assert response.status_code == 201, response.text
@@ -128,6 +129,7 @@ def test_upload_pdf_extracts_text():
 
     answer = client.post(
         "/agent/ask",
+        headers=headers,
         json={
             "question": "How does Dijkstra use a priority queue?",
             "course_id": course_id,
@@ -151,19 +153,20 @@ def test_upload_vtt_video_transcript():
     response = client.post(
         "/knowledge/materials/upload",
         headers=headers,
-        data={"course_id": str(course_id), "title": "Lecture 9 video — DP"},
+        data={"course_id": str(course_id), "title": "Lecture 9 video — DP", "auto_approve": "true"},
         files={"file": ("lecture9.vtt", vtt.encode(), "text/vtt")},
     )
     assert response.status_code == 201, response.text
     assert response.json()["source"] == "video_transcript"
 
     entry_id = response.json()["entry_ids"][0]
-    entry = client.get(f"/knowledge/{entry_id}").json()
+    entry = client.get(f"/knowledge/{entry_id}", headers=headers).json()
     assert "-->" not in entry["answer_draft"]
     assert "memoization" in entry["answer_draft"].lower()
 
     answer = client.post(
         "/agent/ask",
+        headers=headers,
         json={
             "question": "What does memoization cache in dynamic programming?",
             "course_id": course_id,
@@ -177,7 +180,7 @@ def test_upload_scoped_to_course():
     client.post(
         "/knowledge/materials/upload",
         headers=headers,
-        data={"course_id": str(course_id), "title": "Week 6 — AVL notes"},
+        data={"course_id": str(course_id), "title": "Week 6 — AVL notes", "auto_approve": "true"},
         files={
             "file": (
                 "avl.txt",
@@ -193,6 +196,7 @@ def test_upload_scoped_to_course():
     other = next(c["id"] for c in login["user"]["courses"] if c["code"] == "CSC 3323")
     miss = client.post(
         "/agent/ask",
+        headers={"Authorization": f"Bearer {login['token']}"},
         json={"question": "How do AVL rotations rebalance the tree?", "course_id": other},
     ).json()
     assert miss["matched_count"] == 0
