@@ -14,8 +14,10 @@
 | [`ethics_privacy.md`](ethics_privacy.md) | Privacy principles |
 | [`evaluation_plan.md`](evaluation_plan.md) | Evaluation methods |
 | [`fyp_evidence.md`](fyp_evidence.md) | Defense claims / metric honesty |
-| [`research/office_hours_public_sources.md`](research/office_hours_public_sources.md) | Public uni OH research → gold themes |
+| [`defense_crib.md`](defense_crib.md) | One-page viva crib |
+| [`gold_label_lab.md`](gold_label_lab.md) | How to collect real TA gold (not a survey) |
+| [`research/office_hours_public_sources.md`](research/office_hours_public_sources.md) | Public uni OH research → gold *themes* only |
 | [`proposal.md`](proposal.md) | Original FYP proposal |
-| [`surveys/`](surveys/) | Optional templates; **not** a capstone collection task |
+| [`surveys/`](surveys/) | Optional UX templates — **not** gold labels |
 
 Diagrams: [`../diagrams/`](../diagrams/). Cloud operators: [`../AGENTS.md`](../AGENTS.md).

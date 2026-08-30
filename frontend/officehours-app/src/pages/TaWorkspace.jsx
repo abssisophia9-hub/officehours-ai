@@ -532,7 +532,10 @@ export default function TaWorkspace() {
           <p className="bh-card-note">{req.text}</p>
 
           <div className="mt-3 rounded-xl border border-aui-forest/20 bg-[#f3faf5] p-3 text-xs text-aui-deep">
-            <p className="font-semibold text-aui-ink">Triage context</p>
+            <p className="font-semibold text-aui-ink">Ask Triage</p>
+            <p className="mt-0.5 text-[11px] text-aui-deep/60">
+              Analyzer → Matcher → Synthesizer for this ask (local models)
+            </p>
             <ul className="mt-2 space-y-1">
               <li>
                 <strong>Category:</strong> {req.oracle_category || req.category || "n/a"}
@@ -928,8 +931,9 @@ export default function TaWorkspace() {
           <div className="mt-5 rounded-xl border border-[#d7e0d9] p-3">
             <p className="text-sm font-semibold text-aui-ink">Gold label this ask</p>
             <p className="mt-1 text-xs text-aui-deep/70">
-              Your judgment trains the next Analyzer / Matcher eval — not the
-              live student agent.
+              Staff judgment for evaluation — category + whether the Synthesizer
+              hint helped. This does not retrain the live student agent. Protocol:
+              one 45-minute TA lab, ≥40 asks, not a satisfaction survey.
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               <select

@@ -403,22 +403,29 @@ export default function StudentWorkspace() {
                 </p>
               ) : null}
               {result.oracle ? (
-                <ul className="mt-3 space-y-1.5 text-xs text-aui-deep/85">
-                  <li>
-                    <strong>Analyzer:</strong> {result.oracle.analyzer.category} ·{" "}
-                    {result.oracle.analyzer.difficulty}
-                  </li>
-                  <li>
-                    <strong>Matcher:</strong> {result.oracle.matcher.assigned_ta}
-                    {result.oracle.matcher.alternative_ta
-                      ? ` (backup: ${result.oracle.matcher.alternative_ta})`
-                      : ""}{" "}
-                    · wait ~{result.oracle.matcher.estimated_wait_minutes} min
-                  </li>
-                  <li>
-                    <strong>Hint:</strong> {result.oracle.synthesizer.student_hint}
-                  </li>
-                </ul>
+                <div className="mt-3 rounded-lg border border-aui-forest/20 bg-white p-2.5">
+                  <p className="text-xs font-semibold text-aui-ink">Ask Triage</p>
+                  <p className="mt-0.5 text-[11px] text-aui-deep/60">
+                    Analyzer → Matcher → Synthesizer (local models, this course)
+                  </p>
+                  <ul className="mt-2 space-y-1.5 text-xs text-aui-deep/85">
+                    <li>
+                      <strong>Analyzer:</strong> {result.oracle.analyzer.category} ·{" "}
+                      {result.oracle.analyzer.difficulty}
+                    </li>
+                    <li>
+                      <strong>Matcher:</strong> {result.oracle.matcher.assigned_ta}
+                      {result.oracle.matcher.alternative_ta
+                        ? ` (backup: ${result.oracle.matcher.alternative_ta})`
+                        : ""}{" "}
+                      · wait ~{result.oracle.matcher.estimated_wait_minutes} min
+                    </li>
+                    <li>
+                      <strong>Synthesizer hint:</strong>{" "}
+                      {result.oracle.synthesizer.student_hint}
+                    </li>
+                  </ul>
+                </div>
               ) : null}
               {buddyStatus?.eligible && !buddyStatus.opted_in ? (
                 <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-950">

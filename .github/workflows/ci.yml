@@ -6,6 +6,10 @@ on:
     branches:
       - main
 
+# Product CI is the backend + the unified app only.
+# Legacy kiosk / professor-dashboard / ta-dashboard shells are not the product
+# and are not built here.
+
 jobs:
   backend:
     name: Backend tests
@@ -28,89 +32,8 @@ jobs:
         working-directory: backend
         run: python -m pytest
 
-  student-kiosk:
-    name: Student kiosk build and audit
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/student-kiosk/package-lock.json
-
-      - name: Install frontend dependencies
-        working-directory: frontend/student-kiosk
-        run: npm ci
-
-      - name: Audit frontend dependencies
-        working-directory: frontend/student-kiosk
-        run: npm audit --audit-level=moderate
-
-      - name: Build student kiosk
-        working-directory: frontend/student-kiosk
-        run: npm run build
-
-  professor-dashboard:
-    name: Professor dashboard build and audit
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/professor-dashboard/package-lock.json
-
-      - name: Install frontend dependencies
-        working-directory: frontend/professor-dashboard
-        run: npm ci
-
-      - name: Audit frontend dependencies
-        working-directory: frontend/professor-dashboard
-        run: npm audit --audit-level=moderate
-
-      - name: Build professor dashboard
-        working-directory: frontend/professor-dashboard
-        run: npm run build
-
-  ta-dashboard:
-    name: TA dashboard build and audit
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/ta-dashboard/package-lock.json
-
-      - name: Install frontend dependencies
-        working-directory: frontend/ta-dashboard
-        run: npm ci
-
-      - name: Audit frontend dependencies
-        working-directory: frontend/ta-dashboard
-        run: npm audit --audit-level=moderate
-
-      - name: Build TA dashboard
-        working-directory: frontend/ta-dashboard
-        run: npm run build
-
   officehours-app:
-    name: Unified product app build and audit
+    name: Product app build and audit
     runs-on: ubuntu-latest
 
     steps:
@@ -132,6 +55,6 @@ jobs:
         working-directory: frontend/officehours-app
         run: npm audit --audit-level=moderate
 
-      - name: Build unified product app
+      - name: Build product app
         working-directory: frontend/officehours-app
         run: npm run build

@@ -20,9 +20,8 @@ Primary path for supervisors and FYP demos. Vocabulary:
 3. Open **one** browser window: http://127.0.0.1:5180  
    Password for all seeded accounts: **`aui-demo`**.
 
-> **Legacy (optional):** the mid-report two-app flow (student-kiosk `:5173` +
-> professor-dashboard `:5174`) still works for hardware / historical captures.
-> Prefer this script for current demos.
+> The product is this one app. Mid-report kiosk/dashboard folders are archives
+> and are not in CI.
 
 ## Script
 

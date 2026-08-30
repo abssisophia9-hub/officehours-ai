@@ -36,10 +36,9 @@ should make those three pieces *truer per course*, not louder.
 - LTI 1.3 + Microsoft SSO **code** exists; campus credentials do not.
 - Backend pytest is real (~149 cases). Opening story is approved.
 
-`AGENTS.md` is **stale**: it still describes a Three.js Student → TA → Professor
-guest path. That courtyard is gone. The cloud-setup copy that called
-`backend/app/ai/*` docstring stubs is also wrong — those modules are imported
-at runtime (`oracle_service` → `claude_client` → Analyzer / Matcher / Synthesizer).
+Product CI is **backend + `officehours-app` only**. Legacy kiosk/dashboard
+folders are archives. UI says **Ask Triage**; some API fields still use
+`oracle_*`. `backend/app/ai/*` modules are imported at runtime.
 
 ---
 
@@ -172,28 +171,19 @@ Highest-leverage AI work, in order:
 
 - Microsoft + LTI credentials (IT). Local wiring was tested; Sophia’s real
   login was not (placeholder client → AADSTS700038).
-- Favicon + Open Graph.
-- `oracle_*` in API / UI vs “Ask Triage” in copy — rename for literacy or live
-  with it and say so in defense.
 - Unified app has **no frontend tests**. Backend carries the product.
-- Legacy kiosk / professor-dashboard / ta-dashboard still run CI. They are not
-  the product. Either mark them archival in CI or stop implying three apps.
-- Student “Look up request code” is a kiosk leftover. Fine for Quiet ask;
-  identified students should see **their** queue without typing an id.
-- `AGENTS.md` still describes a Three.js guest landing.
+- `oracle_*` remains on API / DB columns (historical). The UI says Ask Triage.
+- Real TA gold lab (≥40 `human_gold`) — protocol in `docs/gold_label_lab.md`.
 
 ---
 
 ## P2 — hygiene
 
-- Historical `oracle_service.py` / `oracle_agents.png` filenames.
+- Historical `oracle_service.py` / `oracle_agents.png` filenames (documented).
 - Legacy Claude modules only behind a flag — keep them out of the default path
   (already).
 - No Python linter in `requirements.txt`.
 - React Router engine warning (wants Node ≥ 22.22; CI is 22).
-- Study-buddy exists and is wired; confirm it stays in the demo script.
-- `product_overview.md` still mentions the Three.js guest path in the
-  supervisor checklist.
 
 ---
 

@@ -54,6 +54,9 @@ courses** per term.
 Dual-TA sections (primary + backup Matcher): CSC 2302 (Alice/Bob), CSC 3323
 (Bob/Priya), CSC 3374 (Bob/Sam).
 
+Print [`docs/defense_crib.md`](defense_crib.md) the morning of the viva.
+Gold labels: [`docs/gold_label_lab.md`](gold_label_lab.md) — a TA labeling lab, not a survey.
+
 ## What a supervisor does
 
 1. Run `./scripts/run_product.sh` (or start backend + `officehours-app`)
