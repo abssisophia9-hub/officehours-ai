@@ -43,6 +43,7 @@ class Request(Base):
     # TA staffing loop: open → claimed → in_progress → helped.
     work_status: Mapped[str] = mapped_column(String, nullable=False, default="open")
     claimed_by: Mapped[str | None] = mapped_column(String, nullable=True)
+    claimed_by_user_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     helped_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # Direct async reply from a TA (message mode) — visible on student status.
@@ -122,6 +123,7 @@ class RequestOut(RequestCreate):
     help_mode: str = "message"
     work_status: str = "open"
     claimed_by: str | None = None
+    claimed_by_user_id: int | None = None
     claimed_at: datetime | None = None
     helped_at: datetime | None = None
     ta_reply: str | None = None
@@ -154,6 +156,7 @@ class RequestStatusOut(BaseModel):
     help_mode: str | None = None
     work_status: str | None = None
     claimed_by: str | None = None
+    claimed_by_user_id: int | None = None
     ta_reply: str | None = None
     recommended_next_step: str | None = None
     agenda_hint: str | None = None

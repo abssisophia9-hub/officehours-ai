@@ -50,7 +50,7 @@ export default function TaWorkspace() {
   const [toast, setToast] = useState("");
   const [resolvedCount, setResolvedCount] = useState(0);
   const [helpedCount, setHelpedCount] = useState(0);
-  const [assignmentFilter, setAssignmentFilter] = useState("mine");
+  const [assignmentFilter, setAssignmentFilter] = useState("desk");
   const [busy, setBusy] = useState(false);
   const [meetingOpen, setMeetingOpen] = useState(false);
   const [meetingTitle, setMeetingTitle] = useState("");
@@ -130,20 +130,20 @@ export default function TaWorkspace() {
     (item) => item.request.work_status === "in_progress",
   ).length;
 
-  function selectItem(item) {
+  async function selectItem(item) {
     setSelectedId(item.request.id);
-    const coach = item.help_coach;
+    const existing = item.help_coach;
     setNotes(
-      coach?.teaching_approach || item.knowledge_entry?.answer_draft || "",
+      existing?.teaching_approach || item.knowledge_entry?.answer_draft || "",
     );
     setHint(
-      coach?.student_hint ||
+      existing?.student_hint ||
         item.knowledge_entry?.student_hint ||
         item.request.student_hint ||
         "",
     );
     setReply(item.request.ta_reply || item.knowledge_entry?.student_hint || "");
-    setSocraticSteps(coach?.socratic_steps || []);
+    setSocraticSteps(existing?.socratic_steps || []);
     setMeetingOpen(false);
     setMeetingTitle(
       `Group review: ${item.request.oracle_category || item.request.category || "topic"}`,
@@ -151,6 +151,28 @@ export default function TaWorkspace() {
     setMeetingWhen("");
     setMeetingPlace("");
     setError("");
+    if (existing) return;
+    setCoachBusy(true);
+    try {
+      const coach = await api(`/ta/coach/?request_id=${item.request.id}`, { token });
+      setNotes(coach.teaching_approach || item.knowledge_entry?.answer_draft || "");
+      setHint(
+        coach.student_hint ||
+          item.knowledge_entry?.student_hint ||
+          item.request.student_hint ||
+          "",
+      );
+      setSocraticSteps(coach.socratic_steps || []);
+      setQueue((prev) =>
+        prev.map((row) =>
+          row.request.id === item.request.id ? { ...row, help_coach: coach } : row,
+        ),
+      );
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCoachBusy(false);
+    }
   }
 
   async function runHelpCoach(mode) {
@@ -300,7 +322,8 @@ export default function TaWorkspace() {
   const work = workPill(req?.work_status);
   const iAmPrimary = req?.assigned_ta === user.display_name;
   const iAmBackup = req?.alternative_ta === user.display_name;
-  const iClaimed = req?.claimed_by === user.display_name;
+  const iClaimed =
+    req?.claimed_by_user_id === user.id || req?.claimed_by === user.display_name;
 
   return (
     <div className="fade-up">
@@ -379,6 +402,7 @@ export default function TaWorkspace() {
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           {[
+            ["desk", "My desk (assigned, backup, open)"],
             ["mine", "Assigned / claimed by me"],
             ["backup", "I'm backup"],
             ["in_progress", "I'm helping now"],
@@ -424,7 +448,8 @@ export default function TaWorkspace() {
                 const urgency = (request.urgency || "n/a").toLowerCase();
                 const helpMode = request.help_mode || "message";
                 const status = workPill(request.work_status);
-                const similarN = item.help_coach?.similar_open_count || 0;
+                const similarN =
+                  item.similar_open_count || item.help_coach?.similar_open_count || 0;
                 return (
                   <tr
                     key={request.id}

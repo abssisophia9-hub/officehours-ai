@@ -5,3 +5,4 @@ import os
 os.environ.setdefault("OFFICEHOURS_DEMO", "true")
 os.environ.setdefault("OFFICEHOURS_CLUSTERING_BACKEND", "lexical")
 os.environ.setdefault("OFFICEHOURS_ALLOW_EXTERNAL_LLM", "false")
+os.environ.setdefault("OFFICEHOURS_RATE_LIMIT", "false")

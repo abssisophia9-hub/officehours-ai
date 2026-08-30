@@ -77,8 +77,12 @@ def test_queue_includes_help_coach_and_similar_badge():
     assert first["id"] in by_id
     assert second["id"] in by_id
 
-    coach = by_id[first["id"]]["help_coach"]
-    assert coach is not None
+    assert by_id[first["id"]]["help_coach"] is None
+    assert by_id[first["id"]]["similar_open_count"] >= 1
+    coach = client.get(
+        f"/ta/coach/?request_id={first['id']}",
+        headers=_auth(alice),
+    ).json()
     assert coach["teaching_approach"]
     assert isinstance(coach["socratic_steps"], list)
     assert len(coach["socratic_steps"]) >= 1
@@ -174,7 +178,11 @@ def test_refresh_teaching_updates_pending_draft():
     item = next(row for row in queue if row["request"]["id"] == rid)
     assert item["knowledge_entry"] is not None
     assert item["knowledge_entry"]["answer_draft"]
-    assert item["help_coach"]["teaching_approach"]
+    coach = client.get(
+        f"/ta/coach/?request_id={rid}",
+        headers=_auth(alice),
+    ).json()
+    assert coach["teaching_approach"]
 
 
 def test_student_cannot_use_help_coach_on_other_course():

@@ -174,6 +174,7 @@ async def patch_knowledge_entry(
             "status": updated.status,
             "source_request_id": updated.source_request_id,
             "learning_style": updated.learning_style,
+            "course_id": updated.course_id,
         },
     )
     return updated
@@ -212,6 +213,7 @@ async def faq_from_cluster(
             "status": out.status,
             "source_request_id": out.source_request_id,
             "cluster_id": out.cluster_id,
+            "course_id": out.course_id,
         },
     )
     return out
@@ -558,6 +560,7 @@ async def faq_from_insight(
             "status": out.status,
             "source_request_id": out.source_request_id,
             "cluster_id": out.cluster_id,
+            "course_id": out.course_id,
         },
     )
     return out

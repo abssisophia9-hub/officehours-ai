@@ -33,14 +33,16 @@ def test_analyzer_overlays_csc_topics():
         question_text=(
             "In CSC 2302 red-black tree deletion fixup after deleting a black leaf "
             "needs which rotations?"
-        )
+        ),
+        course="CSC 2302",
     )
     assert "red-black" in red_black["category"].lower() or "trees" in {
         t.lower() for t in red_black["tags"]
     }
 
     hashing = analyze_with_classifier(
-        question_text="How do hash tables handle collisions with chaining vs open addressing?"
+        question_text="How do hash tables handle collisions with chaining vs open addressing?",
+        course="CSC 2302",
     )
     assert "hash" in hashing["category"].lower() or "hashing" in {
         t.lower() for t in hashing["tags"]

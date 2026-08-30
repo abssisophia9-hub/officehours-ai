@@ -201,6 +201,7 @@ async def create_request(
                 "request_id": db_request.id,
                 "elapsed_ms": step["elapsed_ms"],
                 "agent": step["agent"],
+                "course_id": db_request.course_id,
             },
         )
 
@@ -214,6 +215,7 @@ async def create_request(
             "cluster_id": db_request.cluster_id,
             "assigned_ta": db_request.assigned_ta,
             "oracle_category": db_request.oracle_category,
+            "course_id": db_request.course_id,
         },
     )
     await hub.broadcast(
@@ -224,6 +226,7 @@ async def create_request(
             "source_request_id": entry.source_request_id,
             "learning_style": entry.learning_style,
             "drafter_backend": entry.drafter_backend,
+            "course_id": db_request.course_id,
         },
     )
     if (db_request.urgency or "").lower() in {"urgent", "high"} or db_request.sensitive:
@@ -240,6 +243,7 @@ async def create_request(
                 "category": db_request.category,
                 "sensitive": bool(db_request.sensitive),
                 "reason": reason,
+                "course_id": db_request.course_id,
             },
         )
 

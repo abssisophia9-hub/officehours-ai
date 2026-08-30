@@ -140,11 +140,15 @@ def test_ta_resolve_keeps_entry_pending_review():
 
 def test_websocket_receives_request_created_event():
     with TestClient(app) as client:
-        with client.websocket_connect("/ws") as websocket:
+        from tests.helpers import post_student_request, student_auth
+
+        headers, course_id = student_auth(client, "CSC 2302")
+        token = headers["Authorization"].split(" ", 1)[1]
+        with client.websocket_connect(
+            f"/ws?token={token}&course_id={course_id}"
+        ) as websocket:
             hello = websocket.receive_json()
             assert hello["type"] == "connected"
-
-            from tests.helpers import post_student_request
 
             post_student_request(
                 client,
@@ -153,7 +157,7 @@ def test_websocket_receives_request_created_event():
             )
 
             seen_types = set()
-            for _ in range(5):
+            for _ in range(8):
                 message = websocket.receive_json()
                 seen_types.add(message["type"])
                 if "request.created" in seen_types and "knowledge.created" in seen_types:

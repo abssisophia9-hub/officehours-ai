@@ -122,6 +122,9 @@ Optional environment variables:
 - `OFFICEHOURS_ALLOW_EXTERNAL_LLM=false` — FYP default
 - `OFFICEHOURS_DEMO=true|false` — seed Sara/Youssef + sample chapter outlines +
   local Canvas mirror. **False for community deploy.**
+- `OFFICEHOURS_FRONTEND_URL` / `OFFICEHOURS_CORS_ORIGINS` — CORS allow-list
+  (no `*`). WebSocket `/ws?token=&course_id=` is course-scoped.
+- `OFFICEHOURS_RATE_LIMIT=false` — tests only; leave on for a host.
 - `OFFICEHOURS_CANVAS_MODE=live|local|none` — optional override; live wins when
   `CANVAS_BASE_URL` + `CANVAS_ACCESS_TOKEN` are set
 

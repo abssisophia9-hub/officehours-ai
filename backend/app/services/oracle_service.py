@@ -215,7 +215,9 @@ def apply_oracle_to_request(
         .filter(TaRoster.name == matcher.get("assigned_ta"))
         .one_or_none()
     )
-    if assigned is not None:
+    # Global roster depth is demo-only. Course-scoped Matcher counts open
+    # asks on this course so Alice's 2302 queue does not inflate another course.
+    if assigned is not None and not request.course_id:
         assigned.queue_depth = int(assigned.queue_depth or 0) + 1
         db.add(assigned)
 

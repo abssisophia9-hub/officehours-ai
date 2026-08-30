@@ -59,6 +59,7 @@ class TaQueueItem(BaseModel):
     knowledge_entry: KnowledgeEntryOut | None = None
     learning_style: str | None = None
     urgency: str | None = None
+    similar_open_count: int = 0
     help_coach: HelpCoachOut | None = None
 
     model_config = ConfigDict(from_attributes=True)

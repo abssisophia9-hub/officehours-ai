@@ -37,6 +37,7 @@ def ensure_schema(engine: Engine) -> None:
             ("help_mode", "VARCHAR"),
             ("work_status", "VARCHAR"),
             ("claimed_by", "VARCHAR"),
+            ("claimed_by_user_id", "INTEGER"),
             ("claimed_at", "DATETIME"),
             ("helped_at", "DATETIME"),
             ("ta_reply", "TEXT"),

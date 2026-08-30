@@ -8,10 +8,12 @@ Then visit http://127.0.0.1:8000/docs for the interactive API docs.
 """
 
 import asyncio
+import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.database.migrate import ensure_schema
 from app.database.session import Base, engine
@@ -39,6 +41,7 @@ from app.routes.ta import router as ta_router
 from app.database.session import SessionLocal
 from app.services.demo_accounts import ensure_demo_accounts
 from app.services.demo_mode import demo_mode
+from app.services.rate_limit import enforce_rate_limit
 
 Base.metadata.create_all(bind=engine)
 ensure_schema(engine)
@@ -62,14 +65,43 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Allow the frontend (kiosk + dashboards) to call this API during local dev.
+def _cors_origins() -> list[str]:
+    front = (os.getenv("OFFICEHOURS_FRONTEND_URL") or "http://127.0.0.1:5180").rstrip("/")
+    origins = {
+        front,
+        "http://127.0.0.1:5180",
+        "http://localhost:5180",
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+        "http://127.0.0.1:5174",
+        "http://localhost:5174",
+        "http://127.0.0.1:5175",
+        "http://localhost:5175",
+    }
+    extra = os.getenv("OFFICEHOURS_CORS_ORIGINS") or ""
+    for part in extra.split(","):
+        cleaned = part.strip().rstrip("/")
+        if cleaned:
+            origins.add(cleaned)
+    return sorted(origins)
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tighten this before production
+    allow_origins=_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def rate_limit_hot_paths(request: Request, call_next):
+    try:
+        enforce_rate_limit(request)
+    except HTTPException as exc:
+        return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+    return await call_next(request)
 
 
 @app.get("/")

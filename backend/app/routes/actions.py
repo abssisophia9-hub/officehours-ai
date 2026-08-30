@@ -77,6 +77,7 @@ async def create_recommendation_decision(
                 "request_ids": payload.request_ids,
                 "meeting": meeting,
                 "title": action_plan.get("title"),
+                "course_id": next(iter(course_ids), None),
             },
         )
 
