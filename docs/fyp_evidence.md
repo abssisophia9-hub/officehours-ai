@@ -43,8 +43,8 @@ overload** and **improve student comfort** seeking academic help during finals?
    required before the capstone presentation, and surveys are not a post-product
    submission. Optional templates remain in `docs/surveys/`.
 3. **Canvas LTI 1.3** — code is in; campus needs a developer key + API token. Unsigned `/canvas-demo` is demo-only.
-4. **Open demo APIs** — some list endpoints are convenient for local demos; not
-   campus-hardened ACLs.
+4. **Open demo APIs** — intake, Study Agent, KB stamps, and most analytics are
+   still unauthenticated. Full backlog: [`repo_audit.md`](repo_audit.md).
 5. **Screenshots** — unified-app pack lives in `demo/screenshots/product-*.png`.
 
 ## Defense checklist (day-of)
