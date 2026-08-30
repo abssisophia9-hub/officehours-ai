@@ -260,10 +260,11 @@ export default function OpeningTrio({ variant = "live" }) {
       <section className="oh-open-trio-sec oh-block-cream" id="people">
         <div>
           <p className="oh-open-kicker">Student · TA · Professor</p>
-          <h2 className="font-display">The same person can sit in two seats.</h2>
+          <h2 className="font-display">Three seats. One login. One role per course.</h2>
           <p>
-            A TA on campus is also a student in another course. One login, a
-            role per course. Click a person to jump to their chapter.
+            Students ask. TAs are assigned to a course they already took — they
+            are staff, not classmates in that section. Professors stamp what the
+            agent may say. Click a person to jump to their chapter.
           </p>
         </div>
         <div className="oh-open-picture" aria-label="Student, TA, and professor">

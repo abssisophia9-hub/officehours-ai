@@ -10,7 +10,7 @@ Generated visuals for the **unified product + Canvas** era. Narrative:
 | `oracle_agents.png` | Ask Triage Analyzer / Matcher / Synthesizer (filename historical) |
 | `product_deployment.png` | Canvas-first community deploy vs portal / manual |
 | `database_erd.png` | Auth, memberships, requests (`help_mode`), KB, roster |
-| `canvas_enrollment.png` | JIT Canvas launch + dual-role (TA + student) |
+| `canvas_enrollment.png` | JIT Canvas launch + per-course role (TA is staff) |
 | `project_journey.png` | Phase timeline from proposal to this upgrade |
 
 Regenerate:

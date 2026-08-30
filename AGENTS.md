@@ -7,8 +7,8 @@
 **Primary product (use this for demos and FYP testing):**
 
 - **FastAPI backend** (`backend/`) — http://127.0.0.1:8000
-- **Unified multi-role app** (`frontend/officehours-app/` :5180) — guests see a
-  Three.js Student → TA → Professor path, then one login + course picker
+- **Unified multi-role app** (`frontend/officehours-app/` :5180) — opening
+  story, then one login + course picker (role is per course; TAs are staff)
 
 Helper: `./scripts/run_product.sh`
 

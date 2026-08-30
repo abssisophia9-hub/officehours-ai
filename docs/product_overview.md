@@ -45,10 +45,10 @@ courses** per term.
 | --- | --- | --- |
 | `s.elidrissi@aui.ma` | student | CSC 2302, 3323, 3374, 3326, 3324 + MTH 1304 + COM 1301 (7) |
 | `y.amrani@aui.ma` | student | CSC 3323, 3374 + MTH 1304 |
-| `a.chen@aui.ma` | **TA + student** | TA: CSC 2302 · Student: CSC 3323, MTH 1304, COM 1301 |
-| `b.martinez@aui.ma` | **TA + student** | TA: CSC 2302, 3323, 3374 · Student: MTH 1304, COM 1301 |
-| `p.nair@aui.ma` | **TA + student** | TA: CSC 3323, 3326 · Student: MTH 1304 |
-| `s.ortiz@aui.ma` | **TA + student** | TA: CSC 3374, 3324 · Student: COM 1301 |
+| `a.chen@aui.ma` | **TA** | Staff on CSC 2302 (already took Data Structures) |
+| `b.martinez@aui.ma` | **TA** | Staff on CSC 2302, 3323, 3374 |
+| `p.nair@aui.ma` | **TA** | Staff on CSC 3323, 3326 |
+| `s.ortiz@aui.ma` | **TA** | Staff on CSC 3374, 3324 |
 | `a.benali@aui.ma` | professor | CSC 2302, 3323, 3374 |
 
 Dual-TA sections (primary + backup Matcher): CSC 2302 (Alice/Bob), CSC 3323

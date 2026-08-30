@@ -42,7 +42,7 @@ Primary path for supervisors and FYP demos. Vocabulary:
 
 ## Talking points
 
-- Role is **per course** (TA can also be a student)
+- Role is **per course** (TA is staff on a course they already took)
 - Ask Triage at intake; Help Coach while helping; professor gates Study Agent KB
 - **Rooms** are named classmate help (leaderboard); Quiet ask is anonymous to staff
 - Chapters on deploy = Canvas modules, not a hardcoded CSC list

@@ -8,7 +8,7 @@ Use this with [`product_overview.md`](product_overview.md),
 ## One-sentence product today
 
 **One campus web app** where a person signs in (or launches from Canvas), their
-**role is per course** (a TA can also be a student elsewhere), they ask quietly
+**role is per course** (a TA is staff on a course they already took), they ask quietly
 or identified, optionally request a face-to-face / online meeting, and
 **Ask Triage** agents help under a professor KB gate — with **Help Coach** for
 TAs, **Rooms** for named classmate help, and **shared group meetings** for
@@ -74,7 +74,7 @@ Vocabulary: [`glossary.md`](glossary.md).
 | --- | --- |
 | **Quiet ask vs Identify me** | Students choose; anonymous strips identity; identified needs name/ID |
 | **Help mode** | `message` · `face_to_face` · `online_meeting` → TA-facing recommended action |
-| **TA is also a student** | Demo + Canvas simulator: same person, different roles per course |
+| **TA is staff** | Assigned to a course they already took — not a classmate in that section |
 | **Community deployment** | **Canvas LTI** is the recommended source of enrollments (not AUI portal scraping, not manual entry as the main path) |
 | Docs / diagrams / demo | Journey doc + diagrams + dual-role demo accounts |
 
@@ -176,7 +176,7 @@ Full account table: [`product_overview.md`](product_overview.md).
 | `diagrams/oracle_agents.png` | Ask Triage Analyzer / Matcher / Synthesizer artifacts (filename historical) |
 | `diagrams/product_deployment.png` | Canvas-first community deploy vs what we are not |
 | `diagrams/database_erd.png` | Auth + memberships + requests (`help_mode`) + KB |
-| `diagrams/canvas_enrollment.png` | JIT Canvas launch + dual-role (TA + student) |
+| `diagrams/canvas_enrollment.png` | JIT Canvas launch + per-course role (TA is staff) |
 | `diagrams/project_journey.png` | Phase timeline day 1 → this upgrade |
 
 ```bash

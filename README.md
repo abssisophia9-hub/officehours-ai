@@ -15,7 +15,7 @@ gate for what students can retrieve from the knowledge base.
 
 A **multi-role campus application** with login (or Canvas launch):
 
-- role is **per course** (a TA can also be a student in other courses)
+- role is **per course** (a TA is staff on a course they already took)
 - Quiet ask or Identify me; message / face-to-face / online meeting
 - one workspace: `frontend/officehours-app` (port **5180**)
 
@@ -66,7 +66,7 @@ to ask for help.
 ## Solution highlights
 
 - Anonymous or identified asks; message / face-to-face / online preference
-- Live WebSocket queues (TA + professor)
+- Live WebSocket queues (signed in + subscribed to one course)
 - Ask Triage at intake + Help Coach while TAs help
 - TA staffing loop (claim → help → reply / group meeting → curation)
 - Shared **group meetings** for repeated clusters (same time/place on every

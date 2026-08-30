@@ -14,7 +14,7 @@ overload** and **improve student comfort** seeking academic help during finals?
 
 | Claim | Evidence |
 | --- | --- |
-| One multi-role campus app (role per course) | `frontend/officehours-app`, login + course picker |
+| One multi-role campus app (one role per course; TA ≠ student of that course) | `frontend/officehours-app`, login + course picker |
 | Ask Triage at intake (Analyzer → Matcher → Synthesizer) with **local** models | `oracle_service.py`, `backend/models/*.joblib`, `OFFICEHOURS_ALLOW_EXTERNAL_LLM=false` |
 | Professor remains the Study Agent publication gate | KB `pending_review` → approve → `/agent/ask` |
 | TA staffing + Help Coach mid-session | `/ta/claim/`, `/ta/assist/` |
@@ -43,9 +43,9 @@ overload** and **improve student comfort** seeking academic help during finals?
    required before the capstone presentation, and surveys are not a post-product
    submission. Optional templates remain in `docs/surveys/`.
 3. **Canvas LTI 1.3** — code is in; campus needs a developer key + API token. Unsigned `/canvas-demo` is demo-only.
-4. **Open demo APIs** — intake, Study Agent, KB stamps, and analytics now
-   require a session + course membership. Remaining host work: CORS origin,
-   favicon. Backlog: [`repo_audit.md`](repo_audit.md).
+4. **Host leftovers** — CORS is origin-locked; `/ws` requires token +
+   `course_id`; TA queue requires staff `course_id` (no `course=` bypass).
+   Favicon still optional. Older backlog notes in [`repo_audit.md`](repo_audit.md).
 5. **Screenshots** — unified-app pack lives in `demo/screenshots/product-*.png`.
 
 ## Defense checklist (day-of)

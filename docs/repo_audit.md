@@ -65,7 +65,7 @@ analytics are not.
 
 **Also P0:**
 
-1. **CORS is `allow_origins=["*"]` with `allow_credentials=True`.** Tighten to the SPA origin before hosting.
+1. **CORS** is now origin-locked (`OFFICEHOURS_FRONTEND_URL` + local product ports). `OFFICEHOURS_CORS_ORIGINS` adds extras. `/ws` requires token + course membership. TA queue requires staff `course_id`.
 2. **Host wiring:** `VITE_API_BASE` must not stay `127.0.0.1:8000`; SPA fallback; `OFFICEHOURS_DEMO=false`; favicon / OG tags.
 3. **IT blockers (not code):** Microsoft app registration; Canvas LTI developer key + `CANVAS_BASE_URL` / `CANVAS_ACCESS_TOKEN`. Without these, do not claim live AUI login or live modules.
 4. **Defense wording:** cite CV / silver / gold with caveats. Do not cite seed gold as quality. Do not say “the agent understands the course” — say “it retrieves what you stamped.”

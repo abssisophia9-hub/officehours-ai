@@ -114,7 +114,8 @@ DEMO_USERS = [
         ],
     },
     {
-        # TAs are also students: Alice TAs CSC 2302 and takes other courses.
+        # Alice is staff on CSC 2302 (a course she already took).
+        # Other memberships are leftover demo enrollments, not "TA of 2302 = student of 2302".
         "email": "a.chen@aui.ma",
         "display_name": "Alice Chen",
         "student_id": "118110",
