@@ -10,6 +10,7 @@
 | [`ai_nlp_design.md`](ai_nlp_design.md) | Custom-trained Ask Triage + Help Coach |
 | [`training_data.md`](training_data.md) | CSV / joblib inventory |
 | [`agent_performance.md`](agent_performance.md) | Metrics + upgrade backlog |
+| [`repo_audit.md`](repo_audit.md) | Full-repo backlog (auth, AI by party, hosting) — 30 Aug 2026 |
 | [`ethics_privacy.md`](ethics_privacy.md) | Privacy principles |
 | [`evaluation_plan.md`](evaluation_plan.md) | Evaluation methods |
 | [`fyp_evidence.md`](fyp_evidence.md) | Defense claims / metric honesty |
