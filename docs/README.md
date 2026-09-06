@@ -17,6 +17,7 @@
 | [`defense_crib.md`](defense_crib.md) | One-page viva crib |
 | [`gold_label_lab.md`](gold_label_lab.md) | How to collect real TA gold (not a survey) |
 | [`ops_scale.md`](ops_scale.md) | Postgres, SMTP notify, pagination, staff retrain |
+| [`canvas_live_test.md`](canvas_live_test.md) | Staged LTI live-test runbook (env + developer key + checklist) |
 | [`research/office_hours_public_sources.md`](research/office_hours_public_sources.md) | Public uni OH research → gold *themes* only |
 | [`proposal.md`](proposal.md) | Original FYP proposal |
 | [`surveys/`](surveys/) | Optional UX templates — **not** gold labels |
