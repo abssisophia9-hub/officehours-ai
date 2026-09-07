@@ -4,11 +4,23 @@ Routes for submitting and retrieving student requests.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import json
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from app.ai.clustering import assign_cluster_id
 from app.database.session import get_db
+from app.models.auth import User
+from app.routes.auth import get_current_user
+from app.services.access_control import (
+    require_course_member,
+    require_course_role,
+    require_staff_anywhere,
+    user_course_ids,
+    user_staff_course_ids,
+)
 from app.models.action import RecommendationDecision
 from app.models.request import (
     HELP_MODES,
@@ -25,6 +37,7 @@ from app.services.oracle_service import (
     build_oracle_public_payload,
     run_oracle_pipeline,
 )
+from app.services.pagination import clamp_page
 from app.services.request_serializer import to_request_out
 from app.services.request_status_service import build_request_status
 from app.services.study_buddy_service import (
@@ -48,7 +61,17 @@ HELP_MODE_ACTIONS = {
 
 
 @router.post("/", response_model=RequestOut, status_code=status.HTTP_201_CREATED)
-async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
+async def create_request(
+    payload: RequestCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    if payload.course_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="course_id is required.",
+        )
+    require_course_member(db, user, payload.course_id)
     request_data = payload.model_dump()
 
     help_mode = str(request_data.get("help_mode") or "message").strip().lower()
@@ -133,6 +156,7 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
         request_data["cluster_id"] = assign_cluster_id(payload.text, existing_requests)
 
     db_request = Request(**request_data)
+    db_request.created_by_user_id = user.id
     db.add(db_request)
     db.commit()
     db.refresh(db_request)
@@ -185,6 +209,7 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
                 "request_id": db_request.id,
                 "elapsed_ms": step["elapsed_ms"],
                 "agent": step["agent"],
+                "course_id": db_request.course_id,
             },
         )
 
@@ -198,6 +223,7 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
             "cluster_id": db_request.cluster_id,
             "assigned_ta": db_request.assigned_ta,
             "oracle_category": db_request.oracle_category,
+            "course_id": db_request.course_id,
         },
     )
     await hub.broadcast(
@@ -208,6 +234,7 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
             "source_request_id": entry.source_request_id,
             "learning_style": entry.learning_style,
             "drafter_backend": entry.drafter_backend,
+            "course_id": db_request.course_id,
         },
     )
     if (db_request.urgency or "").lower() in {"urgent", "high"} or db_request.sensitive:
@@ -224,52 +251,159 @@ async def create_request(payload: RequestCreate, db: Session = Depends(get_db)):
                 "category": db_request.category,
                 "sensitive": bool(db_request.sensitive),
                 "reason": reason,
+                "course_id": db_request.course_id,
             },
         )
 
     return to_request_out(db_request, oracle=public_oracle, db=db)
 
 
-@router.get("/", response_model=list[RequestOut])
-def list_requests(db: Session = Depends(get_db)):
-    return [
-        to_request_out(item, db=db)
-        for item in db.query(Request).order_by(Request.id).all()
-    ]
+def _is_request_owner(user: User, db_request: Request) -> bool:
+    return getattr(db_request, "created_by_user_id", None) == user.id
+
+
+def _is_staff_on_request(db: Session, user: User, db_request: Request) -> bool:
+    if db_request.course_id is None:
+        return False
+    try:
+        require_course_role(db, user, db_request.course_id, roles={"ta", "professor"})
+    except HTTPException:
+        return False
+    return True
+
+
+def _require_request_access(db: Session, user: User, db_request: Request) -> None:
+    """Full request body: staff on that course, or the student who submitted it."""
+    if _is_request_owner(user, db_request) or _is_staff_on_request(db, user, db_request):
+        return
+    if db_request.course_id is None:
+        require_staff_anywhere(db, user)
+        return
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Request not found",
+    )
+
+
+def _require_status_access(db: Session, user: User, db_request: Request) -> None:
+    """Request-code receipt: any course member can look up status, not the full row."""
+    if db_request.course_id is None:
+        require_staff_anywhere(db, user)
+        return
+    require_course_member(db, user, db_request.course_id)
+
+
+@router.get("/")
+def list_requests(
+    course_id: int | None = Query(default=None),
+    limit: int | None = Query(default=None, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    query = db.query(Request)
+    if course_id is not None:
+        _course, membership = require_course_member(db, user, course_id)
+        query = query.filter(Request.course_id == course_id)
+        if membership.role == "student":
+            query = query.filter(Request.created_by_user_id == user.id)
+    else:
+        staff_ids = user_staff_course_ids(db, user)
+        student_ids = [
+            cid for cid in user_course_ids(db, user) if cid not in set(staff_ids)
+        ]
+        clauses = []
+        if staff_ids:
+            clauses.append(Request.course_id.in_(staff_ids))
+        if student_ids:
+            clauses.append(
+                and_(
+                    Request.course_id.in_(student_ids),
+                    Request.created_by_user_id == user.id,
+                )
+            )
+        if not clauses:
+            return []
+        query = query.filter(or_(*clauses))
+    query = query.order_by(Request.id)
+    limit, offset = clamp_page(limit, offset)
+    if limit is None:
+        rows = [to_request_out(item, db=db) for item in query.all()]
+        return rows
+    total = query.count()
+    chunk = query.offset(offset).limit(limit).all()
+    rows = [to_request_out(item, db=db) for item in chunk]
+    return {
+        "items": rows,
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+        "has_more": offset + len(rows) < total,
+    }
 
 
 @router.get("/{request_id}/status", response_model=RequestStatusOut)
-def get_request_status(request_id: int, db: Session = Depends(get_db)):
+def get_request_status(
+    request_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     db_request = db.get(Request, request_id)
     if db_request is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Request not found",
         )
+    _require_status_access(db, user, db_request)
 
-    decisions = db.query(RecommendationDecision).order_by(RecommendationDecision.id).all()
+    # Avoid loading every decision campus-wide — match this request id only.
+    marker = str(request_id)
+    candidates = (
+        db.query(RecommendationDecision)
+        .filter(RecommendationDecision.request_ids.contains(marker))
+        .order_by(RecommendationDecision.id)
+        .all()
+    )
+    decisions = []
+    for decision in candidates:
+        try:
+            ids = json.loads(decision.request_ids or "[]")
+        except json.JSONDecodeError:
+            ids = []
+        if request_id in ids or str(request_id) in {str(x) for x in ids}:
+            decisions.append(decision)
     return build_request_status(db_request, decisions)
 
 
 @router.get("/{request_id}", response_model=RequestOut)
-def get_request(request_id: int, db: Session = Depends(get_db)):
+def get_request(
+    request_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     db_request = db.get(Request, request_id)
     if db_request is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Request not found",
         )
+    _require_request_access(db, user, db_request)
     return to_request_out(db_request, db=db)
 
 
 @router.get("/{request_id}/study-buddy", response_model=StudyBuddyStatusOut)
-def study_buddy_status(request_id: int, db: Session = Depends(get_db)):
+def study_buddy_status(
+    request_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     db_request = db.get(Request, request_id)
     if db_request is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Request not found",
         )
+    _require_request_access(db, user, db_request)
     return get_study_buddy_status(db, db_request)
 
 
@@ -278,6 +412,7 @@ def study_buddy_opt_in(
     request_id: int,
     payload: StudyBuddyOptInCreate | None = None,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     db_request = db.get(Request, request_id)
     if db_request is None:
@@ -285,5 +420,6 @@ def study_buddy_opt_in(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Request not found",
         )
+    _require_request_access(db, user, db_request)
     label = payload.display_label if payload else None
     return opt_in_study_buddy(db, db_request, display_label=label)

@@ -7,16 +7,14 @@
 **Primary product (use this for demos and FYP testing):**
 
 - **FastAPI backend** (`backend/`) — http://127.0.0.1:8000
-- **Unified multi-role app** (`frontend/officehours-app/` :5180) — guests see a
-  Three.js Student → TA → Professor path, then one login + course picker
+- **Unified multi-role app** (`frontend/officehours-app/` :5180) — opening
+  story, then one login + course picker (role is per course; TAs are staff)
 
 Helper: `./scripts/run_product.sh`
 
-**Legacy shells** (hardware / older demos only — not the product package):
-
-- Student kiosk (`frontend/student-kiosk/` :5173)
-- Professor dashboard (`frontend/professor-dashboard/` :5174)
-- TA dashboard (`frontend/ta-dashboard/` :5175)
+CI builds **only** the backend and this app. Folders under
+`frontend/student-kiosk/`, `professor-dashboard/`, and `ta-dashboard/` are
+milestone archives — not product jobs.
 
 ### Backend environment
 
@@ -47,16 +45,12 @@ Helper: `./scripts/run_product.sh`
 - Build: `npm run build`.
 - Dependency audit: `npm audit --audit-level=moderate`.
 
-### Legacy frontends (optional)
-
-Same install / `npm run dev` / `npm run build` / `npm audit` pattern from each
-folder (`student-kiosk` 5173, `professor-dashboard` 5174, `ta-dashboard` 5175).
-
 ### Database
 
 - Default DB is SQLite at `backend/officehours.db` (auto-created at startup via
-  `Base.metadata.create_all`). Override with the `DATABASE_URL` env var. Tests
-  set `DATABASE_URL=sqlite:///:memory:`.
+  `Base.metadata.create_all`). Override with `DATABASE_URL`. Tests set
+  `DATABASE_URL=sqlite:///:memory:`. Postgres: see `docs/ops_scale.md` and
+  `docker-compose.postgres.yml`.
 
 ### Demo vs community deploy
 
@@ -68,5 +62,7 @@ folder (`student-kiosk` 5173, `professor-dashboard` 5174, `ta-dashboard` 5175).
 ### Product vocabulary
 
 See [`docs/glossary.md`](docs/glossary.md). Intake pipeline is **Ask Triage**
-(implementation often still named `oracle_*`). TA mid-session AI is **Help Coach**.
-Student classmate forum is **Rooms** (API `/help-room/`).
+(API fields may still say `oracle_*` — same pipeline). TA mid-session AI is
+**Help Coach**. Student classmate forum is **Rooms** (API `/help-room/`).
+Defense crib: [`docs/defense_crib.md`](docs/defense_crib.md). Gold-label lab:
+[`docs/gold_label_lab.md`](docs/gold_label_lab.md).

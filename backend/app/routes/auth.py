@@ -26,8 +26,10 @@ from app.services.auth_service import (
 )
 from app.services.demo_accounts import ensure_demo_accounts
 from app.services.demo_mode import demo_mode
+from app.services.session_tokens import user_from_token
 from app.services.canvas_service import canvas_mode
-from app.services import microsoft_sso
+from app.services import lti13, microsoft_sso
+from app.services.security_log import audit
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 courses_router = APIRouter(prefix="/courses", tags=["courses"])
@@ -68,23 +70,7 @@ def get_current_user(
     db: Session = Depends(get_db),
     authorization: str | None = Header(default=None),
 ) -> User:
-    ensure_demo_accounts(db)
-    if not authorization or not authorization.lower().startswith("bearer "):
-        raise HTTPException(status_code=401, detail="Missing bearer token.")
-    token = authorization.split(" ", 1)[1].strip()
-    session = db.query(AuthSession).filter(AuthSession.token == token).one_or_none()
-    if session is None:
-        raise HTTPException(status_code=401, detail="Invalid session.")
-    from datetime import datetime, timezone
-
-    if session.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
-        db.delete(session)
-        db.commit()
-        raise HTTPException(status_code=401, detail="Session expired.")
-    user = db.query(User).filter(User.id == session.user_id, User.is_active.is_(True)).one_or_none()
-    if user is None:
-        raise HTTPException(status_code=401, detail="User not found.")
-    return user
+    return user_from_token(db, authorization)
 
 
 @router.get("/config")
@@ -94,6 +80,7 @@ def auth_config():
         "demo": demo_mode(),
         "canvas_mode": canvas_mode(),
         "microsoft": microsoft_sso.microsoft_enabled(),
+        "lti": lti13.lti_enabled(),
     }
 
 
@@ -166,6 +153,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     email = payload.email.strip().lower()
     user = db.query(User).filter(User.email == email, User.is_active.is_(True)).one_or_none()
     if user is None or not verify_password(payload.password, user.password_hash):
+        audit("auth.login_failed", level="warning", email=email)
         raise HTTPException(status_code=401, detail="Invalid email or password.")
 
     token = new_session_token()
@@ -177,6 +165,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
         )
     )
     db.commit()
+    audit("auth.login_ok", user_id=user.id, email=email)
     return LoginResponse(token=token, user=_serialize_user(db, user))
 
 

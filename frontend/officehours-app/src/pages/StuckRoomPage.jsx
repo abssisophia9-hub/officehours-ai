@@ -131,7 +131,11 @@ export default function StuckRoomPage() {
 
   const loadFeed = useCallback(async () => {
     if (!courseId || !token) return;
-    const qs = new URLSearchParams({ course_id: String(courseId), sort });
+    const qs = new URLSearchParams({
+      course_id: String(courseId),
+      sort,
+      limit: "40",
+    });
     if (chapterFilter) qs.set("chapter", chapterFilter);
     if (typeFilter) qs.set("room_type", typeFilter);
     try {
@@ -141,7 +145,7 @@ export default function StuckRoomPage() {
         api(`/help-room/ranks/?course_id=${courseId}`, { token }),
       ]);
       setCommunity(meta);
-      setPosts(feed);
+      setPosts(Array.isArray(feed) ? feed : feed?.items || []);
       setRanks(board);
       setError("");
     } catch (err) {

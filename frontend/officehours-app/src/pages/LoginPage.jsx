@@ -12,8 +12,8 @@ const DEMO_ACCOUNTS = [
   },
   {
     email: "a.chen@aui.ma",
-    role: "TA + student",
-    note: "TAs CSC 2302 · takes 3323 / MTH / COM",
+    role: "TA (staff on 2302)",
+    note: "Assigned to CSC 2302 — a course she already took",
   },
   {
     email: "a.benali@aui.ma",
@@ -112,8 +112,9 @@ export default function LoginPage() {
             OfficeHours AI
           </h1>
           <p className="mt-3 max-w-md text-base font-medium text-aui-deep/70">
-            Sign in with your AUI email (Initial.Lastname@aui.ma). Your role is
-            per course — a TA can also be a student in other courses.
+            Sign in with your AUI email (Initial.Lastname@aui.ma). Role is per
+            course. A TA is staff on a course they already completed — not a
+            student in that section.
           </p>
 
           {microsoft ? (

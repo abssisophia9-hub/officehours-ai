@@ -194,7 +194,11 @@ def _to_analyzer_payload(
     confidence = float(prediction.get("confidence") or 0.0)
     combined = _combine(question_text, code_snippet)
 
-    topic_label, topic_tags = _topic_overlay(combined)
+    # CSC topic overlays are SSE demo labels, not a campus-wide taxonomy.
+    topic_label, topic_tags = None, []
+    dept = (course or "").strip().split()[0].upper() if course else ""
+    if dept == "CSC":
+        topic_label, topic_tags = _topic_overlay(combined)
     display_category = topic_label or CATEGORY_DISPLAY.get(
         category, category.replace("_", " ").title()
     )

@@ -43,6 +43,9 @@ class Request(Base):
     # TA staffing loop: open → claimed → in_progress → helped.
     work_status: Mapped[str] = mapped_column(String, nullable=False, default="open")
     claimed_by: Mapped[str | None] = mapped_column(String, nullable=True)
+    claimed_by_user_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    # Submitter (even Quiet ask). Used for "my asks"; never exposed as identity.
+    created_by_user_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     helped_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # Direct async reply from a TA (message mode) — visible on student status.
@@ -62,20 +65,20 @@ WORK_STATUSES = ("open", "claimed", "in_progress", "helped")
 
 
 class RequestCreate(BaseModel):
-    text: str
+    text: str = Field(min_length=1, max_length=8000)
     anonymous: bool = True
-    student_id: str | None = None
-    student_name: str | None = None
-    course: str | None = None
-    course_id: int | None = None
-    code_snippet: str | None = None
-    category: str | None = None
-    urgency: str | None = None
-    learning_style: str | None = None
+    student_id: str | None = Field(default=None, max_length=64)
+    student_name: str | None = Field(default=None, max_length=200)
+    course: str | None = Field(default=None, max_length=64)
+    course_id: int | None = Field(default=None, ge=1)
+    code_snippet: str | None = Field(default=None, max_length=20000)
+    category: str | None = Field(default=None, max_length=80)
+    urgency: str | None = Field(default=None, max_length=40)
+    learning_style: str | None = Field(default=None, max_length=40)
     cluster_id: int | None = None
-    recommended_action: str | None = None
+    recommended_action: str | None = Field(default=None, max_length=500)
     sensitive: bool | None = None
-    help_mode: str = "message"
+    help_mode: str = Field(default="message", max_length=32)
 
 
 class OracleAnalyzerOut(BaseModel):
@@ -122,6 +125,7 @@ class RequestOut(RequestCreate):
     help_mode: str = "message"
     work_status: str = "open"
     claimed_by: str | None = None
+    claimed_by_user_id: int | None = None
     claimed_at: datetime | None = None
     helped_at: datetime | None = None
     ta_reply: str | None = None
@@ -154,6 +158,7 @@ class RequestStatusOut(BaseModel):
     help_mode: str | None = None
     work_status: str | None = None
     claimed_by: str | None = None
+    claimed_by_user_id: int | None = None
     ta_reply: str | None = None
     recommended_next_step: str | None = None
     agenda_hint: str | None = None

@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import AccountMenu from "../components/AccountMenu.jsx";
+import NotificationBell from "../components/NotificationBell.jsx";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 const ICONS = {
@@ -194,6 +195,7 @@ export default function AppShell() {
           </select>
         </nav>
 
+        <NotificationBell />
         <AccountMenu onScrollToSection={scrollToSection} />
       </aside>
 

@@ -27,8 +27,8 @@ export default function CourseHomePage() {
     <section className="fade-up">
       <h1 className="bh-page-title">My Courses</h1>
       <p className="bh-page-subtitle">
-        Choose a course workspace, {user.display_name.split(" ")[0]} — your role
-        can differ by course.
+        Choose a course workspace, {user.display_name.split(" ")[0]} — one role
+        per course. TAs are staff on sections they already took.
       </p>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">

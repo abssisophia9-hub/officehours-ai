@@ -73,6 +73,12 @@ Silver labels align question text / category with TA expertise tags from
 `train_matcher.py` writes holdout metrics to `reports/final_report/matcher_evaluation.json`.
 Treat silver holdout as **demo metrics**, not gold TA judgment.
 
+**Runtime on a real course roster:** Matcher does **not** use
+`matcher_classifier.joblib` (those labels are demo names Alice/Bob/Priya/Sam).
+It load-balances among **this course’s TA memberships** by expertise-tag overlap
+and per-course open-ask depth. That is the correct campus path: AUI staff names
+are not in the silver CSV.
+
 ## Human gold labels (evaluation)
 
 | File | Role |

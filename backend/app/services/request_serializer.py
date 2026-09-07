@@ -62,6 +62,7 @@ def to_request_out(
         help_mode=str(getattr(request, "help_mode", None) or "message"),
         work_status=str(getattr(request, "work_status", None) or "open"),
         claimed_by=getattr(request, "claimed_by", None),
+        claimed_by_user_id=getattr(request, "claimed_by_user_id", None),
         claimed_at=getattr(request, "claimed_at", None),
         helped_at=getattr(request, "helped_at", None),
         ta_reply=getattr(request, "ta_reply", None),

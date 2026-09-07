@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, Navigate } from "react-router";
 import { api } from "../api/client.js";
+import { pageItems } from "../api/page.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import HelpRoomFeed from "../components/HelpRoomFeed.jsx";
 import PeerNotesFeed from "../components/PeerNotesFeed.jsx";
@@ -44,7 +45,15 @@ export default function StudentWorkspace() {
   const [agentQ, setAgentQ] = useState("");
   const [agentA, setAgentA] = useState("");
   const [agentSeekHelp, setAgentSeekHelp] = useState(false);
-  const [stats, setStats] = useState({ open: 0, anonymous: 0, approved: 0 });
+  const [agentSources, setAgentSources] = useState([]);
+  const [myAsks, setMyAsks] = useState([]);
+  const [stats, setStats] = useState({
+    open: 0,
+    anonymous: 0,
+    approved: 0,
+    hitShort: "—",
+    hitLabel: "No agent asks in this course yet",
+  });
   const [buddyStatus, setBuddyStatus] = useState(null);
   const [buddyBusy, setBuddyBusy] = useState(false);
   const [statusCode, setStatusCode] = useState("");
@@ -54,17 +63,25 @@ export default function StudentWorkspace() {
   const loadStats = useCallback(async () => {
     if (!activeCourse) return;
     try {
-      const [requests, approved] = await Promise.all([
-        api("/requests/", { token }),
-        api(`/knowledge/?status=approved&course_id=${activeCourse.id}`, { token }),
+      const [requests, approved, hitRate] = await Promise.all([
+        api(`/requests/?course_id=${activeCourse.id}&limit=50`, { token }),
+        api(`/knowledge/?status=approved&course_id=${activeCourse.id}&limit=50`, { token }),
+        api(`/analytics/kb-hit-rate?course_id=${activeCourse.id}`, { token }),
       ]);
-      const inCourse = requests.filter(
+      const inCourse = pageItems(requests).filter(
         (item) => !item.course || item.course === activeCourse.code,
       );
+      const asks = hitRate?.total_asks || 0;
+      const hits = hitRate?.total_hits || 0;
+      setMyAsks(inCourse);
       setStats({
         open: inCourse.length,
         anonymous: inCourse.filter((item) => item.anonymous).length,
-        approved: approved.length,
+        approved: pageItems(approved).length,
+        hitShort: asks ? `${hits}/${asks}` : "—",
+        hitLabel: asks
+          ? `${hits} of ${asks} asks this course hit a stamp`
+          : "No agent asks in this course yet",
       });
     } catch {
       // stats are decorative; workspace still works without them
@@ -167,6 +184,7 @@ export default function StudentWorkspace() {
     event.preventDefault();
     setAgentA("");
     setAgentSeekHelp(false);
+    setAgentSources([]);
     try {
       const answer = await api("/agent/ask", {
         method: "POST",
@@ -176,6 +194,12 @@ export default function StudentWorkspace() {
       const hint = answer.student_hint ? `\n\n${answer.student_hint}` : "";
       setAgentA(`${answer.answer || ""}${hint}`);
       setAgentSeekHelp(Boolean(answer.should_seek_help || answer.matched_count === 0));
+      setAgentSources(
+        (answer.sources || [])
+          .map((hit) => (hit.entry?.question_text || "").trim())
+          .filter(Boolean),
+      );
+      await loadStats();
     } catch (err) {
       setAgentA(err.message);
       setAgentSeekHelp(true);
@@ -192,26 +216,24 @@ export default function StudentWorkspace() {
 
       <div className="bh-stats">
         <article className="bh-stat-card">
-          <div className="bh-stat-head">Course Requests {ICONS.clock}</div>
+          <div className="bh-stat-head">My asks {ICONS.clock}</div>
           <p className="bh-stat-value">{stats.open}</p>
-          <p className="bh-stat-note">Questions asked in {activeCourse.code}</p>
+          <p className="bh-stat-note">Your asks in {activeCourse.code} — not the class queue</p>
         </article>
         <article className="bh-stat-card">
-          <div className="bh-stat-head">Quiet Asks {ICONS.check}</div>
+          <div className="bh-stat-head">My Quiet asks {ICONS.check}</div>
           <p className="bh-stat-value">{stats.anonymous}</p>
-          <p className="bh-stat-note">Asked anonymously — no names stored</p>
+          <p className="bh-stat-note">Name hidden from staff — you can still open status</p>
         </article>
         <article className="bh-stat-card">
           <div className="bh-stat-head">Approved Knowledge {ICONS.book}</div>
           <p className="bh-stat-value">{stats.approved}</p>
-          <p className="bh-stat-note">Entries your study agent can use</p>
+          <p className="bh-stat-note">Stamped FAQs the study agent may quote</p>
         </article>
         <article className="bh-stat-card">
-          <div className="bh-stat-head">My Submission {ICONS.doc}</div>
-          <p className="bh-stat-value">{result ? `#${result.id}` : "—"}</p>
-          <p className="bh-stat-note">
-            {result ? "Save this request code" : "No request this session"}
-          </p>
+          <div className="bh-stat-head">Agent hit-rate {ICONS.doc}</div>
+          <p className="bh-stat-value">{stats.hitShort}</p>
+          <p className="bh-stat-note">{stats.hitLabel}</p>
         </article>
       </div>
 
@@ -382,22 +404,29 @@ export default function StudentWorkspace() {
                 </p>
               ) : null}
               {result.oracle ? (
-                <ul className="mt-3 space-y-1.5 text-xs text-aui-deep/85">
-                  <li>
-                    <strong>Analyzer:</strong> {result.oracle.analyzer.category} ·{" "}
-                    {result.oracle.analyzer.difficulty}
-                  </li>
-                  <li>
-                    <strong>Matcher:</strong> {result.oracle.matcher.assigned_ta}
-                    {result.oracle.matcher.alternative_ta
-                      ? ` (backup: ${result.oracle.matcher.alternative_ta})`
-                      : ""}{" "}
-                    · wait ~{result.oracle.matcher.estimated_wait_minutes} min
-                  </li>
-                  <li>
-                    <strong>Hint:</strong> {result.oracle.synthesizer.student_hint}
-                  </li>
-                </ul>
+                <div className="mt-3 rounded-lg border border-aui-forest/20 bg-white p-2.5">
+                  <p className="text-xs font-semibold text-aui-ink">Ask Triage</p>
+                  <p className="mt-0.5 text-[11px] text-aui-deep/60">
+                    Analyzer → Matcher → Synthesizer (local models, this course)
+                  </p>
+                  <ul className="mt-2 space-y-1.5 text-xs text-aui-deep/85">
+                    <li>
+                      <strong>Analyzer:</strong> {result.oracle.analyzer.category} ·{" "}
+                      {result.oracle.analyzer.difficulty}
+                    </li>
+                    <li>
+                      <strong>Matcher:</strong> {result.oracle.matcher.assigned_ta}
+                      {result.oracle.matcher.alternative_ta
+                        ? ` (backup: ${result.oracle.matcher.alternative_ta})`
+                        : ""}{" "}
+                      · wait ~{result.oracle.matcher.estimated_wait_minutes} min
+                    </li>
+                    <li>
+                      <strong>Synthesizer hint:</strong>{" "}
+                      {result.oracle.synthesizer.student_hint}
+                    </li>
+                  </ul>
+                </div>
               ) : null}
               {buddyStatus?.eligible && !buddyStatus.opted_in ? (
                 <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-950">
@@ -421,16 +450,48 @@ export default function StudentWorkspace() {
           ) : null}
 
           <div className="mt-5 rounded-xl border border-[#e3e8e4] bg-[#fafcfa] p-3">
-            <p className="text-sm font-semibold text-aui-ink">Check request status</p>
+            <p className="text-sm font-semibold text-aui-ink">My asks</p>
             <p className="mt-1 text-xs text-aui-deep/70">
-              See TA replies or a shared group meeting time/place for your request code.
+              Your submissions in this course. Quiet asks stay nameless to staff.
+              A request code is only for a receipt you wrote down.
             </p>
+            {myAsks.length ? (
+              <ul className="mt-3 space-y-2">
+                {myAsks.slice().reverse().map((ask) => (
+                  <li key={ask.id}>
+                    <button
+                      type="button"
+                      className="w-full rounded-lg border border-[#d7e0d9] bg-white px-3 py-2 text-left text-xs hover:border-aui-forest"
+                      onClick={() => {
+                        setStatusCode(String(ask.id));
+                        setStatusResult(null);
+                        setError("");
+                        api(`/requests/${ask.id}/status`, { token })
+                          .then(setStatusResult)
+                          .catch((err) => setError(err.message));
+                      }}
+                    >
+                      <span className="font-semibold text-aui-ink">#{ask.id}</span>
+                      {" · "}
+                      {ask.anonymous ? "Quiet ask" : "Identify me"}
+                      {" · "}
+                      {ask.work_status || "open"}
+                      <span className="mt-1 block truncate text-aui-deep/80">
+                        {ask.text}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-xs text-aui-deep/60">No asks from this login yet.</p>
+            )}
             <form onSubmit={checkRequestStatus} className="mt-3 flex flex-wrap gap-2">
               <input
                 className="field-glass min-w-[8rem] flex-1 px-3 py-2 text-sm"
                 value={statusCode}
                 onChange={(event) => setStatusCode(event.target.value)}
-                placeholder="Request code"
+                placeholder="Request code (receipt)"
                 inputMode="numeric"
               />
               <button
@@ -438,7 +499,7 @@ export default function StudentWorkspace() {
                 disabled={statusBusy}
                 className="btn-ghost px-4 py-2 text-sm"
               >
-                {statusBusy ? "Checking…" : "Look up"}
+                {statusBusy ? "Checking…" : "Look up receipt"}
               </button>
             </form>
             {statusResult ? (
@@ -500,6 +561,13 @@ export default function StudentWorkspace() {
           {agentA ? (
             <p className="soft-stat mt-4 whitespace-pre-wrap text-sm">{agentA}</p>
           ) : null}
+          {agentSources.length ? (
+            <ul className="mt-3 space-y-1 text-xs text-aui-deep/80">
+              {agentSources.map((title) => (
+                <li key={title}>Quoted from: {title}</li>
+              ))}
+            </ul>
+          ) : null}
           {agentSeekHelp ? (
             <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
               <p className="font-semibold">No approved answer yet — seek help.</p>
@@ -509,7 +577,13 @@ export default function StudentWorkspace() {
                 perspective.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <a href="#ask" className="btn-primary inline-flex px-4 py-2 text-xs">
+                <a
+                  href="#ask"
+                  className="btn-primary inline-flex px-4 py-2 text-xs"
+                  onClick={() => {
+                    if (agentQ.trim()) setText(agentQ);
+                  }}
+                >
                   Go to Quiet ask
                 </a>
                 <Link to="/student/room" className="btn-ghost inline-flex px-4 py-2 text-xs">

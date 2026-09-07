@@ -8,7 +8,7 @@ Use this with [`product_overview.md`](product_overview.md),
 ## One-sentence product today
 
 **One campus web app** where a person signs in (or launches from Canvas), their
-**role is per course** (a TA can also be a student elsewhere), they ask quietly
+**role is per course** (a TA is staff on a course they already took), they ask quietly
 or identified, optionally request a face-to-face / online meeting, and
 **Ask Triage** agents help under a professor KB gate — with **Help Coach** for
 TAs, **Rooms** for named classmate help, and **shared group meetings** for
@@ -74,9 +74,9 @@ Vocabulary: [`glossary.md`](glossary.md).
 | --- | --- |
 | **Quiet ask vs Identify me** | Students choose; anonymous strips identity; identified needs name/ID |
 | **Help mode** | `message` · `face_to_face` · `online_meeting` → TA-facing recommended action |
-| **TA is also a student** | Demo + Canvas simulator: same person, different roles per course |
+| **TA is staff** | Assigned to a course they already took — not a classmate in that section |
 | **Community deployment** | **Canvas LTI** is the recommended source of enrollments (not AUI portal scraping, not manual entry as the main path) |
-| Docs / diagrams / demo | Journey doc + diagrams + dual-role demo accounts |
+| Docs / diagrams / demo | Journey doc + diagrams + per-course role demo accounts |
 
 ### Phase 7 — TA staffing, Help Coach, peer notes, shared meetings
 
@@ -105,6 +105,20 @@ Vocabulary: [`glossary.md`](glossary.md).
 | **Chapters from Canvas** | Production grid = Canvas modules. Sample CSC/MTH outlines only if `OFFICEHOURS_DEMO=true`. |
 | **Demo gate** | `OFFICEHOURS_DEMO` seeds Sara/Youssef and the local Canvas mirror. Community deploy leaves it off. |
 
+### Phase 10 — Opening story, Microsoft SSO, signed Canvas LTI (29–30 Aug 2026)
+
+Full chit-chat (every request, rejection, and IT ask):  
+[`session_log_opening_auth_canvas.md`](session_log_opening_auth_canvas.md).
+
+| Decision / feature | What we shipped |
+| --- | --- |
+| **Opening is community, not the agent** | Headline: choose how you get help and how you give it. Rooms + Hilbert ŵ + help-or-ignore first. |
+| **Hard chapter cuts** | User rejected gradients. Solid cream/white/lime/forest blocks + forest 01–05 bands. |
+| **Illustrated journey** | Alone at 2:13 AM → shared at 2:31 AM. Quiet vs named, TA + agent, professor as guide. |
+| **Microsoft Entra ID** | `/auth/microsoft/login` → AUI tenant picker → `/sso`. Waiting on IT app registration. |
+| **Canvas LTI 1.3** | `/lti/login` + `/lti/launch`. Unsigned `/canvas/launch` and `/canvas-demo` **off** when not demo. |
+| **CI housekeeping** | `nanoid` 3.3.18 in all four frontend lockfiles; drop unused Three.js/Recharts from the unified app. |
+
 ---
 
 ## How campus enrollment works (production recommendation)
@@ -116,7 +130,7 @@ AUI already uses Canvas
 Student / TA / professor opens a Canvas course
         │
         ▼
-Clicks “Open OfficeHours AI”  (real LTI next; demo launch today)
+Clicks “Open OfficeHours AI”  (signed LTI 1.3 when IT installs the tool; `/canvas-demo` only if `OFFICEHOURS_DEMO=true`)
         │
         ▼
 We learn: email · course · Canvas role
@@ -162,7 +176,7 @@ Full account table: [`product_overview.md`](product_overview.md).
 | `diagrams/oracle_agents.png` | Ask Triage Analyzer / Matcher / Synthesizer artifacts (filename historical) |
 | `diagrams/product_deployment.png` | Canvas-first community deploy vs what we are not |
 | `diagrams/database_erd.png` | Auth + memberships + requests (`help_mode`) + KB |
-| `diagrams/canvas_enrollment.png` | JIT Canvas launch + dual-role (TA + student) |
+| `diagrams/canvas_enrollment.png` | JIT Canvas launch + per-course role (TA is staff) |
 | `diagrams/project_journey.png` | Phase timeline day 1 → this upgrade |
 
 ```bash
@@ -175,9 +189,9 @@ backend/venv/bin/python scripts/generate_architecture_diagrams.py
 
 Defense claims / ceilings: [`fyp_evidence.md`](fyp_evidence.md).
 
-1. Replace unsigned `POST /canvas/launch` with **real Canvas LTI 1.3**  
+1. **AUI IT:** Microsoft Entra app registration (client id, secret, redirect URI) and Canvas LTI 1.3 developer key + API token. Code is ready; credentials are not.  
 2. Optional: collect held-out TA **gold labels** when a lab is available  
-3. Keep growing course KB **and Rooms chapters** from Canvas modules  
+3. Host the SPA with a real `VITE_API_BASE` / reverse proxy, favicon, and `OFFICEHOURS_DEMO=false`  
 4. Retrain Analyzer / Matcher / Synthesizer on CSC-covered labels ([`agent_performance.md`](agent_performance.md))  
 5. Optional tabular signals (learning style / stress) from external CSVs — bridge, not drop-in text training  
 

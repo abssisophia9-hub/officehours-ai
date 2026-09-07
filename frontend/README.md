@@ -14,15 +14,9 @@ Demo password: `aui-demo` **when** `OFFICEHOURS_DEMO=true`
 Accounts: `s.elidrissi@aui.ma`, `a.chen@aui.ma`, `a.benali@aui.ma`  
 (AUI email shape: `Initial.Lastname@aui.ma` — role is from membership, not email.)
 
-## Legacy specialized apps (optional)
+## Archives (not the product, not in CI)
 
-Older single-role web shells kept for reference only — **not** a hardware path:
+`student-kiosk/`, `professor-dashboard/`, and `ta-dashboard/` are mid-report
+shells kept in the tree. **CI does not build them.** Do not demo them.
 
-| App | Port | Notes |
-| --- | --- | --- |
-| `student-kiosk/` | 5173 | Shared-device web flow without account login |
-| `professor-dashboard/` | 5174 | Legacy professor-only shell |
-| `ta-dashboard/` | 5175 | Legacy TA-only shell |
-
-Prefer **`officehours-app`** for supervisor testing. Physical kiosk / barcode /
-NFC hardware is **out of scope**.
+Physical kiosk / barcode / NFC hardware is **out of scope**.

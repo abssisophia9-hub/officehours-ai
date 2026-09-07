@@ -33,14 +33,16 @@ def test_analyzer_overlays_csc_topics():
         question_text=(
             "In CSC 2302 red-black tree deletion fixup after deleting a black leaf "
             "needs which rotations?"
-        )
+        ),
+        course="CSC 2302",
     )
     assert "red-black" in red_black["category"].lower() or "trees" in {
         t.lower() for t in red_black["tags"]
     }
 
     hashing = analyze_with_classifier(
-        question_text="How do hash tables handle collisions with chaining vs open addressing?"
+        question_text="How do hash tables handle collisions with chaining vs open addressing?",
+        course="CSC 2302",
     )
     assert "hash" in hashing["category"].lower() or "hashing" in {
         t.lower() for t in hashing["tags"]
@@ -76,9 +78,16 @@ def test_matcher_uses_category_expertise_tags():
 
 
 def test_kb_miss_sets_should_seek_help():
+    from tests.helpers import student_auth
+
+    headers, course_id = student_auth(client)
     response = client.post(
         "/agent/ask",
-        json={"question": "What is the yoga blockchain midterm policy for CSC 9999?"},
+        headers=headers,
+        json={
+            "question": "What is the yoga blockchain midterm policy for CSC 9999?",
+            "course_id": course_id,
+        },
     ).json()
     assert response["matched_count"] == 0
     assert response["should_seek_help"] is True

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import RoleFigure, { ROLES } from "./RoleFigure.jsx";
 import { SceneAlone, SceneTogether, SceneAnon, SceneDuo, SceneGuide } from "./Scenes.jsx";
+import { usePublicConfig } from "../config/PublicConfig.jsx";
 
 const COURSES = [
   {
@@ -54,6 +55,7 @@ export default function OpeningTrio({ variant = "live" }) {
   const [stamped, setStamped] = useState(false);
   const [votes, setVotes] = useState(7);
   const [stance, setStance] = useState("none");
+  const { demo } = usePublicConfig();
   const ignoreObserver = useRef(false);
   const currentId = pinned || fromScroll;
   const course = COURSES[courseIdx];
@@ -258,10 +260,11 @@ export default function OpeningTrio({ variant = "live" }) {
       <section className="oh-open-trio-sec oh-block-cream" id="people">
         <div>
           <p className="oh-open-kicker">Student · TA · Professor</p>
-          <h2 className="font-display">The same person can sit in two seats.</h2>
+          <h2 className="font-display">Three seats. One login. One role per course.</h2>
           <p>
-            A TA on campus is also a student in another course. One login, a
-            role per course. Click a person to jump to their chapter.
+            Students ask. TAs are assigned to a course they already took — they
+            are staff, not classmates in that section. Professors stamp what the
+            agent may say. Click a person to jump to their chapter.
           </p>
         </div>
         <div className="oh-open-picture" aria-label="Student, TA, and professor">
@@ -480,9 +483,13 @@ export default function OpeningTrio({ variant = "live" }) {
           <Link className="oh-open-signin" to="/login">
             Sign in
           </Link>
-          <Link className="oh-open-ghost" to="/canvas-demo">
-            Or open from Canvas
-          </Link>
+          {demo ? (
+            <Link className="oh-open-ghost" to="/canvas-demo">
+              Or open from Canvas
+            </Link>
+          ) : (
+            <span className="oh-open-ghost">Or open OfficeHours from your Canvas course</span>
+          )}
         </p>
       </section>
     </div>

@@ -11,7 +11,8 @@ say `oracle_*` are noted where they differ.
 | **TA** | Course teaching assistant | Queue · Help Coach · staffing · optional group meeting |
 | **Professor** | Course instructor | Clusters · **review insights** · KB gate · Canvas sync · group meetings · metrics |
 
-The same login can be TA in one course and student in another.
+The same login can staff one course and be a student in a **different** course.
+A TA is not a classmate in the section they staff.
 
 ## AI surfaces
 

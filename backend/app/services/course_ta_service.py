@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from app.models.auth import Course, CourseMembership, User
 from app.models.request import Request
 from app.models.ta_roster import DEFAULT_TA_ROSTER, TaRoster
+from app.services.demo_mode import demo_mode
 
 # Product policy for typical AUI sections — soft cap for UX copy; matching
 # still uses every TA membership on the course.
@@ -47,6 +48,14 @@ def build_course_matcher_roster(
     if course_id is not None:
         members = course_ta_memberships(db, course_id)
         if members:
+            open_asks = (
+                db.query(Request)
+                .filter(
+                    Request.course_id == course_id,
+                    Request.work_status.in_(("open", "claimed", "in_progress")),
+                )
+                .all()
+            )
             roster: list[dict[str, Any]] = []
             for user, _membership in members:
                 name = (user.display_name or "").strip()
@@ -58,7 +67,13 @@ def build_course_matcher_roster(
                     if row is not None
                     else _default_tags_for(name)
                 )
-                depth = int(row.queue_depth) if row is not None else 0
+                depth = sum(
+                    1
+                    for req in open_asks
+                    if req.assigned_ta == name
+                    or getattr(req, "claimed_by_user_id", None) == user.id
+                    or req.claimed_by == name
+                )
                 available = bool(row.is_available) if row is not None else True
                 if not available:
                     continue
@@ -75,8 +90,13 @@ def build_course_matcher_roster(
                 )
             if roster:
                 return roster
+        # Course is known but has no TA memberships — do not invent demo names.
+        return []
 
-    # Fallback: global demo roster (no course TAs provisioned yet).
+    if not demo_mode():
+        return []
+
+    # Demo only: global roster when no course was supplied.
     return [
         {
             "id": row.id,
@@ -126,7 +146,16 @@ def build_course_ta_load(
                 "user_id": user.id,
                 "name": name,
                 "email": user.email,
-                "queue_depth": int(row.queue_depth) if row else 0,
+                "queue_depth": sum(
+                    1
+                    for req in open_requests
+                    if (req.work_status or "open") in {"open", "claimed", "in_progress"}
+                    and (
+                        req.assigned_ta == name
+                        or getattr(req, "claimed_by_user_id", None) == user.id
+                        or req.claimed_by == name
+                    )
+                ),
                 "primary_assignments": primary,
                 "backup_assignments": backup,
                 "open_touch_count": primary + backup,

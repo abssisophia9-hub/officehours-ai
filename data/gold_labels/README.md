@@ -3,9 +3,12 @@
 Staff (TA / professor) judgments used to evaluate Analyzer + Matcher quality
 **beyond silver/heuristic training labels**.
 
-## File
+## Files
 
-`gold_labels.csv`
+`gold_labels.csv` — curated / seed evaluation set.
+
+`ta_alice_pass.csv` — 20 labels from a first TA pass (Alice Chen, CSC 2302).
+Seeded into demo DBs. Cite as a demo-TA pass, not an AUI lab session.
 
 | Column | Meaning |
 | --- | --- |
@@ -23,10 +26,13 @@ Staff (TA / professor) judgments used to evaluate Analyzer + Matcher quality
 Research grounding for `curated_heldout_public`:
 [`docs/research/office_hours_public_sources.md`](../../docs/research/office_hours_public_sources.md).
 
+**Due work:** run the TA lab in [`docs/gold_label_lab.md`](../../docs/gold_label_lab.md).
+A Likert survey is the wrong instrument. Literature only grounds themes.
+
 ## How to grow this set
 
-1. Export confusing asks from a live demo / pilot.
-2. Have a TA fill `gold_category` + `gold_assigned_ta` (even 40 rows helps).
+1. Export confusing asks from a live demo / pilot (not from training CSVs).
+2. Sit with a TA for 45 minutes, or have them use **Gold label this ask** on the desk.
 3. Run:
 
 ```bash

@@ -114,6 +114,13 @@ def _bank_embeddings(bank_fingerprint: str) -> tuple[list[dict[str, str]], np.nd
     return bank, vectors
 
 
+def _department_from_course(course: str | None) -> str | None:
+    if not course:
+        return None
+    token = course.strip().split()[0].upper() if course.strip() else ""
+    return token or None
+
+
 def synthesize_with_model(
     *,
     question_text: str,
@@ -122,6 +129,7 @@ def synthesize_with_model(
     learning_style: str | None = None,
     code_snippet: str | None = None,
     model_path: str | None = None,
+    course: str | None = None,
 ) -> dict[str, Any]:
     style = (learning_style or "unknown").strip() or "unknown"
     category = str(analyzer.get("ml_category") or "uncategorized")
@@ -193,14 +201,22 @@ def synthesize_with_model(
     embedder = _load_embedder(embedder_name)
     query_vec = np.asarray(embedder.encode([question_text], show_progress_bar=False))[0]
 
+    department = _department_from_course(course)
     ranked: list[tuple[float, dict[str, str]]] = []
     for row, vector in zip(bank, vectors):
+        row_dept = (row.get("department") or "").strip().upper()
+        if department and department != "CSC" and row_dept != department:
+            continue
+        if department == "CSC" and row_dept and row_dept != "CSC":
+            continue
         score = float(cosine_similarity(query_vec.tolist(), vector.tolist()))
         if row.get("learning_style") == style:
             score += 0.08
         if row.get("category") == category:
             score += 0.12
         ranked.append((score, row))
+    if not ranked:
+        return _seek_help_fallback(topic, style, tags, question_text, code_snippet, backend)
     ranked.sort(key=lambda item: item[0], reverse=True)
     best_score, best_row = ranked[0]
     # Weak bank match → do not pretend we solved it; push human help.

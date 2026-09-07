@@ -103,6 +103,6 @@ def test_invalid_login_rejected():
     with TestClient(app) as client:
         response = client.post(
             "/auth/login",
-            json={"email": "a.benali@aui.ma", "password": "wrong"},
+            json={"email": "a.benali@aui.ma", "password": "wrong-password"},
         )
         assert response.status_code == 401

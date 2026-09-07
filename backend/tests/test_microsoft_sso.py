@@ -1,9 +1,10 @@
 """Microsoft Entra ID sign-in: config flag, redirect, callback, and guards."""
 
-import base64
-import json
+import time
 
+import jwt
 import pytest
+from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -13,17 +14,39 @@ TENANT = "7025e04c-70ca-48bf-ab7b-73954cb846ad"
 CLIENT = "11111111-2222-3333-4444-555555555555"
 
 
-def _fake_id_token(claims: dict) -> str:
-    payload = base64.urlsafe_b64encode(json.dumps(claims).encode()).decode().rstrip("=")
-    return f"eyJhbGciOiJSUzI1NiJ9.{payload}.signature"
+@pytest.fixture()
+def rsa_key():
+    return rsa.generate_private_key(public_exponent=65537, key_size=2048)
+
+
+def _signed_id_token(claims: dict, private_key) -> str:
+    now = int(time.time())
+    payload = {
+        "iss": f"https://login.microsoftonline.com/{TENANT}/v2.0",
+        "aud": claims.get("aud", CLIENT),
+        "tid": claims.get("tid", TENANT),
+        "exp": now + 300,
+        "iat": now,
+        **{k: v for k, v in claims.items() if k not in {"aud", "tid"}},
+    }
+    # aud/tid already set; ensure claims override carefully
+    payload["aud"] = claims.get("aud", CLIENT)
+    payload["tid"] = claims.get("tid", TENANT)
+    return jwt.encode(payload, private_key, algorithm="RS256")
 
 
 @pytest.fixture()
-def ms_env(monkeypatch):
+def ms_env(monkeypatch, rsa_key):
     monkeypatch.setenv("OFFICEHOURS_MS_TENANT_ID", TENANT)
     monkeypatch.setenv("OFFICEHOURS_MS_CLIENT_ID", CLIENT)
     monkeypatch.setenv("OFFICEHOURS_MS_CLIENT_SECRET", "s3cret")
     monkeypatch.setenv("OFFICEHOURS_FRONTEND_URL", "http://127.0.0.1:5180")
+    real_decode = microsoft_sso.claims_from_id_token
+    monkeypatch.setattr(
+        microsoft_sso,
+        "claims_from_id_token",
+        lambda id_token: real_decode(id_token, key=rsa_key.public_key()),
+    )
 
 
 @pytest.fixture()
@@ -54,7 +77,7 @@ def test_login_redirects_to_aui_tenant(client, ms_env):
     assert "state=" in location
 
 
-def test_callback_creates_user_and_hands_token_to_spa(client, ms_env, monkeypatch):
+def test_callback_creates_user_and_hands_token_to_spa(client, ms_env, rsa_key, monkeypatch):
     claims = {
         "aud": CLIENT,
         "tid": TENANT,
@@ -62,7 +85,9 @@ def test_callback_creates_user_and_hands_token_to_spa(client, ms_env, monkeypatc
         "name": "Sophia Abssi",
     }
     monkeypatch.setattr(
-        microsoft_sso, "exchange_code", lambda code: {"id_token": _fake_id_token(claims)}
+        microsoft_sso,
+        "exchange_code",
+        lambda code: {"id_token": _signed_id_token(claims, rsa_key)},
     )
     state = microsoft_sso.new_state()
     response = client.get(f"/auth/microsoft/callback?code=abc&state={state}")
@@ -79,15 +104,17 @@ def test_callback_creates_user_and_hands_token_to_spa(client, ms_env, monkeypatc
 
     # SSO accounts never get a usable password.
     login = client.post(
-        "/auth/login", json={"email": "s.abssi@aui.ma", "password": "anything"}
+        "/auth/login", json={"email": "s.abssi@aui.ma", "password": "anything1"}
     )
     assert login.status_code == 401
 
 
-def test_callback_rejects_foreign_domain(client, ms_env, monkeypatch):
+def test_callback_rejects_foreign_domain(client, ms_env, rsa_key, monkeypatch):
     claims = {"aud": CLIENT, "tid": TENANT, "email": "someone@gmail.com", "name": "X"}
     monkeypatch.setattr(
-        microsoft_sso, "exchange_code", lambda code: {"id_token": _fake_id_token(claims)}
+        microsoft_sso,
+        "exchange_code",
+        lambda code: {"id_token": _signed_id_token(claims, rsa_key)},
     )
     state = microsoft_sso.new_state()
     response = client.get(f"/auth/microsoft/callback?code=abc&state={state}")
@@ -96,10 +123,12 @@ def test_callback_rejects_foreign_domain(client, ms_env, monkeypatch):
     assert "aui.ma" in response.headers["location"]
 
 
-def test_callback_rejects_wrong_audience(client, ms_env, monkeypatch):
+def test_callback_rejects_wrong_audience(client, ms_env, rsa_key, monkeypatch):
     claims = {"aud": "another-app", "tid": TENANT, "email": "s.abssi@aui.ma"}
     monkeypatch.setattr(
-        microsoft_sso, "exchange_code", lambda code: {"id_token": _fake_id_token(claims)}
+        microsoft_sso,
+        "exchange_code",
+        lambda code: {"id_token": _signed_id_token(claims, rsa_key)},
     )
     state = microsoft_sso.new_state()
     response = client.get(f"/auth/microsoft/callback?code=abc&state={state}")
@@ -107,11 +136,15 @@ def test_callback_rejects_wrong_audience(client, ms_env, monkeypatch):
     assert "sso_error=" in response.headers["location"]
 
 
-def test_callback_rejects_unknown_or_reused_state(client, ms_env, monkeypatch):
+def test_callback_rejects_unknown_or_reused_state(client, ms_env, rsa_key, monkeypatch):
     monkeypatch.setattr(
         microsoft_sso,
         "exchange_code",
-        lambda code: {"id_token": _fake_id_token({"aud": CLIENT, "tid": TENANT, "email": "a.b@aui.ma"})},
+        lambda code: {
+            "id_token": _signed_id_token(
+                {"aud": CLIENT, "tid": TENANT, "email": "a.b@aui.ma"}, rsa_key
+            )
+        },
     )
     response = client.get("/auth/microsoft/callback?code=abc&state=forged")
     assert response.status_code == 302

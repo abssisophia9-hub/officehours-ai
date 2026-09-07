@@ -6,9 +6,9 @@ OfficeHours AI is a **packaged multi-role campus application** for office-hours
 triage at Al Akhawayn University.
 
 Users enter via login or Canvas launch. **Course memberships** decide whether
-they work as a student, TA, or professor for each course. The same person may
-be a TA in one course and a student in another. Professors may teach multiple
-courses; courses may have multiple TAs.
+they work as a student, TA, or professor for each course. A TA is staff on a
+course they already completed — not a classmate in that section. Professors
+may teach multiple courses; courses may have two TAs.
 
 | Surface | Port (dev) | Who uses it |
 | --- | --- | --- |

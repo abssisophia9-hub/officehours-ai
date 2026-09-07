@@ -9,6 +9,9 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
+from app.models.auth import User
+from app.routes.auth import get_current_user
+from app.services.access_control import require_course_role, require_staff_anywhere
 from app.models.action import (
     RecommendationDecision,
     RecommendationDecisionCreate,
@@ -35,8 +38,14 @@ router = APIRouter(prefix="/actions", tags=["actions"])
 async def create_recommendation_decision(
     payload: RecommendationDecisionCreate,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     related_requests = _get_related_requests(db, payload.request_ids)
+    course_ids = {req.course_id for req in related_requests if req.course_id}
+    if not course_ids:
+        require_staff_anywhere(db, user)
+    for cid in course_ids:
+        require_course_role(db, user, cid, roles={"professor", "ta"})
     office_hours = db.query(OfficeHoursWindow).all()
     action_plan = build_action_plan(payload, related_requests, office_hours)
 
@@ -68,6 +77,7 @@ async def create_recommendation_decision(
                 "request_ids": payload.request_ids,
                 "meeting": meeting,
                 "title": action_plan.get("title"),
+                "course_id": next(iter(course_ids), None),
             },
         )
 
@@ -75,13 +85,53 @@ async def create_recommendation_decision(
 
 
 @router.get("/recommendations/", response_model=list[RecommendationDecisionOut])
-def list_recommendation_decisions(db: Session = Depends(get_db)):
+def list_recommendation_decisions(
+    course_id: int | None = None,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """List decisions. When course_id is set, only decisions whose requests are in that course."""
+    if course_id is not None:
+        require_course_role(db, user, course_id, roles={"professor", "ta"})
+        course_request_ids = {
+            row.id
+            for row in db.query(Request.id).filter(Request.course_id == course_id).all()
+        }
+        decisions = db.query(RecommendationDecision).order_by(RecommendationDecision.id).all()
+        scoped = []
+        for decision in decisions:
+            try:
+                ids = set(json.loads(decision.request_ids or "[]"))
+            except json.JSONDecodeError:
+                ids = set()
+            if ids & course_request_ids:
+                scoped.append(decision)
+        return [_to_out(decision) for decision in scoped]
+
+    staff_ids = require_staff_anywhere(db, user)
+    course_request_ids = {
+        row.id
+        for row in db.query(Request.id).filter(Request.course_id.in_(staff_ids)).all()
+    }
     decisions = db.query(RecommendationDecision).order_by(RecommendationDecision.id).all()
-    return [_to_out(decision) for decision in decisions]
+    scoped = []
+    for decision in decisions:
+        try:
+            ids = set(json.loads(decision.request_ids or "[]"))
+        except json.JSONDecodeError:
+            ids = set()
+        if ids & course_request_ids:
+            scoped.append(decision)
+    return [_to_out(decision) for decision in scoped]
 
 
 @router.get("/recommendations/{decision_id}/calendar.ics")
-def export_recommendation_calendar(decision_id: int, db: Session = Depends(get_db)):
+def export_recommendation_calendar(
+    decision_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    require_staff_anywhere(db, user)
     decision = db.get(RecommendationDecision, decision_id)
     if decision is None:
         raise HTTPException(
