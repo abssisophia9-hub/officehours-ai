@@ -65,20 +65,20 @@ WORK_STATUSES = ("open", "claimed", "in_progress", "helped")
 
 
 class RequestCreate(BaseModel):
-    text: str
+    text: str = Field(min_length=1, max_length=8000)
     anonymous: bool = True
-    student_id: str | None = None
-    student_name: str | None = None
-    course: str | None = None
-    course_id: int | None = None
-    code_snippet: str | None = None
-    category: str | None = None
-    urgency: str | None = None
-    learning_style: str | None = None
+    student_id: str | None = Field(default=None, max_length=64)
+    student_name: str | None = Field(default=None, max_length=200)
+    course: str | None = Field(default=None, max_length=64)
+    course_id: int | None = Field(default=None, ge=1)
+    code_snippet: str | None = Field(default=None, max_length=20000)
+    category: str | None = Field(default=None, max_length=80)
+    urgency: str | None = Field(default=None, max_length=40)
+    learning_style: str | None = Field(default=None, max_length=40)
     cluster_id: int | None = None
-    recommended_action: str | None = None
+    recommended_action: str | None = Field(default=None, max_length=500)
     sensitive: bool | None = None
-    help_mode: str = "message"
+    help_mode: str = Field(default="message", max_length=32)
 
 
 class OracleAnalyzerOut(BaseModel):

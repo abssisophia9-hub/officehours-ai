@@ -110,6 +110,8 @@ def ensure_schema(engine: Engine) -> None:
             engine, "users", columns, "profile_views", "INTEGER DEFAULT 0"
         )
 
+    _ensure_indexes(engine)
+
 
 def _add_column_if_missing(
     engine: Engine,
@@ -138,3 +140,24 @@ def _add_column_if_missing(
         connection.execute(
             text(f"ALTER TABLE {table} ADD COLUMN {column_name} {mapped}")
         )
+
+
+def _ensure_indexes(engine: Engine) -> None:
+    """Best-effort indexes for hot filters (SQLite/Postgres)."""
+    statements = [
+        "CREATE INDEX IF NOT EXISTS ix_requests_course_created ON requests (course_id, created_at)",
+        "CREATE INDEX IF NOT EXISTS ix_requests_course_author ON requests (course_id, created_by_user_id)",
+        "CREATE INDEX IF NOT EXISTS ix_knowledge_course_status ON knowledge_entries (course_id, status)",
+        "CREATE INDEX IF NOT EXISTS ix_help_posts_course ON help_posts (course_id)",
+        "CREATE INDEX IF NOT EXISTS ix_auth_sessions_token ON auth_sessions (token)",
+    ]
+    with engine.begin() as connection:
+        for sql in statements:
+            try:
+                connection.execute(text(sql))
+            except Exception:
+                # Table may not exist yet on a fresh partial migrate — ignore.
+                pass
+
+
+# Append index ensure to ensure_schema by wrapping — call at end of ensure_schema

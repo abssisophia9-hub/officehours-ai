@@ -86,12 +86,43 @@ async def create_recommendation_decision(
 
 @router.get("/recommendations/", response_model=list[RecommendationDecisionOut])
 def list_recommendation_decisions(
+    course_id: int | None = None,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    require_staff_anywhere(db, user)
+    """List decisions. When course_id is set, only decisions whose requests are in that course."""
+    if course_id is not None:
+        require_course_role(db, user, course_id, roles={"professor", "ta"})
+        course_request_ids = {
+            row.id
+            for row in db.query(Request.id).filter(Request.course_id == course_id).all()
+        }
+        decisions = db.query(RecommendationDecision).order_by(RecommendationDecision.id).all()
+        scoped = []
+        for decision in decisions:
+            try:
+                ids = set(json.loads(decision.request_ids or "[]"))
+            except json.JSONDecodeError:
+                ids = set()
+            if ids & course_request_ids:
+                scoped.append(decision)
+        return [_to_out(decision) for decision in scoped]
+
+    staff_ids = require_staff_anywhere(db, user)
+    course_request_ids = {
+        row.id
+        for row in db.query(Request.id).filter(Request.course_id.in_(staff_ids)).all()
+    }
     decisions = db.query(RecommendationDecision).order_by(RecommendationDecision.id).all()
-    return [_to_out(decision) for decision in decisions]
+    scoped = []
+    for decision in decisions:
+        try:
+            ids = set(json.loads(decision.request_ids or "[]"))
+        except json.JSONDecodeError:
+            ids = set()
+        if ids & course_request_ids:
+            scoped.append(decision)
+    return [_to_out(decision) for decision in scoped]
 
 
 @router.get("/recommendations/{decision_id}/calendar.ics")

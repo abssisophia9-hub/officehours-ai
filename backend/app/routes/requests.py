@@ -4,6 +4,8 @@ Routes for submitting and retrieving student requests.
 
 from __future__ import annotations
 
+import json
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
@@ -35,7 +37,7 @@ from app.services.oracle_service import (
     build_oracle_public_payload,
     run_oracle_pipeline,
 )
-from app.services.pagination import clamp_page, page_or_list
+from app.services.pagination import clamp_page
 from app.services.request_serializer import to_request_out
 from app.services.request_status_service import build_request_status
 from app.services.study_buddy_service import (
@@ -323,9 +325,21 @@ def list_requests(
         if not clauses:
             return []
         query = query.filter(or_(*clauses))
-    rows = [to_request_out(item, db=db) for item in query.order_by(Request.id).all()]
+    query = query.order_by(Request.id)
     limit, offset = clamp_page(limit, offset)
-    return page_or_list(rows, limit=limit, offset=offset)
+    if limit is None:
+        rows = [to_request_out(item, db=db) for item in query.all()]
+        return rows
+    total = query.count()
+    chunk = query.offset(offset).limit(limit).all()
+    rows = [to_request_out(item, db=db) for item in chunk]
+    return {
+        "items": rows,
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+        "has_more": offset + len(rows) < total,
+    }
 
 
 @router.get("/{request_id}/status", response_model=RequestStatusOut)
@@ -342,7 +356,22 @@ def get_request_status(
         )
     _require_status_access(db, user, db_request)
 
-    decisions = db.query(RecommendationDecision).order_by(RecommendationDecision.id).all()
+    # Avoid loading every decision campus-wide — match this request id only.
+    marker = str(request_id)
+    candidates = (
+        db.query(RecommendationDecision)
+        .filter(RecommendationDecision.request_ids.contains(marker))
+        .order_by(RecommendationDecision.id)
+        .all()
+    )
+    decisions = []
+    for decision in candidates:
+        try:
+            ids = json.loads(decision.request_ids or "[]")
+        except json.JSONDecodeError:
+            ids = []
+        if request_id in ids or str(request_id) in {str(x) for x in ids}:
+            decisions.append(decision)
     return build_request_status(db_request, decisions)
 
 

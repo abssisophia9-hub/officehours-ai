@@ -12,20 +12,20 @@ the app registration env vars are present:
                                   (default http://127.0.0.1:5180)
     OFFICEHOURS_MS_ALLOWED_DOMAIN Email domain allowed to sign in (default aui.ma)
 
-The id_token is received directly from Microsoft's token endpoint over TLS, so
-signature verification is not required; we still check audience and tenant.
+The id_token is verified with Microsoft's JWKS (RS256), plus audience, issuer,
+tenant, and expiry checks.
 """
 
 from __future__ import annotations
 
-import base64
-import json
 import os
 import secrets
 import time
+from typing import Any
 from urllib.parse import urlencode
 
 import httpx
+import jwt
 
 _STATE_TTL_SECONDS = 600
 _pending_states: dict[str, float] = {}
@@ -57,6 +57,15 @@ def allowed_domain() -> str:
 
 def _authority() -> str:
     return f"https://login.microsoftonline.com/{_env('OFFICEHOURS_MS_TENANT_ID')}"
+
+
+def _issuer() -> str:
+    # v2.0 tokens use this issuer form.
+    return f"{_authority()}/v2.0"
+
+
+def _jwks_url() -> str:
+    return f"{_authority()}/discovery/v2.0/keys"
 
 
 def new_state() -> str:
@@ -106,16 +115,19 @@ def exchange_code(code: str) -> dict:
     return response.json()
 
 
-def claims_from_id_token(id_token: str) -> dict:
-    """Decode the id_token payload and sanity-check audience + tenant."""
-    try:
-        payload_b64 = id_token.split(".")[1]
-        payload_b64 += "=" * (-len(payload_b64) % 4)
-        claims = json.loads(base64.urlsafe_b64decode(payload_b64))
-    except (IndexError, ValueError) as exc:
-        raise ValueError("Malformed id_token.") from exc
-    if claims.get("aud") != _env("OFFICEHOURS_MS_CLIENT_ID"):
-        raise ValueError("id_token audience mismatch.")
+def claims_from_id_token(id_token: str, *, key: Any = None) -> dict:
+    """Verify the id_token (RS256 JWKS) and check audience, issuer, tenant, exp."""
+    if key is None:
+        jwks = jwt.PyJWKClient(_jwks_url(), cache_jwk_set=True)
+        key = jwks.get_signing_key_from_jwt(id_token).key
+    claims = jwt.decode(
+        id_token,
+        key,
+        algorithms=["RS256"],
+        audience=_env("OFFICEHOURS_MS_CLIENT_ID"),
+        issuer=_issuer(),
+        options={"require": ["exp", "iat", "iss", "aud"]},
+    )
     if claims.get("tid") != _env("OFFICEHOURS_MS_TENANT_ID"):
         raise ValueError("id_token tenant mismatch.")
     return claims
