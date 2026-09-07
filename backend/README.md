@@ -30,6 +30,9 @@ See `app/services/help_coach_service.py`.
 
 ## Setup
 
+Copy [`backend/.env.example`](.env.example) for community deploy variables.
+Security baseline: [`docs/SECURITY.md`](../docs/SECURITY.md).
+
 ```bash
 cd backend
 python -m venv venv

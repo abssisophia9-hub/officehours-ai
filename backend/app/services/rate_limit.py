@@ -2,6 +2,11 @@
 
 Disabled when ``OFFICEHOURS_RATE_LIMIT=false`` (pytest default) so the suite
 does not trip itself. Campus host should leave it on.
+
+Multi-worker note: buckets are per-process. For multiple uvicorn workers, put
+rate limiting at the reverse proxy (nginx/Cloudflare) or run a single worker.
+``OFFICEHOURS_TRUST_PROXY=true`` only when a trusted proxy strips client-supplied
+``X-Forwarded-For``.
 """
 
 from __future__ import annotations
@@ -12,6 +17,9 @@ from collections import defaultdict, deque
 from threading import Lock
 
 from fastapi import HTTPException, Request, status
+
+from app.services.client_ip import client_ip
+from app.services.security_log import audit
 
 # path prefix → (max requests, window seconds)
 DEFAULT_LIMITS = {
@@ -35,6 +43,10 @@ class RateLimiter:
         self._hits: dict[str, deque[float]] = defaultdict(deque)
         self._lock = Lock()
 
+    def reset(self) -> None:
+        with self._lock:
+            self._hits.clear()
+
     def check(self, key: str, limit: int, window_s: int) -> None:
         now = time.monotonic()
         with self._lock:
@@ -54,12 +66,7 @@ limiter = RateLimiter()
 
 
 def client_key(request: Request) -> str:
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",", 1)[0].strip()
-    if request.client and request.client.host:
-        return request.client.host
-    return "unknown"
+    return client_ip(request)
 
 
 def enforce_rate_limit(request: Request) -> None:
@@ -74,5 +81,14 @@ def enforce_rate_limit(request: Request) -> None:
                 return
             if prefix == "/auth/login" and request.method != "POST":
                 return
-            limiter.check(f"{prefix}:{client_key(request)}", limit, window_s)
+            try:
+                limiter.check(f"{prefix}:{client_key(request)}", limit, window_s)
+            except HTTPException:
+                audit(
+                    "rate_limit.exceeded",
+                    level="warning",
+                    path=path,
+                    client=client_key(request),
+                )
+                raise
             return

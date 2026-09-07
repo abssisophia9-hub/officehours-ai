@@ -30,7 +30,7 @@ from app.models.ta import (
 from app.models.ta_roster import TaRoster, TaRosterOut
 from app.realtime.hub import hub
 from app.routes.auth import get_current_user
-from app.services.access_control import require_course_role
+from app.services.access_control import require_course_role, require_staff_anywhere
 from app.services.course_ta_service import build_course_ta_load
 from app.services.help_coach_service import build_help_coach, run_help_coach_assist
 from app.services.knowledge_service import to_out
@@ -75,7 +75,8 @@ def list_ta_roster(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    del user  # auth gate only
+    """Campus TA roster seed — staff only (not a student-facing surface)."""
+    require_staff_anywhere(db, user)
     return [TaRosterOut.from_orm_row(row) for row in ensure_default_roster(db)]
 
 
@@ -111,10 +112,13 @@ def list_ta_queue(
         )
     require_course_role(db, user, course_id, roles={"ta", "professor"})
 
+    # Bound the SQL read: course-scoped, newest first, hard cap before desk filters.
+    sql_cap = 500 if limit is None else min(max(limit + offset, limit or 1), 500)
     requests = (
         db.query(Request)
         .filter(Request.course_id == course_id)
         .order_by(Request.created_at.desc())
+        .limit(sql_cap)
         .all()
     )
     source_ids = [row.id for row in requests]

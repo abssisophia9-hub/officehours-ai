@@ -29,6 +29,7 @@ from app.services.demo_mode import demo_mode
 from app.services.session_tokens import user_from_token
 from app.services.canvas_service import canvas_mode
 from app.services import lti13, microsoft_sso
+from app.services.security_log import audit
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 courses_router = APIRouter(prefix="/courses", tags=["courses"])
@@ -152,6 +153,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     email = payload.email.strip().lower()
     user = db.query(User).filter(User.email == email, User.is_active.is_(True)).one_or_none()
     if user is None or not verify_password(payload.password, user.password_hash):
+        audit("auth.login_failed", level="warning", email=email)
         raise HTTPException(status_code=401, detail="Invalid email or password.")
 
     token = new_session_token()
@@ -163,6 +165,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
         )
     )
     db.commit()
+    audit("auth.login_ok", user_id=user.id, email=email)
     return LoginResponse(token=token, user=_serialize_user(db, user))
 
 

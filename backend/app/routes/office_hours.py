@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
-from app.models.auth import User
+from app.models.auth import CourseMembership, User
 from app.routes.auth import get_current_user
 from app.services.access_control import require_staff_anywhere
 from app.models.office_hours import (
@@ -26,11 +26,28 @@ DAY_ORDER = {
 }
 
 
+def _require_professor(db: Session, user: User) -> None:
+    professor = (
+        db.query(CourseMembership.id)
+        .filter(
+            CourseMembership.user_id == user.id,
+            CourseMembership.role == "professor",
+        )
+        .first()
+    )
+    if professor is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Requires a professor role on at least one course.",
+        )
+
+
 @router.get("/", response_model=list[OfficeHoursWindowOut])
 def list_office_hours(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    """Campus-wide availability windows — professor or TA on any course."""
     require_staff_anywhere(db, user)
     windows = db.query(OfficeHoursWindow).all()
     return sorted(
@@ -49,7 +66,8 @@ def create_office_hours_window(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    require_staff_anywhere(db, user)
+    """Only professors may publish campus office-hour windows."""
+    _require_professor(db, user)
     window = OfficeHoursWindow(
         day=payload.day,
         start=payload.start,
@@ -68,7 +86,7 @@ def delete_office_hours_window(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    require_staff_anywhere(db, user)
+    _require_professor(db, user)
     window = db.get(OfficeHoursWindow, window_id)
     if window is None:
         raise HTTPException(

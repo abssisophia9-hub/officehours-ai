@@ -72,24 +72,17 @@ def create_peer_note(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Empty file.",
         )
-    if len(data) > MAX_PEER_NOTE_BYTES:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail="File too large (20 MB max).",
-        )
+    from app.services.upload_security import assert_upload_allowed, safe_filename
 
-    ext = _extension(filename)
-    if ext not in PEER_NOTE_EXTENSIONS:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                "Unsupported file type. Upload PDF, DOCX, TXT, MD, or an image "
-                "(PNG / JPG / WEBP / GIF)."
-            ),
-        )
+    ext = assert_upload_allowed(
+        filename=filename,
+        data=data,
+        allowed_extensions=PEER_NOTE_EXTENSIONS,
+        max_bytes=MAX_PEER_NOTE_BYTES,
+    )
 
     folder = ensure_storage_dir(course_id)
-    stored = f"{uuid.uuid4().hex}_{_safe_filename(filename)}"
+    stored = f"{uuid.uuid4().hex}_{safe_filename(filename)}"
     dest = folder / stored
     dest.write_bytes(data)
 
@@ -101,7 +94,7 @@ def create_peer_note(
         about=about_clean[:2000],
         caption=(caption or "").strip()[:2000] or None,
         anonymous=bool(anonymous),
-        original_filename=_safe_filename(filename),
+        original_filename=safe_filename(filename),
         stored_filename=stored,
         content_type=guessed,
         byte_size=len(data),
