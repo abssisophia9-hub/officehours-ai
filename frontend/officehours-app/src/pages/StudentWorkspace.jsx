@@ -175,7 +175,10 @@ export default function StudentWorkspace() {
         } catch {
           setBuddyStatus(null);
         }
-        navigate(`/student/asks?focus=${created.id}`);
+        // Brief pause so Quiet ask trust banner can register before tracking page.
+        window.setTimeout(() => {
+          navigate(`/student/asks?focus=${created.id}`);
+        }, 700);
         return;
       }
     } catch (err) {
