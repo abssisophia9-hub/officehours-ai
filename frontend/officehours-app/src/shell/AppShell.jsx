@@ -81,10 +81,16 @@ const ICONS = {
 
 const SECTION_NAV = {
   student: [
-    { id: "ask", label: "Ask for Help", icon: "ask" },
+    { id: "asks", label: "My asks", icon: "ask", to: "/student/asks" },
     { id: "agent", label: "Study Agent", icon: "agent" },
+    {
+      id: "revision",
+      label: "Revision Strategist",
+      icon: "insights",
+      to: "/student/revision",
+    },
     { id: "stuck-room", label: "Rooms", icon: "stuck", to: "/student/room" },
-    { id: "peer-notes", label: "Classmate Notes", icon: "notes" },
+    { id: "peer-notes", label: "Classmate Notes", icon: "notes", to: "/student/notes" },
   ],
   ta: [
     { id: "queue", label: "Live Queue", icon: "queue" },

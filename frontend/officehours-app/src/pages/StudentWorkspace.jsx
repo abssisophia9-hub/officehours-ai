@@ -1,18 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
-import { Link, Navigate } from "react-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, Navigate, useLocation, useNavigate } from "react-router";
 import { api } from "../api/client.js";
 import { pageItems } from "../api/page.js";
 import { useAuth } from "../auth/AuthContext.jsx";
-import HelpRoomFeed from "../components/HelpRoomFeed.jsx";
-import PeerNotesFeed from "../components/PeerNotesFeed.jsx";
 
 const ICONS = {
-  doc: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <path d="M14 2v6h6" />
-    </svg>
-  ),
   clock: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <circle cx="12" cy="12" r="9" />
@@ -25,21 +17,53 @@ const ICONS = {
       <path d="M8.5 12.5l2.5 2.5 5-5.5" />
     </svg>
   ),
-  book: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-    </svg>
-  ),
 };
+
+function needsReply(ask) {
+  if (ask?.ta_reply) return true;
+  const status = String(ask?.work_status || "").toLowerCase();
+  return status === "helped" || status === "done" || status === "answered";
+}
+
+function revisionStorageKey(courseId) {
+  return `officehours_revision_${courseId}`;
+}
+
+function readTodayFocus(courseId, courseCode) {
+  try {
+    const raw = localStorage.getItem(revisionStorageKey(courseId));
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const grades = Array.isArray(parsed?.grades) ? parsed.grades : [];
+      if (grades.length) {
+        const ranked = [...grades].sort(
+          (a, b) =>
+            b.weight * Math.max(0, 85 - b.score) - a.weight * Math.max(0, 85 - a.score),
+        );
+        return ranked[0];
+      }
+    }
+  } catch {
+    // fall through to default label
+  }
+  const code = String(courseCode || "").toUpperCase();
+  if (code.startsWith("CSC") || code.includes("DATA")) {
+    return { topic: "Trees & red-black", score: null, weight: null };
+  }
+  return { topic: "Revision plan", score: null, weight: null };
+}
 
 export default function StudentWorkspace() {
   const { token, user, activeCourse } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [text, setText] = useState("");
   const [codeSnippet, setCodeSnippet] = useState("");
   const [anonymous, setAnonymous] = useState(true);
   const [helpMode, setHelpMode] = useState("message");
+  const [showHelpModes, setShowHelpModes] = useState(false);
   const [result, setResult] = useState(null);
+  const [justSubmitted, setJustSubmitted] = useState(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [agentQ, setAgentQ] = useState("");
@@ -47,50 +71,63 @@ export default function StudentWorkspace() {
   const [agentSeekHelp, setAgentSeekHelp] = useState(false);
   const [agentSources, setAgentSources] = useState([]);
   const [myAsks, setMyAsks] = useState([]);
-  const [stats, setStats] = useState({
-    open: 0,
-    anonymous: 0,
-    approved: 0,
-    hitShort: "—",
-    hitLabel: "No agent asks in this course yet",
-  });
   const [buddyStatus, setBuddyStatus] = useState(null);
   const [buddyBusy, setBuddyBusy] = useState(false);
   const [statusCode, setStatusCode] = useState("");
   const [statusResult, setStatusResult] = useState(null);
   const [statusBusy, setStatusBusy] = useState(false);
+  const [todayFocus, setTodayFocus] = useState({ topic: "Revision plan" });
 
-  const loadStats = useCallback(async () => {
+  const loadAsks = useCallback(async () => {
     if (!activeCourse) return;
     try {
-      const [requests, approved, hitRate] = await Promise.all([
-        api(`/requests/?course_id=${activeCourse.id}&limit=50`, { token }),
-        api(`/knowledge/?status=approved&course_id=${activeCourse.id}&limit=50`, { token }),
-        api(`/analytics/kb-hit-rate?course_id=${activeCourse.id}`, { token }),
-      ]);
+      const requests = await api(
+        `/requests/?course_id=${activeCourse.id}&limit=50`,
+        { token },
+      );
       const inCourse = pageItems(requests).filter(
         (item) => !item.course || item.course === activeCourse.code,
       );
-      const asks = hitRate?.total_asks || 0;
-      const hits = hitRate?.total_hits || 0;
       setMyAsks(inCourse);
-      setStats({
-        open: inCourse.length,
-        anonymous: inCourse.filter((item) => item.anonymous).length,
-        approved: pageItems(approved).length,
-        hitShort: asks ? `${hits}/${asks}` : "—",
-        hitLabel: asks
-          ? `${hits} of ${asks} asks this course hit a stamp`
-          : "No agent asks in this course yet",
-      });
     } catch {
-      // stats are decorative; workspace still works without them
+      // list is decorative; workspace still works
     }
   }, [token, activeCourse]);
 
   useEffect(() => {
-    loadStats();
-  }, [loadStats]);
+    loadAsks();
+  }, [loadAsks]);
+
+  useEffect(() => {
+    if (!activeCourse) return;
+    setTodayFocus(readTodayFocus(activeCourse.id, activeCourse.code));
+  }, [activeCourse]);
+
+  useEffect(() => {
+    if (location.hash === "#agent" || location.hash === "#ask") {
+      const id = location.hash.slice(1);
+      window.setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 80);
+    }
+  }, [location.hash]);
+
+  const replyWaiting = useMemo(
+    () => myAsks.filter((ask) => needsReply(ask)),
+    [myAsks],
+  );
+  const quietCount = useMemo(
+    () => myAsks.filter((ask) => ask.anonymous).length,
+    [myAsks],
+  );
+  const openCount = useMemo(
+    () =>
+      myAsks.filter((ask) => {
+        const status = String(ask.work_status || "open").toLowerCase();
+        return status !== "helped" && status !== "done" && status !== "answered";
+      }).length,
+    [myAsks],
+  );
 
   if (!activeCourse) return <Navigate to="/" replace />;
   if (activeCourse.role !== "student") {
@@ -99,6 +136,7 @@ export default function StudentWorkspace() {
 
   async function submitQuestion(event) {
     event.preventDefault();
+    if (!text.trim()) return;
     setBusy(true);
     setError("");
     try {
@@ -122,12 +160,14 @@ export default function StudentWorkspace() {
         },
       });
       setResult(created);
+      setJustSubmitted({ id: created?.id, anonymous: Boolean(created?.anonymous ?? anonymous) });
       setBuddyStatus(null);
       setStatusCode(created?.id ? String(created.id) : "");
       setStatusResult(null);
       setText("");
       setCodeSnippet("");
-      await loadStats();
+      setShowHelpModes(false);
+      await loadAsks();
       if (created?.id) {
         try {
           const status = await api(`/requests/${created.id}/study-buddy`, { token });
@@ -135,6 +175,8 @@ export default function StudentWorkspace() {
         } catch {
           setBuddyStatus(null);
         }
+        navigate(`/student/asks?focus=${created.id}`);
+        return;
       }
     } catch (err) {
       setError(err.message);
@@ -199,41 +241,91 @@ export default function StudentWorkspace() {
           .map((hit) => (hit.entry?.question_text || "").trim())
           .filter(Boolean),
       );
-      await loadStats();
     } catch (err) {
       setAgentA(err.message);
       setAgentSeekHelp(true);
     }
   }
 
+  function turnIntoQuietAsk() {
+    setAnonymous(true);
+    if (agentQ.trim()) setText(agentQ);
+    setShowHelpModes(true);
+    window.setTimeout(() => {
+      document.getElementById("ask")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("ask-box")?.focus();
+    }, 50);
+  }
+
+  const focusLabel = todayFocus?.topic
+    ? todayFocus.topic.split("&")[0].trim()
+    : "Revision plan";
+
   return (
     <div className="fade-up">
       <h1 className="bh-page-title">Student Dashboard</h1>
       <p className="bh-page-subtitle">
-        Ask staff quietly, unlock an “aha” with classmates, or study from
-        professor-approved knowledge · {activeCourse.code} — {activeCourse.title}
+        Ask staff quietly, study from professor-approved knowledge ·{" "}
+        {activeCourse.code} — {activeCourse.title}
       </p>
+
+      <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-aui-forest/25 bg-[#f3faf5] px-4 py-3 text-sm">
+        <span className="font-semibold text-aui-ink">Now</span>
+        {replyWaiting.length > 0 ? (
+          <Link
+            to={`/student/asks?focus=${replyWaiting[0].id}`}
+            className="rounded-full bg-rose-600 px-3 py-1 text-xs font-bold text-white"
+          >
+            {replyWaiting.length} reply waiting — open
+          </Link>
+        ) : (
+          <span className="text-xs text-aui-deep/70">{openCount} open asks</span>
+        )}
+        <span className="text-aui-deep/30">·</span>
+        <Link
+          to="/student/revision"
+          className="text-xs font-semibold text-aui-forest underline"
+        >
+          Today: {focusLabel}
+          {todayFocus?.score != null ? ` (${todayFocus.score}%` : ""}
+          {todayFocus?.weight != null ? ` · ${todayFocus.weight}% exam)` : todayFocus?.score != null ? ")" : ""}
+        </Link>
+      </div>
 
       <div className="bh-stats">
         <article className="bh-stat-card">
           <div className="bh-stat-head">My asks {ICONS.clock}</div>
-          <p className="bh-stat-value">{stats.open}</p>
+          <p className="bh-stat-value">{myAsks.length}</p>
           <p className="bh-stat-note">Your asks in {activeCourse.code} — not the class queue</p>
         </article>
         <article className="bh-stat-card">
           <div className="bh-stat-head">My Quiet asks {ICONS.check}</div>
-          <p className="bh-stat-value">{stats.anonymous}</p>
-          <p className="bh-stat-note">Name hidden from staff — you can still open status</p>
+          <p className="bh-stat-value">{quietCount}</p>
+          <p className="bh-stat-note">Name hidden — you still track status</p>
         </article>
         <article className="bh-stat-card">
-          <div className="bh-stat-head">Approved Knowledge {ICONS.book}</div>
-          <p className="bh-stat-value">{stats.approved}</p>
-          <p className="bh-stat-note">Stamped FAQs the study agent may quote</p>
+          <div className="bh-stat-head">Needs reply</div>
+          <p className="bh-stat-value">{replyWaiting.length}</p>
+          <p className="bh-stat-note">
+            <Link to="/student/asks" className="font-semibold text-aui-forest underline">
+              Open My asks
+            </Link>
+          </p>
         </article>
         <article className="bh-stat-card">
-          <div className="bh-stat-head">Agent hit-rate {ICONS.doc}</div>
-          <p className="bh-stat-value">{stats.hitShort}</p>
-          <p className="bh-stat-note">{stats.hitLabel}</p>
+          <div className="bh-stat-head">Today&apos;s focus</div>
+          <p className="bh-stat-value text-lg leading-snug">{focusLabel}</p>
+          <p className="bh-stat-note">
+            {todayFocus?.score != null ? (
+              <>
+                Canvas {todayFocus.score}%
+                {todayFocus.weight != null ? ` · ${todayFocus.weight}% exam` : ""} ·{" "}
+              </>
+            ) : null}
+            <Link to="/student/revision" className="font-semibold text-aui-forest underline">
+              Revision plan
+            </Link>
+          </p>
         </article>
       </div>
 
@@ -243,16 +335,29 @@ export default function StudentWorkspace() {
             <h2>Ask for Help</h2>
           </div>
           <p className="bh-card-note">
-            Choose whether staff see your name, and how you want to meet —
-            message only, face-to-face, or online.
+            Choose whether staff see your name. Meeting options appear once you
+            start typing.
           </p>
+
+          {justSubmitted ? (
+            <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-950">
+              {justSubmitted.anonymous ? (
+                <p>
+                  <strong>Quiet ask trust:</strong> Staff cannot see your name or
+                  student ID. Track #{justSubmitted.id} in My asks.
+                </p>
+              ) : (
+                <p>
+                  Submitted as you · track #{justSubmitted.id} in My asks.
+                </p>
+              )}
+            </div>
+          ) : null}
+
           <form onSubmit={submitQuestion} className="mt-4">
             <div className="rounded-xl border border-aui-forest/25 bg-[#f3faf5] p-3 sm:p-4">
               <p className="text-sm font-semibold text-aui-ink">
                 Who should staff see?
-              </p>
-              <p className="mt-1 text-xs text-aui-deep/70">
-                Pick one — Quiet ask hides your name; Identify me shares it.
               </p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <label
@@ -311,65 +416,82 @@ export default function StudentWorkspace() {
               </div>
             </div>
 
-            <fieldset className="mt-4 space-y-2">
-              <legend className="text-xs font-semibold uppercase tracking-wide text-aui-deep/60">
-                How do you want help?
-              </legend>
-              {[
-                {
-                  value: "message",
-                  title: "Message / async",
-                  note: "Answer in the queue or FAQ — no live meeting required.",
-                },
-                {
-                  value: "face_to_face",
-                  title: "Face-to-face meeting",
-                  note: "Request an in-person office-hours slot on campus.",
-                },
-                {
-                  value: "online_meeting",
-                  title: "Online meeting",
-                  note: "Request a Zoom / Teams call with a TA or professor.",
-                },
-              ].map((option) => (
-                <label
-                  key={option.value}
-                  className="clay-blob flex w-full cursor-pointer items-start gap-3 px-4 py-3"
-                >
-                  <input
-                    type="radio"
-                    name="help_mode"
-                    className="mt-1 h-4 w-4 accent-aui-forest"
-                    checked={helpMode === option.value}
-                    onChange={() => setHelpMode(option.value)}
-                  />
-                  <span>
-                    <span className="block text-sm font-semibold text-aui-ink">
-                      {option.title}
-                    </span>
-                    <span className="mt-0.5 block text-xs font-medium text-aui-deep/70">
-                      {option.note}
-                    </span>
-                  </span>
-                </label>
-              ))}
-            </fieldset>
-
             <textarea
-              className="field-glass mt-3 min-h-32 px-4 py-3 text-sm"
+              id="ask-box"
+              className="field-glass mt-3 min-h-28 px-4 py-3 text-sm"
               placeholder="Describe what you're stuck on…"
               value={text}
-              onChange={(event) => setText(event.target.value)}
+              onChange={(event) => {
+                setText(event.target.value);
+                if (event.target.value.trim()) setShowHelpModes(true);
+              }}
               required
             />
-            <textarea
-              className="field-glass mt-3 min-h-20 px-4 py-3 font-mono text-xs"
-              placeholder="Optional code snippet"
-              value={codeSnippet}
-              onChange={(event) => setCodeSnippet(event.target.value)}
-            />
+
+            {showHelpModes ? (
+              <>
+                <fieldset className="mt-3 space-y-2">
+                  <legend className="text-xs font-semibold uppercase tracking-wide text-aui-deep/60">
+                    How do you want help?
+                  </legend>
+                  {[
+                    {
+                      value: "message",
+                      title: "Message / async",
+                      note: "Answer in the queue — no live meeting.",
+                    },
+                    {
+                      value: "face_to_face",
+                      title: "Face-to-face meeting",
+                      note: "In-person office-hours on campus.",
+                    },
+                    {
+                      value: "online_meeting",
+                      title: "Online meeting",
+                      note: "Zoom / Teams with a TA or professor.",
+                    },
+                  ].map((option) => (
+                    <label
+                      key={option.value}
+                      className="clay-blob flex w-full cursor-pointer items-start gap-3 px-4 py-3"
+                    >
+                      <input
+                        type="radio"
+                        name="help_mode"
+                        className="mt-1 h-4 w-4 accent-aui-forest"
+                        checked={helpMode === option.value}
+                        onChange={() => setHelpMode(option.value)}
+                      />
+                      <span>
+                        <span className="block text-sm font-semibold text-aui-ink">
+                          {option.title}
+                        </span>
+                        <span className="mt-0.5 block text-xs font-medium text-aui-deep/70">
+                          {option.note}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </fieldset>
+                <textarea
+                  className="field-glass mt-3 min-h-20 px-4 py-3 font-mono text-xs"
+                  placeholder="Optional code snippet"
+                  value={codeSnippet}
+                  onChange={(event) => setCodeSnippet(event.target.value)}
+                />
+              </>
+            ) : (
+              <p className="mt-2 text-xs text-aui-deep/55">
+                Start typing to choose message / face-to-face / online.
+              </p>
+            )}
+
             {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
-            <button type="submit" disabled={busy} className="btn-primary mt-4 px-5 py-2.5 text-sm">
+            <button
+              type="submit"
+              disabled={busy || !text.trim()}
+              className="btn-primary mt-4 px-5 py-2.5 text-sm disabled:opacity-50"
+            >
               {busy
                 ? "Running Ask Triage…"
                 : anonymous
@@ -450,91 +572,81 @@ export default function StudentWorkspace() {
           ) : null}
 
           <div className="mt-5 rounded-xl border border-[#e3e8e4] bg-[#fafcfa] p-3">
-            <p className="text-sm font-semibold text-aui-ink">My asks</p>
-            <p className="mt-1 text-xs text-aui-deep/70">
-              Your submissions in this course. Quiet asks stay nameless to staff.
-              A request code is only for a receipt you wrote down.
-            </p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-aui-ink">My asks</p>
+              <Link
+                to="/student/asks"
+                className="text-xs font-semibold text-aui-forest underline"
+              >
+                Full status →
+              </Link>
+            </div>
             {myAsks.length ? (
               <ul className="mt-3 space-y-2">
-                {myAsks.slice().reverse().map((ask) => (
-                  <li key={ask.id}>
-                    <button
-                      type="button"
-                      className="w-full rounded-lg border border-[#d7e0d9] bg-white px-3 py-2 text-left text-xs hover:border-aui-forest"
-                      onClick={() => {
-                        setStatusCode(String(ask.id));
-                        setStatusResult(null);
-                        setError("");
-                        api(`/requests/${ask.id}/status`, { token })
-                          .then(setStatusResult)
-                          .catch((err) => setError(err.message));
-                      }}
-                    >
-                      <span className="font-semibold text-aui-ink">#{ask.id}</span>
-                      {" · "}
-                      {ask.anonymous ? "Quiet ask" : "Identify me"}
-                      {" · "}
-                      {ask.work_status || "open"}
-                      <span className="mt-1 block truncate text-aui-deep/80">
-                        {ask.text}
-                      </span>
-                    </button>
-                  </li>
-                ))}
+                {myAsks
+                  .slice()
+                  .reverse()
+                  .slice(0, 3)
+                  .map((ask) => (
+                    <li key={ask.id}>
+                      <Link
+                        to={`/student/asks?focus=${ask.id}`}
+                        className="block w-full rounded-lg border border-[#d7e0d9] bg-white px-3 py-2 text-left text-xs hover:border-aui-forest"
+                      >
+                        <span className="font-semibold text-aui-ink">#{ask.id}</span>
+                        {" · "}
+                        {ask.anonymous ? "Quiet ask" : "Identify me"}
+                        {" · "}
+                        {ask.work_status || "open"}
+                        {needsReply(ask) ? (
+                          <span className="ml-1 rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                            reply
+                          </span>
+                        ) : null}
+                        <span className="mt-1 block truncate text-aui-deep/80">
+                          {ask.text}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
               </ul>
             ) : (
               <p className="mt-2 text-xs text-aui-deep/60">No asks from this login yet.</p>
             )}
-            <form onSubmit={checkRequestStatus} className="mt-3 flex flex-wrap gap-2">
-              <input
-                className="field-glass min-w-[8rem] flex-1 px-3 py-2 text-sm"
-                value={statusCode}
-                onChange={(event) => setStatusCode(event.target.value)}
-                placeholder="Request code (receipt)"
-                inputMode="numeric"
-              />
-              <button
-                type="submit"
-                disabled={statusBusy}
-                className="btn-ghost px-4 py-2 text-sm"
-              >
-                {statusBusy ? "Checking…" : "Look up receipt"}
-              </button>
-            </form>
-            {statusResult ? (
-              <div className="mt-3 rounded-lg bg-white p-3 text-xs text-aui-deep">
-                <p className="font-semibold text-aui-ink">
-                  #{statusResult.request_code} · {statusResult.headline}
-                </p>
-                <p className="mt-1">{statusResult.message}</p>
-                {statusResult.meeting_title ||
-                statusResult.meeting_when ||
-                statusResult.meeting_place ? (
-                  <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2.5 text-emerald-950">
-                    <p className="font-semibold">Shared group meeting</p>
-                    {statusResult.meeting_title ? (
-                      <p className="mt-1">{statusResult.meeting_title}</p>
-                    ) : null}
-                    {statusResult.meeting_when ? (
-                      <p className="mt-1">
-                        <strong>When:</strong> {statusResult.meeting_when}
-                      </p>
-                    ) : null}
-                    {statusResult.meeting_place ? (
-                      <p className="mt-1">
-                        <strong>Where:</strong> {statusResult.meeting_place}
-                      </p>
-                    ) : null}
-                  </div>
-                ) : null}
-                {statusResult.ta_reply ? (
-                  <p className="mt-2">
-                    <strong>TA reply:</strong> {statusResult.ta_reply}
+            <details className="mt-3">
+              <summary className="cursor-pointer text-xs font-medium text-aui-deep/65">
+                Optional: look up a receipt code
+              </summary>
+              <form onSubmit={checkRequestStatus} className="mt-2 flex flex-wrap gap-2">
+                <input
+                  className="field-glass min-w-[8rem] flex-1 px-3 py-2 text-sm"
+                  value={statusCode}
+                  onChange={(event) => setStatusCode(event.target.value)}
+                  placeholder="Request code"
+                  inputMode="numeric"
+                />
+                <button
+                  type="submit"
+                  disabled={statusBusy}
+                  className="btn-ghost px-4 py-2 text-sm"
+                >
+                  {statusBusy ? "Checking…" : "Look up"}
+                </button>
+              </form>
+              {statusResult ? (
+                <div className="mt-3 rounded-lg bg-white p-3 text-xs text-aui-deep">
+                  <p className="font-semibold text-aui-ink">
+                    #{statusResult.request_code} · {statusResult.headline}
                   </p>
-                ) : null}
-              </div>
-            ) : null}
+                  <p className="mt-1">{statusResult.message}</p>
+                  {statusResult.ta_reply ? (
+                    <p className="mt-2">
+                      <strong>TA reply:</strong> {statusResult.ta_reply}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+            </details>
           </div>
         </section>
 
@@ -544,8 +656,7 @@ export default function StudentWorkspace() {
           </div>
           <p className="bh-card-note">
             Answers only from professor-approved FAQs and Canvas course materials
-            for {activeCourse.code}. If nothing matches, stop guessing — Quiet ask
-            a TA instead.
+            for {activeCourse.code}. If nothing matches, turn it into a Quiet ask.
           </p>
           <form onSubmit={askAgent} className="mt-4">
             <input
@@ -572,36 +683,23 @@ export default function StudentWorkspace() {
             <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
               <p className="font-semibold">No approved answer yet — seek help.</p>
               <p className="mt-1 text-xs leading-5">
-                Don&apos;t keep spinning on the agent. Quiet ask a TA, or post the
-                stuck point in Stuck Room — a classmate often has the missing
-                perspective.
+                Don&apos;t keep spinning on the agent. Turn this into a Quiet ask.
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <a
-                  href="#ask"
-                  className="btn-primary inline-flex px-4 py-2 text-xs"
-                  onClick={() => {
-                    if (agentQ.trim()) setText(agentQ);
-                  }}
-                >
-                  Go to Quiet ask
-                </a>
-                <Link to="/student/room" className="btn-ghost inline-flex px-4 py-2 text-xs">
-                  Open Stuck Room
-                </Link>
-              </div>
+              <button
+                type="button"
+                className="btn-primary mt-3 px-4 py-2 text-xs"
+                onClick={turnIntoQuietAsk}
+              >
+                Turn this into a Quiet ask
+              </button>
             </div>
           ) : null}
+          <p className="soft-stat mt-4 text-sm text-aui-deep/70">
+            Rooms and Classmate Notes stay in the sidebar — not under this
+            dashboard.
+          </p>
         </section>
       </div>
-
-      <HelpRoomFeed courseCode={activeCourse.code} />
-
-      <PeerNotesFeed
-        token={token}
-        courseId={activeCourse.id}
-        courseCode={activeCourse.code}
-      />
     </div>
   );
 }
