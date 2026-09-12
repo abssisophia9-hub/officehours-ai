@@ -54,17 +54,10 @@ export default function LoginPage() {
     };
   }, []);
 
+  // Always land on My Courses after auth so you can pick Student / TA /
+  // Professor seats for the same walkthrough without guessing course order.
   if (!loading && user) {
-    const first = user.courses[0];
-    const path =
-      first?.role === "professor"
-        ? "/professor"
-        : first?.role === "ta"
-          ? "/ta"
-          : first
-            ? "/student"
-            : "/";
-    return <Navigate to={path} replace />;
+    return <Navigate to="/" replace />;
   }
 
   async function handleSubmit(event) {
@@ -72,19 +65,23 @@ export default function LoginPage() {
     setBusy(true);
     setError("");
     try {
-      const nextUser = await login(email.trim(), password);
-      const first = nextUser.courses[0];
-      if (!first) {
-        navigate("/");
-        return;
-      }
-      navigate(
-        first.role === "professor"
-          ? "/professor"
-          : first.role === "ta"
-            ? "/ta"
-            : "/student",
-      );
+      await login(email.trim(), password);
+      navigate("/");
+    } catch (err) {
+      setError(err.message || "Login failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function signInAsDemo(account) {
+    setEmail(account.email);
+    setPassword("aui-demo");
+    setBusy(true);
+    setError("");
+    try {
+      await login(account.email, "aui-demo");
+      navigate("/");
     } catch (err) {
       setError(err.message || "Login failed");
     } finally {
@@ -98,7 +95,11 @@ export default function LoginPage() {
         <Link to="/" className="oh-land-login-back">
           ← How it works
         </Link>
-        <span className="oh-land-login-hint">AUI email · role per course</span>
+        <span className="oh-land-login-hint">
+          {searchParams.get("switch")
+            ? "Demo walkthrough · tap an account"
+            : "AUI email · role per course"}
+        </span>
       </div>
       <div className="fade-up mx-auto grid w-full max-w-5xl flex-1 items-center gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <form onSubmit={handleSubmit} className="glass-panel p-8 sm:p-10">
@@ -190,14 +191,17 @@ export default function LoginPage() {
         {demo ? (
         <aside className="glass-panel glass-panel-deep p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-50/85">
-            Demo accounts
+            {searchParams.get("switch") ? "Switch account" : "Demo accounts"}
           </p>
           <h2 className="font-display mt-2 text-3xl font-semibold">
-            Password: aui-demo
+            {searchParams.get("switch")
+              ? "Pick Student, TA, or Professor"
+              : "Password: aui-demo"}
           </h2>
           <p className="mt-2 text-sm font-medium text-emerald-50/80">
-            Same email shape for every role. Tap to fill the form. Not used on a
-            community deploy.
+            {searchParams.get("switch")
+              ? "One tap signs you in — then choose the course seat on My Courses."
+              : "Tap an account to sign in immediately. Role is per course on the next screen."}
           </p>
           <ul className="mt-6 space-y-3">
             {DEMO_ACCOUNTS.map((account) => (
@@ -205,10 +209,8 @@ export default function LoginPage() {
                 <button
                   type="button"
                   className="demo-account"
-                  onClick={() => {
-                    setEmail(account.email);
-                    setPassword("aui-demo");
-                  }}
+                  disabled={busy}
+                  onClick={() => signInAsDemo(account)}
                 >
                   <span className="demo-dot" aria-hidden="true" />
                   <span>

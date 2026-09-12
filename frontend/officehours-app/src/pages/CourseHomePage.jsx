@@ -20,16 +20,32 @@ const ROLE_PILL = {
 };
 
 export default function CourseHomePage() {
-  const { user, setActiveCourse } = useAuth();
+  const { user, setActiveCourse, logout } = useAuth();
   const navigate = useNavigate();
+
+  async function switchAccount() {
+    await logout();
+    navigate("/login?switch=1");
+  }
 
   return (
     <section className="fade-up">
-      <h1 className="bh-page-title">My Courses</h1>
-      <p className="bh-page-subtitle">
-        Choose a course workspace, {user.display_name.split(" ")[0]} — one role
-        per course. TAs are staff on sections they already took.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="bh-page-title">My Courses</h1>
+          <p className="bh-page-subtitle">
+            Choose a course workspace, {user.display_name.split(" ")[0]} — one role
+            per course. TAs are staff on sections they already took.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="btn-ghost px-4 py-2 text-sm"
+          onClick={switchAccount}
+        >
+          Not you? Switch account
+        </button>
+      </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         {user.courses.map((course) => (

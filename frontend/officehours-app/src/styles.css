@@ -811,12 +811,48 @@ button.clay-blob:hover {
   padding: 0.85rem 1rem;
   text-align: left;
   color: inherit;
+  cursor: pointer;
   transition: transform 140ms ease, background 140ms ease;
 }
 
-.demo-account:hover {
+.demo-account:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.18);
   transform: translateY(-1px);
+}
+
+.demo-account:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.bh-switch-account {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  margin: 0.5rem 0.75rem 0.25rem;
+  width: calc(100% - 1.5rem);
+  border-radius: 0.65rem;
+  border: 1px dashed rgba(15, 61, 46, 0.28);
+  background: rgba(255, 255, 255, 0.55);
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--aui-ink, #0f3d2e);
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.bh-switch-account small {
+  font-size: 0.68rem;
+  font-weight: 550;
+  color: rgba(15, 61, 46, 0.55);
+}
+
+.bh-switch-account:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(15, 61, 46, 0.45);
 }
 
 .demo-dot {

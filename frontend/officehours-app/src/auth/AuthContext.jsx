@@ -49,15 +49,13 @@ export function AuthProvider({ children }) {
       method: "POST",
       body: { email, password },
     });
-    // Clear previous role/course before applying the new membership.
+    // Clear previous role/course — land on My Courses so demos can pick
+    // Student / TA / Professor seats intentionally (do not auto-enter a course).
     localStorage.removeItem(COURSE_KEY);
     setActiveCourseState(null);
     localStorage.setItem(TOKEN_KEY, result.token);
     setToken(result.token);
     setUser(result.user);
-    const first = result.user.courses[0] || null;
-    setActiveCourseState(first);
-    if (first) localStorage.setItem(COURSE_KEY, String(first.id));
     return result.user;
   }
 

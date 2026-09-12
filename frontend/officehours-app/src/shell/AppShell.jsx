@@ -2,6 +2,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import AccountMenu from "../components/AccountMenu.jsx";
 import NotificationBell from "../components/NotificationBell.jsx";
 import { useAuth } from "../auth/AuthContext.jsx";
+import { usePublicConfig } from "../config/PublicConfig.jsx";
 
 const ICONS = {
   dashboard: (
@@ -105,7 +106,8 @@ const SECTION_NAV = {
 };
 
 export default function AppShell() {
-  const { user, activeCourse, setActiveCourse } = useAuth();
+  const { user, activeCourse, setActiveCourse, logout } = useAuth();
+  const { demo } = usePublicConfig();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -113,6 +115,11 @@ export default function AppShell() {
   const roleHome =
     role === "professor" ? "/professor" : role === "ta" ? "/ta" : "/student";
   const sections = SECTION_NAV[role] || [];
+
+  async function switchDemoAccount() {
+    await logout();
+    navigate("/login?switch=1");
+  }
 
   const SECTION_ROUTES = {
     "peer-notes": "/student/notes",
@@ -208,8 +215,13 @@ export default function AppShell() {
               }
             }}
           >
+            {!activeCourse ? (
+              <option value="" disabled>
+                Pick a course…
+              </option>
+            ) : null}
             {user.courses.map((course) => (
-              <option key={course.id} value={course.id}>
+              <option key={`${course.id}-${course.role}`} value={course.id}>
                 {course.code} ({course.role})
               </option>
             ))}
@@ -217,6 +229,17 @@ export default function AppShell() {
         </nav>
 
         <NotificationBell />
+        {demo ? (
+          <button
+            type="button"
+            className="bh-switch-account"
+            onClick={switchDemoAccount}
+            data-testid="switch-demo-account"
+          >
+            Switch account
+            <small>Student · TA · Professor</small>
+          </button>
+        ) : null}
         <AccountMenu onScrollToSection={scrollToSection} />
       </aside>
 

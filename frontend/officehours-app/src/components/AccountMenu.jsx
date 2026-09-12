@@ -187,7 +187,9 @@ export default function AccountMenu({ onScrollToSection }) {
   async function handleLogout() {
     setOpen(false);
     await logout();
-    navigate("/login");
+    // Land on login with demo chips so a supervisor walkthrough can switch
+    // Student → TA → Professor without hunting for the menu again.
+    navigate("/login?switch=1");
   }
 
   return (
@@ -220,7 +222,7 @@ export default function AccountMenu({ onScrollToSection }) {
               onClick={handleLogout}
             >
               <span className="bh-account-item-icon">{MENU_ICONS.logout}</span>
-              Log out
+              Log out / switch account
             </button>
           </div>
         ) : null}
