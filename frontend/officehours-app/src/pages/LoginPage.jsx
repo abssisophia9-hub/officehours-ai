@@ -23,7 +23,7 @@ const DEMO_ACCOUNTS = [
 ];
 
 export default function LoginPage() {
-  const { user, login, logout, loading } = useAuth();
+  const { user, login, loading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [demo, setDemo] = useState(false);
@@ -56,24 +56,10 @@ export default function LoginPage() {
 
   // Always land on My Courses after auth so you can pick Student / TA /
   // Professor seats for the same walkthrough without guessing course order.
-  // If we arrived with ?switch=1 while still authenticated (stale race),
-  // clear the session hard so the demo chips are usable.
-  useEffect(() => {
-    if (loading || !user) return undefined;
-    if (searchParams.get("switch") === "1") {
-      let cancelled = false;
-      (async () => {
-        await logout();
-        if (!cancelled) window.location.replace("/login?switch=1");
-      })();
-      return () => {
-        cancelled = true;
-      };
-    }
-    return undefined;
-  }, [loading, user, searchParams, logout]);
-
-  if (!loading && user && searchParams.get("switch") !== "1") {
+  // Do NOT auto-logout on ?switch=1 here — that raced with demo chip login
+  // (user set while URL still had switch=1) and wiped the new session.
+  // Switch entry points already hard-navigate after logout.
+  if (!loading && user) {
     return <Navigate to="/" replace />;
   }
 
