@@ -25,34 +25,29 @@ export default function CourseHomePage() {
 
   async function switchAccount() {
     await logout();
-    navigate("/login?switch=1");
+    window.location.assign("/login?switch=1");
   }
 
   return (
     <section className="fade-up">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="bh-page-title">My Courses</h1>
-          <p className="bh-page-subtitle">
-            Choose a course workspace, {user.display_name.split(" ")[0]} — one role
-            per course. TAs are staff on sections they already took.
-          </p>
-        </div>
+      <h1 className="bh-page-title">My Courses</h1>
+      <p className="bh-page-subtitle">
+        Choose a course workspace, {user.display_name.split(" ")[0]} — one role
+        per course. TAs are staff on sections they already took.
+      </p>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
         <button
           type="button"
-          className="btn-ghost px-4 py-2 text-sm"
+          className="btn-primary px-4 py-2 text-sm"
           onClick={switchAccount}
           data-testid="switch-account-courses"
         >
-          Not you? Switch account
+          Switch account (Student / TA / Professor)
         </button>
+        <p className="text-sm font-medium text-aui-deep/55">
+          Use this between roles when demoing for a supervisor.
+        </p>
       </div>
-
-      <p className="mt-3 text-sm font-medium text-aui-deep/55">
-        Supervisor demo: open a seat below, then use{" "}
-        <strong className="font-semibold text-aui-ink">Switch account</strong> in
-        the sidebar to sign in as Student, TA, or Professor.
-      </p>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         {user.courses.map((course) => (

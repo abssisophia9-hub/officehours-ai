@@ -189,7 +189,7 @@ export default function AccountMenu({ onScrollToSection }) {
     await logout();
     // Land on login with demo chips so a supervisor walkthrough can switch
     // Student → TA → Professor without hunting for the menu again.
-    navigate("/login?switch=1");
+    window.location.assign("/login?switch=1");
   }
 
   return (

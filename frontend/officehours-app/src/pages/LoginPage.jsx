@@ -23,7 +23,7 @@ const DEMO_ACCOUNTS = [
 ];
 
 export default function LoginPage() {
-  const { user, login, loading } = useAuth();
+  const { user, login, logout, loading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [demo, setDemo] = useState(false);
@@ -56,7 +56,24 @@ export default function LoginPage() {
 
   // Always land on My Courses after auth so you can pick Student / TA /
   // Professor seats for the same walkthrough without guessing course order.
-  if (!loading && user) {
+  // If we arrived with ?switch=1 while still authenticated (stale race),
+  // clear the session hard so the demo chips are usable.
+  useEffect(() => {
+    if (loading || !user) return undefined;
+    if (searchParams.get("switch") === "1") {
+      let cancelled = false;
+      (async () => {
+        await logout();
+        if (!cancelled) window.location.replace("/login?switch=1");
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }
+    return undefined;
+  }, [loading, user, searchParams, logout]);
+
+  if (!loading && user && searchParams.get("switch") !== "1") {
     return <Navigate to="/" replace />;
   }
 

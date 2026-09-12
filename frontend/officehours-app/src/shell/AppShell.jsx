@@ -123,7 +123,9 @@ export default function AppShell() {
 
   async function switchDemoAccount() {
     await logout();
-    navigate("/login?switch=1");
+    // Full navigation avoids a race where /login still sees a stale user
+    // and bounces straight back to My Courses.
+    window.location.assign("/login?switch=1");
   }
 
   const SECTION_ROUTES = {
