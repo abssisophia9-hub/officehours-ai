@@ -112,9 +112,14 @@ export default function AppShell() {
   const location = useLocation();
 
   const role = activeCourse?.role;
-  const roleHome =
-    role === "professor" ? "/professor" : role === "ta" ? "/ta" : "/student";
-  const sections = SECTION_NAV[role] || [];
+  const roleHome = !activeCourse
+    ? "/"
+    : role === "professor"
+      ? "/professor"
+      : role === "ta"
+        ? "/ta"
+        : "/student";
+  const sections = activeCourse ? SECTION_NAV[role] || [] : [];
 
   async function switchDemoAccount() {
     await logout();
@@ -198,10 +203,10 @@ export default function AppShell() {
           <p className="bh-nav-label">Course</p>
           <select
             className="bh-course-select"
-            value={activeCourse?.id || ""}
+            value={activeCourse ? `${activeCourse.id}:${activeCourse.role}` : ""}
             onChange={(event) => {
               const next = user.courses.find(
-                (course) => String(course.id) === event.target.value,
+                (course) => `${course.id}:${course.role}` === event.target.value,
               );
               setActiveCourse(next || null);
               if (next) {
@@ -221,7 +226,7 @@ export default function AppShell() {
               </option>
             ) : null}
             {user.courses.map((course) => (
-              <option key={`${course.id}-${course.role}`} value={course.id}>
+              <option key={`${course.id}-${course.role}`} value={`${course.id}:${course.role}`}>
                 {course.code} ({course.role})
               </option>
             ))}

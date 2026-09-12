@@ -5,6 +5,12 @@ const AuthContext = createContext(null);
 const TOKEN_KEY = "officehours_auth_token";
 const COURSE_KEY = "officehours_active_course";
 
+/** Persist course + role so TA vs student seats never collide by id alone. */
+function courseKey(course) {
+  if (!course) return "";
+  return `${course.id}:${course.role || ""}`;
+}
+
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) || "");
   const [user, setUser] = useState(null);
@@ -23,11 +29,14 @@ export function AuthProvider({ children }) {
         const me = await api("/auth/me", { token });
         if (cancelled) return;
         setUser(me);
+        // Only restore an explicitly saved seat. Do not default to courses[0]
+        // — that trapped demos inside a student course after every login.
         const saved = localStorage.getItem(COURSE_KEY);
-        const restored =
-          me.courses.find((course) => String(course.id) === saved) ||
-          me.courses[0] ||
-          null;
+        const restored = saved
+          ? me.courses.find((course) => courseKey(course) === saved) ||
+            me.courses.find((course) => String(course.id) === saved) ||
+            null
+          : null;
         setActiveCourseState(restored);
       } catch {
         localStorage.removeItem(TOKEN_KEY);
@@ -74,13 +83,15 @@ export function AuthProvider({ children }) {
 
   function setActiveCourse(course) {
     setActiveCourseState(course);
-    if (course) localStorage.setItem(COURSE_KEY, String(course.id));
+    if (course) localStorage.setItem(COURSE_KEY, courseKey(course));
+    else localStorage.removeItem(COURSE_KEY);
   }
 
   // Adopt a session minted by a Canvas launch (no password login).
   async function adoptSession(newToken, activeCourseId) {
     localStorage.setItem(TOKEN_KEY, newToken);
     if (activeCourseId) {
+      // Legacy launches may only pass id — match first membership for that id.
       localStorage.setItem(COURSE_KEY, String(activeCourseId));
     } else {
       localStorage.removeItem(COURSE_KEY);
@@ -88,12 +99,13 @@ export function AuthProvider({ children }) {
     const me = await api("/auth/me", { token: newToken });
     setToken(newToken);
     setUser(me);
+    const saved = localStorage.getItem(COURSE_KEY);
     const active =
-      me.courses.find((course) => course.id === activeCourseId) ||
-      me.courses[0] ||
+      me.courses.find((course) => courseKey(course) === saved) ||
+      me.courses.find((course) => String(course.id) === String(activeCourseId)) ||
       null;
     setActiveCourseState(active);
-    if (active) localStorage.setItem(COURSE_KEY, String(active.id));
+    if (active) localStorage.setItem(COURSE_KEY, courseKey(active));
     return { user: me, activeCourse: active };
   }
 

@@ -42,10 +42,17 @@ export default function CourseHomePage() {
           type="button"
           className="btn-ghost px-4 py-2 text-sm"
           onClick={switchAccount}
+          data-testid="switch-account-courses"
         >
           Not you? Switch account
         </button>
       </div>
+
+      <p className="mt-3 text-sm font-medium text-aui-deep/55">
+        Supervisor demo: open a seat below, then use{" "}
+        <strong className="font-semibold text-aui-ink">Switch account</strong> in
+        the sidebar to sign in as Student, TA, or Professor.
+      </p>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         {user.courses.map((course) => (
@@ -53,6 +60,7 @@ export default function CourseHomePage() {
             key={`${course.id}-${course.role}`}
             type="button"
             className="glass-panel p-6 text-left"
+            data-testid={`course-card-${course.code}-${course.role}`}
             onClick={() => {
               setActiveCourse(course);
               navigate(ROLE_PATH[course.role] || "/");
