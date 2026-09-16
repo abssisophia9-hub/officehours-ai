@@ -825,6 +825,12 @@ button.clay-blob:hover {
   cursor: wait;
 }
 
+.demo-account.is-focus {
+  border-color: rgba(154, 240, 196, 0.85);
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 0 0 2px rgba(154, 240, 196, 0.35);
+}
+
 .bh-switch-account {
   display: flex;
   flex-direction: column;

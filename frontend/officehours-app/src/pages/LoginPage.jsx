@@ -6,16 +6,19 @@ import { useAuth } from "../auth/AuthContext.jsx";
 // AUI emails are Initial.Lastname@aui.ma — role comes from course membership, not email.
 const DEMO_ACCOUNTS = [
   {
+    seat: "student",
     email: "s.elidrissi@aui.ma",
     role: "Student",
     note: "7 courses · CSC 2302…",
   },
   {
+    seat: "ta",
     email: "a.chen@aui.ma",
     role: "TA (staff on 2302)",
     note: "Assigned to CSC 2302 — a course she already took",
   },
   {
+    seat: "professor",
     email: "a.benali@aui.ma",
     role: "Professor",
     note: "CSC 2302 · 3323 · 3374",
@@ -33,6 +36,11 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(() => searchParams.get("sso_error") || "");
 
+  const seatParam = (searchParams.get("as") || "").toLowerCase();
+  const highlighted =
+    DEMO_ACCOUNTS.find((account) => account.seat === seatParam) || null;
+  const switching = Boolean(searchParams.get("switch") || highlighted);
+
   useEffect(() => {
     let cancelled = false;
     api("/auth/config")
@@ -42,7 +50,8 @@ export default function LoginPage() {
         setDemo(on);
         setMicrosoft(Boolean(config?.microsoft));
         if (on) {
-          setEmail((current) => current || "s.elidrissi@aui.ma");
+          const preset = highlighted?.email || "s.elidrissi@aui.ma";
+          setEmail((current) => (highlighted ? preset : current || preset));
           setPassword((current) => current || "aui-demo");
         }
       })
@@ -52,7 +61,7 @@ export default function LoginPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [highlighted]);
 
   // Always land on My Courses after auth so you can pick Student / TA /
   // Professor seats for the same walkthrough without guessing course order.
@@ -99,7 +108,7 @@ export default function LoginPage() {
           ← How it works
         </Link>
         <span className="oh-land-login-hint">
-          {searchParams.get("switch")
+          {switching
             ? "Demo walkthrough · tap an account"
             : "AUI email · role per course"}
         </span>
@@ -194,26 +203,31 @@ export default function LoginPage() {
         {demo ? (
         <aside className="glass-panel glass-panel-deep p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-50/85">
-            {searchParams.get("switch") ? "Switch account" : "Demo accounts"}
+            {switching ? "Switch account" : "Demo accounts"}
           </p>
           <h2 className="font-display mt-2 text-3xl font-semibold">
-            {searchParams.get("switch")
-              ? "Pick Student, TA, or Professor"
-              : "Password: aui-demo"}
+            {highlighted
+              ? `Sign in as ${highlighted.role.split(" ")[0]}`
+              : switching
+                ? "Pick Student, TA, or Professor"
+                : "Password: aui-demo"}
           </h2>
           <p className="mt-2 text-sm font-medium text-emerald-50/80">
-            {searchParams.get("switch")
-              ? "One tap signs you in — then choose the course seat on My Courses."
-              : "Tap an account to sign in immediately. Role is per course on the next screen."}
+            {highlighted
+              ? "Same sign-in page — tap the highlighted account (or Sign in)."
+              : switching
+                ? "One tap signs you in — then choose the course seat on My Courses."
+                : "Tap an account to sign in immediately. Role is per course on the next screen."}
           </p>
           <ul className="mt-6 space-y-3">
             {DEMO_ACCOUNTS.map((account) => (
               <li key={account.email}>
                 <button
                   type="button"
-                  className="demo-account"
+                  className={`demo-account${highlighted?.seat === account.seat ? " is-focus" : ""}`}
                   disabled={busy}
                   onClick={() => signInAsDemo(account)}
+                  data-testid={`demo-chip-${account.seat}`}
                 >
                   <span className="demo-dot" aria-hidden="true" />
                   <span>
