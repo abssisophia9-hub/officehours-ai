@@ -129,7 +129,7 @@ export default function StudentWorkspace() {
     [myAsks],
   );
 
-  if (!activeCourse) return <Navigate to="/" replace />;
+  if (!activeCourse) return <Navigate to="/courses" replace />;
   if (activeCourse.role !== "student") {
     return <Navigate to={`/${activeCourse.role === "professor" ? "professor" : "ta"}`} replace />;
   }

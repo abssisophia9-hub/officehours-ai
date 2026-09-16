@@ -131,7 +131,7 @@ export default function StudentRevisionPage() {
   const resources = useMemo(() => resourcesFor(focus.topic), [focus.topic]);
   const week = useMemo(() => weekPlan(focus.topic), [focus.topic]);
 
-  if (!activeCourse) return <Navigate to="/" replace />;
+  if (!activeCourse) return <Navigate to="/courses" replace />;
   if (activeCourse.role !== "student") {
     return (
       <Navigate

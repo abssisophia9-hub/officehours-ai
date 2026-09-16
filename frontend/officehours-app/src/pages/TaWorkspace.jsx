@@ -110,7 +110,7 @@ export default function TaWorkspace() {
     }
   }, [queue, selectedId]);
 
-  if (!activeCourse) return <Navigate to="/" replace />;
+  if (!activeCourse) return <Navigate to="/courses" replace />;
   if (activeCourse.role !== "ta") {
     return (
       <Navigate

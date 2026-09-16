@@ -69,7 +69,7 @@ export default function LoginPage() {
   // (user set while URL still had switch=1) and wiped the new session.
   // Switch entry points already hard-navigate after logout.
   if (!loading && user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/courses" replace />;
   }
 
   async function handleSubmit(event) {
@@ -78,7 +78,7 @@ export default function LoginPage() {
     setError("");
     try {
       await login(email.trim(), password);
-      navigate("/");
+      navigate("/courses");
     } catch (err) {
       setError(err.message || "Login failed");
     } finally {
@@ -93,7 +93,7 @@ export default function LoginPage() {
     setError("");
     try {
       await login(account.email, "aui-demo");
-      navigate("/");
+      navigate("/courses");
     } catch (err) {
       setError(err.message || "Login failed");
     } finally {

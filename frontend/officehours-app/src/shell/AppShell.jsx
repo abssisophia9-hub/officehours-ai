@@ -113,7 +113,7 @@ export default function AppShell() {
 
   const role = activeCourse?.role;
   const roleHome = !activeCourse
-    ? "/"
+    ? "/courses"
     : role === "professor"
       ? "/professor"
       : role === "ta"
@@ -194,7 +194,7 @@ export default function AppShell() {
             ),
           )}
           <NavLink
-            to="/"
+            to="/courses"
             end
             className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
           >

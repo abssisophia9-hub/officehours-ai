@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useLocation } from "react-router";
+import { Navigate, Route, Routes } from "react-router";
 import { useAuth } from "./auth/AuthContext.jsx";
 import { usePublicConfig } from "./config/PublicConfig.jsx";
 import AppShell from "./shell/AppShell.jsx";
@@ -29,14 +29,11 @@ function LoadingScreen() {
   );
 }
 
-function GuestHomeOrApp({ children }) {
+/** Authenticated product shell. Landing stays at `/` even when signed in. */
+function RequireAuth({ children }) {
   const { user, loading } = useAuth();
-  const location = useLocation();
   if (loading) return <LoadingScreen />;
-  if (!user) {
-    if (location.pathname === "/") return <LandingPage />;
-    return <Navigate to="/login" replace />;
-  }
+  if (!user) return <Navigate to="/login" replace />;
   return children;
 }
 
@@ -46,6 +43,8 @@ export default function App() {
 
   return (
     <Routes>
+      {/* Always the opening story — not replaced by a dashboard session */}
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/sso" element={<SsoCompletePage />} />
       {/* Prototype always reachable for feedback — not behind demo race */}
@@ -61,14 +60,13 @@ export default function App() {
         </>
       ) : null}
       <Route
-        path="/"
         element={
-          <GuestHomeOrApp>
+          <RequireAuth>
             <AppShell />
-          </GuestHomeOrApp>
+          </RequireAuth>
         }
       >
-        <Route index element={<CourseHomePage />} />
+        <Route path="courses" element={<CourseHomePage />} />
         <Route path="student" element={<StudentWorkspace />} />
         <Route path="student/asks" element={<StudentAsksPage />} />
         <Route path="student/revision" element={<StudentRevisionPage />} />

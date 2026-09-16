@@ -33,7 +33,7 @@ export default function SsoCompletePage() {
               ? "/ta"
               : activeCourse
                 ? "/student"
-                : "/",
+                : "/courses",
           { replace: true },
         );
       })

@@ -124,7 +124,7 @@ export default function ProfessorWorkspace() {
     load();
   }, [load]);
 
-  if (!activeCourse) return <Navigate to="/" replace />;
+  if (!activeCourse) return <Navigate to="/courses" replace />;
   if (activeCourse.role !== "professor") {
     return (
       <Navigate to={activeCourse.role === "ta" ? "/ta" : "/student"} replace />

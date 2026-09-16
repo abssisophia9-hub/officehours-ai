@@ -5,7 +5,7 @@ import PeerNotesFeed from "../components/PeerNotesFeed.jsx";
 export default function StudentNotesPage() {
   const { token, activeCourse } = useAuth();
 
-  if (!activeCourse) return <Navigate to="/" replace />;
+  if (!activeCourse) return <Navigate to="/courses" replace />;
   if (activeCourse.role !== "student") {
     return (
       <Navigate
