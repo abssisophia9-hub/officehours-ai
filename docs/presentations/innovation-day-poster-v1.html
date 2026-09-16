@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OfficeHours AI — Innovation Day Poster (v1)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #0f3d2e;
+      --deep: #1a4d3a;
+      --sage: #d8ebe1;
+      --mist: #f3f7f5;
+      --paper: #fbfcfb;
+      --accent: #2f7a58;
+      --line: rgba(15, 61, 46, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #cfd8d3;
+      font-family: Outfit, system-ui, sans-serif;
+      color: var(--ink);
+    }
+
+    .poster {
+      width: min(900px, 96vw);
+      aspect-ratio: 3 / 4;
+      margin: 24px auto;
+      background:
+        radial-gradient(1200px 500px at 10% -10%, rgba(47, 122, 88, 0.12), transparent 55%),
+        linear-gradient(180deg, var(--mist), var(--paper) 28%, var(--paper));
+      border: 1px solid rgba(15, 61, 46, 0.18);
+      box-shadow: 0 18px 50px rgba(15, 61, 46, 0.18);
+      display: grid;
+      grid-template-rows: auto auto 1fr auto auto;
+      overflow: hidden;
+    }
+
+    header {
+      background: linear-gradient(120deg, var(--ink), var(--deep) 60%, #245c45);
+      color: #f5faf7;
+      padding: 1.15rem 1.4rem 1.05rem;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.6rem 1rem;
+      align-items: end;
+    }
+    .brand-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: center;
+      grid-column: 1 / -1;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.85;
+      font-weight: 600;
+    }
+    h1 {
+      margin: 0;
+      font-family: Fraunces, Georgia, serif;
+      font-size: clamp(2rem, 5vw, 3.1rem);
+      font-weight: 700;
+      line-height: 1.05;
+    }
+    .subtitle {
+      margin: 0.25rem 0 0;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #c7e6d5;
+      max-width: 28ch;
+    }
+    .badge {
+      justify-self: end;
+      align-self: center;
+      border: 1px solid rgba(255,255,255,0.35);
+      padding: 0.55rem 0.75rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      text-align: right;
+    }
+
+    .problem {
+      padding: 0.85rem 1.4rem;
+      background: rgba(47, 122, 88, 0.08);
+      border-bottom: 1px solid var(--line);
+      font-size: 0.98rem;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+    .problem strong { color: var(--accent); }
+
+    .columns {
+      display: grid;
+      grid-template-columns: 1fr 1.15fr 1fr;
+      gap: 0.9rem;
+      padding: 1rem 1.25rem 0.75rem;
+      min-height: 0;
+    }
+    section {
+      min-width: 0;
+    }
+    h2 {
+      margin: 0 0 0.55rem;
+      font-family: Fraunces, Georgia, serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+    ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 0.45rem;
+    }
+    li {
+      font-size: 0.78rem;
+      line-height: 1.35;
+      font-weight: 500;
+      padding-left: 0.85rem;
+      position: relative;
+    }
+    li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.45em;
+      width: 0.35rem;
+      height: 0.35rem;
+      background: var(--accent);
+    }
+    .note {
+      margin-top: 0.7rem;
+      font-size: 0.72rem;
+      color: rgba(15, 61, 46, 0.72);
+      font-weight: 500;
+      line-height: 1.35;
+    }
+
+    .flow {
+      display: grid;
+      gap: 0.45rem;
+    }
+    .role {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.72);
+      padding: 0.55rem 0.65rem;
+    }
+    .role b {
+      display: block;
+      font-size: 0.78rem;
+      margin-bottom: 0.15rem;
+    }
+    .role span {
+      font-size: 0.72rem;
+      color: rgba(15, 61, 46, 0.75);
+      font-weight: 500;
+    }
+    .chip {
+      margin-top: 0.55rem;
+      display: inline-block;
+      background: var(--ink);
+      color: #eef7f1;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.35rem 0.55rem;
+      letter-spacing: 0.02em;
+    }
+
+    .pipeline {
+      display: grid;
+      gap: 0.35rem;
+    }
+    .step {
+      background: var(--sage);
+      padding: 0.45rem 0.55rem;
+      font-size: 0.74rem;
+      font-weight: 650;
+    }
+    .step small {
+      display: block;
+      font-weight: 500;
+      opacity: 0.8;
+      margin-top: 0.1rem;
+    }
+    .arrow {
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .impact {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.55rem;
+      padding: 0.75rem 1.25rem 0.9rem;
+      background: linear-gradient(180deg, rgba(216, 235, 225, 0.55), rgba(216, 235, 225, 0.9));
+      border-top: 1px solid var(--line);
+    }
+    .metric {
+      text-align: center;
+      padding: 0.45rem 0.3rem;
+    }
+    .metric strong {
+      display: block;
+      font-family: Fraunces, Georgia, serif;
+      font-size: 0.95rem;
+      margin-bottom: 0.15rem;
+    }
+    .metric span {
+      font-size: 0.68rem;
+      font-weight: 550;
+      color: rgba(15, 61, 46, 0.75);
+      line-height: 1.25;
+    }
+
+    footer {
+      background: var(--ink);
+      color: #dceee4;
+      padding: 0.7rem 1.25rem;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0.75rem;
+      align-items: center;
+      font-size: 0.68rem;
+      font-weight: 500;
+    }
+    footer .tech { opacity: 0.92; }
+    footer .team { text-align: right; }
+    .qr {
+      width: 52px;
+      height: 52px;
+      border: 1px dashed rgba(255,255,255,0.45);
+      display: grid;
+      place-items: center;
+      font-size: 0.58rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
+
+    @media print {
+      body { background: white; }
+      .poster {
+        width: 210mm;
+        height: 297mm;
+        margin: 0;
+        box-shadow: none;
+        border: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!--
+    Innovation Day poster — VERSION 1 (editable HTML)
+    Print: open this file → Print → A3/A2 portrait, background graphics ON.
+    Iterate copy freely; keep hierarchy: brand → problem → 3 columns → impact → footer.
+  -->
+  <article class="poster" aria-label="OfficeHours AI Innovation Day poster version 1">
+    <header>
+      <div class="brand-row">
+        <span>Al Akhawayn University · School of Science &amp; Engineering</span>
+        <span>Final Year Project</span>
+      </div>
+      <div>
+        <h1>OfficeHours AI</h1>
+        <p class="subtitle">Campus office-hours triage for finals week — one app, role per course.</p>
+      </div>
+      <div class="badge">Innovation Day<br />Poster v1</div>
+    </header>
+
+    <p class="problem">
+      <strong>Problem:</strong> Finals week floods faculty with repeated questions,
+      while some students hesitate to ask for help.
+    </p>
+
+    <div class="columns">
+      <section>
+        <h2>What breaks today</h2>
+        <ul>
+          <li>Same conceptual questions reappear across the queue</li>
+          <li>Long waits; quiet students stay stuck alone</li>
+          <li>TAs reinvent answers under pressure</li>
+          <li>Approved course knowledge never compounds</li>
+        </ul>
+        <p class="note">
+          Physical kiosk hardware is out of scope. The product is a packaged
+          multi-role web app with Canvas-ready launch.
+        </p>
+      </section>
+
+      <section>
+        <h2>The product</h2>
+        <div class="flow">
+          <div class="role">
+            <b>Student</b>
+            <span>Quiet ask or Identify me · message / face-to-face / online · Rooms · Study Agent</span>
+          </div>
+          <div class="role">
+            <b>TA</b>
+            <span>Live queue · claim/help · Help Coach while teaching · drafts for curation</span>
+          </div>
+          <div class="role">
+            <b>Professor</b>
+            <span>Repeated topics · review insights · approve KB · Canvas materials sync</span>
+          </div>
+        </div>
+        <span class="chip">One login · membership decides role per course</span>
+      </section>
+
+      <section>
+        <h2>How AI helps</h2>
+        <div class="pipeline">
+          <div class="step">Ask Triage · Analyzer<small>Category, difficulty, tags</small></div>
+          <div class="arrow">↓</div>
+          <div class="step">Matcher<small>Primary / backup TA + wait estimate</small></div>
+          <div class="arrow">↓</div>
+          <div class="step">Synthesizer<small>Student hint + teaching approach</small></div>
+        </div>
+        <p class="note">
+          Custom-trained local models (embeddings + classifiers).
+          Professor remains the gate for what the Study Agent may say.
+        </p>
+      </section>
+    </div>
+
+    <div class="impact">
+      <div class="metric"><strong>Faster triage</strong><span>Asks classified at intake</span></div>
+      <div class="metric"><strong>Fewer repeats</strong><span>Clusters + shared meetings</span></div>
+      <div class="metric"><strong>Safer asks</strong><span>Quiet / named identity choice</span></div>
+      <div class="metric"><strong>Trusted answers</strong><span>Professor-approved KB only</span></div>
+    </div>
+
+    <footer>
+      <div class="tech">React · FastAPI · sentence-transformers · scikit-learn · WebSockets · Canvas LTI</div>
+      <div class="qr" title="Replace with demo QR">Demo</div>
+      <div class="team">OfficeHours AI · AUI Capstone<br />Demo: local product app :5180</div>
+    </footer>
+  </article>
+</body>
+</html>
