@@ -20,6 +20,7 @@ import VisionDemoBoard from "./pages/VisionDemoBoard.jsx";
 import VisionDemoPath from "./pages/VisionDemoPath.jsx";
 import VisionDemoTrio from "./pages/VisionDemoTrio.jsx";
 import StudentVisionPrototype from "./pages/StudentVisionPrototype.jsx";
+import DemoLiveLaunch from "./pages/DemoLiveLaunch.jsx";
 
 function LoadingScreen() {
   return (
@@ -50,6 +51,8 @@ export default function App() {
       <Route path="/sso" element={<SsoCompletePage />} />
       {/* Prototype always reachable for feedback — not behind demo race */}
       <Route path="/demo/student-vision" element={<StudentVisionPrototype />} />
+      {/* One-tap supervisor seats — page itself gates on OFFICEHOURS_DEMO */}
+      <Route path="/demo/live/:seat" element={<DemoLiveLaunch />} />
       {showDemos ? (
         <>
           <Route path="/demo" element={<VisionDemoHub />} />
