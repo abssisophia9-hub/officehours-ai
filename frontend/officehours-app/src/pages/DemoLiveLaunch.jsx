@@ -37,64 +37,76 @@ const SEATS = {
 
 const DEMO_PASSWORD = "aui-demo";
 
+// Coalesce StrictMode double-mount only — expire so revisiting a seat re-logins.
+const inflight = new Map();
+
+function launchSeatOnce(seat, { login, logout, setActiveCourse }) {
+  if (!inflight.has(seat)) {
+    const pending = (async () => {
+      const target = SEATS[seat];
+      if (!target) throw new Error("Unknown demo seat.");
+
+      const config = await api("/auth/config");
+      if (!config?.demo) {
+        throw new Error("Demo live links are off (OFFICEHOURS_DEMO=false).");
+      }
+
+      await logout();
+      const user = await login(target.email, DEMO_PASSWORD);
+      const course =
+        user.courses.find(
+          (item) => item.code === target.code && item.role === target.role,
+        ) ||
+        user.courses.find((item) => item.role === target.role) ||
+        null;
+      if (!course) {
+        throw new Error(`No ${target.role} seat found for ${target.email}.`);
+      }
+      setActiveCourse(course);
+      return { path: target.path, label: target.label, code: course.code, who: target.who };
+    })();
+    inflight.set(seat, pending);
+    pending.finally(() => {
+      setTimeout(() => inflight.delete(seat), 1500);
+    });
+  }
+  return inflight.get(seat);
+}
+
 export default function DemoLiveLaunch() {
   const { seat } = useParams();
   const navigate = useNavigate();
   const { login, logout, setActiveCourse } = useAuth();
   const [error, setError] = useState("");
-  const [status, setStatus] = useState("Checking demo mode…");
+  const [status, setStatus] = useState("Opening demo seat…");
 
   const target = SEATS[seat];
 
   useEffect(() => {
     let cancelled = false;
 
-    async function run() {
-      if (!target) {
-        setError("Unknown demo seat. Use /demo/live/student, /ta, or /professor.");
-        return;
-      }
-
-      try {
-        const config = await api("/auth/config");
-        if (cancelled) return;
-        if (!config?.demo) {
-          setError("Demo live links are off (OFFICEHOURS_DEMO=false).");
-          return;
-        }
-
-        setStatus(`Signing in as ${target.who}…`);
-        await logout();
-        if (cancelled) return;
-
-        const user = await login(target.email, DEMO_PASSWORD);
-        if (cancelled) return;
-
-        const course =
-          user.courses.find(
-            (item) => item.code === target.code && item.role === target.role,
-          ) ||
-          user.courses.find((item) => item.role === target.role) ||
-          null;
-
-        if (!course) {
-          setError(`No ${target.role} seat found for ${target.email}.`);
-          return;
-        }
-
-        setActiveCourse(course);
-        setStatus(`Opening ${target.label} · ${course.code}…`);
-        navigate(target.path, { replace: true });
-      } catch (err) {
-        if (!cancelled) setError(err.message || "Demo launch failed");
-      }
+    if (!target) {
+      setError("Unknown demo seat. Use /demo/live/student, /ta, or /professor.");
+      return undefined;
     }
 
-    run();
+    setStatus(`Signing in as ${target.who}…`);
+    launchSeatOnce(seat, { login, logout, setActiveCourse })
+      .then((result) => {
+        if (cancelled) return;
+        setStatus(`Opening ${result.label} · ${result.code}…`);
+        navigate(result.path, { replace: true });
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message || "Demo launch failed");
+      });
+
     return () => {
       cancelled = true;
     };
-  }, [target, login, logout, setActiveCourse, navigate]);
+    // Only re-run when the seat changes — auth helpers are stable enough via inflight.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seat]);
 
   if (error) {
     return (
