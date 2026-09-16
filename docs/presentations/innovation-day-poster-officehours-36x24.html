@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OfficeHours AI — Innovation Day Poster (36×24)</title>
+  <style>
+    /* Print target: 36" × 24" landscape academic poster */
+    @page { size: 36in 24in; margin: 0; }
+
+    :root {
+      --aui: #0b3d2e;
+      --aui-mid: #1a5c45;
+      --aui-bright: #2d8a64;
+      --panel: #ffffff;
+      --bg: #f4f7f5;
+      --line: #c5d5cc;
+      --ink: #12261e;
+      --muted: #3d5a4c;
+      --chip: #e7f2ec;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #d9e2dd;
+      color: var(--ink);
+      font-family: Helvetica, Arial, sans-serif;
+    }
+
+    .poster {
+      width: 36in;
+      height: 24in;
+      margin: 0 auto;
+      background: var(--bg);
+      display: grid;
+      grid-template-rows: 2.35in 1fr 2.55in 1.15in;
+      overflow: hidden;
+      border: 1px solid #9bb5a8;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      background: linear-gradient(105deg, var(--aui) 0%, var(--aui-mid) 55%, #246b50 100%);
+      color: #fff;
+      display: grid;
+      grid-template-columns: 7.2in 1fr 7.5in;
+      gap: 0.35in;
+      padding: 0.28in 0.45in;
+      align-items: center;
+    }
+    .brand {
+      display: flex;
+      gap: 0.22in;
+      align-items: center;
+    }
+    .brand img {
+      height: 1.35in;
+      width: auto;
+      background: #fff;
+      border-radius: 0.06in;
+      padding: 0.08in;
+    }
+    .brand .school {
+      font-size: 0.28in;
+      font-weight: 700;
+      line-height: 1.25;
+      letter-spacing: 0.01em;
+    }
+    .brand .school small {
+      display: block;
+      font-size: 0.18in;
+      font-weight: 500;
+      opacity: 0.85;
+      margin-top: 0.06in;
+    }
+    .title-block { text-align: center; }
+    .title-block h1 {
+      margin: 0;
+      font-size: 0.72in;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+    .title-block .tagline {
+      margin: 0.12in 0 0;
+      font-size: 0.24in;
+      font-weight: 500;
+      color: #cce8db;
+    }
+    .author {
+      text-align: right;
+      font-size: 0.22in;
+      line-height: 1.35;
+      font-weight: 600;
+    }
+    .author strong { display: block; font-size: 0.28in; margin-bottom: 0.05in; }
+    .author span { display: block; font-weight: 500; opacity: 0.9; }
+
+    /* ===== MAIN 3 COLUMNS ===== */
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 1.25fr 1fr;
+      gap: 0.28in;
+      padding: 0.28in 0.4in 0.15in;
+      min-height: 0;
+    }
+    .col {
+      display: flex;
+      flex-direction: column;
+      gap: 0.22in;
+      min-height: 0;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-top: 0.07in solid var(--aui);
+      padding: 0.18in 0.2in 0.2in;
+      flex: 0 0 auto;
+    }
+    .card.grow { flex: 1 1 auto; }
+    .card h2 {
+      margin: 0 0 0.12in;
+      font-size: 0.28in;
+      color: var(--aui);
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+    }
+    ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 0.09in;
+    }
+    li {
+      position: relative;
+      padding-left: 0.22in;
+      font-size: 0.19in;
+      line-height: 1.28;
+      font-weight: 500;
+      color: var(--ink);
+    }
+    li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.08in;
+      width: 0.1in;
+      height: 0.1in;
+      background: var(--aui-bright);
+    }
+    li b { color: var(--aui); font-weight: 700; }
+
+    /* Architecture diagram */
+    .arch {
+      display: grid;
+      gap: 0.1in;
+    }
+    .arch-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.1in;
+    }
+    .node {
+      background: var(--chip);
+      border: 1px solid var(--line);
+      padding: 0.1in 0.12in;
+      text-align: center;
+      font-size: 0.16in;
+      font-weight: 700;
+      color: var(--aui);
+      line-height: 1.2;
+    }
+    .node small {
+      display: block;
+      font-weight: 500;
+      color: var(--muted);
+      margin-top: 0.04in;
+      font-size: 0.14in;
+    }
+    .node.dark {
+      background: var(--aui);
+      color: #fff;
+      border-color: var(--aui);
+    }
+    .node.dark small { color: #cde8da; }
+    .pipe {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      gap: 0.08in;
+      align-items: center;
+      margin-top: 0.08in;
+    }
+    .pipe .box {
+      background: #fff;
+      border: 1.5px solid var(--aui-mid);
+      padding: 0.09in 0.08in;
+      text-align: center;
+      font-size: 0.155in;
+      font-weight: 700;
+      color: var(--aui);
+    }
+    .pipe .box span {
+      display: block;
+      font-size: 0.125in;
+      font-weight: 500;
+      color: var(--muted);
+      margin-top: 0.03in;
+    }
+    .pipe .arr {
+      font-size: 0.22in;
+      color: var(--aui-bright);
+      font-weight: 800;
+    }
+    .flow-label {
+      margin: 0.08in 0 0.05in;
+      font-size: 0.155in;
+      font-weight: 800;
+      color: var(--aui);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.08in;
+    }
+    .stack span {
+      background: var(--aui);
+      color: #fff;
+      font-size: 0.145in;
+      font-weight: 700;
+      padding: 0.06in 0.1in;
+      border-radius: 0.03in;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.1in;
+    }
+    .metric {
+      background: var(--chip);
+      border: 1px solid var(--line);
+      padding: 0.1in 0.12in;
+      text-align: center;
+    }
+    .metric strong {
+      display: block;
+      font-size: 0.3in;
+      color: var(--aui);
+      font-weight: 800;
+      line-height: 1;
+    }
+    .metric em {
+      display: block;
+      font-style: normal;
+      font-size: 0.14in;
+      font-weight: 600;
+      color: var(--muted);
+      margin-top: 0.05in;
+      line-height: 1.2;
+    }
+
+    /* ===== BOTTOM BAND ===== */
+    .bottom {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr 0.85in;
+      gap: 0.25in;
+      padding: 0.18in 0.4in 0.1in;
+      border-top: 1px solid var(--line);
+      background: #eef5f1;
+      align-items: stretch;
+    }
+    .bottom .card { border-top-width: 0.05in; }
+    .qr-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.06in;
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 0.08in;
+    }
+    .qr-wrap img { width: 0.62in; height: 0.62in; }
+    .qr-wrap span {
+      font-size: 0.11in;
+      font-weight: 700;
+      color: var(--aui);
+      text-align: center;
+      line-height: 1.15;
+    }
+
+    footer {
+      background: var(--aui);
+      color: #dceee5;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 0.25in;
+      align-items: center;
+      padding: 0.18in 0.4in;
+      font-size: 0.16in;
+      font-weight: 500;
+    }
+    footer strong { color: #fff; }
+    footer .center { text-align: center; }
+    footer .right { text-align: right; }
+
+    /* Screen preview scaling */
+    @media screen {
+      body {
+        padding: 16px 0 40px;
+        overflow-x: auto;
+      }
+      .poster {
+        transform-origin: top center;
+        /* Fit typical laptop width while preserving 36×24 proportions */
+        transform: scale(calc(min(100vw - 32px, 1400px) / 36in));
+        margin-bottom: calc((24in * (min(100vw - 32px, 1400px) / 36in)) - 24in);
+      }
+    }
+
+    @media print {
+      body { background: #fff; padding: 0; }
+      .poster {
+        transform: none;
+        margin: 0;
+        border: none;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!--
+    OfficeHours AI — Innovation Day / Capstone Poster
+    Print size: 36" wide × 24" tall (landscape)
+    Print tip: Chrome → Print → Paper size Custom 36in × 24in (or A1 landscape scale),
+    Background graphics ON, margins None.
+  -->
+  <article class="poster" aria-label="OfficeHours AI academic poster 36 by 24 inches">
+
+    <header>
+      <div class="brand">
+        <img src="aui-logo.png" alt="Al Akhawayn University" />
+        <div class="school">
+          Al Akhawayn University
+          <small>School of Science and Engineering</small>
+        </div>
+      </div>
+      <div class="title-block">
+        <h1>OfficeHours AI</h1>
+        <p class="tagline">AI-Assisted Campus Office-Hours Triage · One App · Role Per Course</p>
+      </div>
+      <div class="author">
+        <strong>Sophia Abssi</strong>
+        <span>BSc AI and Robotization</span>
+        <span>Graduating Fall 2026</span>
+        <span>Final Year Capstone Project</span>
+      </div>
+    </header>
+
+    <div class="main">
+      <!-- LEFT -->
+      <div class="col">
+        <section class="card">
+          <h2>Problem Statement</h2>
+          <ul>
+            <li>Finals week floods faculty with <b>repeated conceptual questions</b></li>
+            <li>Students hesitate to ask — especially when identity feels exposed</li>
+            <li>TA answers are reinvented under pressure; approved knowledge rarely compounds</li>
+          </ul>
+        </section>
+
+        <section class="card grow">
+          <h2>Research Objectives</h2>
+          <ul>
+            <li>Can local Ask Triage reduce faculty communication overload at intake?</li>
+            <li>Can Quiet ask improve comfort seeking academic help?</li>
+            <li>Can Matcher + dual-TA staffing cut wait / misroute cost?</li>
+            <li>Can a professor KB gate keep Study Agent answers trustworthy?</li>
+            <li>Can Canvas LTI replace manual enrollment for community deploy?</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h2>Roles (Per Course)</h2>
+          <ul>
+            <li><b>Student</b> — Quiet / Identify · ask modes · status · Rooms · Notes · Study Agent</li>
+            <li><b>TA</b> — live queue · claim/help · Help Coach · drafts · group meetings</li>
+            <li><b>Professor</b> — clusters · review insights · KB approve · Canvas sync</li>
+          </ul>
+        </section>
+      </div>
+
+      <!-- CENTER -->
+      <div class="col">
+        <section class="card grow">
+          <h2>Solution Overview</h2>
+          <div class="arch">
+            <div class="arch-row">
+              <div class="node dark">Student Ask<small>Quiet or named · msg / F2F / online</small></div>
+              <div class="node dark">Ask Triage<small>Analyzer → Matcher → Synthesizer</small></div>
+              <div class="node dark">Staff Queue<small>WebSocket live push</small></div>
+            </div>
+            <div class="arch-row">
+              <div class="node">Help Coach<small>TA mid-session assist</small></div>
+              <div class="node">Cluster + Meeting<small>Shared time/place on statuses</small></div>
+              <div class="node">Professor Gate<small>Approve / edit / reject KB</small></div>
+            </div>
+            <div class="arch-row">
+              <div class="node">Study Agent<small>Approved KB only</small></div>
+              <div class="node">Rooms<small>Classmate forum · Hilbert ranks</small></div>
+              <div class="node">Canvas LTI<small>Launch · modules · materials</small></div>
+            </div>
+          </div>
+
+          <p class="flow-label">Ask Triage pipeline (local trained models)</p>
+          <div class="pipe">
+            <div class="box">Analyzer<span>category · difficulty · tags · ETA</span></div>
+            <div class="arr">→</div>
+            <div class="box">Matcher<span>primary / backup TA · wait</span></div>
+            <div class="arr">→</div>
+            <div class="box">Synthesizer<span>student hint · teaching plan</span></div>
+          </div>
+
+          <p class="flow-label" style="margin-top:0.14in">End-to-end loop</p>
+          <ul>
+            <li>Submit ask → triage + cluster + pending KB draft</li>
+            <li>TA claims → Help Coach → reply <b>or</b> shared group meeting</li>
+            <li>Professor approves FAQ → later students hit Study Agent</li>
+            <li>Rooms: named Problem / Discussion / Article · Canvas chapters</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h2>Tech Stack</h2>
+          <div class="stack">
+            <span>React 19</span><span>Vite</span><span>Tailwind 4</span>
+            <span>FastAPI</span><span>Uvicorn</span><span>SQLAlchemy</span>
+            <span>SQLite / Postgres</span><span>WebSockets</span>
+            <span>sentence-transformers</span><span>scikit-learn</span>
+            <span>PyJWT / LTI 1.3</span><span>Canvas LMS</span>
+            <span>Microsoft SSO (opt.)</span><span>Docker Compose</span>
+          </div>
+        </section>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="col">
+        <section class="card">
+          <h2>Key Findings / Evidence</h2>
+          <div class="metric-grid">
+            <div class="metric"><strong>~84.6%</strong><em>Analyzer CV accuracy<br/>(synthetic labels, n=156)</em></div>
+            <div class="metric"><strong>~87.5%</strong><em>Matcher holdout<br/>(silver TA labels)</em></div>
+            <div class="metric"><strong>~75–79%</strong><em>Gold held-out Analyzer / Matcher (n=80)</em></div>
+            <div class="metric"><strong>162</strong><em>Backend pytest cases<br/>+ product app CI</em></div>
+          </div>
+          <ul style="margin-top:0.12in">
+            <li>Assessed path uses <b>local models</b> — no prompted LLM at intake</li>
+            <li>Professor remains the <b>publication gate</b> for Study Agent answers</li>
+            <li>Metrics are lab / curated — not yet live AUI longitudinal proof</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h2>Target Audience</h2>
+          <ul>
+            <li>AUI students, TAs, and professors (per-course roles)</li>
+            <li>SSE / campus teaching support &amp; IT (Canvas LTI deploy)</li>
+            <li>FYP examiners evaluating AI + systems integration</li>
+            <li>Peer institutions exploring office-hours triage tooling</li>
+          </ul>
+        </section>
+
+        <section class="card grow">
+          <h2>Unique Value Proposition</h2>
+          <ul>
+            <li><b>One packaged multi-role app</b> — not three disconnected dashboards</li>
+            <li><b>Role per course</b> — same login can be TA on 2302 &amp; student elsewhere</li>
+            <li><b>Quiet ask</b> privacy path + named Rooms for peer help</li>
+            <li><b>Custom-trained Ask Triage</b> + Help Coach + professor KB gate</li>
+            <li><b>Canvas-ready</b> launch / modules / materials (LTI 1.3 path)</li>
+            <li>Hardware kiosk / NFC intentionally <b>out of scope</b></li>
+          </ul>
+        </section>
+      </div>
+    </div>
+
+    <div class="bottom">
+      <section class="card">
+        <h2>Built So Far (Product Surface)</h2>
+        <ul>
+          <li>Unified app :5180 — opening story, login, course picker, account switch</li>
+          <li>Student: asks · Revision Strategist · Rooms · classmate notes · Study Agent</li>
+          <li>TA desk filters · dual-TA Matcher · Help Coach modes · group meetings</li>
+          <li>Professor clusters · review insights · KB curation · Canvas sync/uploads</li>
+          <li>Auth: demo accounts · session tokens · optional Microsoft SSO · LTI</li>
+          <li>Gold-label lab docs · defense crib · architecture diagrams · surveys archive</li>
+        </ul>
+      </section>
+      <section class="card">
+        <h2>Next Steps / Real-World Applications</h2>
+        <ul>
+          <li>Community deploy: <b>OFFICEHOURS_DEMO=false</b> + live Canvas credentials</li>
+          <li>IT install of Canvas LTI 1.3 key for signed launches</li>
+          <li>Human gold TA labeling lab (≥40) for honest Matcher claims</li>
+          <li>Scale DB to Postgres; SMTP notify for production inbox</li>
+          <li>Pilot with one SSE course section during peak office-hours week</li>
+        </ul>
+      </section>
+      <div class="qr-wrap">
+        <img src="poster-qr-github.png" alt="QR code to GitHub repository" />
+        <span>GitHub<br/>Repo</span>
+      </div>
+    </div>
+
+    <footer>
+      <div>
+        <strong>Contact:</strong> Sophia Abssi · AUI<br />
+        Demo: product app http://127.0.0.1:5180 · API :8000
+      </div>
+      <div class="center">
+        <strong>OfficeHours AI</strong> · Innovation Day Capstone Poster<br />
+        Al Akhawayn University — Ifrane, Morocco
+      </div>
+      <div class="right">
+        github.com/abssisophia9-hub/officehours-ai<br />
+        Print: 36″ × 24″ landscape
+      </div>
+    </footer>
+  </article>
+</body>
+</html>
