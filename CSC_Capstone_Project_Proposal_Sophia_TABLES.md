@@ -12,7 +12,11 @@ Open this file in Cursor. The `.docx` is for Word/Google Docs only.
 | Supervisor | Dr. Oumaima Hourrane |
 | Date of Submission | September 23, 2026 |
 
-**Project type:** Software Development Project — web/mobile application with AI-enabled, trained custom agents.
+## Project Type
+
+| [X] Software Development Project | [ ] Research-Based Project |
+| --- | --- |
+| OfficeHours AI: a unified campus web application (React SPA on port 5180 + FastAPI on port 8000) with custom-trained Ask Triage agents (Analyzer, Matcher, Synthesizer), TA Help Coach, professor-gated Study Agent, Rooms, and Canvas LTI 1.3. Not a mobile app and not a hardware kiosk. | Not selected. Analyzer/Matcher evaluation reports support the software product; this FYP is not a standalone research thesis. |
 
 ## Project Lifecycle
 
