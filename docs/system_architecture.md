@@ -28,7 +28,7 @@ history: [`project_journey.md`](project_journey.md) · training: [`training_data
    knowledge, peer notes, **Rooms** (`/help-room/`), Canvas launch/sync, TA roster/staffing, analytics,
    action plans / group meetings, feedback, `.ics`
 3. **Ask Triage AI (custom-trained)** — Analyzer / Matcher / Synthesizer at
-   intake (implementation: `oracle_service.py` / `oracle_*` fields)
+   intake (implementation: `ask_triage_service.py` / `triage_*` fields)
 4. **Help Coach AI** — TA mid-session assist (`help_coach_service.py`)
 5. **Canvas integration** — JIT launch provisioning + materials → course KB
    **and Rooms chapter grid**. Live API when credentials are set; local mirror

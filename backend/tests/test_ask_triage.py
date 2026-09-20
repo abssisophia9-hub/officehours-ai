@@ -16,7 +16,7 @@ def setup_function():
     Base.metadata.create_all(bind=engine)
 
 
-def test_oracle_pipeline_on_red_black_submission():
+def test_ask_triage_pipeline_on_red_black_submission():
     with TestClient(app) as client:
         from app.database.session import SessionLocal
         from app.services.demo_accounts import ensure_demo_accounts
@@ -65,19 +65,19 @@ def test_oracle_pipeline_on_red_black_submission():
         assert data["student_name"] == "Alex Smith"
         assert data["course"] == "CSC 2302"
         assert data["code_snippet"]
-        assert data["oracle"] is not None
-        assert "Red-Black" in data["oracle"]["analyzer"]["category"]
-        assert data["oracle"]["analyzer"]["difficulty"] in {"EASY", "MEDIUM", "HARD"}
-        assert "trees" in data["oracle"]["analyzer"]["tags"] or "red-black" in data[
-            "oracle"
+        assert data["triage"] is not None
+        assert "Red-Black" in data["triage"]["analyzer"]["category"]
+        assert data["triage"]["analyzer"]["difficulty"] in {"EASY", "MEDIUM", "HARD"}
+        assert "trees" in data["triage"]["analyzer"]["tags"] or "red-black" in data[
+            "triage"
         ]["analyzer"]["tags"]
-        assert data["oracle"]["matcher"]["assigned_ta"] == "Alice Chen"
-        assert data["oracle"]["matcher"]["alternative_ta"]
-        assert data["oracle"]["synthesizer"]["student_hint"]
-        assert data["oracle"]["synthesizer"]["teaching_approach"]
+        assert data["triage"]["matcher"]["assigned_ta"] == "Alice Chen"
+        assert data["triage"]["matcher"]["alternative_ta"]
+        assert data["triage"]["synthesizer"]["student_hint"]
+        assert data["triage"]["synthesizer"]["teaching_approach"]
         assert data["assigned_ta"] == "Alice Chen"
-        assert data["oracle"]["elapsed_ms"] is not None
-        assert {step["agent"] for step in data["oracle"]["steps"]} == {
+        assert data["triage"]["elapsed_ms"] is not None
+        assert {step["agent"] for step in data["triage"]["steps"]} == {
             "analyzer",
             "matcher",
             "synthesizer",
@@ -99,10 +99,10 @@ def test_oracle_pipeline_on_red_black_submission():
         assert "claude" not in (item["knowledge_entry"].get("drafter_backend") or "")
 
         metrics = client.get(
-            "/analytics/oracle-metrics",
+            "/analytics/triage-metrics",
             headers={"Authorization": f"Bearer {alice['token']}"},
         ).json()
-        assert metrics["oracle_runs"] >= 1
+        assert metrics["triage_runs"] >= 1
         assert metrics["matched_assignments"] >= 1
         assert metrics["time_saved_minutes"] >= 0
 

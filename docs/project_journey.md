@@ -210,6 +210,6 @@ New campus surveys are **not required** for the capstone presentation.
 | Rooms | `backend/app/services/help_room_service.py`, `room_chapters.py` |
 | Canvas launch | `backend/app/services/canvas_launch_service.py` |
 | Ask + help mode | `backend/app/routes/requests.py` |
-| Ask Triage (`oracle_service.py`) | `backend/app/services/oracle_service.py` |
+| Ask Triage (`ask_triage_service.py`, historically `oracle_service.py`) | `backend/app/services/ask_triage_service.py` |
 | Help Coach | `backend/app/services/help_coach_service.py` |
 | Run helper | `scripts/run_product.sh` |

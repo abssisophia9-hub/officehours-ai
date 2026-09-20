@@ -208,7 +208,7 @@ def build_cluster_command_center(
     )
 
 
-def build_oracle_metrics(
+def build_triage_metrics(
     db: Session, *, course_ids: list[int] | None = None
 ) -> dict:
     request_q = db.query(Request)
@@ -220,22 +220,22 @@ def build_oracle_metrics(
     entries = entry_q.all()
     approved = [entry for entry in entries if entry.status == "approved"]
     pending = [entry for entry in entries if entry.status == "pending_review"]
-    with_oracle = [request for request in requests if request.oracle_trace_json]
+    with_triage = [request for request in requests if request.triage_trace_json]
     assigned = [request for request in requests if request.assigned_ta]
 
     time_saved = max(
         0,
-        len(with_oracle) * (MANUAL_MINUTES_PER_REQUEST - AI_ASSIST_MINUTES_PER_REQUEST),
+        len(with_triage) * (MANUAL_MINUTES_PER_REQUEST - AI_ASSIST_MINUTES_PER_REQUEST),
     )
 
     recent_traces = []
     for request in sorted(requests, key=lambda item: item.id, reverse=True)[:8]:
-        if not request.oracle_trace_json:
+        if not request.triage_trace_json:
             continue
         try:
             import json
 
-            trace = json.loads(request.oracle_trace_json)
+            trace = json.loads(request.triage_trace_json)
         except Exception:
             continue
         recent_traces.append(
@@ -247,13 +247,13 @@ def build_oracle_metrics(
                     for step in trace.get("steps") or []
                 ],
                 "assigned_ta": request.assigned_ta,
-                "oracle_category": request.oracle_category,
+                "triage_category": request.triage_category,
             }
         )
 
     return {
         "total_requests": len(requests),
-        "oracle_runs": len(with_oracle),
+        "triage_runs": len(with_triage),
         "matched_assignments": len(assigned),
         "kb_pending_review": len(pending),
         "kb_approved": len(approved),
@@ -309,10 +309,10 @@ def build_review_insights(db: Session, *, course_id: int) -> ReviewInsightsOut:
 
     public_requests = 0
     for request in requests:
-        category = request.oracle_category or request.category or "uncategorized"
+        category = request.triage_category or request.category or "uncategorized"
         if bool(getattr(request, "sensitive", False)) or is_sensitive_category(
             request.category
-        ) or is_sensitive_category(request.oracle_category):
+        ) or is_sensitive_category(request.triage_category):
             continue
         public_requests += 1
         display = category.replace("_", " ")

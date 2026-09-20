@@ -528,7 +528,7 @@ export default function StudentWorkspace() {
                   {result.solidarity_message}
                 </p>
               ) : null}
-              {result.oracle ? (
+              {result.triage ? (
                 <div className="mt-3 rounded-lg border border-aui-forest/20 bg-white p-2.5">
                   <p className="text-xs font-semibold text-aui-ink">Ask Triage</p>
                   <p className="mt-0.5 text-[11px] text-aui-deep/60">
@@ -536,19 +536,19 @@ export default function StudentWorkspace() {
                   </p>
                   <ul className="mt-2 space-y-1.5 text-xs text-aui-deep/85">
                     <li>
-                      <strong>Analyzer:</strong> {result.oracle.analyzer.category} ·{" "}
-                      {result.oracle.analyzer.difficulty}
+                      <strong>Analyzer:</strong> {result.triage.analyzer.category} ·{" "}
+                      {result.triage.analyzer.difficulty}
                     </li>
                     <li>
-                      <strong>Matcher:</strong> {result.oracle.matcher.assigned_ta}
-                      {result.oracle.matcher.alternative_ta
-                        ? ` (backup: ${result.oracle.matcher.alternative_ta})`
+                      <strong>Matcher:</strong> {result.triage.matcher.assigned_ta}
+                      {result.triage.matcher.alternative_ta
+                        ? ` (backup: ${result.triage.matcher.alternative_ta})`
                         : ""}{" "}
-                      · wait ~{result.oracle.matcher.estimated_wait_minutes} min
+                      · wait ~{result.triage.matcher.estimated_wait_minutes} min
                     </li>
                     <li>
                       <strong>Synthesizer hint:</strong>{" "}
-                      {result.oracle.synthesizer.student_hint}
+                      {result.triage.synthesizer.student_hint}
                     </li>
                   </ul>
                 </div>

@@ -1,7 +1,7 @@
 # Glossary — product language
 
-Short names used in demos, UI, and docs. Implementation identifiers that still
-say `oracle_*` are noted where they differ.
+Short names used in demos, UI, and docs. Implementation identifiers now match
+the product names (the historical `oracle_*` prefix was renamed to `triage_*`).
 
 ## Roles (per course)
 
@@ -18,7 +18,7 @@ A TA is not a classmate in the section they staff.
 
 | Name | Audience | When | What |
 | --- | --- | --- | --- |
-| **Ask Triage** | Everyone (runs at submit) | `POST /requests/` | Analyzer → Matcher → Synthesizer. Internal module: `oracle_service.py`; columns/API often `oracle_*`. |
+| **Ask Triage** | Everyone (runs at submit) | `POST /requests/` | Analyzer → Matcher → Synthesizer. Internal module: `ask_triage_service.py`; columns/API use `triage_*` (renamed from historical `oracle_*`). |
 | **Help Coach** | TA (while helping) | `POST /ta/assist/` | Similar opens, KB neighbors, Socratic steps, draft/rewrite reply, refresh teaching script. |
 | **Study Agent** | Student | `POST /agent/ask` | Answers only from **professor-approved** KB / materials. |
 | **Lifetime confusion** | Professor analytics | `/analytics/lifetime-confusion` | Hotspots from approved KB topics. |

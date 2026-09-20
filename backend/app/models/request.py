@@ -28,15 +28,15 @@ class Request(Base):
     learning_style: Mapped[str | None] = mapped_column(String, nullable=True)
     cluster_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     recommended_action: Mapped[str | None] = mapped_column(Text, nullable=True)
-    oracle_category: Mapped[str | None] = mapped_column(String, nullable=True)
-    oracle_difficulty: Mapped[str | None] = mapped_column(String, nullable=True)
-    oracle_estimated_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    oracle_tags: Mapped[str | None] = mapped_column(Text, nullable=True)
+    triage_category: Mapped[str | None] = mapped_column(String, nullable=True)
+    triage_difficulty: Mapped[str | None] = mapped_column(String, nullable=True)
+    triage_estimated_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    triage_tags: Mapped[str | None] = mapped_column(Text, nullable=True)
     assigned_ta: Mapped[str | None] = mapped_column(String, nullable=True)
     alternative_ta: Mapped[str | None] = mapped_column(String, nullable=True)
     estimated_wait_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     student_hint: Mapped[str | None] = mapped_column(Text, nullable=True)
-    oracle_trace_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    triage_trace_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     sensitive: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     # How the student wants to be helped: async message, face-to-face, or online call.
     help_mode: Mapped[str] = mapped_column(String, nullable=False, default="message")
@@ -81,7 +81,7 @@ class RequestCreate(BaseModel):
     help_mode: str = Field(default="message", max_length=32)
 
 
-class OracleAnalyzerOut(BaseModel):
+class TriageAnalyzerOut(BaseModel):
     category: str | None = None
     difficulty: str | None = None
     estimated_minutes: int | None = None
@@ -90,14 +90,14 @@ class OracleAnalyzerOut(BaseModel):
     rationale: str | None = None
 
 
-class OracleMatcherOut(BaseModel):
+class TriageMatcherOut(BaseModel):
     assigned_ta: str | None = None
     alternative_ta: str | None = None
     estimated_wait_minutes: int | None = None
     rationale: str | None = None
 
 
-class OracleSynthesizerOut(BaseModel):
+class TriageSynthesizerOut(BaseModel):
     student_hint: str | None = None
     teaching_approach: str | None = None
     similar_count: int = 0
@@ -105,16 +105,16 @@ class OracleSynthesizerOut(BaseModel):
     kb_insight: str | None = None
 
 
-class OracleStepOut(BaseModel):
+class TriageStepOut(BaseModel):
     agent: str
     elapsed_ms: int
 
 
-class OracleResultOut(BaseModel):
-    analyzer: OracleAnalyzerOut
-    matcher: OracleMatcherOut
-    synthesizer: OracleSynthesizerOut
-    steps: list[OracleStepOut] = Field(default_factory=list)
+class TriageResultOut(BaseModel):
+    analyzer: TriageAnalyzerOut
+    matcher: TriageMatcherOut
+    synthesizer: TriageSynthesizerOut
+    steps: list[TriageStepOut] = Field(default_factory=list)
     elapsed_ms: int | None = None
 
 
@@ -130,15 +130,15 @@ class RequestOut(RequestCreate):
     helped_at: datetime | None = None
     ta_reply: str | None = None
     ta_replied_at: datetime | None = None
-    oracle_category: str | None = None
-    oracle_difficulty: str | None = None
-    oracle_estimated_minutes: int | None = None
-    oracle_tags: list[str] = Field(default_factory=list)
+    triage_category: str | None = None
+    triage_difficulty: str | None = None
+    triage_estimated_minutes: int | None = None
+    triage_tags: list[str] = Field(default_factory=list)
     assigned_ta: str | None = None
     alternative_ta: str | None = None
     estimated_wait_minutes: int | None = None
     student_hint: str | None = None
-    oracle: OracleResultOut | None = None
+    triage: TriageResultOut | None = None
     # Anonymous solidarity (non-sensitive only in messaging).
     similar_asks_this_week: int = 0
     solidarity_message: str | None = None

@@ -37,8 +37,8 @@ should make those three pieces *truer per course*, not louder.
 - Backend pytest is real (~149 cases). Opening story is approved.
 
 Product CI is **backend + `officehours-app` only**. Legacy kiosk/dashboard
-folders are archives. UI says **Ask Triage**; some API fields still use
-`oracle_*`. `backend/app/ai/*` modules are imported at runtime.
+folders are archives. UI and API both say **Ask Triage** (`triage_*` fields,
+renamed from `oracle_*`). `backend/app/ai/*` modules are imported at runtime.
 
 ---
 
@@ -89,7 +89,7 @@ the same PDF/DOCX extractor as manual upload.
 **Do not:** add an unconstrained LLM that answers from classmate notes or Rooms
 posts. That breaks the gate you already sold. Peer notes stay a human path.
 
-**Also:** Ask Triage’s Synthesizer neighbor search (`oracle_service._similar_kb_hits`)
+**Also:** Ask Triage’s Synthesizer neighbor search (`ask_triage_service._similar_kb_hits`)
 does **not** pass `course_id`, so a CSC 2302 hint can be built from a CSC 3374
 FAQ. Help Coach **does** scope by `request.course_id`. Align them.
 
@@ -108,7 +108,7 @@ later (`POST /ta/assist/`, auth OK): similar opens, KB neighbors, Socratic
 | Prefer **course-scoped load balance** when memberships exist | `build_course_matcher_roster` already returns course TAs. The trained classifier still scores **Alice / Bob / Priya / Sam**. Unseen AUI `display_name`s get a 0.05 × tag-overlap prior — almost random. Heuristic overlap + queue depth should win for unknown names. |
 | Stop reseeding `DEFAULT_TA_ROSTER` off-demo | `ensure_default_roster` runs on every intake. A community DB that once had demo on can keep leaking demo names. |
 | Course-condition or drop `TOPIC_OVERLAYS` | They are CSC-hardcoded (red-black, hashing, round-robin). An MTH / COM ask that hits a keyword gets a CSC-looking Analyzer title. |
-| One taxonomy for the queue | `classify_and_recommend` **and** Analyzer both run. `oracle_service` then overwrites category from Analyzer’s `ml_category`. The student card still shows Analyzer’s display label. Pick one source of truth. |
+| One taxonomy for the queue | `classify_and_recommend` **and** Analyzer both run. `ask_triage_service` then overwrites category from Analyzer’s `ml_category`. The student card still shows Analyzer’s display label. Pick one source of truth. |
 | Help Coach “this draft was useless” | Drafts are retrieval + glue. That is fine. Missing signal is `gold_hint_useful` from the TA who actually helped. |
 | Show **why** group-help fired | Cluster id vs shared category is already in `match_reason`. Surface it on the badge. |
 | Hide learning-style unless confidence is high | A 12-word ask is not a style. The TA card treats it as fact. |
@@ -172,14 +172,14 @@ Highest-leverage AI work, in order:
 - Microsoft + LTI credentials (IT). Local wiring was tested; Sophia’s real
   login was not (placeholder client → AADSTS700038).
 - Unified app has **no frontend tests**. Backend carries the product.
-- `oracle_*` remains on API / DB columns (historical). The UI says Ask Triage.
+- ~~`oracle_*` remains on API / DB columns (historical)~~ — resolved: renamed to `triage_*` with an in-place column migration.
 - Real TA gold lab (≥40 `human_gold`) — protocol in `docs/gold_label_lab.md`.
 
 ---
 
 ## P2 — hygiene
 
-- Historical `oracle_service.py` / `oracle_agents.png` filenames (documented).
+- ~~Historical `oracle_service.py` filename~~ — resolved: now `ask_triage_service.py`. `oracle_agents.png` diagram filename remains (documented).
 - Legacy Claude modules only behind a flag — keep them out of the default path
   (already).
 - No Python linter in `requirements.txt`.

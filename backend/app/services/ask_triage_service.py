@@ -1,10 +1,10 @@
 """
-Ask Triage orchestration (historical module name: Oracle).
+Ask Triage orchestration (renamed from the historical ``oracle_service``).
 
 Runs Analyzer → Matcher → Synthesizer, keeps professor curation in the loop,
 and records traces for metrics / lifetime confusion analytics.
-Product docs call this pipeline Ask Triage; fields/events often still use
-``oracle_*``.
+Columns, API fields, and WebSocket events use the ``triage_*`` / ``triage.*``
+prefix; ``oracle_*`` was the pre-rename spelling.
 """
 
 from __future__ import annotations
@@ -57,7 +57,7 @@ def ensure_default_roster(db: Session) -> list[TaRoster]:
     return db.query(TaRoster).order_by(TaRoster.id).all()
 
 
-def run_oracle_pipeline(
+def run_ask_triage_pipeline(
     db: Session,
     *,
     question_text: str,
@@ -163,15 +163,15 @@ def run_oracle_pipeline(
     }
 
 
-def apply_oracle_to_request(
+def apply_triage_to_request(
     db: Session,
     request: Request,
-    oracle: dict[str, Any],
+    triage: dict[str, Any],
 ) -> Request:
-    analyzer = oracle["analyzer"]
-    matcher = oracle["matcher"]
-    synthesizer = oracle["synthesizer"]
-    classification = oracle["classification"]
+    analyzer = triage["analyzer"]
+    matcher = triage["matcher"]
+    synthesizer = triage["synthesizer"]
+    classification = triage["classification"]
 
     request.category = str(
         classification.get("category") or analyzer.get("category") or request.category
@@ -199,15 +199,15 @@ def apply_oracle_to_request(
         request.recommended_action = (
             "Private 1:1 / admin route — do not discuss in a public group review"
         )
-    request.oracle_category = str(analyzer.get("category") or "")
-    request.oracle_difficulty = str(analyzer.get("difficulty") or "MEDIUM")
-    request.oracle_estimated_minutes = int(analyzer.get("estimated_minutes") or 15)
-    request.oracle_tags = json.dumps(list(analyzer.get("tags") or []))
+    request.triage_category = str(analyzer.get("category") or "")
+    request.triage_difficulty = str(analyzer.get("difficulty") or "MEDIUM")
+    request.triage_estimated_minutes = int(analyzer.get("estimated_minutes") or 15)
+    request.triage_tags = json.dumps(list(analyzer.get("tags") or []))
     request.assigned_ta = matcher.get("assigned_ta")
     request.alternative_ta = matcher.get("alternative_ta")
     request.estimated_wait_minutes = int(matcher.get("estimated_wait_minutes") or 15)
     request.student_hint = synthesizer.get("student_hint")
-    request.oracle_trace_json = json.dumps(oracle)
+    request.triage_trace_json = json.dumps(triage)
 
     # Bump assigned TA queue depth for demo realism.
     assigned = (
@@ -227,38 +227,38 @@ def apply_oracle_to_request(
     return request
 
 
-def build_oracle_public_payload(oracle: dict[str, Any]) -> dict[str, Any]:
+def build_triage_public_payload(triage: dict[str, Any]) -> dict[str, Any]:
     """Shape returned to student kiosk / dashboards."""
     return {
         "analyzer": {
-            "category": oracle["analyzer"].get("category"),
-            "difficulty": oracle["analyzer"].get("difficulty"),
-            "estimated_minutes": oracle["analyzer"].get("estimated_minutes"),
-            "tags": oracle["analyzer"].get("tags") or [],
-            "urgency": oracle["analyzer"].get("urgency"),
-            "rationale": oracle["analyzer"].get("rationale"),
+            "category": triage["analyzer"].get("category"),
+            "difficulty": triage["analyzer"].get("difficulty"),
+            "estimated_minutes": triage["analyzer"].get("estimated_minutes"),
+            "tags": triage["analyzer"].get("tags") or [],
+            "urgency": triage["analyzer"].get("urgency"),
+            "rationale": triage["analyzer"].get("rationale"),
         },
         "matcher": {
-            "assigned_ta": oracle["matcher"].get("assigned_ta"),
-            "alternative_ta": oracle["matcher"].get("alternative_ta"),
-            "estimated_wait_minutes": oracle["matcher"].get("estimated_wait_minutes"),
-            "rationale": oracle["matcher"].get("rationale"),
+            "assigned_ta": triage["matcher"].get("assigned_ta"),
+            "alternative_ta": triage["matcher"].get("alternative_ta"),
+            "estimated_wait_minutes": triage["matcher"].get("estimated_wait_minutes"),
+            "rationale": triage["matcher"].get("rationale"),
         },
         "synthesizer": {
-            "student_hint": oracle["synthesizer"].get("student_hint"),
-            "teaching_approach": oracle["synthesizer"].get("teaching_approach"),
-            "similar_count": oracle["synthesizer"].get("similar_count"),
-            "similar_questions": oracle["synthesizer"].get("similar_questions") or [],
-            "kb_insight": oracle["synthesizer"].get("kb_insight"),
+            "student_hint": triage["synthesizer"].get("student_hint"),
+            "teaching_approach": triage["synthesizer"].get("teaching_approach"),
+            "similar_count": triage["synthesizer"].get("similar_count"),
+            "similar_questions": triage["synthesizer"].get("similar_questions") or [],
+            "kb_insight": triage["synthesizer"].get("kb_insight"),
         },
         "steps": [
             {
                 "agent": step["agent"],
                 "elapsed_ms": step["elapsed_ms"],
             }
-            for step in oracle.get("steps") or []
+            for step in triage.get("steps") or []
         ],
-        "elapsed_ms": oracle.get("elapsed_ms"),
+        "elapsed_ms": triage.get("elapsed_ms"),
     }
 
 

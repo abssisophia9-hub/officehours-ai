@@ -32,10 +32,10 @@ from app.models.request import (
 from app.realtime.hub import hub
 from app.services.analytics_service import is_sensitive_category
 from app.services.knowledge_service import create_pending_entry_from_request
-from app.services.oracle_service import (
-    apply_oracle_to_request,
-    build_oracle_public_payload,
-    run_oracle_pipeline,
+from app.services.ask_triage_service import (
+    apply_triage_to_request,
+    build_triage_public_payload,
+    run_ask_triage_pipeline,
 )
 from app.services.pagination import clamp_page
 from app.services.request_serializer import to_request_out
@@ -101,7 +101,7 @@ async def create_request(
         request_data["student_name"] = name
         request_data["student_id"] = sid
 
-    oracle = run_oracle_pipeline(
+    triage = run_ask_triage_pipeline(
         db,
         question_text=payload.text,
         code_snippet=payload.code_snippet,
@@ -109,9 +109,9 @@ async def create_request(
         course_id=payload.course_id,
         learning_style=payload.learning_style,
     )
-    classification = oracle["classification"]
-    analyzer = oracle["analyzer"]
-    synthesizer = oracle["synthesizer"]
+    classification = triage["classification"]
+    analyzer = triage["analyzer"]
+    synthesizer = triage["synthesizer"]
 
     if not request_data.get("category"):
         request_data["category"] = classification.get("category") or analyzer.get(
@@ -161,9 +161,9 @@ async def create_request(
     db.commit()
     db.refresh(db_request)
 
-    db_request = apply_oracle_to_request(db, db_request, oracle)
+    db_request = apply_triage_to_request(db, db_request, triage)
 
-    # Oracle classification can overwrite recommended_action; keep meeting preference.
+    # Ask Triage classification can overwrite recommended_action; keep meeting preference.
     if help_mode in {"face_to_face", "online_meeting"}:
         if db_request.sensitive:
             if help_mode == "face_to_face":
@@ -187,7 +187,7 @@ async def create_request(
         matched_keywords=list(analyzer.get("tags") or classification.get("matched_keywords") or []),
         learning_style=str(db_request.learning_style or "unknown"),
     )
-    # Prefer Oracle Synthesizer outputs for TA teaching roadmap + student hint.
+    # Prefer Ask Triage Synthesizer outputs for TA teaching roadmap + student hint.
     entry.answer_draft = str(synthesizer.get("teaching_approach") or entry.answer_draft)
     entry.student_hint = str(synthesizer.get("student_hint") or entry.student_hint)
     entry.difficulty = str(
@@ -200,11 +200,11 @@ async def create_request(
     db.commit()
     db.refresh(entry)
 
-    public_oracle = build_oracle_public_payload(oracle)
+    public_triage = build_triage_public_payload(triage)
 
-    for step in public_oracle.get("steps") or []:
+    for step in public_triage.get("steps") or []:
         await hub.broadcast(
-            f"oracle.{step['agent']}.done",
+            f"triage.{step['agent']}.done",
             {
                 "request_id": db_request.id,
                 "elapsed_ms": step["elapsed_ms"],
@@ -222,7 +222,7 @@ async def create_request(
             "learning_style": db_request.learning_style,
             "cluster_id": db_request.cluster_id,
             "assigned_ta": db_request.assigned_ta,
-            "oracle_category": db_request.oracle_category,
+            "triage_category": db_request.triage_category,
             "course_id": db_request.course_id,
         },
     )
@@ -255,7 +255,7 @@ async def create_request(
             },
         )
 
-    return to_request_out(db_request, oracle=public_oracle, db=db)
+    return to_request_out(db_request, triage=public_triage, db=db)
 
 
 def _is_request_owner(user: User, db_request: Request) -> bool:

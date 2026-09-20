@@ -55,7 +55,7 @@ from app.services.agent_metrics_service import (
 from app.services.analytics_service import (
     build_cluster_command_center,
     build_escalation_feed,
-    build_oracle_metrics,
+    build_triage_metrics,
     build_review_insights,
     build_struggle_heatmap,
     upsert_review_topic_note,
@@ -71,7 +71,7 @@ from app.services.knowledge_service import (
     to_out,
     update_entry,
 )
-from app.services.oracle_service import lifetime_confusion_topics
+from app.services.ask_triage_service import lifetime_confusion_topics
 from app.services.pagination import clamp_page, page_or_list
 from app.services.retrain_service import run_retrain
 
@@ -437,17 +437,17 @@ def cluster_command_center(
     return build_cluster_command_center(db, course=course, course_ids=allowed)
 
 
-@router.get("/analytics/oracle-metrics")
-def oracle_metrics(
+@router.get("/analytics/triage-metrics")
+def triage_metrics(
     course_id: int | None = Query(default=None),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     if course_id is not None:
         require_course_role(db, user, course_id, roles={"professor", "ta"})
-        return build_oracle_metrics(db, course_ids=[course_id])
+        return build_triage_metrics(db, course_ids=[course_id])
     allowed = require_staff_anywhere(db, user)
-    return build_oracle_metrics(db, course_ids=allowed)
+    return build_triage_metrics(db, course_ids=allowed)
 
 
 @router.get("/analytics/kb-hit-rate", response_model=KbHitRateReport)

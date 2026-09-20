@@ -62,7 +62,8 @@ milestone archives — not product jobs.
 ### Product vocabulary
 
 See [`docs/glossary.md`](docs/glossary.md). Intake pipeline is **Ask Triage**
-(API fields may still say `oracle_*` — same pipeline). TA mid-session AI is
+(module `ask_triage_service.py`, fields `triage_*` — renamed from the
+historical `oracle_*` prefix). TA mid-session AI is
 **Help Coach**. Student classmate forum is **Rooms** (API `/help-room/`).
 Defense crib: [`docs/defense_crib.md`](docs/defense_crib.md). Gold-label lab:
 [`docs/gold_label_lab.md`](docs/gold_label_lab.md).

@@ -151,7 +151,7 @@ export default function TaWorkspace() {
     setSocraticSteps(existing?.socratic_steps || []);
     setMeetingOpen(false);
     setMeetingTitle(
-      `Group review: ${item.request.oracle_category || item.request.category || "topic"}`,
+      `Group review: ${item.request.triage_category || item.request.category || "topic"}`,
     );
     setMeetingWhen("");
     setMeetingPlace("");
@@ -230,7 +230,7 @@ export default function TaWorkspace() {
     const requestIds = Array.from(new Set([req.id, ...peerIds]));
     const title = (
       meetingTitle ||
-      `Group review: ${req.oracle_category || req.category || "topic"}`
+      `Group review: ${req.triage_category || req.category || "topic"}`
     ).trim();
     setBusy(true);
     setError("");
@@ -323,7 +323,7 @@ export default function TaWorkspace() {
   }
 
   const req = selected?.request;
-  const tags = req?.oracle_tags || [];
+  const tags = req?.triage_tags || [];
   const work = workPill(req?.work_status);
   const iAmPrimary = req?.assigned_ta === user.display_name;
   const iAmBackup = req?.alternative_ta === user.display_name;
@@ -490,7 +490,7 @@ export default function TaWorkspace() {
                             : "message"}
                       </span>
                     </td>
-                    <td>{request.oracle_category || request.category || "n/a"}</td>
+                    <td>{request.triage_category || request.category || "n/a"}</td>
                     <td>
                       {similarN > 0 ? (
                         <span
@@ -549,13 +549,13 @@ export default function TaWorkspace() {
             </p>
             <ul className="mt-2 space-y-1">
               <li>
-                <strong>Category:</strong> {req.oracle_category || req.category || "n/a"}
+                <strong>Category:</strong> {req.triage_category || req.category || "n/a"}
                 {" · "}
-                <strong>Difficulty:</strong> {req.oracle_difficulty || "n/a"}
+                <strong>Difficulty:</strong> {req.triage_difficulty || "n/a"}
                 {" · "}
                 <strong>Est.:</strong>{" "}
-                {req.oracle_estimated_minutes != null
-                  ? `${req.oracle_estimated_minutes} min`
+                {req.triage_estimated_minutes != null
+                  ? `${req.triage_estimated_minutes} min`
                   : "n/a"}
               </li>
               {selected.learning_style &&
@@ -579,9 +579,9 @@ export default function TaWorkspace() {
               <li>
                 <strong>Sensitive:</strong> {req.sensitive ? "yes — keep private" : "no"}
               </li>
-              {req.oracle?.matcher?.rationale ? (
+              {req.triage?.matcher?.rationale ? (
                 <li>
-                  <strong>Matcher:</strong> {req.oracle.matcher.rationale}
+                  <strong>Matcher:</strong> {req.triage.matcher.rationale}
                 </li>
               ) : (
                 <li>
@@ -590,11 +590,11 @@ export default function TaWorkspace() {
                 </li>
               )}
               {(selected.help_coach?.kb_insight ||
-                req.oracle?.synthesizer?.kb_insight) ? (
+                req.triage?.synthesizer?.kb_insight) ? (
                 <li>
                   <strong>KB insight:</strong>{" "}
                   {selected.help_coach?.kb_insight ||
-                    req.oracle?.synthesizer?.kb_insight}
+                    req.triage?.synthesizer?.kb_insight}
                 </li>
               ) : null}
             </ul>

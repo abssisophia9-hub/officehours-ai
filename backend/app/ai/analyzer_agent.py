@@ -1,11 +1,11 @@
 """
-Oracle Analyzer agent backed by a fine-tuned small classifier.
+Ask Triage Analyzer agent backed by a fine-tuned small classifier.
 
 Default path:
   sentence-transformer embeddings + logistic regression (``ml_classifier``)
 
 Optional overlays:
-  - keyword/topic labels for richer Oracle display names
+  - keyword/topic labels for richer Ask Triage display names
   - TF-IDF tags, difficulty / ETA heuristics
 
 FYP path uses custom-trained models only (no prompted Claude / mocks).
@@ -19,7 +19,7 @@ from typing import Any
 from app.ai.ml_classifier import classify_ml, load_classifier
 from app.ai.summarizer import extract_keywords
 
-# Map trained taxonomy labels → Oracle UI labels.
+# Map trained taxonomy labels → Ask Triage UI labels.
 CATEGORY_DISPLAY = {
     "conceptual_question": "Conceptual Question",
     "exam_logistics": "Exam Logistics",

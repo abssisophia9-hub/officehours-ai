@@ -34,7 +34,7 @@ from app.services.access_control import require_course_role, require_staff_anywh
 from app.services.course_ta_service import build_course_ta_load
 from app.services.help_coach_service import build_help_coach, run_help_coach_assist
 from app.services.knowledge_service import to_out
-from app.services.oracle_service import ensure_default_roster
+from app.services.ask_triage_service import ensure_default_roster
 from app.services.notify_service import notify_request_owner
 from app.services.pagination import clamp_page, page_or_list
 from app.services.request_serializer import to_request_out
@@ -191,9 +191,9 @@ def list_ta_queue(
                     and peer.cluster_id == request.cluster_id
                 )
                 or (
-                    (peer.category or peer.oracle_category)
-                    and (peer.category or peer.oracle_category)
-                    == (request.category or request.oracle_category)
+                    (peer.category or peer.triage_category)
+                    and (peer.category or peer.triage_category)
+                    == (request.category or request.triage_category)
                 )
             )
         )

@@ -11,9 +11,36 @@ from sqlalchemy import inspect, text
 from sqlalchemy.engine import Engine
 
 
+# Ask Triage rename: pipeline columns moved from the historical oracle_*
+# prefix to triage_*. Rename in place so existing rows keep their data.
+_RENAMED_COLUMNS: dict[str, tuple[tuple[str, str], ...]] = {
+    "requests": (
+        ("oracle_category", "triage_category"),
+        ("oracle_difficulty", "triage_difficulty"),
+        ("oracle_estimated_minutes", "triage_estimated_minutes"),
+        ("oracle_tags", "triage_tags"),
+        ("oracle_trace_json", "triage_trace_json"),
+    ),
+}
+
+
 def ensure_schema(engine: Engine) -> None:
     inspector = inspect(engine)
     table_names = set(inspector.get_table_names())
+
+    for table, renames in _RENAMED_COLUMNS.items():
+        if table not in table_names:
+            continue
+        columns = {column["name"] for column in inspector.get_columns(table)}
+        for old_name, new_name in renames:
+            if old_name in columns and new_name not in columns:
+                with engine.begin() as connection:
+                    connection.execute(
+                        text(
+                            f"ALTER TABLE {table} RENAME COLUMN {old_name} TO {new_name}"
+                        )
+                    )
+    inspector = inspect(engine)
 
     if "requests" in table_names:
         columns = {column["name"] for column in inspector.get_columns("requests")}
@@ -23,15 +50,15 @@ def ensure_schema(engine: Engine) -> None:
             ("student_name", "VARCHAR"),
             ("course", "VARCHAR"),
             ("code_snippet", "TEXT"),
-            ("oracle_category", "VARCHAR"),
-            ("oracle_difficulty", "VARCHAR"),
-            ("oracle_estimated_minutes", "INTEGER"),
-            ("oracle_tags", "TEXT"),
+            ("triage_category", "VARCHAR"),
+            ("triage_difficulty", "VARCHAR"),
+            ("triage_estimated_minutes", "INTEGER"),
+            ("triage_tags", "TEXT"),
             ("assigned_ta", "VARCHAR"),
             ("alternative_ta", "VARCHAR"),
             ("estimated_wait_minutes", "INTEGER"),
             ("student_hint", "TEXT"),
-            ("oracle_trace_json", "TEXT"),
+            ("triage_trace_json", "TEXT"),
             ("course_id", "INTEGER"),
             ("sensitive", "BOOLEAN"),
             ("help_mode", "VARCHAR"),
