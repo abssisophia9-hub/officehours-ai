@@ -82,16 +82,62 @@ const ICONS = {
 
 const SECTION_NAV = {
   student: [
-    { id: "asks", label: "My asks", icon: "ask", to: "/student/asks" },
-    { id: "agent", label: "Study Agent", icon: "agent" },
     {
-      id: "revision",
-      label: "Revision Strategist",
-      icon: "insights",
-      to: "/student/revision",
+      group: "Get help",
+      items: [
+        {
+          id: "ask",
+          label: "Ask for help",
+          icon: "ask",
+          hint: "Stuck? Get matched to a TA",
+          badge: "Start here",
+        },
+        {
+          id: "asks",
+          label: "My asks",
+          icon: "requests",
+          to: "/student/asks",
+          hint: "Track quiet & named asks",
+        },
+      ],
     },
-    { id: "stuck-room", label: "Rooms", icon: "stuck", to: "/student/room" },
-    { id: "peer-notes", label: "Classmate Notes", icon: "notes", to: "/student/notes" },
+    {
+      group: "Study",
+      items: [
+        {
+          id: "agent",
+          label: "Study Agent",
+          icon: "agent",
+          hint: "Approved FAQs & slides only",
+        },
+        {
+          id: "revision",
+          label: "Revision Strategist",
+          icon: "insights",
+          to: "/student/revision",
+          hint: "Today-first exam plan",
+        },
+      ],
+    },
+    {
+      group: "Community",
+      items: [
+        {
+          id: "stuck-room",
+          label: "Rooms",
+          icon: "stuck",
+          to: "/student/room",
+          hint: "Peer help threads",
+        },
+        {
+          id: "peer-notes",
+          label: "Classmate Notes",
+          icon: "notes",
+          to: "/student/notes",
+          hint: "Shared course notes",
+        },
+      ],
+    },
   ],
   ta: [
     { id: "queue", label: "Live Queue", icon: "queue" },
@@ -105,6 +151,27 @@ const SECTION_NAV = {
   ],
 };
 
+function flattenSections(sections) {
+  if (!sections.length) return [];
+  if (sections[0]?.items) {
+    return sections.flatMap((group) => group.items);
+  }
+  return sections;
+}
+
+function NavItemContent({ section }) {
+  return (
+    <>
+      {ICONS[section.icon]}
+      <span className="bh-nav-item-stack">
+        <strong>{section.label}</strong>
+        {section.hint ? <span className="bh-nav-hint">{section.hint}</span> : null}
+      </span>
+      {section.badge ? <span className="bh-nav-badge">{section.badge}</span> : null}
+    </>
+  );
+}
+
 export default function AppShell() {
   const { user, activeCourse, setActiveCourse } = useAuth();
   const navigate = useNavigate();
@@ -114,6 +181,8 @@ export default function AppShell() {
   const roleHome =
     role === "professor" ? "/professor" : role === "ta" ? "/ta" : "/student";
   const sections = SECTION_NAV[role] || [];
+  const grouped = Boolean(sections[0]?.items);
+  const flatSections = flattenSections(sections);
 
   const SECTION_ROUTES = {
     "peer-notes": "/student/notes",
@@ -128,17 +197,42 @@ export default function AppShell() {
       navigate(routed);
       return;
     }
+    const hashTarget = id === "agent" || id === "ask" ? id : null;
     if (location.pathname !== roleHome) {
-      navigate(id === "agent" ? `${roleHome}#agent` : roleHome);
+      navigate(hashTarget ? `${roleHome}#${hashTarget}` : roleHome);
       setTimeout(() => {
         document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 150);
     } else {
-      if (id === "agent") {
-        window.history.replaceState(null, "", `${roleHome}#agent`);
+      if (hashTarget) {
+        window.history.replaceState(null, "", `${roleHome}#${hashTarget}`);
       }
       document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
+  }
+
+  function renderNavItem(section) {
+    if (section.to) {
+      return (
+        <NavLink
+          key={section.id}
+          to={section.to}
+          className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+        >
+          <NavItemContent section={section} />
+        </NavLink>
+      );
+    }
+    return (
+      <button
+        key={section.id}
+        type="button"
+        className="bh-nav-item"
+        onClick={() => scrollToSection(section.id)}
+      >
+        <NavItemContent section={section} />
+      </button>
+    );
   }
 
   return (
@@ -158,28 +252,14 @@ export default function AppShell() {
             {ICONS.dashboard}
             Dashboard
           </NavLink>
-          {sections.map((section) =>
-            section.to ? (
-              <NavLink
-                key={section.id}
-                to={section.to}
-                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
-              >
-                {ICONS[section.icon]}
-                {section.label}
-              </NavLink>
-            ) : (
-              <button
-                key={section.id}
-                type="button"
-                className="bh-nav-item"
-                onClick={() => scrollToSection(section.id)}
-              >
-                {ICONS[section.icon]}
-                {section.label}
-              </button>
-            ),
-          )}
+          {grouped
+            ? sections.map((group) => (
+                <div key={group.group} className="bh-nav-group">
+                  <p className="bh-nav-label">{group.group}</p>
+                  {group.items.map((section) => renderNavItem(section))}
+                </div>
+              ))
+            : flatSections.map((section) => renderNavItem(section))}
           <NavLink
             to="/"
             end

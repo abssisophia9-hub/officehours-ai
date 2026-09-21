@@ -115,8 +115,8 @@
   --theme-border-strong: #4a4438;
   --theme-border-control: #4a4438;
   --theme-text: #f2ebe0;
-  --theme-text-muted: #c2b8a8;
-  --theme-text-subtle: #9a9080;
+  --theme-text-muted: #d4cbb8;
+  --theme-text-subtle: #c2b8a6;
   --theme-title: #faf6ef;
   --theme-table-text: #e5ddd0;
   --theme-table-head: #b8ae9c;
@@ -5591,6 +5591,21 @@ html:has(.oh-open) {
   border-color: transparent;
 }
 
+.sd-chip-ask {
+  border-color: color-mix(in srgb, var(--theme-accent) 55%, var(--theme-border));
+  background: color-mix(in srgb, var(--theme-accent) 28%, var(--theme-surface));
+  color: var(--theme-accent-ink);
+  font-weight: 750;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.sd-pulse-secondary {
+  opacity: 0.78;
+  font-weight: 600;
+  color: var(--theme-text-muted);
+}
+
 .sd-layout {
   display: grid;
   gap: 1.25rem;
@@ -5667,11 +5682,11 @@ html:has(.oh-open) {
 }
 
 .sd-identity-label {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 750;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--theme-text-subtle);
+  color: var(--theme-text-muted);
 }
 
 .sd-identity-grid {
@@ -5729,9 +5744,9 @@ html:has(.oh-open) {
 .sd-choice-tag {
   display: inline-block;
   margin-top: 0.4rem;
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   font-weight: 800;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--theme-deep);
 }
@@ -5800,11 +5815,11 @@ html:has(.oh-open) {
 }
 
 .sd-panel-label {
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--theme-text-subtle);
+  color: var(--theme-text-muted);
 }
 
 .sd-panel h3 {
@@ -5895,16 +5910,17 @@ html:has(.oh-open) {
 .sd-metric span {
   display: block;
   margin-top: 0.35rem;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  color: var(--theme-text-subtle);
+  color: var(--theme-text-muted);
 }
 
 .sd-metric em {
   display: block;
-  margin-top: 0.2rem;
+  margin-top: 0.25rem;
   font-style: normal;
-  font-size: 0.65rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
   color: var(--theme-text-muted);
 }
 
@@ -5983,4 +5999,233 @@ html:has(.oh-open) {
   font-size: 0.7rem;
   font-weight: 600;
   color: var(--theme-text-subtle);
+}
+
+/* ---------- Onboarding & feature paths ---------- */
+
+.sd-onboard {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.85rem;
+  margin-bottom: 1.15rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 55%, var(--theme-border));
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--theme-accent) 28%, var(--theme-surface)) 0%, var(--theme-surface) 62%);
+  padding: 0.95rem 1.05rem;
+}
+
+.sd-onboard strong {
+  display: block;
+  font-family: "Fraunces", serif;
+  font-size: 1.05rem;
+  color: var(--theme-title);
+}
+
+.sd-onboard p {
+  margin: 0.3rem 0 0;
+  max-width: 36rem;
+  font-size: 0.88rem;
+  color: var(--theme-text-muted);
+}
+
+.sd-onboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.sd-onboard-dismiss {
+  border: none;
+  background: transparent;
+  color: var(--theme-text-muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.sd-paths {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0 0 1.25rem;
+}
+
+@media (min-width: 760px) {
+  .sd-paths {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.sd-path {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  width: 100%;
+  text-align: left;
+  border-radius: 1rem;
+  border: 1.5px solid var(--theme-border);
+  background: var(--theme-surface);
+  padding: 0.9rem 0.95rem;
+  cursor: pointer;
+  color: inherit;
+  transition: border-color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+}
+
+.sd-path:hover {
+  border-color: var(--theme-forest);
+  transform: translateY(-1px);
+}
+
+.sd-path-primary {
+  border-color: color-mix(in srgb, var(--theme-accent) 65%, var(--theme-border));
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--theme-accent) 22%, transparent);
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--theme-accent) 32%, var(--theme-surface)) 0%, var(--theme-surface) 70%);
+}
+
+.sd-path-primary:hover {
+  border-color: var(--theme-accent-ink);
+}
+
+.sd-path-active {
+  border-color: var(--theme-forest);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-forest) 35%, transparent);
+}
+
+.sd-path-kicker {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--theme-deep);
+}
+
+.sd-path strong {
+  font-family: "Fraunces", serif;
+  font-size: 1.12rem;
+  color: var(--theme-title);
+}
+
+.sd-path span {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--theme-text-muted);
+}
+
+.sd-guide {
+  margin: 0.85rem 0 0;
+  padding-left: 0.55rem;
+  font-size: 0.88rem;
+  color: var(--theme-text-muted);
+}
+
+.sd-guide strong {
+  color: var(--theme-title);
+}
+
+.sd-ask-guide {
+  margin: 0.85rem 0 0;
+  padding: 0.75rem 0.85rem;
+  margin-left: 0.55rem;
+  border-radius: 0.85rem;
+  border: 1px dashed var(--theme-border-strong);
+  background: var(--theme-surface-soft);
+  font-size: 0.875rem;
+  color: var(--theme-text-muted);
+}
+
+/* Sidebar feature groups */
+.bh-nav-group {
+  margin-top: 0.85rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.bh-nav-group:first-of-type {
+  margin-top: 0.35rem;
+  padding-top: 0;
+  border-top: none;
+}
+
+.bh-nav-group .bh-nav-label {
+  margin-top: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.75rem;
+}
+
+.bh-nav-item-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.12rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.bh-nav-item-stack strong {
+  font-size: 0.88rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.bh-nav-hint {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.bh-nav-item.active .bh-nav-hint {
+  color: color-mix(in srgb, var(--theme-accent-ink) 78%, transparent);
+}
+
+.bh-nav-badge {
+  margin-left: 0.25rem;
+  flex-shrink: 0;
+  align-self: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--theme-accent) 88%, white);
+  color: var(--theme-accent-ink);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.45rem;
+}
+
+.bh-nav-item:has(.bh-nav-item-stack) {
+  align-items: flex-start;
+}
+
+.bh-nav-item:has(.bh-nav-item-stack) .bh-nav-icon {
+  margin-top: 0.2rem;
+}
+
+/* Dark-mode small-text AA: keep muted/subtle ≥ 4.5:1 on surface */
+[data-theme="dark"] .sd-panel-label,
+[data-theme="dark"] .sd-identity-label,
+[data-theme="dark"] .sd-choice-tag,
+[data-theme="dark"] .sd-path-kicker,
+[data-theme="dark"] .sd-community small,
+[data-theme="dark"] .sd-ask-meta,
+[data-theme="dark"] .sd-metric em,
+[data-theme="dark"] .sd-metric span,
+[data-theme="dark"] .sd-onboard-dismiss {
+  font-size: 0.8125rem;
+  color: var(--theme-text-muted);
+}
+
+[data-theme="dark"] .sd-chip:not(.sd-chip-hot):not(.sd-chip-ask) {
+  font-size: 0.8125rem;
+  color: var(--theme-text-muted);
+}
+
+[data-theme="dark"] .sd-choice span {
+  font-size: 0.8125rem;
+  color: var(--theme-text-muted);
 }

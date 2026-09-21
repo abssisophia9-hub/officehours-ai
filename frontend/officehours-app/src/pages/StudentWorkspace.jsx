@@ -10,8 +10,53 @@ function needsReply(ask) {
   return status === "helped" || status === "done" || status === "answered";
 }
 
+const ONBOARD_STORAGE_KEY = "officehours_student_onboarded";
+
+const FEATURE_PATHS = [
+  {
+    id: "ask",
+    kicker: "Primary",
+    title: "Ask for help",
+    when: "Use when you're stuck and need a TA or professor.",
+    guide:
+      "Write one concrete question below. Quiet ask hides your name; Ask Triage matches you to staff.",
+  },
+  {
+    id: "agent",
+    kicker: "Self-serve",
+    title: "Study Agent",
+    when: "Use when you want answers from approved FAQs and slides.",
+    guide:
+      "Ask the course Study Agent in the rail. If nothing matches, turn it into a Quiet ask.",
+  },
+  {
+    id: "revision",
+    kicker: "Plan",
+    title: "Revision Strategist",
+    when: "Use when exams are coming and you need a today-first plan.",
+    guide:
+      "Open Revision Strategist for a ranked study sequence from your Canvas grades.",
+  },
+];
+
 function revisionStorageKey(courseId) {
   return `officehours_revision_${courseId}`;
+}
+
+function readOnboarded() {
+  try {
+    return localStorage.getItem(ONBOARD_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function writeOnboarded() {
+  try {
+    localStorage.setItem(ONBOARD_STORAGE_KEY, "1");
+  } catch {
+    // ignore
+  }
 }
 
 function readTodayFocus(courseId, courseCode) {
@@ -64,6 +109,8 @@ export default function StudentWorkspace() {
   const [statusBusy, setStatusBusy] = useState(false);
   const [todayFocus, setTodayFocus] = useState({ topic: "Revision plan" });
   const [roomCount, setRoomCount] = useState(null);
+  const [showOnboard, setShowOnboard] = useState(() => !readOnboarded());
+  const [quickStart, setQuickStart] = useState(null);
 
   const loadAsks = useCallback(async () => {
     if (!activeCourse) return;
@@ -261,12 +308,37 @@ export default function StudentWorkspace() {
     setAnonymous(true);
     if (agentQ.trim()) setText(agentQ);
     setShowHelpModes(true);
+    setQuickStart("ask");
     window.setTimeout(() => {
       document.getElementById("ask")?.scrollIntoView({ behavior: "smooth", block: "start" });
       document.getElementById("ask-box")?.focus();
     }, 50);
   }
 
+  function dismissOnboard() {
+    writeOnboarded();
+    setShowOnboard(false);
+  }
+
+  function startPath(pathId) {
+    dismissOnboard();
+    setQuickStart(pathId);
+    if (pathId === "revision") {
+      navigate("/student/revision");
+      return;
+    }
+    const target = pathId === "agent" ? "agent" : "ask";
+    window.setTimeout(() => {
+      document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (pathId === "ask") {
+        document.getElementById("ask-box")?.focus();
+      } else if (pathId === "agent") {
+        document.querySelector("#agent input")?.focus();
+      }
+    }, 60);
+  }
+
+  const activePath = FEATURE_PATHS.find((path) => path.id === quickStart);
   const focusLabel = todayFocus?.topic
     ? todayFocus.topic.split("&")[0].trim()
     : "Revision plan";
@@ -285,9 +357,55 @@ export default function StudentWorkspace() {
         </p>
         <h1 className="sd-title">What do you need help with?</h1>
         <p className="sd-lead">
-          Ask quietly if you want, get matched to a TA who already took this
-          course, or study from answers your professor stamped.
+          Start with Ask for help when you&apos;re stuck. Study Agent covers
+          stamped materials; Revision Strategist plans what to study today.
         </p>
+
+        {showOnboard ? (
+          <div className="sd-onboard" role="status">
+            <div>
+              <strong>New here? Start with Ask for help</strong>
+              <p>
+                Most students begin there — Quiet asks hide your name, then Ask
+                Triage matches you to a TA who already took this course.
+              </p>
+            </div>
+            <div className="sd-onboard-actions">
+              <button
+                type="button"
+                className="sd-cta"
+                onClick={() => startPath("ask")}
+              >
+                Start with Ask for help
+              </button>
+              <button
+                type="button"
+                className="sd-onboard-dismiss"
+                onClick={dismissOnboard}
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="sd-paths" aria-label="Choose how to get help">
+          {FEATURE_PATHS.map((path) => (
+            <button
+              key={path.id}
+              type="button"
+              className={`sd-path${path.id === "ask" ? " sd-path-primary" : ""}${
+                quickStart === path.id ? " sd-path-active" : ""
+              }`}
+              onClick={() => startPath(path.id)}
+            >
+              <span className="sd-path-kicker">{path.kicker}</span>
+              <strong>{path.title}</strong>
+              <span>{path.when}</span>
+            </button>
+          ))}
+        </div>
+
         <div className="sd-pulse">
           {replyWaiting.length > 0 ? (
             <Link
@@ -297,17 +415,23 @@ export default function StudentWorkspace() {
               {replyWaiting.length} reply waiting — open now
             </Link>
           ) : (
-            <span className="sd-chip">{openCopy}</span>
+            <button
+              type="button"
+              className="sd-chip sd-chip-ask"
+              onClick={() => startPath("ask")}
+            >
+              {openCopy}
+            </button>
           )}
-          <Link className="sd-chip" to="/student/revision">
+          <Link className="sd-chip sd-pulse-secondary" to="/student/revision">
             Today: {focusLabel}
             {todayFocus?.score != null ? ` · ${todayFocus.score}%` : ""}
           </Link>
-          <Link className="sd-chip" to="/student/room">
+          <Link className="sd-chip sd-pulse-secondary" to="/student/room">
             Rooms
             {roomCount != null ? ` · ${roomCount} open` : ""}
           </Link>
-          <Link className="sd-chip" to="/student/notes">
+          <Link className="sd-chip sd-pulse-secondary" to="/student/notes">
             Classmate notes
           </Link>
         </div>
@@ -319,12 +443,18 @@ export default function StudentWorkspace() {
             <div>
               <h2>Ask for help</h2>
               <p className="sd-ask-copy">
-                Quiet asks hide your name from staff. You still own the thread and
-                can track every update in My asks.
+                Use when you&apos;re stuck and need a TA or professor. Quiet asks
+                hide your name; you still own the thread in My asks.
               </p>
             </div>
-            <span className="sd-badge">Campus differentiator</span>
+            <span className="sd-badge">Primary path</span>
           </div>
+
+          {activePath?.id === "ask" ? (
+            <p className="sd-ask-guide">
+              <strong>Quick start:</strong> {activePath.guide}
+            </p>
+          ) : null}
 
           {justSubmitted ? (
             <div className="mt-4 ml-2 rounded-xl border border-aui-forest/25 bg-[var(--theme-emerald-bg)] p-3 text-sm text-[var(--theme-emerald-fg)]">
@@ -670,9 +800,14 @@ export default function StudentWorkspace() {
             <p className="sd-panel-label">Course Study Agent</p>
             <h3>Ask stamped materials</h3>
             <p>
-              Answers only from professor-approved FAQs and Canvas materials for{" "}
+              Use when you want answers from approved FAQs and slides for{" "}
               {activeCourse.code}. If nothing matches, turn it into a Quiet ask.
             </p>
+            {activePath?.id === "agent" ? (
+              <p className="sd-guide">
+                <strong>Quick start:</strong> {activePath.guide}
+              </p>
+            ) : null}
             <form onSubmit={askAgent} className="mt-3">
               <input
                 className="field-glass w-full px-4 py-3 text-sm"
