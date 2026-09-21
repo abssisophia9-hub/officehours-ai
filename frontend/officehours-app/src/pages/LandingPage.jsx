@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import OpeningStory from "../landing/OpeningTrio.jsx";
+import ThemeToggle from "../components/ThemeToggle.jsx";
 
 export default function LandingPage() {
   return (
@@ -17,6 +18,7 @@ export default function LandingPage() {
           <a href="#student">Student</a>
           <a href="#ta">TA</a>
           <a href="#professor">Professor</a>
+          <ThemeToggle />
           <Link className="oh-open-nav-cta" to="/login">
             <span className="oh-open-door" aria-hidden="true" />
             Sign in
