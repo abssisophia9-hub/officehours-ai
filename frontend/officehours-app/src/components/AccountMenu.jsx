@@ -45,7 +45,7 @@ const TOURS = {
     },
     {
       title: "Classmate notes",
-      body: "Share study notes with classmates: say what they cover, upload, then like, comment, or download. Peer notes do not train the study agent.",
+      body: "Share study notes with classmates: say what they cover, upload, then like, comment, or download. Peer notes do not train the study agent. Open Classmate Notes from the sidebar.",
       sectionId: "peer-notes",
     },
   ],

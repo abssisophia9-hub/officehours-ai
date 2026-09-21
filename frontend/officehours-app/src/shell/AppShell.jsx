@@ -81,10 +81,16 @@ const ICONS = {
 
 const SECTION_NAV = {
   student: [
-    { id: "ask", label: "Ask for Help", icon: "ask" },
+    { id: "asks", label: "My asks", icon: "ask", to: "/student/asks" },
     { id: "agent", label: "Study Agent", icon: "agent" },
+    {
+      id: "revision",
+      label: "Revision Strategist",
+      icon: "insights",
+      to: "/student/revision",
+    },
     { id: "stuck-room", label: "Rooms", icon: "stuck", to: "/student/room" },
-    { id: "peer-notes", label: "Classmate Notes", icon: "notes" },
+    { id: "peer-notes", label: "Classmate Notes", icon: "notes", to: "/student/notes" },
   ],
   ta: [
     { id: "queue", label: "Live Queue", icon: "queue" },
@@ -108,13 +114,28 @@ export default function AppShell() {
     role === "professor" ? "/professor" : role === "ta" ? "/ta" : "/student";
   const sections = SECTION_NAV[role] || [];
 
+  const SECTION_ROUTES = {
+    "peer-notes": "/student/notes",
+    asks: "/student/asks",
+    revision: "/student/revision",
+    "stuck-room": "/student/room",
+  };
+
   function scrollToSection(id) {
+    const routed = SECTION_ROUTES[id];
+    if (routed) {
+      navigate(routed);
+      return;
+    }
     if (location.pathname !== roleHome) {
-      navigate(roleHome);
+      navigate(id === "agent" ? `${roleHome}#agent` : roleHome);
       setTimeout(() => {
         document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 150);
     } else {
+      if (id === "agent") {
+        window.history.replaceState(null, "", `${roleHome}#agent`);
+      }
       document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }

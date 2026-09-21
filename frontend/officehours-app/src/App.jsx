@@ -7,6 +7,9 @@ import LoginPage from "./pages/LoginPage.jsx";
 import SsoCompletePage from "./pages/SsoCompletePage.jsx";
 import CourseHomePage from "./pages/CourseHomePage.jsx";
 import StudentWorkspace from "./pages/StudentWorkspace.jsx";
+import StudentAsksPage from "./pages/StudentAsksPage.jsx";
+import StudentRevisionPage from "./pages/StudentRevisionPage.jsx";
+import StudentNotesPage from "./pages/StudentNotesPage.jsx";
 import StuckRoomPage from "./pages/StuckRoomPage.jsx";
 import TaWorkspace from "./pages/TaWorkspace.jsx";
 import ProfessorWorkspace from "./pages/ProfessorWorkspace.jsx";
@@ -16,6 +19,7 @@ import VisionDemoHub from "./pages/VisionDemoHub.jsx";
 import VisionDemoBoard from "./pages/VisionDemoBoard.jsx";
 import VisionDemoPath from "./pages/VisionDemoPath.jsx";
 import VisionDemoTrio from "./pages/VisionDemoTrio.jsx";
+import StudentVisionPrototype from "./pages/StudentVisionPrototype.jsx";
 
 function LoadingScreen() {
   return (
@@ -44,6 +48,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/sso" element={<SsoCompletePage />} />
+      {/* Prototype always reachable for feedback — not behind demo race */}
+      <Route path="/demo/student-vision" element={<StudentVisionPrototype />} />
       {showDemos ? (
         <>
           <Route path="/demo" element={<VisionDemoHub />} />
@@ -64,6 +70,9 @@ export default function App() {
       >
         <Route index element={<CourseHomePage />} />
         <Route path="student" element={<StudentWorkspace />} />
+        <Route path="student/asks" element={<StudentAsksPage />} />
+        <Route path="student/revision" element={<StudentRevisionPage />} />
+        <Route path="student/notes" element={<StudentNotesPage />} />
         <Route path="student/room" element={<StuckRoomPage />} />
         <Route path="ta" element={<TaWorkspace />} />
         <Route path="professor" element={<ProfessorWorkspace />} />
