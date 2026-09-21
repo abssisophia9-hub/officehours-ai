@@ -1,5 +1,5 @@
 /**
- * Visual test for student onboarding + feature differentiation (light + dark).
+ * Visual test: Ask is sole primary; Agent/Revision demoted; one lime focal.
  */
 import { chromium } from "playwright";
 import { copyFile, mkdir } from "node:fs/promises";
@@ -22,17 +22,15 @@ async function capture(page, name) {
 async function main() {
   await mkdir(OUT_DIR, { recursive: true });
   const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({
+  const page = await (await browser.newContext({
     viewport: { width: 1440, height: 900 },
     deviceScaleFactor: 2,
-  });
-  const page = await context.newPage();
+  })).newPage();
 
   await page.goto(`${APP}/login`, { waitUntil: "networkidle" });
   await page.evaluate(() => {
     localStorage.clear();
     localStorage.setItem("officehours_theme", "light");
-    document.documentElement.setAttribute("data-theme", "light");
   });
   await page.reload({ waitUntil: "networkidle" });
   await page
@@ -49,53 +47,47 @@ async function main() {
   const match = options.find((t) => t.includes("CSC 2302"));
   if (match) {
     await select.selectOption({ label: match });
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(800);
   }
 
   await page.goto(`${APP}/student`, { waitUntil: "networkidle" });
   await page.locator("h1.sd-title").waitFor({ timeout: 15000 });
   await page.locator(".sd-onboard").waitFor({ timeout: 8000 });
-  await page.waitForTimeout(600);
-  await capture(page, "sd-04-onboard-light");
+  await page.waitForTimeout(500);
+  await capture(page, "sd-08-ask-primary-light");
 
-  await page.locator(".sd-onboard .sd-cta").click();
-  await page.waitForTimeout(700);
+  await page.locator(".sd-onboard-go").click();
   await page.locator(".sd-ask-guide").waitFor({ timeout: 5000 });
-  await capture(page, "sd-05-quickstart-ask-light");
-
-  await page.locator(".sd-path").filter({ hasText: "Study Agent" }).click();
-  await page.waitForTimeout(700);
-  await page.locator("#agent .sd-guide").waitFor({ timeout: 5000 });
-  await capture(page, "sd-06-quickstart-agent-light");
+  await page.waitForTimeout(400);
+  await capture(page, "sd-09-ask-focused-light");
 
   await page.evaluate(() => {
     localStorage.setItem("officehours_theme", "dark");
     document.documentElement.setAttribute("data-theme", "dark");
+    window.scrollTo(0, 0);
   });
   await page.waitForTimeout(500);
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await page.waitForTimeout(400);
-  await capture(page, "sd-07-onboard-dark");
+  await capture(page, "sd-10-ask-primary-dark");
 
   const checks = {
-    onboardDismissed: await page.locator(".sd-onboard").count(),
-    paths: await page.locator(".sd-path").count(),
-    pathPrimary: await page.locator(".sd-path-primary").count(),
-    navGroups: await page.locator(".bh-nav-group").count(),
-    startBadge: await page.locator(".bh-nav-badge").count(),
-    navHints: await page.locator(".bh-nav-hint").count(),
+    pathCards: await page.locator(".sd-path").count(),
+    altTools: await page.locator(".sd-alt-tools").count(),
+    askCta: await page.locator(".sd-ask .sd-cta").count(),
+    onboardCta: await page.locator(".sd-onboard .sd-cta").count(),
+    navBadge: await page.locator(".bh-nav-badge").count(),
+    onboard: await page.locator(".sd-onboard").count(),
     theme: await page.evaluate(() => document.documentElement.getAttribute("data-theme")),
   };
   console.log("checks", checks);
   if (
-    checks.onboardDismissed !== 0 ||
-    checks.paths !== 3 ||
-    checks.pathPrimary !== 1 ||
-    checks.navGroups < 3 ||
-    checks.startBadge < 1 ||
-    checks.navHints < 4
+    checks.pathCards !== 0 ||
+    checks.altTools !== 1 ||
+    checks.askCta !== 1 ||
+    checks.onboardCta !== 0 ||
+    checks.navBadge !== 0 ||
+    checks.onboard !== 0
   ) {
-    throw new Error(`Unexpected onboarding layout: ${JSON.stringify(checks)}`);
+    throw new Error(`Hierarchy regression: ${JSON.stringify(checks)}`);
   }
 
   await browser.close();

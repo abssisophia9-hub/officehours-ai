@@ -90,7 +90,6 @@ const SECTION_NAV = {
           label: "Ask for help",
           icon: "ask",
           hint: "Stuck? Get matched to a TA",
-          badge: "Start here",
         },
         {
           id: "asks",

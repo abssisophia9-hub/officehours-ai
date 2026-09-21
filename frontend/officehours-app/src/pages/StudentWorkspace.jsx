@@ -12,32 +12,8 @@ function needsReply(ask) {
 
 const ONBOARD_STORAGE_KEY = "officehours_student_onboarded";
 
-const FEATURE_PATHS = [
-  {
-    id: "ask",
-    kicker: "Primary",
-    title: "Ask for help",
-    when: "Use when you're stuck and need a TA or professor.",
-    guide:
-      "Write one concrete question below. Quiet ask hides your name; Ask Triage matches you to staff.",
-  },
-  {
-    id: "agent",
-    kicker: "Self-serve",
-    title: "Study Agent",
-    when: "Use when you want answers from approved FAQs and slides.",
-    guide:
-      "Ask the course Study Agent in the rail. If nothing matches, turn it into a Quiet ask.",
-  },
-  {
-    id: "revision",
-    kicker: "Plan",
-    title: "Revision Strategist",
-    when: "Use when exams are coming and you need a today-first plan.",
-    guide:
-      "Open Revision Strategist for a ranked study sequence from your Canvas grades.",
-  },
-];
+const ASK_GUIDE =
+  "Write one concrete question below. Quiet ask hides your name; Ask Triage matches you to staff.";
 
 function revisionStorageKey(courseId) {
   return `officehours_revision_${courseId}`;
@@ -110,7 +86,7 @@ export default function StudentWorkspace() {
   const [todayFocus, setTodayFocus] = useState({ topic: "Revision plan" });
   const [roomCount, setRoomCount] = useState(null);
   const [showOnboard, setShowOnboard] = useState(() => !readOnboarded());
-  const [quickStart, setQuickStart] = useState(null);
+  const [showAskGuide, setShowAskGuide] = useState(false);
 
   const loadAsks = useCallback(async () => {
     if (!activeCourse) return;
@@ -308,7 +284,7 @@ export default function StudentWorkspace() {
     setAnonymous(true);
     if (agentQ.trim()) setText(agentQ);
     setShowHelpModes(true);
-    setQuickStart("ask");
+    setShowAskGuide(true);
     window.setTimeout(() => {
       document.getElementById("ask")?.scrollIntoView({ behavior: "smooth", block: "start" });
       document.getElementById("ask-box")?.focus();
@@ -320,25 +296,23 @@ export default function StudentWorkspace() {
     setShowOnboard(false);
   }
 
-  function startPath(pathId) {
+  function focusAsk() {
     dismissOnboard();
-    setQuickStart(pathId);
-    if (pathId === "revision") {
-      navigate("/student/revision");
-      return;
-    }
-    const target = pathId === "agent" ? "agent" : "ask";
+    setShowAskGuide(true);
     window.setTimeout(() => {
-      document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
-      if (pathId === "ask") {
-        document.getElementById("ask-box")?.focus();
-      } else if (pathId === "agent") {
-        document.querySelector("#agent input")?.focus();
-      }
+      document.getElementById("ask")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("ask-box")?.focus();
     }, 60);
   }
 
-  const activePath = FEATURE_PATHS.find((path) => path.id === quickStart);
+  function focusAgent() {
+    dismissOnboard();
+    window.setTimeout(() => {
+      document.getElementById("agent")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.querySelector("#agent input")?.focus();
+    }, 60);
+  }
+
   const focusLabel = todayFocus?.topic
     ? todayFocus.topic.split("&")[0].trim()
     : "Revision plan";
@@ -357,8 +331,8 @@ export default function StudentWorkspace() {
         </p>
         <h1 className="sd-title">What do you need help with?</h1>
         <p className="sd-lead">
-          Start with Ask for help when you&apos;re stuck. Study Agent covers
-          stamped materials; Revision Strategist plans what to study today.
+          <strong>Ask for help</strong> is the main action — Quiet asks hide your
+          name and match you to a TA. Everything else is optional.
         </p>
 
         {showOnboard ? (
@@ -366,17 +340,13 @@ export default function StudentWorkspace() {
             <div>
               <strong>New here? Start with Ask for help</strong>
               <p>
-                Most students begin there — Quiet asks hide your name, then Ask
-                Triage matches you to a TA who already took this course.
+                Write your question in the form below. Study Agent and Revision
+                Strategist stay in the sidebar when you need them later.
               </p>
             </div>
             <div className="sd-onboard-actions">
-              <button
-                type="button"
-                className="sd-cta"
-                onClick={() => startPath("ask")}
-              >
-                Start with Ask for help
+              <button type="button" className="sd-onboard-go" onClick={focusAsk}>
+                Jump to Ask for help
               </button>
               <button
                 type="button"
@@ -389,22 +359,15 @@ export default function StudentWorkspace() {
           </div>
         ) : null}
 
-        <div className="sd-paths" aria-label="Choose how to get help">
-          {FEATURE_PATHS.map((path) => (
-            <button
-              key={path.id}
-              type="button"
-              className={`sd-path${path.id === "ask" ? " sd-path-primary" : ""}${
-                quickStart === path.id ? " sd-path-active" : ""
-              }`}
-              onClick={() => startPath(path.id)}
-            >
-              <span className="sd-path-kicker">{path.kicker}</span>
-              <strong>{path.title}</strong>
-              <span>{path.when}</span>
-            </button>
-          ))}
-        </div>
+        <p className="sd-alt-tools">
+          Not stuck right now?{" "}
+          <button type="button" onClick={focusAgent}>
+            Study Agent
+          </button>{" "}
+          answers from stamped FAQs &amp; slides ·{" "}
+          <Link to="/student/revision">Revision Strategist</Link> builds a
+          today-first exam plan.
+        </p>
 
         <div className="sd-pulse">
           {replyWaiting.length > 0 ? (
@@ -415,11 +378,7 @@ export default function StudentWorkspace() {
               {replyWaiting.length} reply waiting — open now
             </Link>
           ) : (
-            <button
-              type="button"
-              className="sd-chip sd-chip-ask"
-              onClick={() => startPath("ask")}
-            >
+            <button type="button" className="sd-chip" onClick={focusAsk}>
               {openCopy}
             </button>
           )}
@@ -447,12 +406,12 @@ export default function StudentWorkspace() {
                 hide your name; you still own the thread in My asks.
               </p>
             </div>
-            <span className="sd-badge">Primary path</span>
+            <span className="sd-badge">Primary</span>
           </div>
 
-          {activePath?.id === "ask" ? (
+          {showAskGuide ? (
             <p className="sd-ask-guide">
-              <strong>Quick start:</strong> {activePath.guide}
+              <strong>Quick start:</strong> {ASK_GUIDE}
             </p>
           ) : null}
 
@@ -800,14 +759,10 @@ export default function StudentWorkspace() {
             <p className="sd-panel-label">Course Study Agent</p>
             <h3>Ask stamped materials</h3>
             <p>
-              Use when you want answers from approved FAQs and slides for{" "}
-              {activeCourse.code}. If nothing matches, turn it into a Quiet ask.
+              Secondary to Ask for help — use when you want answers from approved
+              FAQs and slides for {activeCourse.code}. If nothing matches, turn it
+              into a Quiet ask.
             </p>
-            {activePath?.id === "agent" ? (
-              <p className="sd-guide">
-                <strong>Quick start:</strong> {activePath.guide}
-              </p>
-            ) : null}
             <form onSubmit={askAgent} className="mt-3">
               <input
                 className="field-glass w-full px-4 py-3 text-sm"
