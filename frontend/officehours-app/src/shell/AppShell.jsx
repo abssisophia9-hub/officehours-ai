@@ -260,14 +260,16 @@ export default function AppShell() {
                 </div>
               ))
             : flatSections.map((section) => renderNavItem(section))}
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
-          >
-            {ICONS.courses}
-            My Courses
-          </NavLink>
+          <div className="bh-nav-group">
+            <NavLink
+              to="/"
+              end
+              className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+            >
+              {ICONS.courses}
+              My Courses
+            </NavLink>
+          </div>
 
           <p className="bh-nav-label">Course</p>
           <select
