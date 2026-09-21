@@ -4,7 +4,7 @@ All current training fixtures are **synthetic / silver / curated** for the FYP.
 They are **not** scraped private student emails or real AUI transcripts.
 
 Product name: **Ask Triage** (Analyzer → Matcher → Synthesizer). Implementation
-paths still use `oracle_*` / `oracle_service.py` — see [`glossary.md`](glossary.md).
+lives in `ask_triage_service.py` with `triage_*` fields — see [`glossary.md`](glossary.md).
 
 **Help Coach** (`POST /ta/assist/`) reuses the Synthesizer teaching bank / approved
 KB RAG at runtime; it has **no separate joblib artifact**.

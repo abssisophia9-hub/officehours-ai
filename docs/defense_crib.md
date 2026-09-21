@@ -29,7 +29,7 @@ Password `aui-demo`. Role is per course.
 - Quiet asks are invisible on a classmate’s `GET /requests/`. Status-by-code is a receipt.
 - `/agent/ask`, stamps, analytics, TA queue, and `/ws` require a session + membership.
 - Ingest lands in `pending_review`. Stamp before the agent can quote.
-- Ask Triage is the product name. Some API fields still say `oracle_*` — same pipeline.
+- Ask Triage is the product name. API fields and DB columns use `triage_*` (the historical `oracle_*` prefix was renamed).
 - One product app: `frontend/officehours-app` (:5180). CI builds that + the backend.
 
 ## Numbers you may cite

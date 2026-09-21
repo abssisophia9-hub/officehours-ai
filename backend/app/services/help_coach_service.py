@@ -1,8 +1,7 @@
 """
 Help Coach — TA-facing AI co-pilot while helping a student.
 
-Ask Triage / Oracle (Analyzer → Matcher → Synthesizer) runs once at intake.
-Product name is **Ask Triage**; module/fields may still say `oracle_*`.
+Ask Triage (Analyzer → Matcher → Synthesizer) runs once at intake.
 Help Coach runs later while a TA is helping (`POST /ta/assist/`).
 Help Coach runs *during* the TA staffing loop: similar open asks, approved KB
 neighbors, teaching script, Socratic steps, and draft student replies.
@@ -42,18 +41,18 @@ def build_help_coach(
     similar_open = _similar_open_asks(db, request)
     steps = _socratic_steps(
         teaching_approach=teaching,
-        difficulty=request.oracle_difficulty,
-        category=request.oracle_category or request.category,
+        difficulty=request.triage_difficulty,
+        category=request.triage_category or request.category,
         learning_style=request.learning_style,
     )
     return {
         "teaching_approach": teaching,
         "student_hint": hint,
         "kb_insight": kb_insight,
-        "difficulty": request.oracle_difficulty,
-        "estimated_minutes": request.oracle_estimated_minutes,
+        "difficulty": request.triage_difficulty,
+        "estimated_minutes": request.triage_estimated_minutes,
         "learning_style": request.learning_style,
-        "category": request.oracle_category or request.category,
+        "category": request.triage_category or request.category,
         "similar_open_count": len(similar_open),
         "similar_open": similar_open,
         "similar_kb": similar_kb,
@@ -62,8 +61,8 @@ def build_help_coach(
         "coach_summary": _coach_summary(
             similar_open_count=len(similar_open),
             similar_kb_count=len(similar_kb),
-            difficulty=request.oracle_difficulty,
-            estimated_minutes=request.oracle_estimated_minutes,
+            difficulty=request.triage_difficulty,
+            estimated_minutes=request.triage_estimated_minutes,
         ),
     }
 
@@ -87,8 +86,8 @@ def run_help_coach_assist(
         kb_insight = refreshed["kb_insight"]
         steps = _socratic_steps(
             teaching_approach=teaching,
-            difficulty=request.oracle_difficulty,
-            category=request.oracle_category or request.category,
+            difficulty=request.triage_difficulty,
+            category=request.triage_category or request.category,
             learning_style=request.learning_style,
         )
         coach.update(
@@ -187,10 +186,10 @@ def _kb_insight(request: Request) -> str | None:
 
 
 def _synthesizer_blob(request: Request) -> dict[str, Any]:
-    if not request.oracle_trace_json:
+    if not request.triage_trace_json:
         return {}
     try:
-        trace = json.loads(request.oracle_trace_json)
+        trace = json.loads(request.triage_trace_json)
     except Exception:
         return {}
     return dict(trace.get("synthesizer") or {})
@@ -244,7 +243,7 @@ def _similar_open_asks(db: Session, request: Request) -> list[dict[str, Any]]:
 
     rows = q.order_by(Request.created_at.desc()).all()
     cluster_id = request.cluster_id
-    category = (request.oracle_category or request.category or "").strip().lower()
+    category = (request.triage_category or request.category or "").strip().lower()
 
     matches: list[dict[str, Any]] = []
     for row in rows:
@@ -256,7 +255,7 @@ def _similar_open_asks(db: Session, request: Request) -> list[dict[str, Any]]:
             and row.cluster_id is not None
             and row.cluster_id == cluster_id
         )
-        row_cat = (row.oracle_category or row.category or "").strip().lower()
+        row_cat = (row.triage_category or row.category or "").strip().lower()
         same_category = bool(category and row_cat and row_cat == category)
         if not (same_cluster or same_category):
             continue
@@ -267,7 +266,7 @@ def _similar_open_asks(db: Session, request: Request) -> list[dict[str, Any]]:
                 "work_status": work,
                 "assigned_ta": row.assigned_ta,
                 "cluster_id": row.cluster_id,
-                "category": row.oracle_category or row.category,
+                "category": row.triage_category or row.category,
                 "match_reason": "cluster" if same_cluster else "category",
             }
         )
@@ -392,7 +391,7 @@ def _compose_draft_reply(
 
 def _rewrite_reply(source: str, request: Request, coach: dict[str, Any]) -> str:
     text = " ".join(source.split()).strip()
-    topic = (coach.get("category") or request.oracle_category or "this").replace(
+    topic = (coach.get("category") or request.triage_category or "this").replace(
         "_", " "
     )
     hint = (coach.get("student_hint") or "").strip()
@@ -426,11 +425,11 @@ def _refresh_teaching(db: Session, request: Request) -> dict[str, Any]:
             }
         )
     analyzer = {
-        "category": request.oracle_category or request.category or "General",
+        "category": request.triage_category or request.category or "General",
         "ml_category": request.category or "uncategorized",
         "tags": _tags(request),
         "urgency": request.urgency or "medium",
-        "difficulty": request.oracle_difficulty or "MEDIUM",
+        "difficulty": request.triage_difficulty or "MEDIUM",
     }
     result = synthesize_with_model(
         question_text=request.text,
@@ -460,10 +459,10 @@ def _refresh_teaching(db: Session, request: Request) -> dict[str, Any]:
 
 
 def _tags(request: Request) -> list[str]:
-    if not request.oracle_tags:
+    if not request.triage_tags:
         return []
     try:
-        parsed = json.loads(request.oracle_tags)
+        parsed = json.loads(request.triage_tags)
         if isinstance(parsed, list):
             return [str(item) for item in parsed]
     except Exception:

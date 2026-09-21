@@ -190,7 +190,7 @@ def test_backup_takeover_and_resolve_auth():
     assert denied.status_code == 403
 
 
-def test_oracle_fields_present_on_queue_item():
+def test_ask_triage_fields_present_on_queue_item():
     student = _login("s.elidrissi@aui.ma")
     alice = _login("a.chen@aui.ma")
     course_id = _csc2302(student)

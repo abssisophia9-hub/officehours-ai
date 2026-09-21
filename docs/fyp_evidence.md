@@ -15,7 +15,7 @@ overload** and **improve student comfort** seeking academic help during finals?
 | Claim | Evidence |
 | --- | --- |
 | One multi-role campus app (one role per course; TA ≠ student of that course) | `frontend/officehours-app`, login + course picker |
-| Ask Triage at intake (Analyzer → Matcher → Synthesizer) with **local** models | `oracle_service.py`, `backend/models/*.joblib`, `OFFICEHOURS_ALLOW_EXTERNAL_LLM=false` |
+| Ask Triage at intake (Analyzer → Matcher → Synthesizer) with **local** models | `ask_triage_service.py`, `backend/models/*.joblib`, `OFFICEHOURS_ALLOW_EXTERNAL_LLM=false` |
 | Professor remains the Study Agent publication gate | KB `pending_review` → approve → `/agent/ask` |
 | TA staffing + Help Coach mid-session | `/ta/claim/`, `/ta/assist/` |
 | Privacy-preserving Quiet ask + request-code status | student workspace, `GET /requests/{id}/status` |

@@ -2,9 +2,9 @@
 
 FastAPI backend for the OfficeHours AI product (Ask Triage + Help Coach + KB).
 
-> **Naming:** docs say **Ask Triage** for the intake pipeline. The implementation
-> module is still `app/services/oracle_service.py` and many columns/fields use
-> the historical `oracle_*` prefix.
+> **Naming:** docs and code both say **Ask Triage** for the intake pipeline.
+> The implementation module is `app/services/ask_triage_service.py` and
+> columns/fields use the `triage_*` prefix (renamed from historical `oracle_*`).
 
 ## Ask Triage pipeline (custom-trained models)
 
@@ -99,11 +99,11 @@ Visit:
   shared cluster group meetings
 - `GET /actions/recommendations/`, `…/calendar.ics`
 - `GET /office-hours/`, `POST /office-hours/`, `DELETE /office-hours/{id}`
-- Analytics: `GET /analytics/oracle-metrics` (historical name),
+- Analytics: `GET /analytics/triage-metrics`,
   `/lifetime-confusion`, `/clusters`, `/struggle-heatmap`, `/escalations`,
   `/kb-hit-rate`, gold-labels `GET|POST`
 - `POST /feedback/bugs` — account-menu bug/issue reports
-- `WS /ws` — live events (`request.created`, `oracle.*.done`, `ta.*`,
+- `WS /ws` — live events (`request.created`, `triage.*.done`, `ta.*`,
   `group.meeting.scheduled`, `knowledge.*`, …)
 
 Full interactive catalog: http://127.0.0.1:8000/docs
@@ -235,7 +235,7 @@ backend/
 │   ├── main.py
 │   ├── routes/          # HTTP + WebSocket
 │   ├── models/
-│   ├── services/        # oracle_service (Ask Triage), help_coach_service, …
+│   ├── services/        # ask_triage_service, help_coach_service, …
 │   ├── database/
 │   ├── realtime/
 │   └── ai/              # Analyzer / Matcher / Synthesizer (custom-trained)

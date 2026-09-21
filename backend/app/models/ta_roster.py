@@ -1,4 +1,4 @@
-"""Default TA roster for Oracle Matcher — keep in sync with data/ta_roster_seed.csv.
+"""Default TA roster for Ask Triage Matcher — keep in sync with data/ta_roster_seed.csv.
 
 Category tags (conceptual_question, exam_logistics, …) matter: Matcher silver
 labels and runtime expertise-overlap both rely on them.
