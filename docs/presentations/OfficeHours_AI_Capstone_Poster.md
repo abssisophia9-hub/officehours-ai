@@ -1,12 +1,12 @@
 # OfficeHours AI — Capstone Poster (filled SSE template)
 
-**Source template:** CSC Capstone Early-Stage Proposal Poster (SSE)
+Official **CSC Capstone Early-Stage Proposal Poster** layout. Placeholders filled; dashed figure slots now contain technical diagrams (not captions).
 
-**Files (same layout as the template — content filled only):**
-- [`OfficeHours_AI_Capstone_Poster.docx`](OfficeHours_AI_Capstone_Poster.docx) — filled Word poster (open in Word / LibreOffice)
-- [`OfficeHours_AI_Capstone_Poster.pdf`](OfficeHours_AI_Capstone_Poster.pdf) — PDF export of that same `.docx`
-- [`OfficeHours_AI_Capstone_Poster_content.txt`](OfficeHours_AI_Capstone_Poster_content.txt) — plain-text extract of the filled body
+| File | Use |
+| --- | --- |
+| [`OfficeHours_AI_Capstone_Poster.docx`](OfficeHours_AI_Capstone_Poster.docx) | Word / print (template layout) |
+| [`OfficeHours_AI_Capstone_Poster.pdf`](OfficeHours_AI_Capstone_Poster.pdf) | One-page PDF of the same poster |
+| [`poster_figures/`](poster_figures/) | Embedded diagrams (gap map, architecture, roadmap, pipeline, evaluation, QR) |
+| [`build_capstone_poster.py`](build_capstone_poster.py) | Rebuild script |
 
-**Still replace before print:** supervisor name (`TBD`); QR image in the QR box; drop architecture figure into the design-figure slot if desired (`diagrams/architecture.png`).
-
-Cursor cannot preview `.docx` (“Binary file is not supported”) — open the PDF or Word file instead.
+**Still edit before print:** supervisor name (`TBD`). QR already points at the GitHub repo.

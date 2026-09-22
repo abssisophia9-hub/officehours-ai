@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>OfficeHours AI — SSE Capstone Poster</title>
+  <style>
+    @page { size: 14.5in 19in; margin: 0.32in; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: "Liberation Sans", "Segoe UI", Arial, sans-serif;
+      color: #202423;
+      background: #fff;
+    }
+    .poster { width: 13.86in; }
+    .top {
+      display: grid;
+      grid-template-columns: 1fr 1.15in 1.85in;
+      gap: 12px;
+      align-items: start;
+      padding-bottom: 8px;
+      border-bottom: 3px solid #006633;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      line-height: 1.2;
+      color: #004B2B;
+    }
+    .meta { font-size: 11.5px; line-height: 1.45; }
+    .qr { text-align: center; }
+    .qr img { width: 92px; height: 92px; display: block; margin: 0 auto 4px; }
+    .qr small { font-size: 9px; color: #4C514F; }
+    .brand { text-align: center; }
+    .brand img { width: 150px; }
+    .brand p { margin: 4px 0 0; font-size: 10px; font-weight: 700; color: #004B2B; }
+    .cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 10px;
+    }
+    section { margin: 0 0 9px; }
+    h2 {
+      margin: 0 0 6px;
+      background: #006633;
+      color: #fff;
+      font-size: 11px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      padding: 5px 8px;
+    }
+    p, li { font-size: 11px; line-height: 1.32; margin: 0 0 4px; }
+    ul { margin: 0; padding-left: 1.05rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+    th, td { border: 1px solid #D9DEDC; padding: 4px 6px; vertical-align: top; text-align: left; }
+    th { background: #F3F6F4; }
+    .fig { width: 100%; border: 1px solid #C9D2CE; display: block; margin-top: 4px; }
+    .refs {
+      margin-top: 8px;
+      border-top: 3px solid #006633;
+    }
+    .refs h2 { margin-top: 0; }
+    .refs p { font-size: 11px; padding: 4px 2px 0; }
+  </style>
+</head>
+<body>
+  <article class="poster">
+    <header class="top">
+      <div>
+        <h1>OfficeHours AI: Multi-Role Campus Office-Hours Triage with Local NLP and Canvas Integration</h1>
+        <p class="meta">
+          <strong>Student Name(s):</strong> Sophia Abssi &nbsp;|&nbsp;
+          <strong>Degree:</strong> B.Sc. Computer Science (SSE) &nbsp;|&nbsp;
+          <strong>Project Type:</strong> ☑ Software Development &nbsp; ☐ Research-Based<br />
+          <strong>Supervisor:</strong> TBD (Capstone Supervisor) &nbsp;|&nbsp;
+          <strong>Co-Supervisor / Client:</strong> AUI Canvas LMS &nbsp;|&nbsp;
+          <strong>Stage:</strong> Early Proposal &nbsp;|&nbsp;
+          <strong>Date:</strong> Sep 2026
+        </p>
+      </div>
+      <div class="qr">
+        <img src="poster_figures/fig_qr.png" alt="Repository QR" />
+        <small>Repository<br />github.com/abssisophia9-hub/officehours-ai</small>
+      </div>
+      <div class="brand">
+        <img src="poster_figures/aui_logo.png" alt="Al Akhawayn University" />
+        <p>SCHOOL OF SCIENCE &amp; ENGINEERING<br />CAPSTONE PROJECT PROPOSAL / POSTER</p>
+      </div>
+    </header>
+
+    <div class="cols">
+      <div>
+        <section>
+          <h2>Project Overview</h2>
+          <p>Finals-week ask overload floods email and Canvas. OfficeHours AI triages asks, staffs TAs, and lets professors stamp the only answers the Study Agent may quote—local NLP, Canvas-first, not an unconstrained chatbot.</p>
+          <ul>
+            <li><strong>Context / application area:</strong> AUI courses; students, TAs, and professors during peak academic support demand.</li>
+            <li><strong>Proposed idea:</strong> React SPA + FastAPI with Ask Triage, Help Coach, professor-stamped Study Agent, Rooms, and Canvas LTI 1.3 / REST sync.</li>
+            <li><strong>Expected contribution:</strong> Course-scoped triage, dual-TA staffing, KB approval gate, and a demo→live Canvas path.</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Problem Definition &amp; Relevance</h2>
+          <p>Students need a lower barrier to ask; staff need less repeat load; faculty must remain the gate on AI-facing answers.</p>
+          <ul>
+            <li><strong>Problem statement / research question:</strong> How can campus office hours cut repeat load and ask friction while keeping professors in control of AI answers?</li>
+            <li><strong>Stakeholders / intended users:</strong> Students (Quiet ask, Study Agent, Strategist, Rooms); TAs (Live Queue, Help Coach); Professors (Repeated Topics, KB stamp, Canvas sync).</li>
+            <li><strong>Evidence, scope &amp; constraints:</strong> Silver/synthetic FYP labels; local ML by default; live Canvas needs IT credentials + HTTPS. No portal scraping; no unconstrained LLM backend.</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Related Work, Gap &amp; Proposed Innovation</h2>
+          <p>LMS inboxes and Piazza/Ed-style forums lack local triage ML, dual-TA matching, and a professor stamp before student-facing AI.</p>
+          <ul>
+            <li><strong>Existing work / alternatives:</strong> LMS inboxes; Piazza/Ed; tutoring chatbots; FAQ bots without a KB stamp or dual-TA queue.</li>
+            <li><strong>Gap / unmet need:</strong> Quiet escalation + MiniLM/LogReg triage + dual-TA staffing + professor stamp before Study Agent quotes.</li>
+            <li><strong>Proposed innovation:</strong> Ask Triage + Help Coach + stamped Study Agent in one Canvas-linked multi-role app.</li>
+          </ul>
+          <img class="fig" src="poster_figures/fig_gap.png" alt="Gap map: existing campus help vs OfficeHours AI" />
+        </section>
+        <section>
+          <h2>Objectives &amp; Proposed Success Criteria</h2>
+          <p>Three measurable objectives mapped to demo acceptance and one live Canvas checklist. Targets are preliminary.</p>
+          <table>
+            <thead><tr><th>Objective</th><th>Planned Metric / Evidence</th><th>Target / Criterion</th></tr></thead>
+            <tbody>
+              <tr><td>Triage and route asks to the right TA / help mode</td><td>Category / routing quality (holdout + demo walkthrough)</td><td>Usable triage in demo; cite holdout metrics carefully</td></tr>
+              <tr><td>Keep Study Agent answers professor-gated</td><td>Refuse unapproved or missing KB; stamp required before quotes</td><td>0 unauthorized Study Agent quotes from pending KB</td></tr>
+              <tr><td>Enable a Canvas-first campus deploy path</td><td>LTI launch + module sync on one AUI test course when IT enables</td><td>Live checklist pass on one AUI test course</td></tr>
+            </tbody>
+          </table>
+        </section>
+        <section>
+          <h2>Proposed System / Research Design</h2>
+          <p>Clients → FastAPI → local Ask Triage / Help Coach / stamped Study Agent → SQL + Canvas LTI/REST.</p>
+          <ul>
+            <li><strong>Software:</strong> React SPA; FastAPI (requests / ta / knowledge / lti / help-room); SQLite→Postgres; WebSockets; Quiet-ask privacy.</li>
+            <li><strong>Models:</strong> MiniLM + LogisticRegression + RAG joblibs; cluster cosine 0.72; Strategist client-side until live grades.</li>
+          </ul>
+          <img class="fig" src="poster_figures/fig_architecture.png" alt="Proposed architecture" />
+        </section>
+        <section>
+          <h2>Requirements &amp; Initial Work Plan</h2>
+          <p>Demo path is implemented; live Canvas is gated on IT credentials.</p>
+          <ul>
+            <li><strong>Key requirements:</strong> Multi-role auth; Ask Triage; TA queue + Help Coach; KB stamp; Rooms; LTI/REST; WebSockets.</li>
+            <li><strong>Planned phases:</strong> (1) triage+roles (2) TA/KB gate (3) Rooms+demo Canvas (4) LTI live (5) Postgres + Strategist grades.</li>
+            <li><strong>Dependencies:</strong> Canvas LTI key + API token; optional Entra; HTTPS; one AUI test course.</li>
+          </ul>
+          <img class="fig" src="poster_figures/fig_roadmap.png" alt="Five-phase work plan" />
+        </section>
+      </div>
+      <div>
+        <section>
+          <h2>Methodology / Proposed Technical Approach</h2>
+          <p>Local NLP + professor gate fits campus integrity better than unconstrained LLM tutoring.</p>
+          <ul>
+            <li><strong>Proposed methodology:</strong> Iterative prototyping with CI (backend + officehours-app) and role walkthrough demos.</li>
+            <li><strong>Technologies / methods:</strong> FastAPI, React/Vite/Tailwind, SQLAlchemy, sentence-transformers (all-MiniLM-L6-v2), scikit-learn, WebSockets, Canvas LTI 1.3 + REST.</li>
+            <li><strong>Data / resources:</strong> Silver/synthetic ask labels; gold-label TA lab; demo Canvas mirror; live course modules when IT enables.</li>
+            <li><strong>Reproducibility / management:</strong> GitHub CI; docs/; train scripts; reports/; OFFICEHOURS_DEMO toggle.</li>
+          </ul>
+          <img class="fig" src="poster_figures/fig_pipeline.png" alt="Ask pipeline" />
+        </section>
+        <section>
+          <h2>Planned Evaluation &amp; Validation</h2>
+          <p>Mix automated tests, holdouts, a gold-label TA lab, role walkthroughs, and a live Canvas checklist. Do not report final campus results here.</p>
+          <ul>
+            <li><strong>Validation approach:</strong> pytest; triage holdouts; gold-label TA lab; student/TA/professor walkthroughs; live Canvas checklist.</li>
+            <li><strong>Comparison / reference:</strong> LMS inbox / forum baseline. Acceptance = usable demo triage + 0 unauthorized Study Agent quotes + one live course checklist.</li>
+            <li><strong>Planned metrics:</strong> Category/routing quality (cite carefully); KB-gate refusal; LTI launch success; triage-path latency; role-task completion.</li>
+          </ul>
+          <img class="fig" src="poster_figures/fig_evaluation.png" alt="Evaluation framework" />
+        </section>
+        <section>
+          <h2>Planned Deliverables &amp; Project Timeline</h2>
+          <ul>
+            <li><strong>Planned deliverables:</strong> Multi-role prototype; Ask Triage joblibs; architecture diagrams; demo script; live Canvas checklist; Capstone report.</li>
+            <li><strong>Milestone 1:</strong> Problem definition / requirements / literature → Sep 2026</li>
+            <li><strong>Milestone 2:</strong> Design / development / experimentation → Fall 2026</li>
+            <li><strong>Milestone 3:</strong> Evaluation / refinement / finalization → Capstone deadline</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Feasibility, Resources &amp; Risks</h2>
+          <p>Feasible as staged demo→live. Main risk is campus credential latency, not missing application code.</p>
+          <ul>
+            <li><strong>Required resources:</strong> Dev laptop; GitHub; SQLite→Postgres host; Canvas LTI key/token; optional Entra; no GPU required for MiniLM demo.</li>
+            <li><strong>Main feasibility concern / risk:</strong> IT delay on LTI / API / Entra; Strategist grades blocked until a live grade token.</li>
+            <li><strong>Mitigation / fallback:</strong> Local Canvas mirror for showcase; one-course live stage; Postgres at go-live; Strategist stays client-side until grades API.</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Ethics, Privacy, Security &amp; Responsible AI</h2>
+          <p>Privacy, security, and responsible AI are in scope for a campus help product.</p>
+          <ul>
+            <li><strong>Privacy / human participants:</strong> Quiet asks hide identity from staff; course-scoped data; minimize PII in logs; term-aligned retention.</li>
+            <li><strong>Cybersecurity / legal / standards:</strong> Auth + CORS; HTTPS for live; no portal scraping; Canvas LTI 1.3; least-privilege API tokens.</li>
+            <li><strong>AI use plan:</strong> Local Ask Triage + Help Coach; Study Agent quotes only professor-stamped KB; OFFICEHOURS_ALLOW_EXTERNAL_LLM=false; refuse weak KB.</li>
+            <li><strong>AI system risks if applicable:</strong> Label bias; triage miss → human TA path; hallucination mitigated by stamp gate; course auth limits misuse.</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Expected Contribution &amp; Potential Impact</h2>
+          <ul>
+            <li><strong>Expected technical / research contribution:</strong> Demonstrate gated local-NLP office-hours triage with dual-TA staffing and a professor-controlled Study Agent.</li>
+            <li><strong>Potential value / impact:</strong> Safer faculty-controlled AI help for campus office hours; transferable pattern for other LMS schools.</li>
+            <li><strong>Expected limitations / boundaries:</strong> Not an SIS replacement; not live-grade Strategist yet; not multilingual ChatGPT-style tutoring.</li>
+          </ul>
+        </section>
+      </div>
+    </div>
+    <footer class="refs">
+      <h2>Key References</h2>
+      <p>[1] AUI finals-week office-hours need. &nbsp; [2] Piazza / Ed Q&amp;A. &nbsp; [3] Canvas LTI 1.3; sentence-transformers MiniLM; scikit-learn.</p>
+    </footer>
+  </article>
+</body>
+</html>

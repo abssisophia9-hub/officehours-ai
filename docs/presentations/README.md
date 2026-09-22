@@ -53,16 +53,19 @@ Full script: [`demo/demo_script.md`](../../demo/demo_script.md)
 
 
 
+
+
 ---
 
 ## Capstone proposal poster (SSE template)
 
-Filled copy of the official **CSC Capstone Early-Stage Proposal Poster** template (same layout; placeholders filled).
+Filled official **CSC Capstone Early-Stage Proposal Poster**. Same layout; placeholders filled; dashed boxes now hold technical figures.
 
 | File | Use |
 | --- | --- |
-| [`OfficeHours_AI_Capstone_Poster.docx`](OfficeHours_AI_Capstone_Poster.docx) | **Primary** — Word / LibreOffice print layout |
-| [`OfficeHours_AI_Capstone_Poster.pdf`](OfficeHours_AI_Capstone_Poster.pdf) | PDF export of that same filled `.docx` (open if Cursor says binary not supported) |
-| [`OfficeHours_AI_Capstone_Poster_content.txt`](OfficeHours_AI_Capstone_Poster_content.txt) | Plain-text extract |
+| [`OfficeHours_AI_Capstone_Poster.docx`](OfficeHours_AI_Capstone_Poster.docx) | Word / print |
+| [`OfficeHours_AI_Capstone_Poster.pdf`](OfficeHours_AI_Capstone_Poster.pdf) | One-page PDF |
+| [`poster_figures/`](poster_figures/) | Gap map, architecture, roadmap, pipeline, evaluation, QR |
+| [`build_capstone_poster.py`](build_capstone_poster.py) | Rebuild from the SSE template |
 
-**Still edit before print:** supervisor name, QR image, optional architecture figure in the design-figure slot.
+**Before print:** replace supervisor name. QR already links the GitHub repository.
