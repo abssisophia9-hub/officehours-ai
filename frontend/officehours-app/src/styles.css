@@ -226,7 +226,7 @@ body {
 
 .theme-toggle-sidebar {
   width: 100%;
-  margin-top: 0.55rem;
+  margin-top: 0.45rem;
   justify-content: flex-start;
   border-color: rgba(255, 255, 255, 0.35);
   background: rgba(255, 255, 255, 0.14);
@@ -278,6 +278,8 @@ body {
   position: sticky;
   top: 0;
   height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
 }
 
 .bh-logo {
@@ -287,6 +289,7 @@ body {
   color: #fff;
   padding: 0 0.6rem;
   letter-spacing: -0.02em;
+  flex-shrink: 0;
 }
 
 .bh-logo small {
@@ -301,11 +304,25 @@ body {
 }
 
 .bh-nav {
-  margin-top: 2rem;
+  margin-top: 1.35rem;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.2rem;
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 0.35rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+}
+
+.bh-sidebar-footer {
+  flex-shrink: 0;
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.18) 40%);
 }
 
 .bh-nav-item {
@@ -385,8 +402,8 @@ body {
 
 .bh-account {
   position: relative;
-  margin-top: 0.9rem;
-  padding-top: 0.75rem;
+  margin-top: 0.55rem;
+  padding-top: 0.55rem;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
@@ -6110,8 +6127,8 @@ html:has(.oh-open) {
 
 /* Sidebar feature groups */
 .bh-nav-group {
-  margin-top: 0.85rem;
-  padding-top: 0.55rem;
+  margin-top: 0.55rem;
+  padding-top: 0.4rem;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
@@ -6123,7 +6140,7 @@ html:has(.oh-open) {
 
 .bh-nav-group .bh-nav-label {
   margin-top: 0;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.78);
   font-size: 0.75rem;
 }
 
@@ -6155,10 +6172,12 @@ html:has(.oh-open) {
 
 .bh-nav-item:has(.bh-nav-item-stack) {
   align-items: flex-start;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
 }
 
 .bh-nav-item:has(.bh-nav-item-stack) .bh-nav-icon {
-  margin-top: 0.2rem;
+  margin-top: 0.15rem;
 }
 
 /* Dark-mode small-text AA: keep muted/subtle ≥ 4.5:1 on surface */

@@ -298,9 +298,11 @@ export default function AppShell() {
           </select>
         </nav>
 
-        <NotificationBell />
-        <ThemeToggle className="theme-toggle-sidebar" />
-        <AccountMenu onScrollToSection={scrollToSection} />
+        <div className="bh-sidebar-footer">
+          <NotificationBell />
+          <ThemeToggle className="theme-toggle-sidebar" />
+          <AccountMenu onScrollToSection={scrollToSection} />
+        </div>
       </aside>
 
       <main className="bh-main">
