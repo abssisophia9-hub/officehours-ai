@@ -349,11 +349,11 @@ body {
   padding: 0 0.85rem;
   margin-top: 1.1rem;
   margin-bottom: 0.35rem;
-  font-size: 0.7rem;
-  font-weight: 650;
+  font-size: 0.75rem;
+  font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: none;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .bh-course-select {
@@ -5767,6 +5767,13 @@ html:has(.oh-open) {
   font-size: 0.98rem;
   border-width: 1.5px;
   background: var(--theme-surface);
+}
+
+.sd-form-hint {
+  margin: 0.55rem 0 0;
+  font-size: 0.84rem;
+  font-weight: 550;
+  color: var(--theme-text-muted);
 }
 
 .sd-cta {
