@@ -331,54 +331,52 @@ export default function TaWorkspace() {
     req?.claimed_by_user_id === user.id || req?.claimed_by === user.display_name;
 
   return (
-    <div className="fade-up">
-      <h1 className="bh-page-title">TA Dashboard</h1>
-      <p className="bh-page-subtitle">
-        Claim asks, help with Help Coach, reply async, then send drafts for
-        professor curation · {activeCourse.code} — {activeCourse.title}
-      </p>
-
-      <div className="bh-stats">
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Open Queue {ICONS.queue}</div>
-          <p className="bh-stat-value">{queue.length}</p>
-          <p className="bh-stat-note">Visible with current filter</p>
-        </article>
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Helping now {ICONS.flame}</div>
-          <p className="bh-stat-value">{inProgressCount}</p>
-          <p className="bh-stat-note">In-progress in this filter</p>
-        </article>
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Urgent {ICONS.flame}</div>
-          <p className="bh-stat-value">{urgentCount}</p>
-          <p className="bh-stat-note">High-urgency asks to take first</p>
-        </article>
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Avg Wait {ICONS.clock}</div>
-          <p className="bh-stat-value">{avgWait === null ? "—" : `${avgWait}m`}</p>
-          <p className="bh-stat-note">Matcher wait estimate</p>
-        </article>
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Helped {ICONS.check}</div>
-          <p className="bh-stat-value">{helpedCount}</p>
-          <p className="bh-stat-note">Done helping this session</p>
-        </article>
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">To curation {ICONS.check}</div>
-          <p className="bh-stat-value">{resolvedCount}</p>
-          <p className="bh-stat-note">Sent to professor review</p>
-        </article>
-      </div>
+    <div className="td fade-up">
+      <header className="td-hero">
+        <p className="td-kicker">
+          AUI · {activeCourse.code} · {activeCourse.title}
+        </p>
+        <h1 className="td-title">Who needs help next?</h1>
+        <p className="td-lead">
+          <strong>Live Queue</strong> is the main action — claim an ask, help with
+          Help Coach, reply async, then send drafts for professor curation.
+        </p>
+        <p className="td-alt">
+          Dual-TA Matcher assigns primary + backup. Work your desk first; open
+          asks still need a human.
+        </p>
+        <div className="td-pulse">
+          <span className="td-chip">
+            <strong>{queue.length}</strong> open on desk
+          </span>
+          {urgentCount > 0 ? (
+            <span className="td-chip td-chip-hot">
+              <strong>{urgentCount}</strong> urgent
+            </span>
+          ) : (
+            <span className="td-chip">
+              <strong>{inProgressCount}</strong> helping now
+            </span>
+          )}
+          <span className="td-chip">
+            Avg wait <strong>{avgWait === null ? "—" : `${avgWait}m`}</strong>
+          </span>
+          <span className="td-chip">
+            Helped <strong>{helpedCount}</strong>
+          </span>
+          <span className="td-chip">
+            To curation <strong>{resolvedCount}</strong>
+          </span>
+        </div>
+      </header>
 
       {loadInfo ? (
-        <section className="bh-card mb-5">
-          <div className="bh-card-title">
-            <h2>TA load (you + partner)</h2>
-          </div>
-          <p className="bh-card-note">
-            Dual-TA Matcher depth for {activeCourse.code}
-            {loadInfo.ta_count ? ` · ${loadInfo.ta_count} TAs` : ""}.
+        <section className="td-panel mb-4">
+          <p className="td-panel-label">TA load (you + partner)</p>
+          <h3>Dual staffing for {activeCourse.code}</h3>
+          <p>
+            {loadInfo.ta_count ? `${loadInfo.ta_count} TAs` : "Matcher depth"} —
+            take asks where you are primary or backup first.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {(loadInfo.tas || []).map((ta) => (
@@ -400,14 +398,21 @@ export default function TaWorkspace() {
         </section>
       ) : null}
 
-      <section id="queue" className="bh-card scroll-mt-6">
-        <div className="bh-card-title">
-          <h2>Live Queue</h2>
-          <span className="bh-pill bh-pill-green live-pulse">live</span>
+      <div className="td-layout">
+      <section id="queue" className="td-primary scroll-mt-6">
+        <div className="td-primary-head">
+          <div>
+            <h2>Live Queue</h2>
+            <p className="td-primary-copy">
+              Use when a student is waiting. Pick a row to claim, help, and reply —
+              students read your reply in My asks.
+            </p>
+          </div>
+          <span className="td-badge">Primary</span>
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="td-filters">
           {[
-            ["desk", "My desk (assigned, backup, open)"],
+            ["desk", "My desk"],
             ["mine", "Assigned / claimed by me"],
             ["backup", "I'm backup"],
             ["in_progress", "I'm helping now"],
@@ -417,20 +422,18 @@ export default function TaWorkspace() {
             <button
               key={value}
               type="button"
-              className={`btn-ghost px-3 py-1.5 text-xs ${
-                assignmentFilter === value ? "ring-2 ring-aui-deep/30" : ""
-              }`}
+              className={`td-filter${assignmentFilter === value ? " td-filter-on" : ""}`}
               onClick={() => setAssignmentFilter(value)}
             >
               {label}
             </button>
           ))}
         </div>
-        {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
-        {toast ? <p className="mt-2 text-sm text-emerald-700">{toast}</p> : null}
+        {error ? <p className="mt-2 pl-2 text-sm text-[var(--theme-red-fg)]">{error}</p> : null}
+        {toast ? <p className="mt-2 pl-2 text-sm text-[var(--theme-emerald-fg)]">{toast}</p> : null}
 
         {queue.length === 0 ? (
-          <p className="bh-card-note mt-4">No open requests for this filter.</p>
+          <p className="td-empty">No open requests for this filter.</p>
         ) : (
           <table className="bh-table">
             <thead>
@@ -534,8 +537,9 @@ export default function TaWorkspace() {
         ) : null}
       </section>
 
+      <aside className="td-rail">
       {selected && req ? (
-        <section className="bh-card">
+        <section className="td-panel">
           <div className="bh-card-title">
             <h2>Ask · #{req.id}</h2>
             <span className={`bh-pill ${work.className}`}>{work.label}</span>
@@ -1014,13 +1018,17 @@ export default function TaWorkspace() {
           </div>
         </section>
       ) : (
-        <section className="bh-card">
-          <p className="bh-card-note">
-            Select a request to claim it, help the student, reply, and prepare a
-            teaching draft.
+        <section className="td-panel">
+          <p className="td-panel-label">Working ask</p>
+          <h3>Select a row in Live Queue</h3>
+          <p>
+            Claim it, help with Help Coach, reply async — the student sees your
+            reply in My asks.
           </p>
         </section>
       )}
+      </aside>
+      </div>
     </div>
   );
 }

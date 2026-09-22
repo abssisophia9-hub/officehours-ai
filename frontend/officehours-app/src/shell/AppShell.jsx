@@ -139,14 +139,64 @@ const SECTION_NAV = {
     },
   ],
   ta: [
-    { id: "queue", label: "Live Queue", icon: "queue" },
+    {
+      group: "Desk",
+      items: [
+        {
+          id: "queue",
+          label: "Live Queue",
+          icon: "queue",
+          hint: "Claim, help, reply to students",
+        },
+      ],
+    },
   ],
   professor: [
-    { id: "clusters", label: "Repeated Topics", icon: "clusters" },
-    { id: "review-insights", label: "Review Insights", icon: "insights" },
-    { id: "knowledge", label: "Knowledge Review", icon: "knowledge" },
-    { id: "materials", label: "Canvas Materials", icon: "canvas" },
-    { id: "requests", label: "Requests", icon: "requests" },
+    {
+      group: "Teaching",
+      items: [
+        {
+          id: "clusters",
+          label: "Repeated Topics",
+          icon: "clusters",
+          hint: "What to emphasize next",
+        },
+        {
+          id: "review-insights",
+          label: "Review Insights",
+          icon: "insights",
+          hint: "Chapter-end teaching notes",
+        },
+      ],
+    },
+    {
+      group: "Study Agent",
+      items: [
+        {
+          id: "knowledge",
+          label: "Knowledge Review",
+          icon: "knowledge",
+          hint: "Stamp answers students can trust",
+        },
+        {
+          id: "materials",
+          label: "Canvas Materials",
+          icon: "canvas",
+          hint: "Ground the agent in your slides",
+        },
+      ],
+    },
+    {
+      group: "Asks",
+      items: [
+        {
+          id: "requests",
+          label: "Requests",
+          icon: "requests",
+          hint: "All course asks",
+        },
+      ],
+    },
   ],
 };
 
