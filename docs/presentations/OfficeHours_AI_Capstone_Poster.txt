@@ -1,0 +1,16 @@
+OfficeHours AI Capstone Poster — file guide
+==========================================
+
+Cursor cannot preview .docx (“Binary file is not supported”).
+Use one of these instead:
+
+1. OfficeHours_AI_Capstone_Poster.html   ← open in browser / Cursor preview
+2. OfficeHours_AI_Capstone_Poster.md     ← markdown mirror
+3. OfficeHours_AI_Capstone_Poster_content.txt  ← plain text from Word body
+4. OfficeHours_AI_Capstone_Poster.pdf    ← printable fixed layout
+5. OfficeHours_AI_Capstone_Poster.docx   ← Word / print layout (download)
+
+Before final print:
+- Replace supervisor: TBD (Capstone Supervisor)
+- Add QR for repo / live demo
+- Confirm architecture figure (diagrams/architecture.png)

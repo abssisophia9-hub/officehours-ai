@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OfficeHours AI — Capstone Poster</title>
+  <style>
+    :root {
+      --ink: #202423;
+      --muted: #4a5552;
+      --line: #c9d2ce;
+      --panel: #f3f6f4;
+      --band: #0f3d36;
+      --band-2: #1a5c50;
+      --accent: #c6f06a;
+      --paper: #fbfcfb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #dfecea 0%, transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, #e8efe4 0%, transparent 50%),
+        linear-gradient(180deg, #eef2f0, #e4ebe8);
+      font-family: "Segoe UI", "Aptos", "Helvetica Neue", sans-serif;
+      line-height: 1.35;
+    }
+    .page {
+      max-width: 1100px;
+      margin: 24px auto 48px;
+      padding: 0 16px;
+    }
+    .poster {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 40px rgba(15, 61, 54, 0.12);
+      overflow: hidden;
+    }
+    .mast {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      padding: 22px 24px 18px;
+      background: linear-gradient(135deg, var(--band), var(--band-2));
+      color: #f4faf7;
+    }
+    .school {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.85;
+      margin: 0 0 6px;
+    }
+    .mast h1 {
+      margin: 0;
+      font-size: clamp(1.15rem, 2.4vw, 1.55rem);
+      font-weight: 700;
+      max-width: 42ch;
+      line-height: 1.25;
+    }
+    .meta {
+      margin: 10px 0 0;
+      font-size: 12.5px;
+      opacity: 0.95;
+    }
+    .qr-box {
+      width: 118px;
+      min-height: 118px;
+      border: 1px dashed rgba(198, 240, 106, 0.7);
+      background: rgba(255,255,255,0.06);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 10px;
+      font-size: 11px;
+      color: var(--accent);
+    }
+    .badge {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 11px;
+      padding: 3px 8px;
+      background: var(--accent);
+      color: #14352e;
+      font-weight: 700;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr 1fr;
+      gap: 0;
+      border-top: 1px solid var(--line);
+    }
+    section {
+      padding: 16px 18px 18px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+    section:nth-child(3n) { border-right: none; }
+    h2 {
+      margin: 0 0 8px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--band);
+    }
+    p, li { font-size: 12.5px; color: var(--ink); margin: 0 0 8px; }
+    ul { margin: 0; padding-left: 1.1rem; }
+    li { margin-bottom: 6px; }
+    .span-2 { grid-column: span 2; }
+    .span-3 { grid-column: 1 / -1; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 7px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: var(--panel); }
+    .figure {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: 10px;
+      margin-top: 8px;
+    }
+    .figure img {
+      display: block;
+      width: 100%;
+      max-height: 220px;
+      object-fit: contain;
+      background: #fff;
+    }
+    .figure figcaption {
+      margin-top: 8px;
+      font-size: 11.5px;
+      color: var(--muted);
+    }
+    .pipe {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .pipe span {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: 5px 8px;
+    }
+    .pipe em { font-style: normal; color: var(--muted); font-weight: 500; }
+    .note {
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .span-2, .span-3 { grid-column: auto; }
+      section { border-right: none; }
+      .mast { grid-template-columns: 1fr; }
+    }
+    @media print {
+      body { background: #fff; }
+      .page { margin: 0; max-width: none; padding: 0; }
+      .poster { box-shadow: none; border: none; }
+      .note { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <article class="poster">
+      <header class="mast">
+        <div>
+          <p class="school">School of Science &amp; Engineering · Capstone Project Proposal / Poster</p>
+          <h1>OfficeHours AI: Multi-Role Campus Office-Hours Triage with Local NLP and Canvas Integration</h1>
+          <p class="meta">
+            <strong>Sophia Abssi</strong> · B.Sc. Computer Science (SSE) · Software Development<br />
+            Supervisor: TBD (Capstone Supervisor) · Client path: AUI Canvas LMS · Stage: Working Prototype → Live aim · Sep 2026
+          </p>
+          <span class="badge">Readable mirror of the filled .docx</span>
+        </div>
+        <div class="qr-box">QR: repo / live demo<br />(add before print)</div>
+      </header>
+
+      <div class="grid">
+        <section>
+          <h2>Project Overview</h2>
+          <p>Finals-week support overload and student hesitation create repeated, urgent asks across email and Canvas. OfficeHours AI is a unified multi-role campus app that triages asks, staffs TAs, and lets professors stamp Study Agent answers. Contribution: gated local-NLP triage designed for Canvas-first deployment—not an unconstrained chatbot.</p>
+          <ul>
+            <li><strong>Context:</strong> AUI courses; students, TAs, professors during peak support demand.</li>
+            <li><strong>Idea:</strong> React SPA + FastAPI with Ask Triage, Help Coach, stamped Study Agent, Rooms, Canvas LTI/sync.</li>
+            <li><strong>Contribution:</strong> Course-scoped triage, dual-TA staffing, KB approval gate, demo→live Canvas path.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Problem Definition &amp; Relevance</h2>
+          <p><strong>Question:</strong> How can campus office hours cut repeat load and lower ask barriers while keeping professors in control of AI answers?</p>
+          <ul>
+            <li><strong>Stakeholders:</strong> Students (Quiet asks, Study Agent, Strategist, Rooms); TAs (Live Queue, Help Coach); Professors (Repeated Topics, KB stamp, Canvas sync).</li>
+            <li><strong>Constraints:</strong> Synthetic/silver FYP labels; local ML by default; live Canvas needs IT credentials + HTTPS. No portal scraping; no unconstrained LLM backend.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Related Work, Gap &amp; Innovation</h2>
+          <ul>
+            <li><strong>Alternatives:</strong> LMS inboxes; Piazza/Ed; tutoring chatbots; FAQ bots without professor gates or dual-TA matching.</li>
+            <li><strong>Gap:</strong> Missing Quiet escalation + local triage ML + dual-TA staffing + professor stamp before student-facing AI.</li>
+            <li><strong>Innovation:</strong> Ask Triage + Help Coach + stamped Study Agent in one app; Canvas LTI; trackable Quiet asks.</li>
+          </ul>
+        </section>
+
+        <section class="span-2">
+          <h2>Objectives &amp; Success Criteria</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Objective</th>
+                <th>Planned metric / evidence</th>
+                <th>Target / criterion</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Triage &amp; route asks to the right TA/help mode</td>
+                <td>Category/routing quality (holdout + demo walkthrough)</td>
+                <td>Usable triage in demo; cite holdout metrics carefully</td>
+              </tr>
+              <tr>
+                <td>Keep Study Agent answers professor-gated</td>
+                <td>Refuse unapproved/missing KB; stamp required before quotes</td>
+                <td>0 unauthorized Study Agent quotes from pending KB</td>
+              </tr>
+              <tr>
+                <td>Enable Canvas-first campus deploy path</td>
+                <td>LTI launch + module sync on one AUI test course when IT enables</td>
+                <td>Live checklist pass on one AUI test course</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section>
+          <h2>Pipeline</h2>
+          <div class="pipe">
+            <span>Ask</span><em>→</em>
+            <span>Analyzer / Matcher / Synthesizer</span><em>→</em>
+            <span>TA queue / Help Coach</span><em>→</em>
+            <span>Professor stamp</span><em>→</em>
+            <span>Study Agent</span>
+          </div>
+          <p style="margin-top:10px">Ask Triage = MiniLM + LogisticRegression + RAG (joblibs). Help Coach = TA assist. Study Agent = approved KB only. Revision Strategist = client-side until live Canvas grades.</p>
+        </section>
+
+        <section class="span-2">
+          <h2>Proposed System / Design</h2>
+          <p>Unified React SPA; FastAPI (requests/ta/knowledge/lti); SQLite→Postgres; WebSocket hub; Quiet-ask privacy; Canvas LTI 1.3 + REST.</p>
+          <figure class="figure">
+            <img src="../../diagrams/architecture.png" alt="OfficeHours AI architecture diagram" />
+            <figcaption>Architecture: clients → FastAPI → Ask Triage / Help Coach / Study Agent → SQL + Canvas LTI. Replace/enlarge on print poster as needed.</figcaption>
+          </figure>
+        </section>
+
+        <section>
+          <h2>Requirements &amp; Work Plan</h2>
+          <ul>
+            <li>Core triage + roles</li>
+            <li>TA / Help Coach + KB gate</li>
+            <li>Rooms + Canvas demo</li>
+            <li>LTI + live sync</li>
+            <li>Strategist grades + Postgres host</li>
+          </ul>
+          <p><strong>Dependencies:</strong> Canvas LTI key + API token; optional Entra; public HTTPS.</p>
+        </section>
+
+        <section>
+          <h2>Methodology / Tech</h2>
+          <ul>
+            <li>Iterative prototyping + CI</li>
+            <li>FastAPI, React/Vite/Tailwind, SQLAlchemy, sentence-transformers, scikit-learn, WebSockets</li>
+            <li>GitHub, docs/, train scripts, reports/</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Evaluation</h2>
+          <p>pytest + holdouts + gold-label TA lab + role walkthroughs + live Canvas checklist. Avoid overclaiming campus quality from synthetic metrics alone.</p>
+        </section>
+
+        <section>
+          <h2>Feasibility &amp; Risks</h2>
+          <p><strong>Risk:</strong> IT delay on LTI/API/Entra; Strategist grades blocked until token.</p>
+          <p><strong>Mitigation:</strong> demo mirror for showcase; staged live on one course; Postgres at go-live.</p>
+        </section>
+
+        <section>
+          <h2>Ethics / Responsible AI</h2>
+          <p>Quiet asks; auth + CORS; professor stamp; external LLM off by default; refuse weak/missing KB; course-scoped least privilege.</p>
+        </section>
+
+        <section>
+          <h2>Expected Impact</h2>
+          <p>Safer faculty-controlled AI help for campus office hours; transferable to other LMS schools.</p>
+          <p><strong>Limits:</strong> Not SIS replacement; not live-grade Strategist yet; not multilingual ChatGPT tutoring.</p>
+        </section>
+
+        <section class="span-3">
+          <h2>Key References</h2>
+          <p>[1] AUI finals-week office-hours overload (stakeholder need). [2] LMS Q&amp;A / discussion platforms (Piazza, Ed). [3] Canvas LTI 1.3; sentence-transformers MiniLM; scikit-learn classifiers.</p>
+        </section>
+      </div>
+    </article>
+    <p class="note">Open this HTML in a browser for preview. Download the matching <code>.docx</code> for Word/print layout, or the <code>.pdf</code> for a fixed printable page. Edit supervisor name and QR before final print.</p>
+  </div>
+</body>
+</html>

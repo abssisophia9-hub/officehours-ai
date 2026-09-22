@@ -50,3 +50,20 @@ https://github.com/abssisophia9-hub/officehours-ai/raw/cursor/supervisor-pitch-d
 | Professor | `a.benali@aui.ma` | Clusters · stamp KB · Canvas sync · agent after stamp |
 
 Full script: [`demo/demo_script.md`](../../demo/demo_script.md)
+
+
+---
+
+## Capstone proposal poster (SSE template)
+
+Cursor cannot preview `.docx` (shows **Binary file is not supported**). Open the HTML/PDF/Markdown mirrors instead.
+
+| File | Use |
+| --- | --- |
+| [`OfficeHours_AI_Capstone_Poster.html`](OfficeHours_AI_Capstone_Poster.html) | **Readable preview** in browser / IDE |
+| [`OfficeHours_AI_Capstone_Poster.pdf`](OfficeHours_AI_Capstone_Poster.pdf) | Printable fixed layout |
+| [`OfficeHours_AI_Capstone_Poster.docx`](OfficeHours_AI_Capstone_Poster.docx) | Word / official template fill |
+| [`OfficeHours_AI_Capstone_Poster.md`](OfficeHours_AI_Capstone_Poster.md) | Markdown mirror |
+| [`OfficeHours_AI_Capstone_Poster_content.txt`](OfficeHours_AI_Capstone_Poster_content.txt) | Plain-text extract |
+
+**Still edit before print:** supervisor name, QR code, architecture figure size.
