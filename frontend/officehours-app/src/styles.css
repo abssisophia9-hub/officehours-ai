@@ -52,7 +52,7 @@
   --theme-row-active: #e5f0d8;
   --theme-table-rule: #e4ddd0;
   --theme-accent: #c6e24e;
-  --theme-accent-ink: #1b3226;
+  --theme-accent-ink: #142018;
   --theme-accent-soft: #eaf6c8;
   --theme-pill-green-bg: #dff3e8;
   --theme-pill-green-fg: #14663c;
@@ -228,14 +228,21 @@ body {
   width: 100%;
   margin-top: 0.55rem;
   justify-content: flex-start;
-  border-color: rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.1);
-  color: #f4f6f4;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
   box-shadow: none;
+  font-weight: 700;
 }
 
 .theme-toggle-sidebar:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.theme-toggle-sidebar .theme-toggle-label {
+  color: #ffffff;
+  opacity: 1;
 }
 
 @media (max-width: 720px) {
@@ -508,9 +515,9 @@ body {
 }
 
 .bh-user-role {
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.78rem;
+  font-weight: 550;
+  color: rgba(255, 255, 255, 0.82);
   text-transform: capitalize;
 }
 
@@ -812,6 +819,15 @@ body {
 
 .btn-primary:active {
   transform: translateY(1px);
+  box-shadow: none;
+}
+
+.btn-primary:disabled {
+  opacity: 1;
+  background: color-mix(in srgb, var(--theme-accent) 42%, var(--theme-surface-muted));
+  color: var(--theme-accent-ink);
+  cursor: not-allowed;
+  transform: none;
   box-shadow: none;
 }
 
@@ -5778,9 +5794,12 @@ html:has(.oh-open) {
 }
 
 .sd-cta:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
+  /* Keep label readable — never fade the whole lime button with opacity */
+  opacity: 1;
+  background: #d7e08a;
+  color: #142018;
   box-shadow: none;
+  cursor: not-allowed;
 }
 
 .sd-rail {
