@@ -1,16 +1,16 @@
-OfficeHours AI Capstone Poster — file guide
-==========================================
+OfficeHours AI Capstone Poster
+==============================
 
-Cursor cannot preview .docx (“Binary file is not supported”).
-Use one of these instead:
+Filled copy of the SSE Capstone Early-Stage Proposal Poster template.
+Layout matches the template; only placeholder / instruction text was replaced.
 
-1. OfficeHours_AI_Capstone_Poster.html   ← open in browser / Cursor preview
-2. OfficeHours_AI_Capstone_Poster.md     ← markdown mirror
-3. OfficeHours_AI_Capstone_Poster_content.txt  ← plain text from Word body
-4. OfficeHours_AI_Capstone_Poster.pdf    ← printable fixed layout
-5. OfficeHours_AI_Capstone_Poster.docx   ← Word / print layout (download)
+Open:
+  OfficeHours_AI_Capstone_Poster.docx  (Word / LibreOffice — print layout)
+  OfficeHours_AI_Capstone_Poster.pdf   (same document exported to PDF)
+
+Cursor cannot preview .docx (Binary file is not supported). Use the PDF.
 
 Before final print:
-- Replace supervisor: TBD (Capstone Supervisor)
-- Add QR for repo / live demo
-- Confirm architecture figure (diagrams/architecture.png)
+  - Supervisor: TBD (Capstone Supervisor)
+  - Replace with QR (image)
+  - Optional: insert diagrams/architecture.png in PROPOSED DESIGN FIGURE
