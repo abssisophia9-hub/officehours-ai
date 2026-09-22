@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>OfficeHours AI — Walk-up visual board</title>
+  <style>
+    @page { size: 14.5in 19in; margin: 0.28in; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Liberation Sans", "Segoe UI", sans-serif; color: #14201C; }
+    .board { width: 13.94in; }
+    header {
+      background: #006633; color: #fff;
+      padding: 14px 18px 12px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    header h1 { margin: 0; font-size: 26px; }
+    header p { margin: 4px 0 0; font-size: 13px; opacity: .92; }
+    header img { width: 88px; height: 88px; background: #fff; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 10px 0 0;
+    }
+    figure { margin: 0; }
+    figure img { width: 100%; display: block; border: 1px solid #c9d2ce; }
+    .wide { grid-column: 1 / -1; }
+    figcaption { font-size: 11px; font-weight: 700; color: #004B2B; padding: 3px 2px 0; }
+  </style>
+</head>
+<body>
+  <div class="board">
+    <header>
+      <div>
+        <h1>OfficeHours AI — walk-up visuals</h1>
+        <p>Read these first. Same product story as the SSE poster, drawn large enough to see from the aisle.</p>
+      </div>
+      <img src="V10_qr_square.png" alt="Repository QR" />
+    </header>
+    <div class="grid">
+      <figure class="wide">
+        <img src="V01_architecture.png" alt="Architecture" />
+        <figcaption>1 · Architecture — app, API, Canvas, Ask Triage, professor gate</figcaption>
+      </figure>
+      <figure>
+        <img src="V03_pipeline.png" alt="Pipeline" />
+        <figcaption>3 · Ask pipeline</figcaption>
+      </figure>
+      <figure>
+        <img src="V02_ask_triage_agents.png" alt="Ask Triage agents" />
+        <figcaption>2 · Analyzer · Matcher · Synthesizer</figcaption>
+      </figure>
+      <figure>
+        <img src="V04_gap_map.png" alt="Gap map" />
+        <figcaption>4 · Gap map</figcaption>
+      </figure>
+      <figure>
+        <img src="V05_roles.png" alt="Roles" />
+        <figcaption>5 · Student · TA · Professor</figcaption>
+      </figure>
+      <figure>
+        <img src="V06_stamp_gate.png" alt="Stamp gate" />
+        <figcaption>6 · Professor stamp gate</figcaption>
+      </figure>
+      <figure>
+        <img src="V07_roadmap.png" alt="Roadmap" />
+        <figcaption>7 · Demo → live work plan</figcaption>
+      </figure>
+      <figure class="wide">
+        <img src="V08_evaluation.png" alt="Evaluation" />
+        <figcaption>8 · Evaluation</figcaption>
+      </figure>
+      <figure class="wide">
+        <img src="V09_demo_vs_live.png" alt="Demo vs live" />
+        <figcaption>9 · Demo path vs live Canvas</figcaption>
+      </figure>
+    </div>
+  </div>
+</body>
+</html>

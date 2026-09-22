@@ -55,7 +55,8 @@
     table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
     th, td { border: 1px solid #D9DEDC; padding: 4px 6px; vertical-align: top; text-align: left; }
     th { background: #F3F6F4; }
-    .fig { width: 100%; border: 1px solid #C9D2CE; display: block; margin-top: 4px; }
+    .fig { width: 100%; border: 1px solid #C9D2CE; display: block; margin-top: 6px; }
+    .fig-lg { min-height: 2.1in; object-fit: contain; background: #fff; }
     .refs {
       margin-top: 8px;
       border-top: 3px solid #006633;
@@ -80,7 +81,7 @@
         </p>
       </div>
       <div class="qr">
-        <img src="poster_figures/fig_qr.png" alt="Repository QR" />
+        <img src="poster_visuals/V10_qr_square.png" alt="Repository QR" />
         <small>Repository<br />github.com/abssisophia9-hub/officehours-ai</small>
       </div>
       <div class="brand">
@@ -117,7 +118,7 @@
             <li><strong>Gap / unmet need:</strong> Quiet escalation + MiniLM/LogReg triage + dual-TA staffing + professor stamp before Study Agent quotes.</li>
             <li><strong>Proposed innovation:</strong> Ask Triage + Help Coach + stamped Study Agent in one Canvas-linked multi-role app.</li>
           </ul>
-          <img class="fig" src="poster_figures/fig_gap.png" alt="Gap map: existing campus help vs OfficeHours AI" />
+          <img class="fig fig-lg" src="poster_visuals/V04_gap_map.png" alt="Gap map: existing campus help vs OfficeHours AI" />
         </section>
         <section>
           <h2>Objectives &amp; Proposed Success Criteria</h2>
@@ -138,7 +139,7 @@
             <li><strong>Software:</strong> React SPA; FastAPI (requests / ta / knowledge / lti / help-room); SQLite→Postgres; WebSockets; Quiet-ask privacy.</li>
             <li><strong>Models:</strong> MiniLM + LogisticRegression + RAG joblibs; cluster cosine 0.72; Strategist client-side until live grades.</li>
           </ul>
-          <img class="fig" src="poster_figures/fig_architecture.png" alt="Proposed architecture" />
+          <img class="fig fig-lg" src="poster_visuals/V01_architecture.png" alt="Proposed architecture" />
         </section>
         <section>
           <h2>Requirements &amp; Initial Work Plan</h2>
@@ -148,7 +149,7 @@
             <li><strong>Planned phases:</strong> (1) triage+roles (2) TA/KB gate (3) Rooms+demo Canvas (4) LTI live (5) Postgres + Strategist grades.</li>
             <li><strong>Dependencies:</strong> Canvas LTI key + API token; optional Entra; HTTPS; one AUI test course.</li>
           </ul>
-          <img class="fig" src="poster_figures/fig_roadmap.png" alt="Five-phase work plan" />
+          <img class="fig fig-lg" src="poster_visuals/V07_roadmap.png" alt="Five-phase work plan" />
         </section>
       </div>
       <div>
@@ -161,7 +162,7 @@
             <li><strong>Data / resources:</strong> Silver/synthetic ask labels; gold-label TA lab; demo Canvas mirror; live course modules when IT enables.</li>
             <li><strong>Reproducibility / management:</strong> GitHub CI; docs/; train scripts; reports/; OFFICEHOURS_DEMO toggle.</li>
           </ul>
-          <img class="fig" src="poster_figures/fig_pipeline.png" alt="Ask pipeline" />
+          <img class="fig fig-lg" src="poster_visuals/V03_pipeline.png" alt="Ask pipeline" />
         </section>
         <section>
           <h2>Planned Evaluation &amp; Validation</h2>
@@ -171,7 +172,7 @@
             <li><strong>Comparison / reference:</strong> LMS inbox / forum baseline. Acceptance = usable demo triage + 0 unauthorized Study Agent quotes + one live course checklist.</li>
             <li><strong>Planned metrics:</strong> Category/routing quality (cite carefully); KB-gate refusal; LTI launch success; triage-path latency; role-task completion.</li>
           </ul>
-          <img class="fig" src="poster_figures/fig_evaluation.png" alt="Evaluation framework" />
+          <img class="fig fig-lg" src="poster_visuals/V08_evaluation.png" alt="Evaluation framework" />
         </section>
         <section>
           <h2>Planned Deliverables &amp; Project Timeline</h2>
