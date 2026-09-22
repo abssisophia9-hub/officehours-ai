@@ -534,7 +534,7 @@ export default function StudentWorkspace() {
                 />
               </>
             ) : (
-              <p className="mt-2 text-xs text-[var(--theme-text-subtle)]">
+              <p className="sd-form-hint">
                 Start typing to choose message / face-to-face / online.
               </p>
             )}
