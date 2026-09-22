@@ -849,12 +849,12 @@ export default function ProfessorWorkspace() {
 
       <section id="knowledge" className="pd-secondary scroll-mt-6">
         <div className="bh-card-title">
-          <h2>Pending Knowledge Curation</h2>
+          <h2>Knowledge Review</h2>
           <span className="bh-pill bh-pill-amber">{entries.length} pending</span>
         </div>
         <p className="bh-card-note">
-          Sync, paste, and upload land here as pending. Nothing reaches the
-          study agent until you stamp it.
+          Secondary to Repeated Topics — stamp drafts so Study Agent only answers
+          from materials you trust. Nothing reaches students until you approve.
         </p>
         {entries.length === 0 ? (
           <p className="bh-card-note mt-3">No pending drafts for this course.</p>
