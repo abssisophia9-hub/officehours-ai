@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { API_BASE, api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
+import ThemeToggle from "../components/ThemeToggle.jsx";
 
 // AUI emails are Initial.Lastname@aui.ma — role comes from course membership, not email.
 const DEMO_ACCOUNTS = [
@@ -99,6 +100,7 @@ export default function LoginPage() {
           ← How it works
         </Link>
         <span className="oh-land-login-hint">AUI email · role per course</span>
+        <ThemeToggle />
       </div>
       <div className="fade-up mx-auto grid w-full max-w-5xl flex-1 items-center gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <form onSubmit={handleSubmit} className="glass-panel p-8 sm:p-10">

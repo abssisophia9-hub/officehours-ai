@@ -28,7 +28,7 @@ export default function NotificationBell() {
   }
 
   return (
-    <div className="relative mb-3">
+    <div className="relative">
       <button
         type="button"
         className="bh-nav-item w-full"
