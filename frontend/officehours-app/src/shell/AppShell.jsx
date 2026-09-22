@@ -269,7 +269,9 @@ export default function AppShell() {
               My Courses
             </NavLink>
           </div>
+        </nav>
 
+        <div className="bh-sidebar-footer">
           <p className="bh-nav-label">Course</p>
           <select
             className="bh-course-select"
@@ -296,9 +298,6 @@ export default function AppShell() {
               </option>
             ))}
           </select>
-        </nav>
-
-        <div className="bh-sidebar-footer">
           <NotificationBell />
           <ThemeToggle className="theme-toggle-sidebar" />
           <AccountMenu onScrollToSection={scrollToSection} />

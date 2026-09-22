@@ -325,6 +325,10 @@ body {
   background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.18) 40%);
 }
 
+.bh-sidebar-footer .bh-nav-label {
+  margin-top: 0.15rem;
+}
+
 .bh-nav-item {
   display: flex;
   align-items: center;
