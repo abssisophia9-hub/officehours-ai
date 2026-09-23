@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OfficeHours AI — demo database UML</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #f6f3ec;
+      color: #1c1917;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    }
+    header { padding: 20px 28px 4px; }
+    h1 { margin: 0; font-size: 22px; font-weight: 700; }
+    header p { margin: 6px 0 0; font-size: 14px; line-height: 1.45; max-width: 980px; }
+    .wrap { padding: 12px 20px 8px; overflow-x: auto; }
+    svg { display: block; background: #f6f3ec; }
+    .note { margin: 4px 28px 28px; font-size: 13px; line-height: 1.5; max-width: 980px; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>OfficeHours AI — demo database</h1>
+    <p>
+      UML class diagram of <code>backend/officehours.db</code>.
+      Each box is one table. The number on a line is how many rows attach to the other side.
+      With the demo flag on, startup fills User, Course, CourseMembership, and AgentGoldLabel.
+    </p>
+  </header>
+  <div class="wrap">
+    <svg viewBox="0 0 1200 760" width="1200" height="760" role="img" aria-label="UML class diagram of the demo database">
+      <!-- links, drawn under the boxes -->
+      <g fill="none" stroke="#1c1917" stroke-width="1.5">
+        <path d="M276 100 H320" />
+        <path d="M580 100 H610" />
+        <path d="M850 100 H900" />
+        <path d="M156 176 V230" />
+        <path d="M156 340 V520" />
+        <path d="M276 150 H298 V340 H320" />
+        <path d="M610 160 H595 V330 H580" />
+        <path d="M730 186 V230" />
+        <path d="M580 390 H610" />
+        <path d="M450 450 V490 H1030 V400" />
+        <path d="M280 600 H320" />
+        <path d="M450 450 V505 H740 V520" stroke-dasharray="5 4" />
+      </g>
+
+      <g font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#9a3412">
+        <text x="284" y="92">1</text>
+        <text x="304" y="92">*</text>
+        <text x="584" y="92">*</text>
+        <text x="594" y="92">1</text>
+        <text x="858" y="92">1</text>
+        <text x="882" y="92">*</text>
+        <text x="162" y="198">1</text>
+        <text x="162" y="224">*</text>
+        <text x="162" y="360">1</text>
+        <text x="162" y="508">*</text>
+        <text x="304" y="332">*</text>
+        <text x="248" y="142">1</text>
+        <text x="548" y="322">1</text>
+        <text x="564" y="348">*</text>
+        <text x="736" y="210">1</text>
+        <text x="748" y="226">*</text>
+        <text x="586" y="382">1</text>
+        <text x="592" y="406">0..1</text>
+        <text x="456" y="478">*</text>
+        <text x="1004" y="392">*</text>
+        <text x="286" y="592">1</text>
+        <text x="304" y="592">*</text>
+        <text x="724" y="512">*</text>
+      </g>
+
+      <g font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="11" fill="#44403c">
+        <text x="304" y="312">created_by</text>
+        <text x="500" y="322">course</text>
+        <text x="586" y="368">source</text>
+        <text x="168" y="430">author</text>
+        <text x="620" y="482">request_id</text>
+        <text x="560" y="500">plans</text>
+      </g>
+
+      <!-- User -->
+      <g transform="translate(36,36)">
+        <rect width="240" height="140" fill="#fff" stroke="#1b4332" stroke-width="1.6"/>
+        <rect width="240" height="26" fill="#1b4332"/>
+        <text x="120" y="18" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="Segoe UI, Helvetica, Arial, sans-serif">User</text>
+        <text x="10" y="48" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ id : int</text>
+        <text x="10" y="66" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ email : string</text>
+        <text x="10" y="84" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ display_name : string</text>
+        <text x="10" y="102" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ student_id : string</text>
+        <text x="10" y="120" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ password_hash : string</text>
+      </g>
+
+      <!-- CourseMembership -->
+      <g transform="translate(320,40)">
+        <rect width="260" height="120" fill="#fff" stroke="#1b4332" stroke-width="1.6"/>
+        <rect width="260" height="26" fill="#1b4332"/>
+        <text x="130" y="18" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="Segoe UI, Helvetica, Arial, sans-serif">CourseMembership</text>
+        <text x="10" y="48" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ id : int</text>
+        <text x="10" y="66" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ user_id : int</text>
+        <text x="10" y="84" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ course_id : int</text>
+        <text x="10" y="102" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ role : student | ta | professor</text>
+      </g>
+
+      <!-- Course -->
+      <g transform="translate(610,30)">
+        <rect width="240" height="156" fill="#fff" stroke="#1b4332" stroke-width="1.6"/>
+        <rect width="240" height="26" fill="#1b4332"/>
+        <text x="120" y="18" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="Segoe UI, Helvetica, Arial, sans-serif">Course</text>
+        <text x="10" y="48" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ id : int</text>
+        <text x="10" y="66" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ code : string</text>
+        <text x="10" y="84" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ title : string</text>
+        <text x="10" y="102" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ term : string</text>
+        <text x="10" y="120" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ canvas_course_id : string</text>
+        <text x="10" y="142" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ is_active : bool</text>
+      </g>
+
+      <!-- AgentGoldLabel -->
+      <g transform="translate(900,24)">
+        <rect width="270" height="168" fill="#fff" stroke="#1b4332" stroke-width="1.6"/>
+        <rect width="270" height="26" fill="#1b4332"/>
+        <text x="135" y="18" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="Segoe UI, Helvetica, Arial, sans-serif">AgentGoldLabel</text>
+        <text x="10" y="48" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ id : int</text>
+        <text x="10" y="66" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ label_id : string</text>
+        <text x="10" y="84" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ text : string</text>
+        <text x="10" y="102" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ gold_category : string</text>
+        <text x="10" y="120" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ gold_assigned_ta : string</text>
+        <text x="10" y="138" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ course_id : int</text>
+        <text x="10" y="156" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ label_source : human_gold</text>
+      </g>
+
+      <!-- AuthSession -->
+      <g transform="translate(36,230)">
+        <rect width="240" height="110" fill="#fff" stroke="#1b4332" stroke-width="1.6"/>
+        <rect width="240" height="26" fill="#1b4332"/>
+        <text x="120" y="18" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="Segoe UI, Helvetica, Arial, sans-serif">AuthSession</text>
+        <text x="10" y="48" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ id : int</text>
+        <text x="10" y="66" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ user_id : int</text>
+        <text x="10" y="84" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ token : string</text>
+        <text x="10" y="102" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ expires_at : datetime</text>
+      </g>
+
+      <!-- Request -->
+      <g transform="translate(320,230)">
+        <rect width="260" height="220" fill="#fff" stroke="#1b4332" stroke-width="1.6"/>
+        <rect width="260" height="26" fill="#1b4332"/>
+        <text x="130" y="18" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="Segoe UI, Helvetica, Arial, sans-serif">Request</text>
+        <text x="10" y="48" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ id : int</text>
+        <text x="10" y="66" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ text : string</text>
+        <text x="10" y="84" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ anonymous : bool</text>
+        <text x="10" y="102" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ course_id : int</text>
+        <text x="10" y="120" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ created_by_user_id : int</text>
+        <text x="10" y="138" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ category : string</text>
+        <text x="10" y="156" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ learning_style : string</text>
+        <text x="10" y="174" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ cluster_id : int</text>
+        <text x="10" y="192" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ assigned_ta : string</text>
+        <text x="10" y="210" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ student_hint : string</text>
+      </g>
+
+      <!-- KnowledgeEntry -->
+      <g transform="translate(610,230)">
+        <rect width="240" height="190" fill="#fff" stroke="#1b4332" stroke-width="1.6"/>
+        <rect width="240" height="26" fill="#1b4332"/>
+        <text x="120" y="18" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="Segoe UI, Helvetica, Arial, sans-serif">KnowledgeEntry</text>
+        <text x="10" y="48" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ id : int</text>
+        <text x="10" y="66" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ question_text : string</text>
+        <text x="10" y="84" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ student_hint : string</text>
+        <text x="10" y="102" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ status : string</text>
+        <text x="10" y="120" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ source_request_id : int</text>
+        <text x="10" y="138" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ course_id : int</text>
+        <text x="10" y="156" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ professor_note : string</text>
+        <text x="10" y="178" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">status starts pending_review</text>
+      </g>
+
+      <!-- Notification -->
+      <g transform="translate(900,240)">
+        <rect width="270" height="160" fill="#fff" stroke="#1b4332" stroke-width="1.6"/>
+        <rect width="270" height="26" fill="#1b4332"/>
+        <text x="135" y="18" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="Segoe UI, Helvetica, Arial, sans-serif">Notification</text>
+        <text x="10" y="48" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ id : int</text>
+        <text x="10" y="66" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ user_id : int</text>
+        <text x="10" y="84" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ request_id : int</text>
+        <text x="10" y="102" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ course_id : int</text>
+        <text x="10" y="120" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ title : string</text>
+        <text x="10" y="138" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ body : string</text>
+      </g>
+
+      <!-- HelpPost -->
+      <g transform="translate(36,520)">
+        <rect width="244" height="168" fill="#fff" stroke="#1b4332" stroke-width="1.6"/>
+        <rect width="244" height="26" fill="#1b4332"/>
+        <text x="122" y="18" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="Segoe UI, Helvetica, Arial, sans-serif">HelpPost</text>
+        <text x="10" y="48" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ id : int</text>
+        <text x="10" y="66" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ course_id : int</text>
+        <text x="10" y="84" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ author_user_id : int</text>
+        <text x="10" y="102" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ title : string</text>
+        <text x="10" y="120" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ chapter : string</text>
+        <text x="10" y="138" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ room_type : string</text>
+        <text x="10" y="156" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ body : string</text>
+      </g>
+
+      <!-- HelpReply -->
+      <g transform="translate(320,540)">
+        <rect width="250" height="140" fill="#fff" stroke="#1b4332" stroke-width="1.6"/>
+        <rect width="250" height="26" fill="#1b4332"/>
+        <text x="125" y="18" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="Segoe UI, Helvetica, Arial, sans-serif">HelpReply</text>
+        <text x="10" y="48" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ id : int</text>
+        <text x="10" y="66" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ post_id : int</text>
+        <text x="10" y="84" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ author_user_id : int</text>
+        <text x="10" y="102" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ body : string</text>
+        <text x="10" y="120" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ accepted : bool</text>
+      </g>
+
+      <!-- RecommendationDecision -->
+      <g transform="translate(610,520)">
+        <rect width="260" height="176" fill="#fff" stroke="#1b4332" stroke-width="1.6"/>
+        <rect width="260" height="26" fill="#1b4332"/>
+        <text x="130" y="18" text-anchor="middle" fill="#fff" font-size="13" font-weight="700" font-family="Segoe UI, Helvetica, Arial, sans-serif">RecommendationDecision</text>
+        <text x="10" y="48" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ id : int</text>
+        <text x="10" y="66" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ action_kind : string</text>
+        <text x="10" y="84" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ status : string</text>
+        <text x="10" y="102" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ cluster_id : int</text>
+        <text x="10" y="120" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ request_ids : string</text>
+        <text x="10" y="138" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">+ action_plan : string</text>
+        <text x="10" y="160" font-size="13" font-family="Segoe UI, Helvetica, Arial, sans-serif">dashed: ids stored as text</text>
+      </g>
+    </svg>
+  </div>
+  <p class="note">
+    Demo rows already in the file: Sara, Youssef, Benali, Alice, Bob, Priya, Sam;
+    seven Spring 2026 courses; one membership per person per course; Alice’s 20 gold labels on CSC 2302.
+    Shared password <code>aui-demo</code>.
+    Request, KnowledgeEntry, HelpPost, HelpReply, Notification, and RecommendationDecision stay empty until someone uses the app.
+    HelpPost.course_id points at Course. Notification.user_id points at User.
+  </p>
+</body>
+</html>
