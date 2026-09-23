@@ -275,11 +275,11 @@ def fill_docx(figures: dict[str, Path], sizes: dict[str, tuple[float, float]] | 
     # Display inches MUST match SLOT_IN in build_slot_visuals.py and sit
     # inside each official dashed cell (hRule=exact). Oversized images clip.
     default_sizes = {
-        "gap": (6.20, 0.85),
-        "arch": (6.20, 1.70),
-        "road": (6.20, 0.48),
-        "pipe": (6.20, 1.70),
-        "eval": (6.20, 1.70),
+        "gap": (6.20, 1.05),
+        "arch": (6.20, 2.20),
+        "road": (6.20, 0.62),
+        "pipe": (6.20, 2.00),
+        "eval": (6.20, 2.05),
     }
     if sizes:
         default_sizes.update(sizes)

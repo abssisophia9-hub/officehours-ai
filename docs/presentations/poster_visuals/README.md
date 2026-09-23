@@ -1,15 +1,15 @@
 # Poster visuals
 
-**Used in the SSE poster dashed boxes.** Each PNG is sized to that cell’s
-official `hRule=exact` content area so labels cannot clip:
+**Used in the SSE poster dashed boxes.** Matplotlib figures, sized to each
+cell’s official `hRule=exact` content area:
 
-| File | Template slot | Cell height | Figure |
-| --- | --- | --- | --- |
-| `SLOT_gap.png` | OPTIONAL VISUAL | 1.15in | Today vs OfficeHours comparison table |
-| `SLOT_architecture.png` | PROPOSED DESIGN FIGURE | 2.55in | App → FastAPI → Canvas + Analyzer/Matcher/Synthesizer/stamp |
-| `SLOT_pipeline.png` | PROPOSED PROCESS / PIPELINE | 2.29in | Ask → triage → TA/stamp → Study Agent |
-| `SLOT_roadmap.png` | PLANNED WORK / REQUIREMENTS VISUAL | 0.70in | Phases 1–5 banner (this cell is short by design) |
-| `SLOT_evaluation.png` | PLANNED EVALUATION FRAMEWORK | 2.33in | Method / evidence / pass-rule matrix |
+| File | Template slot | Figure |
+| --- | --- | --- |
+| `SLOT_gap.png` | OPTIONAL VISUAL | Capability presence matrix (LMS / Piazza / chatbot vs OfficeHours) |
+| `SLOT_architecture.png` | PROPOSED DESIGN FIGURE | C4-style container diagram |
+| `SLOT_pipeline.png` | PROPOSED PROCESS / PIPELINE | Input → process → output flowchart |
+| `SLOT_roadmap.png` | PLANNED WORK / REQUIREMENTS VISUAL | Milestone stem plot (demo built vs waiting on IT) |
+| `SLOT_evaluation.png` | PLANNED EVALUATION FRAMEWORK | Accuracy bars + per-class F1 from `reports/final_report/` |
 
 Rebuild poster (figures + official template fill):
 

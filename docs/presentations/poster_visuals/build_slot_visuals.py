@@ -1,351 +1,383 @@
 #!/usr/bin/env python3
-"""Slot-native SSE poster figures.
+"""Publication-style figures for the SSE poster slots.
 
-Each PNG is sized to the official dashed cell *content* area
-(cell height minus 0.125in top+bottom margins, width minus 0.139in
-side margins) so Word/LibreOffice cannot clip or squash labels.
+Drawn with matplotlib to the official dashed-cell content size.
+Charts use the repo's own evaluation JSON. They are labeled as
+curated / silver checks, not a campus trial.
 
-Official cells (hRule=exact):
-  OPTIONAL VISUAL                         1.150in
-  PROPOSED DESIGN FIGURE                  2.550in
-  PLANNED WORK / REQUIREMENTS VISUAL      0.700in
-  PROPOSED PROCESS / PIPELINE             2.292in
-  PLANNED EVALUATION FRAMEWORK            2.333in
+Official cells (hRule=exact) and the inches we embed:
+  OPTIONAL VISUAL                      cell 1.15in   figure 1.05in
+  PROPOSED DESIGN FIGURE               cell 2.55in   figure 2.20in
+  PLANNED WORK / REQUIREMENTS VISUAL   cell 0.70in   figure 0.62in
+  PROPOSED PROCESS / PIPELINE          cell 2.29in   figure 2.00in
+  PLANNED EVALUATION FRAMEWORK         cell 2.33in   figure 2.05in
 """
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+from matplotlib import font_manager
+from matplotlib.colors import ListedColormap
+from matplotlib.patches import FancyBboxPatch, Rectangle
+from PIL import Image
 
 HERE = Path(__file__).resolve().parent
 FIGS = HERE.parent / "poster_figures"
-DPI = 240
+ROOT = HERE.parents[2]
+REPORTS = ROOT / "reports" / "final_report"
+DPI = 220
 
-# Display inches written into Word (must match these pixel sizes).
-# Stay a few hundredths inside the cell content box.
 SLOT_IN = {
-    "gap": (6.20, 0.85),
-    "arch": (6.20, 1.70),
-    "road": (6.20, 0.48),
-    "pipe": (6.20, 1.70),
-    "eval": (6.20, 1.70),
+    "gap": (6.20, 1.05),
+    "arch": (6.20, 2.20),
+    "road": (6.20, 0.62),
+    "pipe": (6.20, 2.00),
+    "eval": (6.20, 2.05),
 }
 
-GREEN = "#006633"
-GREEN_DK = "#004B2B"
-INK = "#12201B"
-MUTED = "#2A3531"
-# Match the template dashed-cell fill so the PNG has no white halo.
-CELL = "#F1F3F2"
-GOLD = "#FFE28A"
-BLUE = "#C9DFFF"
-MINT = "#B9EBCB"
-PEACH = "#FFC9A8"
-SAND = "#E4EBE7"
-WHITE = "#FFFFFF"
+INK = "#1B1F1E"
+MUTED = "#3E4946"
+GREEN = "#0B6E4F"
+GREEN_SOFT = "#E5F2EC"
+SLATE = "#5C6764"
+RULE = "#1B1F1E"
+HAIR = "#D5DBD8"
+PAPER = "#FFFFFF"
 
 
-def px(inches: float) -> int:
-    return max(1, int(round(inches * DPI)))
-
-
-def font(size: int, bold: bool = True) -> ImageFont.FreeTypeFont:
-    path = (
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-        if bold
-        else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+def _fonts() -> None:
+    for name in ("Inter-Regular.ttf", "Inter-Medium.ttf", "Inter-Bold.ttf"):
+        font_manager.fontManager.addfont(f"/usr/share/fonts/truetype/macos/{name}")
+    plt.rcParams.update(
+        {
+            "font.family": "Inter",
+            "font.size": 8,
+            "text.color": INK,
+            "axes.labelcolor": INK,
+            "axes.edgecolor": RULE,
+            "axes.linewidth": 0.6,
+            "xtick.color": INK,
+            "ytick.color": INK,
+            "xtick.major.width": 0.6,
+            "ytick.major.width": 0.6,
+            "figure.facecolor": PAPER,
+            "savefig.facecolor": PAPER,
+            "axes.facecolor": PAPER,
+        }
     )
-    return ImageFont.truetype(path, size)
 
 
-def tw(draw: ImageDraw.ImageDraw, s: str, f) -> tuple[int, int]:
-    b = draw.textbbox((0, 0), s, font=f)
-    return b[2] - b[0], b[3] - b[1]
-
-
-def fit_font(draw, text: str, max_w: int, start: int, min_size: int = 14, bold: bool = True):
-    for size in range(start, min_size - 1, -1):
-        f = font(size, bold)
-        if tw(draw, text, f)[0] <= max_w:
-            return f
-    return font(min_size, bold)
-
-
-def rounded(draw, box, fill, outline=GREEN_DK, radius=16, width=3):
-    draw.rounded_rectangle(box, radius=radius, fill=fill, outline=outline, width=width)
-
-
-def center_lines(draw, box, lines, sizes, fills, bold=(True, False, False)):
-    x0, y0, x1, y1 = box
-    inner_w = x1 - x0 - 16
-    fonts = []
-    heights = []
-    for i, line in enumerate(lines):
-        is_bold = bold[i] if i < len(bold) else False
-        f = fit_font(draw, line, inner_w, sizes[i] if i < len(sizes) else 18, 12, is_bold)
-        fonts.append(f)
-        heights.append(tw(draw, line, f)[1])
-    gap = 6
-    total = sum(heights) + gap * (len(lines) - 1)
-    y = y0 + (y1 - y0 - total) // 2
-    for i, line in enumerate(lines):
-        ww, hh = tw(draw, line, fonts[i])
-        color = fills[i] if i < len(fills) else INK
-        draw.text((x0 + (x1 - x0 - ww) // 2, y), line, fill=color, font=fonts[i])
-        y += hh + gap
-
-
-def arrow_h(draw, x0, y, x1, color=GREEN_DK, width=5):
-    if x1 - x0 < 12:
-        return
-    draw.line([(x0, y), (x1 - 10, y)], fill=color, width=width)
-    draw.polygon([(x1, y), (x1 - 12, y - 7), (x1 - 12, y + 7)], fill=color)
-
-
-def arrow_v(draw, x, y0, y1, color=GREEN_DK, width=5):
-    draw.line([(x, y0), (x, y1 - 10)], fill=color, width=width)
-    draw.polygon([(x, y1), (x - 7, y1 - 12), (x + 7, y1 - 12)], fill=color)
-
-
-def save(img: Image.Image, name: str) -> Path:
+def _save(fig: plt.Figure, name: str, inches: tuple[float, float]) -> Path:
     HERE.mkdir(parents=True, exist_ok=True)
     FIGS.mkdir(parents=True, exist_ok=True)
     path = HERE / name
-    img.save(path, "PNG")
-    img.save(FIGS / name, "PNG")
+    fig.savefig(path, dpi=DPI)
+    plt.close(fig)
+    im = Image.open(path)
+    expect = (round(inches[0] * DPI), round(inches[1] * DPI))
+    if im.size != expect:
+        raise SystemExit(f"{name} is {im.size}, expected {expect}")
+    im.save(FIGS / name, "PNG")
     return path
 
 
-def canvas(key: str) -> tuple[Image.Image, ImageDraw.ImageDraw, int, int]:
-    wi, hi = SLOT_IN[key]
-    w, h = px(wi), px(hi)
-    img = Image.new("RGB", (w, h), CELL)
-    return img, ImageDraw.Draw(img), w, h
+def _blank(key: str) -> tuple[plt.Figure, plt.Axes]:
+    w, h = SLOT_IN[key]
+    fig = plt.figure(figsize=(w, h), dpi=DPI)
+    ax = fig.add_axes((0, 0, 1, 1))
+    ax.set_xlim(0, w)
+    ax.set_ylim(0, h)
+    ax.axis("off")
+    return fig, ax
+
+
+def _arrow(ax, x0, y0, x1, y1):
+    ax.annotate(
+        "",
+        xy=(x1, y1),
+        xytext=(x0, y0),
+        arrowprops={
+            "arrowstyle": "-|>",
+            "color": INK,
+            "lw": 0.8,
+            "mutation_scale": 7,
+            "shrinkA": 0,
+            "shrinkB": 0,
+        },
+        zorder=3,
+    )
+
+
+def _box(ax, x, y, w, h, title, sub="", *, face=PAPER, edge=INK, lw=0.8, title_pt=8.0, sub_pt=6.4):
+    ax.add_patch(
+        Rectangle((x, y), w, h, facecolor=face, edgecolor=edge, linewidth=lw, joinstyle="miter", zorder=2)
+    )
+    cx = x + w / 2
+    if sub:
+        ax.text(cx, y + h * 0.62, title, ha="center", va="center", fontsize=title_pt, fontweight="bold", color=INK, zorder=4)
+        ax.text(cx, y + h * 0.30, sub, ha="center", va="center", fontsize=sub_pt, color=MUTED, zorder=4)
+    else:
+        ax.text(cx, y + h / 2, title, ha="center", va="center", fontsize=title_pt, fontweight="bold", color=INK, zorder=4)
 
 
 def slot_gap() -> Path:
-    """OPTIONAL VISUAL — existing vs proposed (gap / feature comparison)."""
-    img, d, w, h = canvas("gap")
-    headers = ["Capability", "Today on campus", "OfficeHours AI"]
-    rows = [
-        ("Routing", "LMS inbox / Piazza", "Ask Triage (MiniLM)"),
-        ("TA staffing", "No dual-TA match", "Matcher + queue"),
-        ("Student AI", "Open chatbot / FAQ", "Stamped Study Agent"),
+    """OPTIONAL VISUAL — capability gap as a presence matrix, not a score."""
+    w, h = SLOT_IN["gap"]
+    fig = plt.figure(figsize=(w, h), dpi=DPI)
+    ax = fig.add_axes((0.23, 0.16, 0.74, 0.62))
+    rows = ["Local triage model", "Dual-TA matcher", "Stamp before AI quote", "Quiet ask to staff"]
+    cols = ["LMS inbox", "Piazza / Ed", "Open chatbot", "OfficeHours"]
+    data = [
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
     ]
-    pad = 8
-    cols = [int(w * 0.20), int(w * 0.38), int(w * 0.42) - 2]
-    row_h = (h - pad * 2) // 4
-    y = pad
-    x = pad
-    for i, head in enumerate(headers):
-        fill = GREEN if i == 2 else GREEN_DK if i == 0 else SAND
-        color = WHITE
-        d.rectangle((x, y, x + cols[i], y + row_h), fill=fill)
-        f = fit_font(d, head, cols[i] - 16, 26, 14, True)
-        ww, hh = tw(d, head, f)
-        d.text((x + (cols[i] - ww) // 2, y + (row_h - hh) // 2), head, fill=color, font=f)
-        x += cols[i]
-    y += row_h
-    for r, row in enumerate(rows):
-        x = pad
-        for i, cell in enumerate(row):
-            bg = MINT if i == 2 else (WHITE if r % 2 == 0 else SAND)
-            d.rectangle((x, y, x + cols[i], y + row_h), fill=bg, outline="#C5CDC9")
-            f = fit_font(d, cell, cols[i] - 16, 24 if i else 22, 13, True)
-            ww, hh = tw(d, cell, f)
-            d.text((x + (cols[i] - ww) // 2, y + (row_h - hh) // 2), cell, fill=INK, font=f)
-            x += cols[i]
-        y += row_h
-    return save(img, "SLOT_gap.png")
+    ax.imshow(data, cmap=ListedColormap(["#F4F6F5", GREEN]), vmin=0, vmax=1, aspect="auto")
+    ax.set_xticks(range(len(cols)), cols, fontsize=7.5)
+    ax.set_yticks(range(len(rows)), rows, fontsize=7.5)
+    ax.tick_params(length=0, pad=2)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    ax.set_xticks([x - 0.5 for x in range(len(cols) + 1)], minor=True)
+    ax.set_yticks([y - 0.5 for y in range(len(rows) + 1)], minor=True)
+    ax.grid(which="minor", color="white", linestyle="-", linewidth=2)
+    ax.tick_params(which="minor", length=0)
+    for i, row in enumerate(data):
+        for j, val in enumerate(row):
+            ax.text(
+                j,
+                i,
+                "yes" if val else "—",
+                ha="center",
+                va="center",
+                fontsize=8,
+                color="white" if val else SLATE,
+                fontweight="medium",
+            )
+    fig.text(0.02, 0.90, "Gap map  ·  capability present or absent", fontsize=9, fontweight="bold", color=INK)
+    fig.text(0.02, 0.04, "Qualitative comparison. Not a measured performance score.", fontsize=6.5, color=MUTED)
+    return _save(fig, "SLOT_gap.png", SLOT_IN["gap"])
 
 
 def slot_architecture() -> Path:
-    """PROPOSED DESIGN FIGURE — conceptual architecture."""
-    img, d, w, h = canvas("arch")
-    d.rectangle((0, 0, w, 44), fill=GREEN)
-    title = "Proposed architecture  ·  one app  ·  local Ask Triage  ·  Canvas as source of truth"
-    f = fit_font(d, title, w - 24, 22, 14, True)
-    ww, hh = tw(d, title, f)
-    d.text(((w - ww) // 2, (44 - hh) // 2), title, fill=WHITE, font=f)
+    """PROPOSED DESIGN FIGURE — C4-style container diagram."""
+    fig, ax = _blank("arch")
+    w, h = SLOT_IN["arch"]
+    ax.text(0.08, h - 0.16, "Containers  ·  one app, local models, Canvas as the external system", fontsize=9, fontweight="bold", color=INK, va="center")
 
-    top = [
-        (GOLD, ["App :5180", "Student · TA · Professor", "React / Vite / Tailwind"]),
-        (BLUE, ["FastAPI :8000", "REST · WebSocket · SQL", "SQLite now → Postgres"]),
-        (MINT, ["Canvas LTI 1.3", "Launch + REST modules", "Materials → KB  ·  no scrape"]),
+    top_y, top_h = 1.22, 0.70
+    top_w = 1.78
+    gap = 0.32
+    xs = [0.10 + i * (top_w + gap) for i in range(3)]
+    _box(ax, xs[0], top_y, top_w, top_h, "officehours-app", "React  ·  :5180  ·  3 roles", title_pt=8, sub_pt=6.2)
+    _box(ax, xs[1], top_y, top_w, top_h, "FastAPI", "REST · WebSocket · SQL", face=GREEN_SOFT, title_pt=8, sub_pt=6.2)
+    _box(ax, xs[2], top_y, top_w, top_h, "Canvas LMS", "LTI 1.3  ·  external", face="#F7F7F5", edge=SLATE, title_pt=8, sub_pt=6.2)
+    mid_y = top_y + top_h / 2
+    _arrow(ax, xs[0] + top_w, mid_y, xs[1], mid_y)
+    _arrow(ax, xs[1] + top_w, mid_y, xs[2], mid_y)
+    ax.text(xs[1] + top_w / 2, top_y - 0.08, "SQLite now  →  Postgres at go-live", ha="center", va="top", fontsize=6.2, color=MUTED)
+
+    # Ask Triage boundary behind the first three components.
+    bot_y, bot_h = 0.10, 0.82
+    bot_w = 1.08
+    bot_gap = 0.10
+    bxs = [0.12 + i * (bot_w + bot_gap) for i in range(5)]
+    ax.add_patch(
+        FancyBboxPatch(
+            (bxs[0] - 0.06, bot_y - 0.05),
+            3 * bot_w + 2 * bot_gap + 0.12,
+            bot_h + 0.10,
+            boxstyle="square,pad=0",
+            facecolor="#F7FBFA",
+            edgecolor=GREEN,
+            linewidth=0.7,
+            linestyle=(0, (2.2, 1.4)),
+            zorder=1,
+        )
+    )
+    ax.text(bxs[0] - 0.02, bot_y + bot_h + 0.02, "Ask Triage · local", fontsize=6.2, color=GREEN, fontweight="bold", va="bottom")
+    components = [
+        ("Analyzer", "MiniLM + LogReg"),
+        ("Matcher", "TA + queue blend"),
+        ("Synthesizer", "approved-KB RAG"),
+        ("Stamp", "professor gate"),
+        ("Study Agent", "stamped KB only"),
     ]
-    bot = [
-        (GOLD, ["Analyzer", "MiniLM + LogReg", "category · urgency · ETA"]),
-        (BLUE, ["Matcher", "Primary + alt TA", "queue-wait blend"]),
-        (MINT, ["Synthesizer", "Approved-KB RAG", "hint or seek-help"]),
-        (PEACH, ["Professor stamp", "Only stamped KB", "reaches Study Agent"]),
-    ]
-
-    gap = 16
-    top_y0 = 52
-    top_y1 = 52 + int((h - 64) * 0.46)
-    bot_y0 = top_y1 + 36
-    bot_y1 = h - 10
-    n = len(top)
-    bw = (w - 20 - gap * (n - 1)) // n
-    xs = []
-    for i, (fill, lines) in enumerate(top):
-        x0 = 10 + i * (bw + gap)
-        x1 = x0 + bw
-        xs.append((x0, x1))
-        rounded(d, (x0, top_y0, x1, top_y1), fill, radius=18)
-        center_lines(d, (x0, top_y0, x1, top_y1), lines, (28, 18, 16), (INK, MUTED, MUTED), (True, False, False))
-        if i < n - 1:
-            arrow_h(d, x1 + 1, (top_y0 + top_y1) // 2, x1 + gap - 1)
-
-    # drop from FastAPI into Ask Triage row
-    mid_x = (xs[1][0] + xs[1][1]) // 2
-    arrow_v(d, mid_x, top_y1 + 2, bot_y0 - 4)
-
-    n = len(bot)
-    bw = (w - 20 - gap * (n - 1)) // n
-    for i, (fill, lines) in enumerate(bot):
-        x0 = 10 + i * (bw + gap)
-        x1 = x0 + bw
-        rounded(d, (x0, bot_y0, x1, bot_y1), fill, radius=18)
-        center_lines(d, (x0, bot_y0, x1, bot_y1), lines, (26, 18, 16), (INK, MUTED, MUTED), (True, False, False))
-        if i < n - 1:
-            arrow_h(d, x1 + 1, (bot_y0 + bot_y1) // 2, x1 + gap - 1)
-    return save(img, "SLOT_architecture.png")
+    for i, (title, sub) in enumerate(components):
+        face = GREEN_SOFT if i < 3 else PAPER
+        edge = GREEN if i < 3 else INK
+        _box(ax, bxs[i], bot_y, bot_w, bot_h, title, sub, face=face, edge=edge, title_pt=7.4, sub_pt=5.8)
+        if i < len(components) - 1:
+            _arrow(ax, bxs[i] + bot_w, bot_y + bot_h / 2, bxs[i + 1], bot_y + bot_h / 2)
+    # Drop from the API into Ask Triage.
+    _arrow(ax, xs[1] + top_w / 2, top_y, xs[1] + top_w / 2, bot_y + bot_h + 0.06)
+    return _save(fig, "SLOT_architecture.png", SLOT_IN["arch"])
 
 
 def slot_pipeline() -> Path:
-    """PROPOSED PROCESS / PIPELINE — inputs → processing → outputs."""
-    img, d, w, h = canvas("pipe")
-    d.rectangle((0, 0, w, 44), fill=GREEN)
-    title = "Ask pipeline  ·  Input → local triage → TA desk → professor stamp → Study Agent"
-    f = fit_font(d, title, w - 24, 22, 14, True)
-    ww, hh = tw(d, title, f)
-    d.text(((w - ww) // 2, (44 - hh) // 2), title, fill=WHITE, font=f)
+    """PROPOSED PROCESS / PIPELINE — methods flowchart with stage brackets."""
+    fig, ax = _blank("pipe")
+    w, h = SLOT_IN["pipe"]
+    ax.text(0.08, h - 0.16, "Ask path  ·  input, local triage, human gate, student-facing output", fontsize=9, fontweight="bold", va="center")
 
-    bands = [
-        (0, 2, "INPUT"),
-        (2, 5, "PROCESS  (Ask Triage)"),
-        (5, 7, "OUTPUT"),
-    ]
     steps = [
-        (GOLD, ["1  Ask", "Quiet or named", "help mode"]),
-        (GOLD, ["2  Intake", "course-scoped", "auth + request"]),
-        (BLUE, ["3  Analyzer", "MiniLM + LogReg", "category · urgency"]),
-        (BLUE, ["4  Matcher", "dual-TA + wait", "primary / alt"]),
-        (MINT, ["5  Synthesizer", "approved-KB RAG", "hint or seek-help"]),
-        (PEACH, ["6  TA + stamp", "Help Coach · KB", "professor gate"]),
-        (MINT, ["7  Study Agent", "stamped KB only", "/agent/ask"]),
+        ("1  Ask", "Quiet or named", "INPUT"),
+        ("2  Analyzer", "MiniLM + LogReg", "PROCESS"),
+        ("3  Matcher", "dual-TA + wait", "PROCESS"),
+        ("4  Synthesizer", "approved-KB RAG", "PROCESS"),
+        ("5  TA + stamp", "Help Coach · KB", "OUTPUT"),
+        ("6  Study Agent", "stamped quotes", "OUTPUT"),
     ]
-    gap = 10
-    n = len(steps)
-    bw = (w - 16 - gap * (n - 1)) // n
-    band_y0, band_y1 = 56, 92
-    box_y0, box_y1 = 104, h - 12
-
-    # band labels spanning groups
-    starts = [10 + i * (bw + gap) for i in range(n)]
-    ends = [s + bw for s in starts]
-    band_fills = [SAND, BLUE, MINT]
-    for (a, b, label), bf in zip(bands, band_fills):
-        x0, x1 = starts[a], ends[b - 1]
-        rounded(d, (x0, band_y0, x1, band_y1), bf, GREEN_DK, 10, 2)
-        f = fit_font(d, label, x1 - x0 - 12, 20, 12, True)
-        ww, hh = tw(d, label, f)
-        d.text((x0 + (x1 - x0 - ww) // 2, band_y0 + (band_y1 - band_y0 - hh) // 2), label, fill=INK, font=f)
-
-    for i, (fill, lines) in enumerate(steps):
-        x0 = starts[i]
-        x1 = ends[i]
-        rounded(d, (x0, box_y0, x1, box_y1), fill, radius=16)
-        center_lines(d, (x0, box_y0, x1, box_y1), lines, (22, 16, 15), (INK, MUTED, MUTED), (True, False, False))
-        if i < n - 1:
-            arrow_h(d, x1 + 1, (box_y0 + box_y1) // 2, x1 + gap - 1, width=4)
-    return save(img, "SLOT_pipeline.png")
+    margin, arrow_g = 0.08, 0.14
+    bw = (w - 2 * margin - arrow_g * (len(steps) - 1)) / len(steps)
+    by, bh = 0.28, 1.28
+    xs = [margin + i * (bw + arrow_g) for i in range(len(steps))]
+    bands = [("INPUT", 0, 1, "#F4F6F5"), ("PROCESS", 1, 4, GREEN_SOFT), ("OUTPUT", 4, 6, "#F7F7F5")]
+    for label, a, b, face in bands:
+        x0, x1 = xs[a], xs[b - 1] + bw
+        ax.add_patch(Rectangle((x0, h - 0.48), x1 - x0, 0.22, facecolor=face, edgecolor=HAIR, linewidth=0.6, zorder=1))
+        ax.text((x0 + x1) / 2, h - 0.37, label, ha="center", va="center", fontsize=7, fontweight="bold", color=INK)
+    for i, (title, sub, _band) in enumerate(steps):
+        _box(ax, xs[i], by, bw, bh, title, sub, title_pt=7.2, sub_pt=6.0)
+        if i < len(steps) - 1:
+            _arrow(ax, xs[i] + bw, by + bh / 2, xs[i + 1], by + bh / 2)
+    ax.text(0.08, 0.10, "External LLM stays off. Study Agent quotes nothing the professor has not stamped.", fontsize=6.4, color=MUTED, va="center")
+    return _save(fig, "SLOT_pipeline.png", SLOT_IN["pipe"])
 
 
 def slot_roadmap() -> Path:
-    """PLANNED WORK / REQUIREMENTS VISUAL — 0.52in banner; labels must fill the height."""
-    img, d, w, h = canvas("road")
-    items = [
-        (SAND, "1", "Roles + auth"),
-        (SAND, "2", "TA / KB gate"),
-        (SAND, "3", "Rooms + demo"),
-        (GOLD, "4", "LTI live"),
-        (GOLD, "5", "Postgres"),
+    """PLANNED WORK — milestone stem plot. The cell is 0.70in, so one axis, not five tiny rows."""
+    w, h = SLOT_IN["road"]
+    fig = plt.figure(figsize=(w, h), dpi=DPI)
+    ax = fig.add_axes((0.04, 0.30, 0.94, 0.62))
+    events = [
+        (0.6, "1  Roles + auth", True),
+        (1.8, "2  TA / KB gate", True),
+        (3.0, "3  Rooms + demo", True),
+        (4.4, "4  LTI live", False),
+        (5.5, "5  Postgres", False),
     ]
-    gap = 10
-    n = len(items)
-    pad = 4
-    bw = (w - pad * 2 - gap * (n - 1)) // n
-    for i, (fill, num, label) in enumerate(items):
-        x0 = pad + i * (bw + gap)
-        x1 = x0 + bw
-        rounded(d, (x0, 2, x1, h - 2), fill, radius=14, width=3)
-        # number badge
-        cy = h // 2
-        br = max(16, h // 2 - 8)
-        bx = x0 + 10 + br
-        d.ellipse((bx - br, cy - br, bx + br, cy + br), fill=GREEN)
-        nf = fit_font(d, num, br * 2 - 6, br, 14, True)
-        ww, hh = tw(d, num, nf)
-        d.text((bx - ww // 2, cy - hh // 2), num, fill=WHITE, font=nf)
-        # label uses remaining width — this is the whole 0.52in cell, so type is large
-        lx0 = bx + br + 8
-        lf = fit_font(d, label, x1 - lx0 - 8, h - 18, 16, True)
-        ww, hh = tw(d, label, lf)
-        d.text((lx0, (h - hh) // 2), label, fill=INK, font=lf)
-        if i < n - 1:
-            arrow_h(d, x1 + 1, h // 2, x1 + gap - 1, width=4)
-    return save(img, "SLOT_roadmap.png")
+    ax.axvspan(3.7, 6.0, color="#F4F6F5", zorder=0)
+    ax.plot([0.3, 5.8], [0, 0], color=INK, lw=0.9, zorder=1)
+    for x, label, done in events:
+        ax.plot([x], [0], marker="o", ms=5.5, color=GREEN if done else PAPER, markeredgecolor=GREEN, markeredgewidth=1.1, zorder=3)
+        ax.text(x, 0.55, label, ha="center", va="bottom", fontsize=7.2, fontweight="bold", color=INK)
+    ax.set_xlim(0.05, 6.15)
+    ax.set_ylim(-1.15, 1.35)
+    ax.set_yticks([])
+    ax.set_xticks([0.6, 3.7, 5.7])
+    ax.set_xticklabels(["Sep 2026", "campus IT", "deadline"], fontsize=6.5, color=MUTED)
+    ax.tick_params(axis="x", length=0, pad=1)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    ax.set_xlabel("filled = demo built     open = waits on IT        sequence, not a week schedule", fontsize=6.2, color=MUTED, labelpad=1)
+    return _save(fig, "SLOT_roadmap.png", SLOT_IN["road"])
+
+
+def _load_metrics() -> tuple[dict, dict, list[tuple[str, float]]]:
+    clf = json.loads((REPORTS / "classifier_evaluation.json").read_text())
+    matcher = json.loads((REPORTS / "matcher_evaluation.json").read_text())
+    gold = json.loads((REPORTS / "gold_label_evaluation.json").read_text())
+    short = {
+        "academic_integrity": "integrity",
+        "accessibility_accommodation": "access need",
+        "conceptual_question": "concept",
+        "emotional_stress": "stress",
+        "exam_logistics": "exam logistics",
+        "grading_dispute": "grading",
+        "office_hours_access": "office access",
+        "project_submission": "submission",
+        "retake_request": "retake",
+        "uncategorized": "other",
+    }
+    per_class = []
+    for label, row in clf["classification_report"].items():
+        if label in short and isinstance(row, dict) and "f1-score" in row:
+            per_class.append((short[label], float(row["f1-score"])))
+    per_class.sort(key=lambda item: item[1])
+    summary = {
+        "analyzer_cv_acc": float(clf["accuracy"]),
+        "analyzer_cv_f1": float(clf["macro_f1"]),
+        "analyzer_n": int(clf["dataset_size"]),
+        "matcher_hold_acc": float(matcher["metrics"]["accuracy"]),
+        "matcher_hold_n": int(matcher["metrics"]["n"]),
+        "analyzer_gold_acc": float(gold["analyzer"]["accuracy"]),
+        "matcher_gold_acc": float(gold["matcher"]["accuracy"]),
+        "gold_n": int(gold["analyzer"]["n"]),
+    }
+    return summary, matcher, per_class
 
 
 def slot_evaluation() -> Path:
-    """PLANNED EVALUATION FRAMEWORK — test matrix + pass rules."""
-    img, d, w, h = canvas("eval")
-    d.rectangle((0, 0, w, 44), fill=GREEN)
-    title = "Evaluation framework  ·  planned evidence only  ·  no unverified campus claims"
-    f = fit_font(d, title, w - 24, 22, 14, True)
-    ww, hh = tw(d, title, f)
-    d.text(((w - ww) // 2, (44 - hh) // 2), title, fill=WHITE, font=f)
+    """PLANNED EVALUATION — real curated checks, plotted, with the caveat on the figure."""
+    summary, _matcher, per_class = _load_metrics()
+    w, h = SLOT_IN["eval"]
+    fig = plt.figure(figsize=(w, h), dpi=DPI)
+    fig.text(0.02, 0.93, "Preliminary checks  ·  curated labels, not a campus trial", fontsize=9, fontweight="bold", va="center")
 
-    headers = ["Method", "Evidence we will collect", "Pass / acceptance rule"]
-    rows = [
-        ("pytest + CI", "API, auth, KB-gate tests", "CI green on demo path"),
-        ("Triage holdouts", "Category / routing quality", "Cite metrics carefully"),
-        ("Gold-label TA lab", "Human labels on real asks", "Lab protocol in docs/"),
-        ("Role walkthroughs", "Student · TA · professor", "Each role completes tasks"),
-        ("Live Canvas check", "LTI launch + module sync", "One AUI test course"),
-    ]
-    pad = 10
-    cols = [int(w * 0.24), int(w * 0.40), int(w * 0.36) - 4]
-    table_h = h - 44 - pad - 6
-    row_h = table_h // 6
-    y = 50
-    x = pad
-    for i, head in enumerate(headers):
-        d.rectangle((x, y, x + cols[i], y + row_h), fill=GREEN_DK)
-        f = fit_font(d, head, cols[i] - 14, 22, 13, True)
-        ww, hh = tw(d, head, f)
-        d.text((x + (cols[i] - ww) // 2, y + (row_h - hh) // 2), head, fill=WHITE, font=f)
-        x += cols[i]
-    y += row_h
-    zebra = [WHITE, SAND]
-    for r, row in enumerate(rows):
-        x = pad
-        for i, cell in enumerate(row):
-            bg = MINT if i == 2 else zebra[r % 2]
-            d.rectangle((x, y, x + cols[i], y + row_h), fill=bg, outline="#C5CDC9")
-            f = fit_font(d, cell, cols[i] - 14, 22, 13, True if i == 0 else False)
-            ww, hh = tw(d, cell, f)
-            d.text((x + (cols[i] - ww) // 2, y + (row_h - hh) // 2), cell, fill=INK, font=f)
-            x += cols[i]
-        y += row_h
-    return save(img, "SLOT_evaluation.png")
+    ax = fig.add_axes((0.07, 0.20, 0.36, 0.64))
+    import numpy as np
+
+    labels = ["Analyzer", "Matcher"]
+    holdout = [summary["analyzer_cv_acc"] * 100, summary["matcher_hold_acc"] * 100]
+    gold = [summary["analyzer_gold_acc"] * 100, summary["matcher_gold_acc"] * 100]
+    x = np.arange(len(labels))
+    width = 0.34
+    b1 = ax.bar(x - width / 2, holdout, width, color=GREEN, label="Dev holdout", zorder=2)
+    b2 = ax.bar(x + width / 2, gold, width, color="#B7C4BE", edgecolor=GREEN, linewidth=0.6, label="Curated gold", zorder=2)
+    ax.set_ylabel("Accuracy (%)", fontsize=7)
+    ax.set_xticks(x, labels, fontsize=8)
+    ax.set_ylim(0, 100)
+    ax.set_yticks([0, 25, 50, 75, 100])
+    ax.tick_params(axis="y", labelsize=6.5, length=2)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.yaxis.grid(True, color=HAIR, lw=0.5, zorder=0)
+    ax.set_axisbelow(True)
+    ax.legend(frameon=False, fontsize=6.2, loc="upper right", borderpad=0.1)
+    for bars in (b1, b2):
+        for bar in bars:
+            val = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width() / 2, val + 1.5, f"{val:.0f}", ha="center", va="bottom", fontsize=6.5, color=INK)
+    ax.set_title("Accuracy", fontsize=8, loc="left", pad=2, color=INK)
+
+    ax2 = fig.add_axes((0.56, 0.16, 0.42, 0.70))
+    names = [n for n, _ in per_class]
+    scores = [s * 100 for _, s in per_class]
+    ax2.barh(names, scores, color=GREEN, height=0.72, zorder=2)
+    ax2.axvline(summary["analyzer_cv_f1"] * 100, color=SLATE, lw=0.7, ls=(0, (2, 1.5)), zorder=3)
+    ax2.set_xlim(0, 100)
+    ax2.set_xlabel("F1 (%)", fontsize=7)
+    ax2.tick_params(axis="y", labelsize=6.4, length=0)
+    ax2.tick_params(axis="x", labelsize=6.5, length=2)
+    ax2.set_xticks([0, 50, 100])
+    ax2.spines["top"].set_visible(False)
+    ax2.spines["right"].set_visible(False)
+    ax2.xaxis.grid(True, color=HAIR, lw=0.5, zorder=0)
+    ax2.set_axisbelow(True)
+    ax2.set_title("Analyzer CV  ·  per-class F1", fontsize=8, loc="left", pad=2)
+
+    fig.text(
+        0.02,
+        0.035,
+        f"Holdout: Analyzer 5-fold CV n={summary['analyzer_n']}; Matcher silver n={summary['matcher_hold_n']}.  "
+        f"Gold set n={summary['gold_n']}, not independent campus TA labels.  "
+        f"Dashed line = macro-F1 {summary['analyzer_cv_f1']*100:.0f}%.",
+        fontsize=5.8,
+        color=MUTED,
+    )
+    return _save(fig, "SLOT_evaluation.png", SLOT_IN["eval"])
 
 
 def build_all() -> dict[str, Path]:
+    _fonts()
     paths = {
         "gap": slot_gap(),
         "arch": slot_architecture(),
@@ -353,10 +385,10 @@ def build_all() -> dict[str, Path]:
         "pipe": slot_pipeline(),
         "eval": slot_evaluation(),
     }
-    for key, p in paths.items():
-        im = Image.open(p)
+    for key, path in paths.items():
+        im = Image.open(path)
         wi, hi = SLOT_IN[key]
-        print(f"{p.name:24} {im.size}  ({wi:.2f}in x {hi:.2f}in @ {DPI}dpi)")
+        print(f"{path.name:24} {im.size}  ({wi:.2f}in x {hi:.2f}in @ {DPI}dpi)")
     return paths
 
 
