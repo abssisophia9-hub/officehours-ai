@@ -881,6 +881,7 @@ def main() -> int:
 
     root = ET.fromstring(xml)
     body = root.find(f"{W}body")
+    original_runs = [node.text or "" for node in root.iter(f"{W}t")]
     counts: dict[str, int] = {}
     for tbl in body.findall(f"{W}tbl"):
         rows = tbl.findall(f"{W}tr")
@@ -912,7 +913,28 @@ def main() -> int:
                 if apply_project_type(tbl):
                     counts["project_type"] = 1
 
-    new_xml = ET.tostring(root, encoding="utf-8", xml_declaration=True)
+    # Do not re-serialize with ElementTree. It renames Word prefixes
+    # (wpc, mc, cx, …) to ns1/ns2, and Microsoft Word then reports
+    # "unreadable content" and offers to repair the file.
+    raw = xml.decode("utf-8")
+    pairs: list[tuple[str, str]] = []
+    for node, old in zip(root.iter(f"{W}t"), original_runs):
+        new = node.text or ""
+        if old and old != new:
+            pairs.append((old, new))
+    pairs.sort(key=lambda item: len(item[0]), reverse=True)
+
+    def xml_escape(value: str) -> str:
+        return (
+            value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        )
+
+    for old, new in pairs:
+        if old not in raw:
+            print("WARNING missing original text:", old[:80], file=sys.stderr)
+            continue
+        raw = raw.replace(old, xml_escape(new), 1)
+    new_xml = raw.encode("utf-8")
     tmp = DOCX.with_suffix(".docx.tmp")
     with ZipFile(tmp, "w", compression=ZIP_DEFLATED) as zf:
         zf.writestr("word/document.xml", new_xml)
