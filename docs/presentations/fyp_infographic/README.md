@@ -15,6 +15,9 @@ Rebuild:
 ./docs/presentations/fyp_infographic/build_poster.sh
 ```
 
+**Download the print PDF:**  
+https://github.com/abssisophia9-hub/officehours-ai/raw/cursor/fyp-infographic-poster-1879/docs/presentations/fyp_infographic/OfficeHours_AI_FYP_Poster.pdf
+
 QR points at https://github.com/abssisophia9-hub/officehours-ai
 
 ## 60-second pitch
