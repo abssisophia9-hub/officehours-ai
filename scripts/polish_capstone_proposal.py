@@ -79,81 +79,94 @@ def table_fingerprint(tbl) -> str:
 
 LIFECYCLE = {
     "1. Problem Definition & Background": (
-        "Define the AUI finals-week overload problem and the research question. "
-        "The concept is triage: organize incoming academic asks before they become "
-        "scattered emails, so staff see one structured ticket instead of the same "
-        "question five times.",
-        "Write the research question: can Ask Triage reduce repeated staff load and "
-        "raise student comfort without replacing office hours? Freeze the product as "
-        "one React app (frontend/officehours-app, port 5180) plus one FastAPI process "
-        "(backend/, port 8000). Role is course_memberships.role (student / TA / "
-        "professor) on a course_id, not a global account type. Keep out of scope: "
-        "physical kiosk, barcode/NFC, and scraping canvas.aui.ma. Specify Quiet ask: "
-        "created_by_user_id is stored, but GET /requests/{id}/status never returns "
-        "the asker’s name.",
+        "During finals week, AUI courses such as CSC 2302 send the same conceptual "
+        "question to TAs and professors many times through email and Canvas, while "
+        "students who do not want their name on the form do not ask at all. The "
+        "purpose of this phase is that problem: OfficeHours AI must turn those "
+        "repeats into one structured ticket so staff are not answering red-black "
+        "rotations five times, and it must do that without replacing the human "
+        "office-hours session.",
+        "Research question: can Ask Triage cut that repeated staff load and make it "
+        "easier to ask, including Quiet asks, without replacing office hours? The "
+        "product is one React app (frontend/officehours-app, port 5180) and one "
+        "FastAPI process (backend/, port 8000). A person’s role is "
+        "course_memberships.role on a course_id — Sara is a student on CSC 2302, "
+        "Alice is a TA on CSC 2302 and a student elsewhere, Benali is the professor. "
+        "Out of scope: physical kiosk, barcode/NFC, and scraping canvas.aui.ma. "
+        "Quiet ask stores created_by_user_id so Sara can open My asks; "
+        "GET /requests/{id}/status never returns her name.",
     ),
     "2. Investigation / Requirements": (
-        "Lock evidence, baselines, and campus constraints so the project does not "
-        "claim live AUI transcripts it does not have, and so Canvas LTI 1.3 is the "
-        "enrollment path rather than a second password site.",
-        "Compare Canvas inbox/tickets, FIFO queues, ungated RAG chatbots, and the "
-        "old three web shells. Freeze: LTI 1.3 OIDC + RS256 JWKS (lti13.py); optional "
-        "Microsoft Entra @aui.ma; OFFICEHOURS_DEMO for seeded accounts; "
-        "OFFICEHOURS_ALLOW_EXTERNAL_LLM=false on the assessed intake path. Freeze "
-        "lab data already in the repo: Analyzer stratified CV ~84.6% (n=156); "
-        "Matcher silver holdout ~87.5% (n=32); curated gold n=80 (Analyzer acc 0.75, "
-        "Matcher acc 0.79). Those are lab numbers, not campus human_gold.",
+        "The project does not have live AUI student transcripts, so training and "
+        "scores stay on synthetic, silver, and curated gold files already in the "
+        "repository. Campus enrollment is Canvas LTI 1.3, not a second password "
+        "site and not a scraped AUI portal.",
+        "Baselines already in the design: Canvas inbox/tickets, FIFO queues, "
+        "ungated RAG chatbots, prompted LLM helpdesks, and the archived "
+        "kiosk/TA/professor shells on ports 5173–5175. Constraints in code: LTI 1.3 "
+        "OIDC + RS256 JWKS (lti13.py); optional Microsoft Entra @aui.ma; "
+        "OFFICEHOURS_DEMO for Sara/Alice/Benali; OFFICEHOURS_ALLOW_EXTERNAL_LLM=false "
+        "on the assessed intake path. Lab files in the repo: Analyzer stratified CV "
+        "~84.6% (n=156); Matcher silver holdout ~87.5% (n=32); curated gold n=80 "
+        "(Analyzer accuracy 0.75, Matcher accuracy 0.79). Those numbers are lab "
+        "scores, not campus human_gold.",
     ),
     "3. Technical Design / Research Design": (
-        "Design one login, per-course RBAC, Ask Triage at POST /requests/, a "
-        "professor knowledge-base gate before any Study Agent answer, and a live TA "
-        "queue over WebSocket /ws.",
-        "Specify SQLAlchemy tables: users, courses, course_memberships, "
-        "auth_sessions, requests (text, category, cluster_id, assigned_ta, "
-        "student_hint, help_mode, work_status, created_by_user_id), "
-        "knowledge_entries (pending_review → approved/rejected), help_posts, "
-        "notifications. Specify the four tools: MiniLM (all-MiniLM-L6-v2) embeds "
-        "text; scikit-learn LogisticRegression joblibs pick a class; cosine "
-        "similarity retrieves the nearest stamped note; fixed tables fill wait, "
-        "difficulty, and planner cards. Ask Triage = Analyzer → Matcher → "
-        "Synthesizer. Help Coach is POST /ta/assist/ (draft_reply, socratic, "
-        "refresh_teaching, rewrite_reply). Study Agent is POST /agent/ask and "
-        "refuses below similarity 0.42. Clustering shares cluster_id at cosine ≥ 0.72.",
+        "The architecture is one login, a role per course, Ask Triage on every "
+        "POST /requests/, a professor stamp before the Study Agent may quote a "
+        "note, and a live TA queue on WebSocket /ws.",
+        "Tables: users, courses, course_memberships, auth_sessions, requests "
+        "(text, category, cluster_id, assigned_ta, student_hint, help_mode, "
+        "work_status, created_by_user_id), knowledge_entries (pending_review → "
+        "approved or rejected), help_posts, notifications. Four tools: MiniLM "
+        "(all-MiniLM-L6-v2) turns a sentence into a vector; scikit-learn "
+        "LogisticRegression joblibs pick a class; cosine similarity finds the "
+        "nearest stamped note; fixed tables fill wait, difficulty, and planner "
+        "cards. Ask Triage is Analyzer → Matcher → Synthesizer. Help Coach is "
+        "POST /ta/assist/ with modes draft_reply, socratic, refresh_teaching, "
+        "rewrite_reply. Study Agent is POST /agent/ask and refuses below "
+        "similarity 0.42. Clustering shares cluster_id when cosine is at least 0.72.",
     ),
     "4. Development / Experimentation": (
-        "Build the running loop from Quiet ask to TA Help Coach to professor stamp "
-        "to Study Agent answer, plus Rooms and Canvas launch, in this repository.",
-        "Ship routers auth, requests, ta, knowledge, help-room, canvas, lti, "
-        "realtime. Train with train_classifier.py, train_matcher.py, "
-        "train_synthesizer.py → backend/models/*.joblib. On submit: classify, "
-        "assign TA, retrieve a hint, write cluster_id, seed a pending KB draft, "
-        "push triage.* on /ws. Staffing: claim → in_progress → reply or group "
-        "meeting. Professor approve/reject KB. Canvas POST /canvas/launch JIT "
-        "provision; sync_course_materials copies modules/files into pending KB. "
-        "Rooms: Problem/Discussion/Article, Hilbert ŵ. Revision Strategist is a "
-        "local formula (weight × gap to 85%) until Canvas grades exist. Demo "
-        "password aui-demo. Hardening: rate_limit.py, upload magic, LTI nonce.",
+        "The repository already runs the loop: Quiet ask → TA Help Coach → "
+        "professor stamp → Study Agent quote or refuse, plus Rooms and Canvas launch.",
+        "Routers in backend/app/routes/: auth, requests, ta, knowledge, help-room, "
+        "canvas, lti, realtime. Training scripts train_classifier.py, "
+        "train_matcher.py, train_synthesizer.py write backend/models/*.joblib. On "
+        "submit the pipeline classifies the ask, assigns a TA, retrieves a hint, "
+        "writes cluster_id, seeds a pending knowledge_entries row, and pushes "
+        "triage.* on /ws. Staffing is claim → in_progress → reply or group meeting. "
+        "The professor approves or rejects the KB row. Canvas POST /canvas/launch "
+        "provisions the membership; sync_course_materials copies modules and files "
+        "into pending KB. Rooms are Problem, Discussion, or Article with Hilbert ŵ "
+        "ranks. Revision Strategist ranks topics by exam weight × (85 − score) in "
+        "the browser until live Canvas grades exist. Demo password is aui-demo. "
+        "Hardening is rate_limit.py, upload magic-byte checks, and LTI nonce.",
     ),
     "5. Validation & Evaluation": (
-        "Show whether the built system meets the objectives using pytest and lab "
-        "model scores, with an honesty table rather than a live AUI accuracy claim.",
-        "Run backend pytest (Quiet-ask redaction, KB refuse-unapproved, dual-TA "
-        "matcher, Canvas launch, upload/security). Report Analyzer CV ~84.6% "
-        "(n=156), Matcher silver ~87.5%, gold held-out Analyzer ~75% / Matcher ~79% "
-        "(n=80, not campus human_gold). Walk through s.elidrissi Quiet ask on "
-        "CSC 2302 → WebSocket to a.chen → Help Coach → a.benali stamp → "
-        "/agent/ask quotes that stamp only. If examiners require human labels, "
-        "run docs/gold_label_lab.md (target ≥40 human_gold).",
+        "Evaluation evidence is backend pytest plus the lab score files, with an "
+        "honesty table that labels synthetic, silver, and curated gold. This phase "
+        "does not claim live AUI accuracy.",
+        "Backend pytest covers Quiet-ask redaction, refuse of unapproved KB, "
+        "dual-TA matching, Canvas launch, and upload security. Published scores: "
+        "Analyzer CV ~84.6% (n=156); Matcher silver holdout ~87.5%; curated gold "
+        "n=80 (Analyzer ~75%, Matcher ~79%), which is not campus human_gold. The "
+        "product walkthrough is s.elidrissi Quiet ask on CSC 2302 → WebSocket to "
+        "a.chen → Help Coach → a.benali stamp → /agent/ask quotes that stamp only. "
+        "If examiners require human labels, the lab in docs/gold_label_lab.md "
+        "targets at least 40 human_gold rows.",
     ),
     "6. Finalization & Communication": (
-        "Package a supervisor-runnable demo and a campus hand-off so Dr. Hourrane, "
-        "Innovation Day, and AUI IT inspect the same product.",
-        "Deliver docs/defense_crib.md, system_architecture.md, SECURITY.md, "
-        "glossary.md, and the official SSE poster. Launch with "
-        "./scripts/run_product.sh (OFFICEHOURS_DEMO=true; Sara / Alice / Benali). "
-        "Community hand-off: OFFICEHOURS_DEMO=false, DATABASE_URL Postgres, Canvas "
-        "LTI key + API token, Microsoft SSO only after IT client_id. Repo "
-        "github.com/abssisophia9-hub/officehours-ai. URLs http://127.0.0.1:5180 "
+        "The same product is what Dr. Hourrane, Innovation Day, and AUI IT "
+        "inspect: a local demo they can start with one script, plus a written "
+        "hand-off for when campus credentials exist.",
+        "Documents: docs/defense_crib.md, system_architecture.md, SECURITY.md, "
+        "glossary.md, and the official SSE poster. Local launch is "
+        "./scripts/run_product.sh with OFFICEHOURS_DEMO=true and accounts Sara / "
+        "Alice / Benali. Community hand-off is OFFICEHOURS_DEMO=false, "
+        "DATABASE_URL set to Postgres, a Canvas LTI key and API token, and "
+        "Microsoft SSO only after IT issues a client_id. Repository: "
+        "github.com/abssisophia9-hub/officehours-ai. URLs: http://127.0.0.1:5180 "
         "and http://127.0.0.1:8000/docs.",
     ),
 }
