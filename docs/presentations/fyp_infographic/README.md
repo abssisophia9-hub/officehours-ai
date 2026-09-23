@@ -1,13 +1,13 @@
 # OfficeHours AI — FYP poster
 
-Two prints of the **same official SSE section map**. Port numbers are not on either sheet.
+Official SSE catalog size: **14.5 × 19 in**. Designed print source is one self-contained HTML file.
 
 | File | Use |
 | --- | --- |
-| [`OfficeHours_AI_Catalog_Poster.docx`](OfficeHours_AI_Catalog_Poster.docx) | **Submit this.** Official 14.5 × 19 in SSE catalog template |
-| [`OfficeHours_AI_Catalog_Poster.pdf`](OfficeHours_AI_Catalog_Poster.pdf) | Same catalog sheet, PDF |
-| [`OfficeHours_AI_FYP_Poster.pdf`](OfficeHours_AI_FYP_Poster.pdf) | 24 × 36 in booth print — same sections, same order |
-| [`OfficeHours_AI_FYP_Poster.png`](OfficeHours_AI_FYP_Poster.png) | Screen proof of the large print |
+| [`catalog.html`](catalog.html) | **Designed poster** — self-contained, `@page` 14.5 × 19 in |
+| [`OfficeHours_AI_Catalog_Poster.pdf`](OfficeHours_AI_Catalog_Poster.pdf) | Print this (matte) |
+| [`OfficeHours_AI_Catalog_Poster.png`](OfficeHours_AI_Catalog_Poster.png) | Screen proof |
+| [`OfficeHours_AI_Catalog_Poster.docx`](OfficeHours_AI_Catalog_Poster.docx) | Official Word template fill (copy only) |
 
 **Catalog download:**  
 https://github.com/abssisophia9-hub/officehours-ai/raw/cursor/fyp-infographic-poster-1879/docs/presentations/fyp_infographic/OfficeHours_AI_Catalog_Poster.pdf
