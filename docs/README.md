@@ -22,6 +22,8 @@
 | [`presentations/`](presentations/) | Supervisor proposal — vision + three live demos |
 | [`research/office_hours_public_sources.md`](research/office_hours_public_sources.md) | Public uni OH research → gold *themes* only |
 | [`proposal.md`](proposal.md) | Original FYP proposal |
+| [`CSC_Capstone_Project_Proposal_Sophia_A_FINAL.docx`](CSC_Capstone_Project_Proposal_Sophia_A_FINAL.docx) | Approved CSC EGR 4402 proposal (Word) |
+| [`CSC_Capstone_Project_Proposal_Sophia_A_FINAL.pdf`](CSC_Capstone_Project_Proposal_Sophia_A_FINAL.pdf) | Same approved proposal (PDF) |
 | [`surveys/`](surveys/) | Optional UX templates — **not** gold labels |
 
 Diagrams: [`../diagrams/`](../diagrams/). Cloud operators: [`../AGENTS.md`](../AGENTS.md).
