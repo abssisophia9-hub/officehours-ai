@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>OfficeHours AI — FYP poster</title>
+<style>
+  @font-face { font-family: Inter; src: url("file:///usr/share/fonts/truetype/macos/Inter-Regular.ttf"); font-weight: 400; }
+  @font-face { font-family: Inter; src: url("file:///usr/share/fonts/truetype/macos/Inter-Medium.ttf"); font-weight: 500; }
+  @font-face { font-family: Inter; src: url("file:///usr/share/fonts/truetype/macos/Inter-SemiBold.ttf"); font-weight: 600; }
+  @font-face { font-family: Inter; src: url("file:///usr/share/fonts/truetype/macos/Inter-Bold.ttf"); font-weight: 700; }
+  @page { size: 24in 36in; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body {
+    width: 24in;
+    height: 36in;
+    margin: 0;
+    padding: 0;
+    background: #F6F3EC;
+    color: #1C1917;
+    font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+    overflow: hidden;
+  }
+  body {
+    padding: 0.38in 0.46in 0.28in;
+    display: grid;
+    grid-template-rows: 2.35in 6.15in 7.55in 4.05in 1.85in 7.35in 2.35in 0.55in;
+    gap: 0.12in;
+  }
+  header {
+    display: grid;
+    grid-template-columns: 1fr 3.5in;
+    gap: 0.2in;
+    align-items: end;
+    border-bottom: 0.026in solid #07552F;
+    padding-bottom: 0.10in;
+  }
+  .brand {
+    font-size: 15pt;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #07552F;
+    font-weight: 700;
+    margin: 0 0 0.04in;
+  }
+  h1 {
+    font-size: 72pt;
+    line-height: 0.96;
+    margin: 0;
+    color: #07552F;
+    font-weight: 800;
+    letter-spacing: 0.012em;
+  }
+  h1 .ai { letter-spacing: 0.06em; padding-left: 0.08em; }
+  .tag {
+    font-size: 22pt;
+    margin: 0.06in 0 0;
+    font-weight: 500;
+    max-width: 16.4in;
+    line-height: 1.22;
+  }
+  .meta { text-align: right; font-size: 15pt; line-height: 1.36; color: #44403C; }
+  .meta strong { display: block; color: #07552F; font-size: 19pt; margin-bottom: 0.02in; }
+  h2 {
+    font-size: 16pt;
+    margin: 0 0 0.05in;
+    color: #07552F;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  p, li { font-size: 18pt; line-height: 1.28; margin: 0; }
+  ul { margin: 0; padding-left: 0.26in; }
+  li + li { margin-top: 0.05in; }
+  .row-2 {
+    display: grid;
+    grid-template-columns: 1.62fr 1fr;
+    gap: 0.16in;
+    min-height: 0;
+  }
+  .card {
+    background: #fff;
+    border: 0.010in solid #C9D8CE;
+    border-radius: 0.09in;
+    padding: 0.09in 0.12in 0.08in;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .card img, .full img { width: 100%; height: auto; display: block; }
+  .grow { flex: 1 1 auto; min-height: 0; object-fit: contain; }
+  .caption { font-size: 13pt; color: #57534E; margin-top: 0.05in; line-height: 1.25; }
+  .results {
+    display: grid;
+    grid-template-columns: 1.55fr 0.85fr;
+    gap: 0.16in;
+    min-height: 0;
+  }
+  .qr-wrap {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #07552F;
+    color: #F6F3EC;
+    border-radius: 0.10in;
+    padding: 0.14in 0.16in;
+    min-height: 0;
+  }
+  .qr-wrap h2 { color: #F6F3EC; }
+  .qr-wrap p { font-size: 15pt; color: #E7F0EA; }
+  .qr-wrap img {
+    width: 2.15in;
+    height: 2.15in;
+    background: #fff;
+    padding: 0.06in;
+    border-radius: 0.06in;
+    align-self: center;
+    margin: 0.08in 0;
+  }
+  .qr-wrap a { color: #F6F3EC; font-size: 13pt; word-break: break-all; }
+  .take { font-size: 22pt; font-weight: 700; color: #F6F3EC; line-height: 1.2; margin: 0.05in 0 0.10in; }
+  footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 0.016in solid #07552F;
+    padding-top: 0.06in;
+    font-size: 13pt;
+    color: #44403C;
+  }
+  .chips { display: flex; gap: 0.07in; flex-wrap: wrap; margin-top: 0.08in; }
+  .chip {
+    background: #D7E8DC;
+    color: #07552F;
+    font-size: 12pt;
+    font-weight: 700;
+    padding: 0.025in 0.08in;
+    border-radius: 0.05in;
+  }
+  .bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.12in;
+    min-height: 0;
+  }
+  .bottom p { font-size: 16pt; line-height: 1.3; }
+  .kpis { width: 100%; height: 100%; object-fit: contain; display: block; }
+</style>
+</head>
+<body>
+  <header>
+    <div>
+      <p class="brand">Al Akhawayn University &nbsp;·&nbsp; SSE &nbsp;·&nbsp; CSC capstone</p>
+      <h1>OfficeHours<span class="ai">&nbsp;AI</span></h1>
+      <p class="tag">One Canvas-linked help desk. Three seats. A professor stamp before any agent may quote.</p>
+    </div>
+    <div class="meta">
+      <strong>Sophia Abssi &nbsp;·&nbsp; 117027</strong>
+      B.S. AI and Robotization<br />
+      Supervisor: Dr. Oumaima Hourrane<br />
+      School of Science and Engineering
+    </div>
+  </header>
+
+  <section class="row-2">
+    <div class="card">
+      <h2>The gap</h2>
+      <img class="grow" src="figures/problem.png" alt="Repeat staff load versus quiet-student channel barrier" />
+      <p class="caption">Office hours fail two ways: staff hear the same stuck point on five channels; quiet students will not put a name on a public one.</p>
+    </div>
+    <div class="card">
+      <h2>What this product is</h2>
+      <ul>
+        <li>A triaged ticket — not a campus chatbot and not three archived frontends.</li>
+        <li>A Quiet receipt: the ask is tracked; classmates never see the name.</li>
+        <li>A professor stamp: the Study Agent quotes approved text only, or it refuses.</li>
+      </ul>
+      <p style="margin-top:0.10in;">Why it matters: finals week repeats work, extraverted channels leave people silent, and a hosted model can invent a syllabus. This desk keeps a human in the reply and a stamp on anything an agent may say.</p>
+      <div class="chips">
+        <span class="chip">Ask Triage</span>
+        <span class="chip">Help Coach</span>
+        <span class="chip">KB stamp</span>
+        <span class="chip">Study Agent</span>
+        <span class="chip">Rooms</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Architecture &nbsp;·&nbsp; one app, one API, local tools</h2>
+    <img class="grow" src="figures/architecture.png" alt="Layered architecture and three seats" />
+    <p class="caption">React 19 + Vite talk to FastAPI over REST and /ws. Auth is JWT or Canvas LTI 1.3. Demo uses SQLite; a host can set DATABASE_URL to Postgres. The Claude path exists and stays off (OFFICEHOURS_ALLOW_EXTERNAL_LLM=false) on the path users run.</p>
+  </section>
+
+  <section class="card">
+    <h2>The loop we defend</h2>
+    <img class="grow" src="figures/loop.png" alt="Quiet ask to Ask Triage to Help Coach to professor stamp to Study Agent" />
+    <p class="caption">Ask Triage is Analyzer + Matcher + Synthesizer. Cluster if MiniLM cosine ≥ 0.72. Help Coach stays on the TA screen. The stamp is the knowledge gate. The Study Agent searches stamps and refuses below 0.42.</p>
+  </section>
+
+  <img class="kpis" src="figures/kpis.png" alt="Four laboratory KPI numbers" />
+
+  <section class="results">
+    <div class="card">
+      <h2>Laboratory evaluation</h2>
+      <img class="grow" src="figures/eval.png" alt="Accuracy and macro-F1 for Analyzer and Matcher" />
+      <p class="caption">Gold n=80 is curated lab labels, not a live AUI section. Analyzer is 10-way; Matcher is 4-way TA names. Do not call these campus-quality human_gold.</p>
+    </div>
+    <aside class="qr-wrap">
+      <div>
+        <h2>Take-home</h2>
+        <p class="take">Keep office hours human. Make the queue and the approved answers machine-readable.</p>
+        <p>Scan for the repo, the demo script, and this poster source.</p>
+      </div>
+      <img src="figures/qr.png" alt="QR code to the GitHub repository" />
+      <a href="https://github.com/abssisophia9-hub/officehours-ai">github.com/abssisophia9-hub/officehours-ai</a>
+    </aside>
+  </section>
+
+  <section class="bottom">
+    <div class="card">
+      <h2>How we built it</h2>
+      <p>Design-science: one running product, not a paper model. Freeze the loop. Measure synthetic, then silver, then curated gold. Tests lock Quiet identity strip and the classmate-list hide.</p>
+    </div>
+    <div class="card">
+      <h2>Out of scope</h2>
+      <p>Hardware kiosk, NFC or barcode, portal scrape, four backend services, and a hosted LLM on the user path unless the supervisor later opens that gate.</p>
+    </div>
+    <div class="card">
+      <h2>Next, if approved</h2>
+      <p>Live Canvas key and token. Optional OpenAI tool calls behind the same stamp and Quiet rules. A 40-label human_gold pass on one real section.</p>
+    </div>
+  </section>
+
+  <footer>
+    <span>Print 24 × 36 in · matte · cream + forest + amber</span>
+    <span>Demo: ./scripts/run_product.sh · password aui-demo</span>
+    <span>OfficeHours AI · FYP 2025–26</span>
+  </footer>
+</body>
+</html>
