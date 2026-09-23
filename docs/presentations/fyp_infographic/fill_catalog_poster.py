@@ -129,7 +129,7 @@ REPLACEMENTS = {
     "Expected limitations / boundaries: Not SIS; not live-grade Strategist yet; not multilingual ChatGPT tutoring":
         "Expected limitations / boundaries: Not a student-information system; not live-grade planning yet; not a multilingual chatbot.",
     "[1] AUI finals-week office-hours need.   [2] Piazza / Ed Q&amp;A.   [3] Canvas LTI 1.3; MiniLM; scikit-learn.":
-        "[1] AUI finals-week office-hours load.   [2] Piazza / Ed Q&amp;A.   [3] Canvas LTI 1.3; MiniLM; scikit-learn.",
+        "[1] Piazza; Ed Discussion (forum baseline).   [2] IMS Global, Learning Tools Interoperability 1.3.   [3] Reimers &amp; Gurevych, Sentence-BERT; Pedregosa et al., scikit-learn.",
 }
 
 MEDIA = {
