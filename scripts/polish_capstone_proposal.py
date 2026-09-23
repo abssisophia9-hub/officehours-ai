@@ -3,6 +3,7 @@
 
 Keeps the official CSC Word template (styles, headers, table grid, page size).
 Only paragraph text inside existing cells / body paragraphs is replaced.
+Writes by swapping text inside the original document.xml so Word prefixes stay intact.
 """
 
 from __future__ import annotations
