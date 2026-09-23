@@ -1,6 +1,23 @@
 # Poster visuals
 
-These are the walk-up figures. Print them large. Text on the SSE poster supports them — it does not replace them.
+**Used in the SSE poster dashed boxes.** Each PNG is sized to that cell’s
+official `hRule=exact` content area so labels cannot clip:
+
+| File | Template slot | Cell height | Figure |
+| --- | --- | --- | --- |
+| `SLOT_gap.png` | OPTIONAL VISUAL | 1.15in | Today vs OfficeHours comparison table |
+| `SLOT_architecture.png` | PROPOSED DESIGN FIGURE | 2.55in | App → FastAPI → Canvas + Analyzer/Matcher/Synthesizer/stamp |
+| `SLOT_pipeline.png` | PROPOSED PROCESS / PIPELINE | 2.29in | Ask → triage → TA/stamp → Study Agent |
+| `SLOT_roadmap.png` | PLANNED WORK / REQUIREMENTS VISUAL | 0.70in | Phases 1–5 banner (this cell is short by design) |
+| `SLOT_evaluation.png` | PLANNED EVALUATION FRAMEWORK | 2.33in | Method / evidence / pass-rule matrix |
+
+Rebuild poster (figures + official template fill):
+
+```bash
+backend/venv/bin/python docs/presentations/build_capstone_poster.py
+```
+
+Larger print-size extras (V01–V16) stay in this folder for a backboard. Text on the SSE poster supports the slot figures — it does not replace them.
 
 | File | Slot on the SSE template |
 | --- | --- |

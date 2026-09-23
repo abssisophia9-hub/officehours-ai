@@ -261,7 +261,7 @@ def figure_paragraph(rid: str, name: str, width_in: float, height_in: float, doc
     )
 
 
-def fill_docx(figures: dict[str, Path]) -> Path:
+def fill_docx(figures: dict[str, Path], sizes: dict[str, tuple[float, float]] | None = None) -> Path:
     work = Path("/tmp/poster_professional")
     if work.exists():
         shutil.rmtree(work)
@@ -272,13 +272,23 @@ def fill_docx(figures: dict[str, Path]) -> Path:
     shutil.copyfile(figures["qr"], work / "word" / "media" / "image1.png")
 
     media = work / "word" / "media"
-    # Display inches (keep one-page SSE template). Source PNGs stay high-res.
+    # Display inches MUST match SLOT_IN in build_slot_visuals.py and sit
+    # inside each official dashed cell (hRule=exact). Oversized images clip.
+    default_sizes = {
+        "gap": (6.20, 0.85),
+        "arch": (6.20, 1.70),
+        "road": (6.20, 0.48),
+        "pipe": (6.20, 1.70),
+        "eval": (6.20, 1.70),
+    }
+    if sizes:
+        default_sizes.update(sizes)
     rels = {
-        "gap": ("rId11", "image3.png", figures["gap"], 6.15, 0.58, 3),
-        "arch": ("rId12", "image4.png", figures["arch"], 6.15, 0.72, 4),
-        "road": ("rId13", "image5.png", figures["road"], 6.15, 0.50, 5),
-        "pipe": ("rId14", "image6.png", figures["pipe"], 6.15, 0.52, 6),
-        "eval": ("rId15", "image7.png", figures["eval"], 6.15, 0.52, 7),
+        "gap": ("rId11", "image3.png", figures["gap"], *default_sizes["gap"], 3),
+        "arch": ("rId12", "image4.png", figures["arch"], *default_sizes["arch"], 4),
+        "road": ("rId13", "image5.png", figures["road"], *default_sizes["road"], 5),
+        "pipe": ("rId14", "image6.png", figures["pipe"], *default_sizes["pipe"], 6),
+        "eval": ("rId15", "image7.png", figures["eval"], *default_sizes["eval"], 7),
     }
     for _key, (rid, fname, src, *_rest) in rels.items():
         shutil.copyfile(src, media / fname)
@@ -308,34 +318,34 @@ def fill_docx(figures: dict[str, Path]) -> Path:
             "github.com/abssisophia9-hub/officehours-ai",
 
         "Use 3–4 concise sentences: the problem, why it matters, the proposed idea, and the expected contribution. Do not report final results.":
-            "Finals-week ask overload floods email and Canvas. OfficeHours AI triages asks, staffs TAs, and lets professors stamp the only answers the Study Agent may quote—local NLP, Canvas-first, not an unconstrained chatbot.",
+            "Finals-week ask overload. OfficeHours AI triages asks, staffs TAs, and stamps Study Agent answers—local NLP, Canvas-first.",
         "Context / application area: [Where, for whom, and why the problem matters]":
-            "Context / application area: AUI courses; students, TAs, and professors during peak academic support demand.",
+            "Context / application area: AUI courses; students, TAs, professors at peak support demand.",
         "Proposed idea: [System, method, model, experiment, or prototype]":
-            "Proposed idea: React SPA + FastAPI with Ask Triage, Help Coach, professor-stamped Study Agent, Rooms, and Canvas LTI 1.3 / REST sync.",
+            "Proposed idea: React + FastAPI: Ask Triage, Help Coach, stamped Study Agent, Rooms, Canvas LTI.",
         "Expected contribution: [What the project aims to improve, investigate, or demonstrate]":
-            "Expected contribution: Course-scoped triage, dual-TA staffing, KB approval gate, and a demo→live Canvas path.",
+            "Expected contribution: Course-scoped triage, dual-TA staffing, KB stamp, demo→live Canvas path.",
 
         "Define the need before the solution. Use evidence, stakeholder needs, or a research question to justify the project.":
-            "Students need a lower barrier to ask; staff need less repeat load; faculty must remain the gate on AI-facing answers.",
+            "Lower ask barriers and repeat load while faculty stay the gate on AI answers.",
         "Problem statement / research question: [1–2 precise sentences]":
-            "Problem statement / research question: How can campus office hours cut repeat load and ask friction while keeping professors in control of AI answers?",
+            "Problem statement / research question: How can office hours cut repeat load without unconstrained AI?",
         "Stakeholders / intended users: [Who is affected or expected to benefit?]":
-            "Stakeholders / intended users: Students (Quiet ask, Study Agent, Strategist, Rooms); TAs (Live Queue, Help Coach); Professors (Repeated Topics, KB stamp, Canvas sync).",
+            "Stakeholders / intended users: Students (Quiet ask, Rooms); TAs (queue, Help Coach); Professors (KB stamp).",
         "Evidence, scope &amp; constraints: [Need evidence and project boundaries]":
-            "Evidence, scope &amp; constraints: Silver/synthetic FYP labels; local ML by default; live Canvas needs IT credentials + HTTPS. No portal scraping; no unconstrained LLM backend.",
+            "Evidence, scope &amp; constraints: Silver/synthetic labels; local ML; live Canvas needs IT + HTTPS; no scraping.",
 
         "Summarize the most relevant prior work and identify the gap the proposal will address.":
-            "LMS inboxes and Piazza/Ed-style forums lack local triage ML, dual-TA matching, and a professor stamp before student-facing AI.",
+            "LMS inboxes and Piazza/Ed lack local triage, dual-TA match, and a stamp gate.",
         "Existing work / alternatives: [2–4 relevant studies, products, or approaches]":
-            "Existing work / alternatives: LMS inboxes; Piazza/Ed; tutoring chatbots; FAQ bots without a KB stamp or dual-TA queue.",
+            "Existing work / alternatives: LMS inbox; Piazza/Ed; tutoring chatbots; FAQ bots without a stamp or dual-TA queue.",
         "Gap / unmet need: [What remains insufficient or unresolved?]":
-            "Gap / unmet need: Quiet escalation + MiniLM/LogReg triage + dual-TA staffing + professor stamp before Study Agent quotes.",
+            "Gap / unmet need: No Quiet ask + MiniLM triage + dual-TA staffing + professor stamp before student AI.",
         "Proposed innovation: [Planned adaptation, integration, method, or investigation]":
-            "Proposed innovation: Ask Triage + Help Coach + stamped Study Agent in one Canvas-linked multi-role app.",
+            "Proposed innovation: Ask Triage + Help Coach + stamped Study Agent in one Canvas-linked app.",
 
         "State 2–3 measurable objectives and how each will be evaluated. Targets may be preliminary.":
-            "Three measurable objectives mapped to demo acceptance and one live Canvas checklist. Targets are preliminary.",
+            "Three objectives mapped to demo acceptance and one live Canvas checklist.",
         "Objective 1: [intended outcome]":
             "Objective 1: Triage and route asks to the right TA / help mode",
         "Objective 2: [intended outcome]":
@@ -344,43 +354,43 @@ def fill_docx(figures: dict[str, Path]) -> Path:
             "Objective 3: Enable a Canvas-first campus deploy path",
 
         "Show the proposed architecture or research design. Clearly label planned components and relationships.":
-            "Clients → FastAPI → local Ask Triage / Help Coach / stamped Study Agent → SQL + Canvas LTI/REST.",
+            "Clients → FastAPI → Ask Triage / Help Coach / stamped Study Agent → SQL + Canvas LTI.",
         "Software: planned architecture, modules, data flow, database/APIs, UI/UX, security.":
-            "Software: React SPA; FastAPI (requests / ta / knowledge / lti / help-room); SQLite→Postgres; WebSockets; Quiet-ask privacy.",
+            "Software: React SPA; FastAPI; SQLite→Postgres; WebSockets; Quiet-ask privacy.",
         "Research: questions/hypotheses, variables, setup, algorithms/models, datasets.":
-            "Models: MiniLM + LogisticRegression + RAG joblibs; cluster cosine 0.72; Strategist client-side until live grades.",
+            "Models: MiniLM + LogReg + RAG joblibs; Strategist client-side until live grades.",
 
         "State the key requirements, planned phases, and dependencies needed to carry out the project.":
             "Demo path is implemented; live Canvas is gated on IT credentials.",
         "Key requirements: [functional/non-functional or research requirements]":
-            "Key requirements: Multi-role auth; Ask Triage; TA queue + Help Coach; KB stamp; Rooms; LTI/REST; WebSockets.",
+            "Key requirements: Multi-role auth; Ask Triage; TA queue + Help Coach; KB stamp; Rooms; LTI/REST.",
         "Planned phases: [3–5 development, setup, data, or experimentation steps]":
-            "Planned phases: (1) triage+roles (2) TA/KB gate (3) Rooms+demo Canvas (4) LTI live (5) Postgres + Strategist grades.",
+            "Planned phases: (1) triage+roles (2) TA/KB gate (3) Rooms+demo (4) LTI live (5) Postgres/grades.",
         "Dependencies: [data, hardware, tools, access, client input, approvals]":
             "Dependencies: Canvas LTI key + API token; optional Entra; HTTPS; one AUI test course.",
 
         "Summarize the planned technical approach and why it fits the problem. Prefer a flowchart to final-output screenshots.":
-            "Local NLP + professor gate fits campus integrity better than unconstrained LLM tutoring. Pipeline figure at right.",
+            "Local NLP + professor gate fits campus integrity better than open LLM tutoring.",
         "Proposed methodology: [Agile / iterative prototyping / experimental design / simulation / other]":
-            "Proposed methodology: Iterative prototyping with CI (backend + officehours-app) and role walkthrough demos.",
+            "Proposed methodology: Iterative prototyping with CI (backend + officehours-app).",
         "Technologies / methods: [languages, frameworks, algorithms, models, protocols, hardware]":
-            "Technologies / methods: FastAPI, React/Vite/Tailwind, SQLAlchemy, sentence-transformers (all-MiniLM-L6-v2), scikit-learn, WebSockets, Canvas LTI 1.3 + REST.",
+            "Technologies / methods: FastAPI, React/Vite/Tailwind, SQLAlchemy, MiniLM, scikit-learn, WebSockets, LTI 1.3.",
         "Data / resources: [dataset, participants, APIs, cloud, lab equipment, computing resources]":
-            "Data / resources: Silver/synthetic ask labels; gold-label TA lab; demo Canvas mirror; live course modules when IT enables.",
+            "Data / resources: Silver/synthetic asks; gold-label TA lab; demo Canvas mirror; live modules when enabled.",
         "Reproducibility / management: [Git, documentation, experiment tracking, versioning]":
-            "Reproducibility / management: GitHub CI; docs/ (architecture, NLP, ops); train scripts; reports/; OFFICEHOURS_DEMO toggle.",
+            "Reproducibility / management: GitHub CI; docs/; train scripts; reports/; OFFICEHOURS_DEMO toggle.",
 
         "Explain how the project will be evaluated after implementation. Specify methods, baselines, and evidence to collect; do not report final results.":
-            "Mix automated tests, holdouts, a gold-label TA lab, role walkthroughs, and a live Canvas checklist. Do not report final campus results here.",
+            "Tests, holdouts, gold-label lab, role walkthroughs, live Canvas checklist — no final campus claims.",
         "Validation approach: [tests, experiment, benchmark, usability, security, statistical analysis]":
-            "Validation approach: pytest; triage holdouts; gold-label TA lab; student/TA/professor walkthroughs; live Canvas checklist.",
+            "Validation approach: pytest; holdouts; gold-label TA lab; role walkthroughs; live Canvas checklist.",
         "Comparison / reference: [baseline, prior work, requirement, control, or acceptance criterion]":
-            "Comparison / reference: LMS inbox / forum baseline. Acceptance = usable demo triage + 0 unauthorized Study Agent quotes + one live course checklist.",
+            "Comparison / reference: LMS inbox/forum baseline; demo triage + 0 unauthorized quotes + one live course.",
         "Planned metrics: [accuracy, F1, latency, reliability, energy, user score, significance, etc.]":
-            "Planned metrics: Category/routing quality (cite carefully); KB-gate refusal; LTI launch success; triage-path latency; role-task completion.",
+            "Planned metrics: Routing quality (cite carefully); KB refusal; LTI success; latency; task completion.",
 
         "Planned deliverables: [prototype/system/model/dataset/experiment/repository/documentation/report/paper/demo]":
-            "Planned deliverables: Multi-role prototype; Ask Triage joblibs; architecture diagrams; demo script; live Canvas checklist; Capstone report.",
+            "Planned deliverables: Prototype; Ask Triage joblibs; diagrams; demo script; live checklist; Capstone report.",
         "Milestone 1: [Problem definition / requirements / literature]   →   [date]":
             "Milestone 1: Problem definition / requirements / literature   →   Sep 2026",
         "Milestone 2: [Design / development / experimentation]   →   [date]":
@@ -389,33 +399,33 @@ def fill_docx(figures: dict[str, Path]) -> Path:
             "Milestone 3: Evaluation / refinement / finalization   →   Capstone deadline",
 
         "Show that the proposal is realistic within the Capstone timeframe, available resources, and technical constraints.":
-            "Feasible as staged demo→live. Main risk is campus credential latency, not missing application code.",
+            "Feasible as staged demo→live. Main risk is campus credential latency.",
         "Required resources: [hardware, software, datasets, APIs, cloud, lab access, budget, external expertise]":
-            "Required resources: Dev laptop; GitHub; SQLite→Postgres host; Canvas LTI key/token; optional Entra; no GPU required for MiniLM demo.",
+            "Required resources: Laptop; GitHub; SQLite→Postgres; Canvas LTI/token; optional Entra; no GPU for MiniLM.",
         "Main feasibility concern / risk: [data, hardware, integration, approval, performance, schedule, cost]":
-            "Main feasibility concern / risk: IT delay on LTI / API / Entra; Strategist grades blocked until a live grade token.",
+            "Main feasibility concern / risk: IT delay on LTI/API/Entra; Strategist grades blocked until a live grade token.",
         "Mitigation / fallback: [alternative dataset, simplified scope, backup method, staged integration, contingency]":
-            "Mitigation / fallback: Local Canvas mirror for showcase; one-course live stage; Postgres at go-live; Strategist stays client-side until grades API.",
+            "Mitigation / fallback: Demo Canvas mirror; one-course live stage; Postgres at go-live; Strategist stays client-side.",
 
         "Identify relevant considerations early and state how they will be addressed during development or research. Justify “Not applicable” where needed.":
-            "Privacy, security, and responsible AI are in scope for a campus help product.",
+            "Privacy, security, and responsible AI are in scope for campus help.",
         "Privacy / human participants: [consent, data minimization, storage/access, retention, anonymization]":
-            "Privacy / human participants: Quiet asks hide identity from staff; course-scoped data; minimize PII in logs; term-aligned retention.",
+            "Privacy / human participants: Quiet asks; course-scoped data; minimize PII; role auth; term retention.",
         "Cybersecurity / legal / standards: [anticipated threats, safeguards, licenses, sector rules, technical standards]":
-            "Cybersecurity / legal / standards: Auth + CORS; HTTPS for live; no portal scraping; Canvas LTI 1.3; least-privilege API tokens.",
+            "Cybersecurity / legal / standards: Auth+CORS; HTTPS; no scraping; Canvas LTI 1.3; least-privilege tokens.",
         "AI use plan: [where AI tools/models may be used and how outputs will be verified, documented, attributed, and supervised]":
-            "AI use plan: Local Ask Triage + Help Coach; Study Agent quotes only professor-stamped KB; OFFICEHOURS_ALLOW_EXTERNAL_LLM=false; refuse weak KB.",
+            "AI use plan: Local Ask Triage + Help Coach; Study Agent quotes stamped KB only; external LLM off.",
         "AI system risks if applicable: [bias, hallucination, provenance, explainability, failure modes, misuse]":
-            "AI system risks if applicable: Label bias; triage miss → human TA path; hallucination mitigated by stamp gate; course auth limits misuse.",
+            "AI system risks if applicable: Label bias; triage miss→TA; stamp gate vs hallucination; course-auth limits misuse.",
 
         "Describe what the project is expected to contribute if successfully completed. Avoid conclusion language or unverified performance claims.":
-            "Expected contribution if completed successfully—without unverified campus performance claims.",
+            "Expected contribution if successful — no unverified campus performance claims.",
         "Expected technical / research contribution: [What the project aims to add, improve, test, or demonstrate]":
-            "Expected technical / research contribution: Demonstrate gated local-NLP office-hours triage with dual-TA staffing and a professor-controlled Study Agent.",
+            "Expected technical / research contribution: Gated local-NLP office-hours triage with dual-TA staffing and stamped Study Agent.",
         "Potential value / impact: [Why it may matter for users, industry, research, society, or deployment]":
-            "Potential value / impact: Safer faculty-controlled AI help for campus office hours; transferable pattern for other LMS schools.",
+            "Potential value / impact: Safer faculty-controlled AI help; transferable to other LMS schools.",
         "Expected limitations / boundaries: [What the current Capstone will not attempt to solve]":
-            "Expected limitations / boundaries: Not an SIS replacement; not live-grade Strategist yet; not multilingual ChatGPT-style tutoring.",
+            "Expected limitations / boundaries: Not SIS; not live-grade Strategist yet; not multilingual ChatGPT tutoring.",
 
         "[1] Problem / need source.   [2] Key related work.   [3] Method, standard, or dataset.   Use only the most relevant sources.":
             "[1] AUI finals-week office-hours need.   [2] Piazza / Ed Q&amp;A.   [3] Canvas LTI 1.3; MiniLM; scikit-learn.",
@@ -429,14 +439,14 @@ def fill_docx(figures: dict[str, Path]) -> Path:
             xml = xml.replace(old, new)
 
     metrics = [
-        "Category / routing quality (holdout + demo walkthrough)",
-        "Refuse unapproved or missing KB; stamp required before quotes",
-        "LTI launch + module sync on one AUI test course when IT enables",
+        "Routing quality (holdout + demo)",
+        "Refuse unapproved / missing KB",
+        "LTI + module sync on one test course",
     ]
     targets = [
-        "Usable triage in demo; cite holdout metrics carefully",
-        "0 unauthorized Study Agent quotes from pending KB",
-        "Live checklist pass on one AUI test course",
+        "Usable demo triage; cite holdouts carefully",
+        "0 unauthorized Study Agent quotes",
+        "Live checklist pass on one AUI course",
     ]
     for m in metrics:
         xml = xml.replace("[e.g., F1, latency, usability]", m, 1)
@@ -507,9 +517,9 @@ def fill_docx(figures: dict[str, Path]) -> Path:
 
     xml, n = re.subn(r'w:sz w:val="(\d+)"', shrink_sz, xml)
     print("font shrinks", n)
-    xml = xml.replace('w:after="80"', 'w:after="16"')
-    xml = xml.replace('w:bottom="432"', 'w:bottom="200"')
-    xml = xml.replace("</w:tbl><w:p/></w:tc></w:tr></w:tbl><w:sectPr", "</w:tbl></w:tc></w:tr></w:tbl><w:sectPr")
+    # Match the proven 1-page fill: tighten 80-twip gaps only, do not
+    # change page bottom margin (that paginates the 2-column table).
+    xml = xml.replace('w:after="80"', 'w:after="20"')
     xml_path.write_text(xml, encoding="utf-8")
     out = OUT_DIR / "OfficeHours_AI_Capstone_Poster.docx"
     with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED) as z:
@@ -527,19 +537,96 @@ def fill_docx(figures: dict[str, Path]) -> Path:
     return out
 
 
+def inject_slots_into_existing(docx: Path, figures: dict[str, Path], sizes: dict[str, tuple[float, float]]) -> Path:
+    """Replace already-embedded figure PNGs and their Word extents."""
+    work = Path("/tmp/poster_inject")
+    if work.exists():
+        shutil.rmtree(work)
+    work.mkdir()
+    with zipfile.ZipFile(docx) as z:
+        z.extractall(work)
+    media = work / "word" / "media"
+    mapping = [
+        ("image3.png", figures["gap"], sizes["gap"]),
+        ("image4.png", figures["arch"], sizes["arch"]),
+        ("image5.png", figures["road"], sizes["road"]),
+        ("image6.png", figures["pipe"], sizes["pipe"]),
+        ("image7.png", figures["eval"], sizes["eval"]),
+    ]
+    heights: list[float] = []
+    for fname, src, (wi, hi) in mapping:
+        shutil.copyfile(src, media / fname)
+        heights.append(hi)
+    xml_path = work / "word" / "document.xml"
+    xml = xml_path.read_text(encoding="utf-8")
+    w_emu = inches_emu(6.20)
+    h_iter = iter(int(h * 914400) for h in heights)
+
+    def patch_extent(m):
+        cx = int(m.group(2))
+        if cx < 4_000_000:
+            return m.group(0)
+        try:
+            cy = next(h_iter)
+        except StopIteration:
+            return m.group(0)
+        return f"{m.group(1)}{w_emu}{m.group(3)}{cy}{m.group(5)}"
+
+    xml = re.sub(r'(<wp:extent cx=")(\d+)(" cy=")(\d+)("/>)', patch_extent, xml)
+    h_iter = iter(int(h * 914400) for h in heights)
+    xml = re.sub(r'(<a:ext cx=")\d+(" cy=")\d+("/>)', lambda m: (
+        m.group(0) if int(re.search(r"cx=\"(\d+)\"", m.group(0)).group(1)) < 4_000_000
+        else f'{m.group(1)}{w_emu}{m.group(2)}{next(h_iter)}{m.group(3)}'
+    ), xml)
+    xml_path.write_text(xml, encoding="utf-8")
+    out = OUT_DIR / "OfficeHours_AI_Capstone_Poster.docx"
+    with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED) as z:
+        for f in sorted(work.rglob("*")):
+            if f.is_file():
+                z.write(f, f.relative_to(work).as_posix())
+    return out
+
+
 def main() -> None:
+    import importlib.util
+    import subprocess
+
+    slot_py = OUT_DIR / "poster_visuals" / "build_slot_visuals.py"
+    spec = importlib.util.spec_from_file_location("build_slot_visuals", slot_py)
+    slot_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(slot_mod)
+    SLOT_IN = slot_mod.SLOT_IN
+    slots = slot_mod.build_all()
     figures = {
-        "gap": fig_gap(),
-        "arch": fig_architecture(),
-        "road": fig_roadmap(),
-        "pipe": fig_pipeline(),
-        "eval": fig_evaluation(),
+        "gap": slots["gap"],
+        "arch": slots["arch"],
+        "road": slots["road"],
+        "pipe": slots["pipe"],
+        "eval": slots["eval"],
         "qr": fig_qr(),
     }
-    out = fill_docx(figures)
+    # Keep the official 1-page two-column XML (text already filled on this
+    # branch). Replacing figures by rebuilding from the template can paginate
+    # the table; injecting PNGs + extents does not.
+    base = OUT_DIR / "OfficeHours_AI_Capstone_Poster.docx"
+    out = inject_slots_into_existing(base, figures, SLOT_IN)
     print("Wrote", out)
     for k, p in figures.items():
         print(k, p, Image.open(p).size)
+
+    pdf_dir = Path("/tmp/poster_export")
+    pdf_dir.mkdir(exist_ok=True)
+    subprocess.check_call(
+        ["soffice", "--headless", "--convert-to", "pdf", "--outdir", str(pdf_dir), str(out)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
+    )
+    pdf = pdf_dir / "OfficeHours_AI_Capstone_Poster.pdf"
+    info = subprocess.check_output(["pdfinfo", str(pdf)], text=True)
+    print(info)
+    if "Pages:           1" not in info:
+        raise SystemExit("poster is not 1 page")
+    shutil.copyfile(pdf, OUT_DIR / "OfficeHours_AI_Capstone_Poster.pdf")
 
 
 if __name__ == "__main__":
