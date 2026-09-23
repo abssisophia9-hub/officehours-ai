@@ -20,7 +20,7 @@
 | [`canvas_live_test.md`](canvas_live_test.md) | Staged LTI live-test runbook (env + developer key + checklist) |
 | [`SECURITY.md`](SECURITY.md) | Backend security scorecard + production checklist |
 | [`presentations/`](presentations/) | Supervisor proposal — vision + three live demos |
-| [`presentations/fyp_infographic/`](presentations/fyp_infographic/) | **24×36 FYP infographic poster** (print PDF + PNG) |
+| [`presentations/fyp_infographic/`](presentations/fyp_infographic/) | **FYP poster** — official 14.5×19 catalog sheet + 24×36 booth print |
 | [`research/office_hours_public_sources.md`](research/office_hours_public_sources.md) | Public uni OH research → gold *themes* only |
 | [`proposal.md`](proposal.md) | Original FYP proposal |
 | [`CSC_Capstone_Project_Proposal_Sophia_A_FINAL.docx`](CSC_Capstone_Project_Proposal_Sophia_A_FINAL.docx) | Approved CSC EGR 4402 proposal (Word) |

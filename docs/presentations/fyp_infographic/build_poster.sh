@@ -3,7 +3,8 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 cd "$HERE"
 PY="${HERE}/../../../backend/venv/bin/python"
-"$PY" build_figures.py
+"$PY" fill_catalog_poster.py
+
 HTML="file://${HERE}/poster.html"
 OUT_PDF="${HERE}/OfficeHours_AI_FYP_Poster.pdf"
 OUT_PNG="${HERE}/OfficeHours_AI_FYP_Poster.png"
@@ -11,33 +12,16 @@ UD="/tmp/chrome-fyp-poster"
 rm -rf "$UD"
 mkdir -p "$UD"
 timeout 40s google-chrome \
-  --headless=new \
-  --disable-gpu \
-  --no-first-run \
-  --no-default-browser-check \
-  --user-data-dir="$UD" \
-  --hide-scrollbars \
-  --no-pdf-header-footer \
-  --print-to-pdf="$OUT_PDF" \
-  "$HTML"
+  --headless=new --disable-gpu --no-first-run --no-default-browser-check \
+  --user-data-dir="$UD" --hide-scrollbars --no-pdf-header-footer \
+  --print-to-pdf="$OUT_PDF" "$HTML"
 timeout 45s google-chrome \
-  --headless=new \
-  --disable-gpu \
-  --no-first-run \
-  --no-default-browser-check \
-  --user-data-dir="$UD" \
-  --hide-scrollbars \
-  --window-size=2304,3456 \
-  --force-device-scale-factor=1 \
-  --screenshot="$OUT_PNG" \
-  "$HTML"
-ls -lh "$OUT_PDF" "$OUT_PNG"
-echo "WORD_COUNT $(python3 - <<'PY'
-import re, pathlib
-html = pathlib.Path("poster.html").read_text()
-text = re.sub(r"<style[\s\S]*?</style>", " ", html)
-text = re.sub(r"<[^>]+>", " ", text)
-words = re.findall(r"[A-Za-z0-9&·×/%.-]+", text)
-print(len(words))
-PY
-)"
+  --headless=new --disable-gpu --no-first-run --no-default-browser-check \
+  --user-data-dir="$UD" --hide-scrollbars \
+  --window-size=2304,3456 --force-device-scale-factor=1 \
+  --screenshot="$OUT_PNG" "$HTML"
+pdfinfo "$OUT_PDF" | rg -i 'Pages|Page size' || true
+pdfinfo "${HERE}/OfficeHours_AI_Catalog_Poster.pdf" | rg -i 'Pages|Page size' || true
+echo "ports leftover:"
+rg -n ':[0-9]{3,5}' poster.html fill_catalog_poster.py build_catalog_figures.py || echo "none"
+ls -lh "$OUT_PDF" "$OUT_PNG" "${HERE}/OfficeHours_AI_Catalog_Poster".{docx,pdf}

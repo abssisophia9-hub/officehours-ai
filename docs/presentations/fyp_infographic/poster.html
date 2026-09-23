@@ -2,239 +2,231 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>OfficeHours AI — FYP poster</title>
+<title>OfficeHours AI — SSE Capstone Poster</title>
 <style>
   @font-face { font-family: Inter; src: url("file:///usr/share/fonts/truetype/macos/Inter-Regular.ttf"); font-weight: 400; }
   @font-face { font-family: Inter; src: url("file:///usr/share/fonts/truetype/macos/Inter-Medium.ttf"); font-weight: 500; }
-  @font-face { font-family: Inter; src: url("file:///usr/share/fonts/truetype/macos/Inter-SemiBold.ttf"); font-weight: 600; }
   @font-face { font-family: Inter; src: url("file:///usr/share/fonts/truetype/macos/Inter-Bold.ttf"); font-weight: 700; }
   @page { size: 24in 36in; margin: 0; }
   * { box-sizing: border-box; }
   html, body {
-    width: 24in;
-    height: 36in;
-    margin: 0;
-    padding: 0;
-    background: #F6F3EC;
-    color: #1C1917;
+    width: 24in; height: 36in; margin: 0; padding: 0;
+    background: #fff; color: #1B1F1E;
     font-family: Inter, "Helvetica Neue", Arial, sans-serif;
     overflow: hidden;
   }
   body {
-    padding: 0.38in 0.46in 0.28in;
+    padding: 0.32in 0.38in 0.22in;
     display: grid;
-    grid-template-rows: 2.35in 6.15in 7.55in 4.05in 1.85in 7.35in 2.35in 0.55in;
+    grid-template-rows: 2.55in 1fr 0.72in;
     gap: 0.12in;
   }
   header {
     display: grid;
-    grid-template-columns: 1fr 3.5in;
-    gap: 0.2in;
-    align-items: end;
-    border-bottom: 0.026in solid #07552F;
+    grid-template-columns: 1fr 1.35in 2.35in;
+    gap: 0.18in;
+    align-items: start;
+    border-bottom: 0.04in solid #006633;
     padding-bottom: 0.10in;
   }
-  .brand {
-    font-size: 15pt;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: #07552F;
-    font-weight: 700;
-    margin: 0 0 0.04in;
-  }
   h1 {
-    font-size: 72pt;
-    line-height: 0.96;
-    margin: 0;
-    color: #07552F;
+    margin: 0 0 0.08in;
+    font-size: 34pt;
+    line-height: 1.12;
+    color: #004B2B;
     font-weight: 800;
-    letter-spacing: 0.012em;
   }
-  h1 .ai { letter-spacing: 0.06em; padding-left: 0.08em; }
-  .tag {
-    font-size: 22pt;
-    margin: 0.06in 0 0;
-    font-weight: 500;
-    max-width: 16.4in;
-    line-height: 1.22;
+  .meta { font-size: 13pt; line-height: 1.4; color: #3E4946; }
+  .meta strong { color: #1B1F1E; }
+  .qr { text-align: center; }
+  .qr img { width: 1.15in; height: 1.15in; display: block; margin: 0 auto 0.04in; }
+  .qr small { font-size: 9pt; color: #5C6764; }
+  .brand { text-align: center; }
+  .brand img { width: 2.15in; height: auto; }
+  .brand p { margin: 0.05in 0 0; font-size: 10pt; font-weight: 700; color: #004B2B; letter-spacing: 0.04em; line-height: 1.25; }
+  .cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.22in;
+    min-height: 0;
   }
-  .meta { text-align: right; font-size: 15pt; line-height: 1.36; color: #44403C; }
-  .meta strong { display: block; color: #07552F; font-size: 19pt; margin-bottom: 0.02in; }
+  .col { display: flex; flex-direction: column; justify-content: space-between; gap: 0.08in; min-height: 0; height: 100%; }
+  section { min-height: 0; }
+  section.visual { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
   h2 {
-    font-size: 16pt;
-    margin: 0 0 0.05in;
-    color: #07552F;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  p, li { font-size: 18pt; line-height: 1.28; margin: 0; }
-  ul { margin: 0; padding-left: 0.26in; }
-  li + li { margin-top: 0.05in; }
-  .row-2 {
-    display: grid;
-    grid-template-columns: 1.62fr 1fr;
-    gap: 0.16in;
-    min-height: 0;
-  }
-  .card {
-    background: #fff;
-    border: 0.010in solid #C9D8CE;
-    border-radius: 0.09in;
-    padding: 0.09in 0.12in 0.08in;
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-  .card img, .full img { width: 100%; height: auto; display: block; }
-  .grow { flex: 1 1 auto; min-height: 0; object-fit: contain; }
-  .caption { font-size: 13pt; color: #57534E; margin-top: 0.05in; line-height: 1.25; }
-  .results {
-    display: grid;
-    grid-template-columns: 1.55fr 0.85fr;
-    gap: 0.16in;
-    min-height: 0;
-  }
-  .qr-wrap {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    background: #07552F;
-    color: #F6F3EC;
-    border-radius: 0.10in;
-    padding: 0.14in 0.16in;
-    min-height: 0;
-  }
-  .qr-wrap h2 { color: #F6F3EC; }
-  .qr-wrap p { font-size: 15pt; color: #E7F0EA; }
-  .qr-wrap img {
-    width: 2.15in;
-    height: 2.15in;
-    background: #fff;
-    padding: 0.06in;
-    border-radius: 0.06in;
-    align-self: center;
-    margin: 0.08in 0;
-  }
-  .qr-wrap a { color: #F6F3EC; font-size: 13pt; word-break: break-all; }
-  .take { font-size: 22pt; font-weight: 700; color: #F6F3EC; line-height: 1.2; margin: 0.05in 0 0.10in; }
-  footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 0.016in solid #07552F;
-    padding-top: 0.06in;
-    font-size: 13pt;
-    color: #44403C;
-  }
-  .chips { display: flex; gap: 0.07in; flex-wrap: wrap; margin-top: 0.08in; }
-  .chip {
-    background: #D7E8DC;
-    color: #07552F;
+    margin: 0 0 0.06in;
+    background: #006633;
+    color: #fff;
     font-size: 12pt;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.045in 0.08in;
     font-weight: 700;
-    padding: 0.025in 0.08in;
-    border-radius: 0.05in;
   }
-  .bottom {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 0.12in;
-    min-height: 0;
+  p, li { font-size: 12.5pt; line-height: 1.28; margin: 0 0 0.04in; }
+  ul { margin: 0; padding-left: 0.22in; }
+  table { width: 100%; border-collapse: collapse; font-size: 11.5pt; }
+  th, td { border: 1px solid #D9DEDC; padding: 0.04in 0.06in; vertical-align: top; text-align: left; }
+  th { background: #F3F6F4; color: #004B2B; }
+  .fig { width: 100%; display: block; margin-top: 0.05in; flex: 1 1 auto; object-fit: contain; min-height: 0; }
+  footer {
+    border-top: 0.04in solid #006633;
   }
-  .bottom p { font-size: 16pt; line-height: 1.3; }
-  .kpis { width: 100%; height: 100%; object-fit: contain; display: block; }
+  footer h2 { margin-top: 0.08in; }
+  footer p { font-size: 12pt; padding: 0.04in 0.02in 0; }
 </style>
 </head>
 <body>
   <header>
     <div>
-      <p class="brand">Al Akhawayn University &nbsp;·&nbsp; SSE &nbsp;·&nbsp; CSC capstone</p>
-      <h1>OfficeHours<span class="ai">&nbsp;AI</span></h1>
-      <p class="tag">One Canvas-linked help desk. Three seats. A professor stamp before any agent may quote.</p>
+      <h1>OfficeHours&nbsp;AI: Campus Help Desk that Triages Asks and Quotes Only Professor-Stamped Answers</h1>
+      <p class="meta">
+        <strong>Student Name(s):</strong> Sophia Abssi &nbsp;|&nbsp;
+        <strong>Degree:</strong> B.S. AI and Robotization (SSE) &nbsp;|&nbsp;
+        <strong>Project Type:</strong> ☑ Software Development &nbsp; ☐ Research-Based<br />
+        <strong>Supervisor:</strong> Dr. Oumaima Hourrane &nbsp;|&nbsp;
+        <strong>Co-Supervisor / Client:</strong> AUI Canvas LMS &nbsp;|&nbsp;
+        <strong>Stage:</strong> Early Proposal &nbsp;|&nbsp;
+        <strong>Date:</strong> Sep 2026
+      </p>
     </div>
-    <div class="meta">
-      <strong>Sophia Abssi &nbsp;·&nbsp; 117027</strong>
-      B.S. AI and Robotization<br />
-      Supervisor: Dr. Oumaima Hourrane<br />
-      School of Science and Engineering
+    <div class="qr">
+      <img src="figures/qr.png" alt="Repository QR" />
+      <small>Repository<br />github.com/abssisophia9-hub/officehours-ai</small>
+    </div>
+    <div class="brand">
+      <img src="figures/aui_logo.png" alt="Al Akhawayn University" />
+      <p>SCHOOL OF SCIENCE &amp; ENGINEERING<br />CAPSTONE PROJECT PROPOSAL / POSTER</p>
     </div>
   </header>
 
-  <section class="row-2">
-    <div class="card">
-      <h2>The gap</h2>
-      <img class="grow" src="figures/problem.png" alt="Repeat staff load versus quiet-student channel barrier" />
-      <p class="caption">Office hours fail two ways: staff hear the same stuck point on five channels; quiet students will not put a name on a public one.</p>
+  <div class="cols">
+    <div class="col">
+      <section>
+        <h2>Project Overview</h2>
+        <p>Office hours break two ways: staff hear the same stuck point five times, and quiet students will not put a name on a public channel. OfficeHours is one Canvas-linked desk that triages the ask and lets a professor stamp the only text an agent may quote.</p>
+        <ul>
+          <li><strong>Context / application area:</strong> AUI courses at peak demand — students, TAs, and professors.</li>
+          <li><strong>Proposed idea:</strong> One web app — Quiet ask, Ask Triage, Help Coach, stamped Study Agent, Rooms, Canvas login.</li>
+          <li><strong>Expected contribution:</strong> Less repeat load, a private way to ask, and faculty-controlled AI answers.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Problem Definition &amp; Relevance</h2>
+        <p>Cut repeat load and ask friction without letting a chatbot invent the syllabus.</p>
+        <ul>
+          <li><strong>Problem statement / research question:</strong> How can campus office hours route asks and still keep professors as the gate on AI answers?</li>
+          <li><strong>Stakeholders / intended users:</strong> Students (Quiet ask, Rooms, Study Agent); TAs (desk, Help Coach); Professors (clusters, stamp, Canvas).</li>
+          <li><strong>Evidence, scope &amp; constraints:</strong> Local models by default; live Canvas needs campus credentials; no portal scrape; no open chatbot.</li>
+        </ul>
+      </section>
+      <section class="visual">
+        <h2>Related Work, Gap &amp; Proposed Innovation</h2>
+        <p>Inbox, Piazza/Ed, and tutoring chatbots do not combine a private ask, a triaged TA queue, and a stamp before student-facing AI.</p>
+        <ul>
+          <li><strong>Existing work / alternatives:</strong> LMS inbox; Piazza/Ed; FAQ bots; unconstrained campus chatbots.</li>
+          <li><strong>Gap / unmet need:</strong> No Quiet receipt + local triage + dual-TA match + professor stamp before an agent quotes.</li>
+          <li><strong>Proposed innovation:</strong> Those four capabilities in one Canvas-linked product.</li>
+        </ul>
+        <img class="fig" src="figures/SLOT_gap.png" alt="Gap map versus inbox, Piazza, and campus chatbots" />
+      </section>
+      <section>
+        <h2>Objectives &amp; Proposed Success Criteria</h2>
+        <p>Three objectives a recruiter can check on the demo and one live Canvas checklist.</p>
+        <table>
+          <thead><tr><th>Objective</th><th>Planned Metric / Evidence</th><th>Target / Criterion</th></tr></thead>
+          <tbody>
+            <tr><td>Route the ask to the right TA / help mode</td><td>Holdout quality + live demo walkthrough</td><td>Usable demo triage; cite lab scores as lab, not campus</td></tr>
+            <tr><td>Keep Study Agent answers professor-gated</td><td>Refuse unstamped or weakly matched notes</td><td>0 unauthorized Study Agent quotes</td></tr>
+            <tr><td>Open a Canvas-first campus deploy path</td><td>Campus login + module sync on one test course</td><td>Live checklist pass on one AUI course</td></tr>
+          </tbody>
+        </table>
+      </section>
+      <section class="visual">
+        <h2>Proposed System / Research Design</h2>
+        <p>Students, TAs, and professors share one web app. The API owns the queue and stamps. Canvas is the campus door.</p>
+        <ul>
+          <li><strong>Software:</strong> React web app; FastAPI; SQLite now, Postgres when hosted; live queue; Quiet-ask privacy.</li>
+          <li><strong>Models:</strong> MiniLM vectors, logistic classifiers, cosine lookup, planner tables. No hosted chatbot on the user path.</li>
+        </ul>
+        <img class="fig" src="figures/SLOT_architecture.png" alt="One web app, campus API, Canvas, and five product modules" />
+      </section>
+      <section class="visual">
+        <h2>Requirements &amp; Initial Work Plan</h2>
+        <p>The demo path runs today. Live Canvas waits on campus credentials.</p>
+        <ul>
+          <li><strong>Key requirements:</strong> Roles; Ask Triage; TA desk + Help Coach; professor stamp; Rooms; Canvas login and sync.</li>
+          <li><strong>Planned phases:</strong> (1) roles + triage (2) TA / stamp (3) Rooms + demo (4) live Canvas (5) hosted database.</li>
+          <li><strong>Dependencies:</strong> Canvas launch key, API token, HTTPS, one AUI test course.</li>
+        </ul>
+        <img class="fig" src="figures/SLOT_roadmap.png" alt="Five-phase work plan" />
+      </section>
     </div>
-    <div class="card">
-      <h2>What this product is</h2>
-      <ul>
-        <li>A triaged ticket — not a campus chatbot and not three archived frontends.</li>
-        <li>A Quiet receipt: the ask is tracked; classmates never see the name.</li>
-        <li>A professor stamp: the Study Agent quotes approved text only, or it refuses.</li>
-      </ul>
-      <p style="margin-top:0.10in;">Why it matters: finals week repeats work, extraverted channels leave people silent, and a hosted model can invent a syllabus. This desk keeps a human in the reply and a stamp on anything an agent may say.</p>
-      <div class="chips">
-        <span class="chip">Ask Triage</span>
-        <span class="chip">Help Coach</span>
-        <span class="chip">KB stamp</span>
-        <span class="chip">Study Agent</span>
-        <span class="chip">Rooms</span>
-      </div>
-    </div>
-  </section>
 
-  <section class="card">
-    <h2>Architecture &nbsp;·&nbsp; one app, one API, local tools</h2>
-    <img class="grow" src="figures/architecture.png" alt="Layered architecture and three seats" />
-    <p class="caption">React 19 + Vite talk to FastAPI over REST and /ws. Auth is JWT or Canvas LTI 1.3. Demo uses SQLite; a host can set DATABASE_URL to Postgres. The Claude path exists and stays off (OFFICEHOURS_ALLOW_EXTERNAL_LLM=false) on the path users run.</p>
-  </section>
-
-  <section class="card">
-    <h2>The loop we defend</h2>
-    <img class="grow" src="figures/loop.png" alt="Quiet ask to Ask Triage to Help Coach to professor stamp to Study Agent" />
-    <p class="caption">Ask Triage is Analyzer + Matcher + Synthesizer. Cluster if MiniLM cosine ≥ 0.72. Help Coach stays on the TA screen. The stamp is the knowledge gate. The Study Agent searches stamps and refuses below 0.42.</p>
-  </section>
-
-  <img class="kpis" src="figures/kpis.png" alt="Four laboratory KPI numbers" />
-
-  <section class="results">
-    <div class="card">
-      <h2>Laboratory evaluation</h2>
-      <img class="grow" src="figures/eval.png" alt="Accuracy and macro-F1 for Analyzer and Matcher" />
-      <p class="caption">Gold n=80 is curated lab labels, not a live AUI section. Analyzer is 10-way; Matcher is 4-way TA names. Do not call these campus-quality human_gold.</p>
+    <div class="col">
+      <section class="visual">
+        <h2>Methodology / Proposed Technical Approach</h2>
+        <p>Local models plus a professor stamp fit campus integrity better than an open tutoring bot.</p>
+        <ul>
+          <li><strong>Proposed methodology:</strong> Iterative product build, automated tests, and three-seat demos.</li>
+          <li><strong>Technologies / methods:</strong> React, FastAPI, MiniLM, scikit-learn, Canvas LTI 1.3.</li>
+          <li><strong>Data / resources:</strong> Synthetic and silver asks; curated gold file; local Canvas mirror until live modules.</li>
+          <li><strong>Reproducibility / management:</strong> GitHub, documentation, train scripts, and evaluation reports.</li>
+        </ul>
+        <img class="fig" src="figures/SLOT_pipeline.png" alt="Quiet ask to Ask Triage to Help Coach to stamp to Study Agent" />
+      </section>
+      <section class="visual">
+        <h2>Planned Evaluation &amp; Validation</h2>
+        <p>Lab checks, a gold-label file, three-seat walkthroughs, and a live Canvas checklist. No campus-quality claim here.</p>
+        <ul>
+          <li><strong>Validation approach:</strong> Automated tests; holdouts; gold-label lab; student / TA / professor walkthrough; live checklist.</li>
+          <li><strong>Comparison / reference:</strong> Inbox / forum baseline. Accept if demo triage works, the agent never quotes unstamped text, and one course can launch.</li>
+          <li><strong>Planned metrics:</strong> Lab accuracy / F1 (honesty table); stamp refusal; Canvas launch success; walkthrough completion.</li>
+        </ul>
+        <img class="fig" src="figures/SLOT_evaluation.png" alt="Laboratory accuracy and macro-F1" />
+      </section>
+      <section>
+        <h2>Planned Deliverables &amp; Project Timeline</h2>
+        <ul>
+          <li><strong>Planned deliverables:</strong> Running product; trained models; diagrams; demo script; live checklist; Capstone report.</li>
+          <li><strong>Milestone 1:</strong> Problem definition / requirements / literature → Sep 2026</li>
+          <li><strong>Milestone 2:</strong> Design / development / experimentation → Fall 2026</li>
+          <li><strong>Milestone 3:</strong> Evaluation / refinement / finalization → Capstone deadline</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Feasibility, Resources &amp; Risks</h2>
+        <p>Feasible as a demo now and live when credentials arrive. The risk is campus keys, not missing code.</p>
+        <ul>
+          <li><strong>Required resources:</strong> Laptop, GitHub, SQLite then Postgres, Canvas key and token. No GPU required for the demo.</li>
+          <li><strong>Main feasibility concern / risk:</strong> IT delay on the Canvas launch key and API token.</li>
+          <li><strong>Mitigation / fallback:</strong> Local Canvas mirror for showcase; one-course live stage; Postgres at go-live.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Ethics, Privacy, Security &amp; Responsible AI</h2>
+        <p>Privacy, security, and responsible AI are in scope for a campus help product.</p>
+        <ul>
+          <li><strong>Privacy / human participants:</strong> Quiet asks hide the name from classmates; course-scoped data; minimize identifiers.</li>
+          <li><strong>Cybersecurity / legal / standards:</strong> Role login; HTTPS for live; no scrape; Canvas LTI 1.3; least-privilege token.</li>
+          <li><strong>AI use plan:</strong> Local Ask Triage and Help Coach; Study Agent quotes stamped notes only; hosted LLM stays off unless approved.</li>
+          <li><strong>AI system risks if applicable:</strong> Label bias and misses go to a human TA; the stamp blocks an invented syllabus.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Expected Contribution &amp; Potential Impact</h2>
+        <ul>
+          <li><strong>Expected technical / research contribution:</strong> A gated local-NLP office-hours desk with dual-TA routing and a professor-controlled agent.</li>
+          <li><strong>Potential value / impact:</strong> Safer campus AI help, and a pattern other LMS schools can copy.</li>
+          <li><strong>Expected limitations / boundaries:</strong> Not a student-information system; not live-grade planning yet; not a multilingual chatbot.</li>
+        </ul>
+      </section>
     </div>
-    <aside class="qr-wrap">
-      <div>
-        <h2>Take-home</h2>
-        <p class="take">Keep office hours human. Make the queue and the approved answers machine-readable.</p>
-        <p>Scan for the repo, the demo script, and this poster source.</p>
-      </div>
-      <img src="figures/qr.png" alt="QR code to the GitHub repository" />
-      <a href="https://github.com/abssisophia9-hub/officehours-ai">github.com/abssisophia9-hub/officehours-ai</a>
-    </aside>
-  </section>
-
-  <section class="bottom">
-    <div class="card">
-      <h2>How we built it</h2>
-      <p>Design-science: one running product, not a paper model. Freeze the loop. Measure synthetic, then silver, then curated gold. Tests lock Quiet identity strip and the classmate-list hide.</p>
-    </div>
-    <div class="card">
-      <h2>Out of scope</h2>
-      <p>Hardware kiosk, NFC or barcode, portal scrape, four backend services, and a hosted LLM on the user path unless the supervisor later opens that gate.</p>
-    </div>
-    <div class="card">
-      <h2>Next, if approved</h2>
-      <p>Live Canvas key and token. Optional OpenAI tool calls behind the same stamp and Quiet rules. A 40-label human_gold pass on one real section.</p>
-    </div>
-  </section>
+  </div>
 
   <footer>
-    <span>Print 24 × 36 in · matte · cream + forest + amber</span>
-    <span>Demo: ./scripts/run_product.sh · password aui-demo</span>
-    <span>OfficeHours AI · FYP 2025–26</span>
+    <h2>Key References</h2>
+    <p>[1] AUI finals-week office-hours load. &nbsp; [2] Piazza / Ed Q&amp;A. &nbsp; [3] Canvas LTI 1.3; MiniLM; scikit-learn.</p>
   </footer>
 </body>
 </html>

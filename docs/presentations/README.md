@@ -2,7 +2,7 @@
 
 | File | Use |
 | --- | --- |
-| [`fyp_infographic/OfficeHours_AI_FYP_Poster.pdf`](fyp_infographic/OfficeHours_AI_FYP_Poster.pdf) | **FYP exhibition poster** — 24×36 in infographic |
+| [`fyp_infographic/OfficeHours_AI_Catalog_Poster.pdf`](fyp_infographic/OfficeHours_AI_Catalog_Poster.pdf) | **SSE catalog poster** — official 14.5×19 template |
 | [`fyp_infographic/README.md`](fyp_infographic/README.md) | Rebuild notes + 60-second pitch |
 
 ---
