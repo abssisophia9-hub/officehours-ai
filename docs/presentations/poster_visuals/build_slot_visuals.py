@@ -33,12 +33,14 @@ ROOT = HERE.parents[2]
 REPORTS = ROOT / "reports" / "final_report"
 DPI = 220
 
+# Stay inside the dashed cell's content box (cell height minus 0.125in
+# padding, width minus 0.14in). Taller images paint over the section text.
 SLOT_IN = {
-    "gap": (6.20, 1.05),
-    "arch": (6.20, 2.20),
-    "road": (6.20, 0.62),
-    "pipe": (6.20, 2.00),
-    "eval": (6.20, 2.05),
+    "gap": (6.55, 0.92),
+    "arch": (6.55, 2.28),
+    "road": (6.55, 0.52),
+    "pipe": (6.55, 2.10),
+    "eval": (6.55, 2.12),
 }
 
 INK = "#1B1F1E"
@@ -81,7 +83,7 @@ def _save(fig: plt.Figure, name: str, inches: tuple[float, float]) -> Path:
     plt.close(fig)
     im = Image.open(path)
     expect = (round(inches[0] * DPI), round(inches[1] * DPI))
-    if im.size != expect:
+    if abs(im.size[0] - expect[0]) > 2 or abs(im.size[1] - expect[1]) > 2:
         raise SystemExit(f"{name} is {im.size}, expected {expect}")
     im.save(FIGS / name, "PNG")
     return path
@@ -130,7 +132,7 @@ def slot_gap() -> Path:
     """OPTIONAL VISUAL — capability gap as a presence matrix, not a score."""
     w, h = SLOT_IN["gap"]
     fig = plt.figure(figsize=(w, h), dpi=DPI)
-    ax = fig.add_axes((0.23, 0.16, 0.74, 0.62))
+    ax = fig.add_axes((0.22, 0.10, 0.76, 0.74))
     rows = ["Local triage model", "Dual-TA matcher", "Stamp before AI quote", "Quiet ask to staff"]
     cols = ["LMS inbox", "Piazza / Ed", "Open chatbot", "OfficeHours"]
     data = [
@@ -161,8 +163,7 @@ def slot_gap() -> Path:
                 color="white" if val else SLATE,
                 fontweight="medium",
             )
-    fig.text(0.02, 0.90, "Gap map  ·  capability present or absent", fontsize=9, fontweight="bold", color=INK)
-    fig.text(0.02, 0.04, "Qualitative comparison. Not a measured performance score.", fontsize=6.5, color=MUTED)
+    fig.text(0.02, 0.90, "Gap map  ·  capability present or absent  ·  not a measured score", fontsize=8.5, fontweight="bold", color=INK)
     return _save(fig, "SLOT_gap.png", SLOT_IN["gap"])
 
 
@@ -172,21 +173,19 @@ def slot_architecture() -> Path:
     w, h = SLOT_IN["arch"]
     ax.text(0.08, h - 0.16, "Containers  ·  one app, local models, Canvas as the external system", fontsize=9, fontweight="bold", color=INK, va="center")
 
-    top_y, top_h = 1.22, 0.70
-    top_w = 1.78
-    gap = 0.32
+    top_y, top_h = 1.32, 0.74
+    top_w = 1.90
+    gap = 0.28
     xs = [0.10 + i * (top_w + gap) for i in range(3)]
     _box(ax, xs[0], top_y, top_w, top_h, "officehours-app", "React  ·  :5180  ·  3 roles", title_pt=8, sub_pt=6.2)
-    _box(ax, xs[1], top_y, top_w, top_h, "FastAPI", "REST · WebSocket · SQL", face=GREEN_SOFT, title_pt=8, sub_pt=6.2)
+    _box(ax, xs[1], top_y, top_w, top_h, "FastAPI", "REST · SQL  ·  SQLite → Postgres", face=GREEN_SOFT, title_pt=8, sub_pt=6.0)
     _box(ax, xs[2], top_y, top_w, top_h, "Canvas LMS", "LTI 1.3  ·  external", face="#F7F7F5", edge=SLATE, title_pt=8, sub_pt=6.2)
     mid_y = top_y + top_h / 2
     _arrow(ax, xs[0] + top_w, mid_y, xs[1], mid_y)
     _arrow(ax, xs[1] + top_w, mid_y, xs[2], mid_y)
-    ax.text(xs[1] + top_w / 2, top_y - 0.08, "SQLite now  →  Postgres at go-live", ha="center", va="top", fontsize=6.2, color=MUTED)
-
     # Ask Triage boundary behind the first three components.
-    bot_y, bot_h = 0.10, 0.82
-    bot_w = 1.08
+    bot_y, bot_h = 0.08, 0.98
+    bot_w = 1.16
     bot_gap = 0.10
     bxs = [0.12 + i * (bot_w + bot_gap) for i in range(5)]
     ax.add_patch(
@@ -235,9 +234,9 @@ def slot_pipeline() -> Path:
         ("5  TA + stamp", "Help Coach · KB", "OUTPUT"),
         ("6  Study Agent", "stamped quotes", "OUTPUT"),
     ]
-    margin, arrow_g = 0.08, 0.14
+    margin, arrow_g = 0.08, 0.12
     bw = (w - 2 * margin - arrow_g * (len(steps) - 1)) / len(steps)
-    by, bh = 0.28, 1.28
+    by, bh = 0.22, 1.42
     xs = [margin + i * (bw + arrow_g) for i in range(len(steps))]
     bands = [("INPUT", 0, 1, "#F4F6F5"), ("PROCESS", 1, 4, GREEN_SOFT), ("OUTPUT", 4, 6, "#F7F7F5")]
     for label, a, b, face in bands:
@@ -256,7 +255,7 @@ def slot_roadmap() -> Path:
     """PLANNED WORK — milestone stem plot. The cell is 0.70in, so one axis, not five tiny rows."""
     w, h = SLOT_IN["road"]
     fig = plt.figure(figsize=(w, h), dpi=DPI)
-    ax = fig.add_axes((0.04, 0.30, 0.94, 0.62))
+    ax = fig.add_axes((0.03, 0.28, 0.96, 0.66))
     events = [
         (0.6, "1  Roles + auth", True),
         (1.8, "2  TA / KB gate", True),
@@ -322,7 +321,7 @@ def slot_evaluation() -> Path:
     fig = plt.figure(figsize=(w, h), dpi=DPI)
     fig.text(0.02, 0.93, "Preliminary checks  ·  curated labels, not a campus trial", fontsize=9, fontweight="bold", va="center")
 
-    ax = fig.add_axes((0.07, 0.20, 0.36, 0.64))
+    ax = fig.add_axes((0.07, 0.22, 0.36, 0.62))
     import numpy as np
 
     labels = ["Analyzer", "Matcher"]
@@ -330,8 +329,8 @@ def slot_evaluation() -> Path:
     gold = [summary["analyzer_gold_acc"] * 100, summary["matcher_gold_acc"] * 100]
     x = np.arange(len(labels))
     width = 0.34
-    b1 = ax.bar(x - width / 2, holdout, width, color=GREEN, label="Dev holdout", zorder=2)
-    b2 = ax.bar(x + width / 2, gold, width, color="#B7C4BE", edgecolor=GREEN, linewidth=0.6, label="Curated gold", zorder=2)
+    b1 = ax.bar(x - width / 2, holdout, width, color=GREEN, zorder=2)
+    b2 = ax.bar(x + width / 2, gold, width, color="#B7C4BE", edgecolor=GREEN, linewidth=0.6, zorder=2)
     ax.set_ylabel("Accuracy (%)", fontsize=7)
     ax.set_xticks(x, labels, fontsize=8)
     ax.set_ylim(0, 100)
@@ -341,14 +340,13 @@ def slot_evaluation() -> Path:
     ax.spines["right"].set_visible(False)
     ax.yaxis.grid(True, color=HAIR, lw=0.5, zorder=0)
     ax.set_axisbelow(True)
-    ax.legend(frameon=False, fontsize=6.2, loc="upper right", borderpad=0.1)
     for bars in (b1, b2):
         for bar in bars:
             val = bar.get_height()
             ax.text(bar.get_x() + bar.get_width() / 2, val + 1.5, f"{val:.0f}", ha="center", va="bottom", fontsize=6.5, color=INK)
     ax.set_title("Accuracy", fontsize=8, loc="left", pad=2, color=INK)
 
-    ax2 = fig.add_axes((0.56, 0.16, 0.42, 0.70))
+    ax2 = fig.add_axes((0.55, 0.18, 0.43, 0.66))
     names = [n for n, _ in per_class]
     scores = [s * 100 for _, s in per_class]
     ax2.barh(names, scores, color=GREEN, height=0.72, zorder=2)
@@ -366,11 +364,11 @@ def slot_evaluation() -> Path:
 
     fig.text(
         0.02,
-        0.035,
-        f"Holdout: Analyzer 5-fold CV n={summary['analyzer_n']}; Matcher silver n={summary['matcher_hold_n']}.  "
-        f"Gold set n={summary['gold_n']}, not independent campus TA labels.  "
+        0.045,
+        f"Green = dev holdout (Analyzer CV n={summary['analyzer_n']}, Matcher silver n={summary['matcher_hold_n']}).  "
+        f"Gray = curated gold n={summary['gold_n']}, not campus TA labels.  "
         f"Dashed line = macro-F1 {summary['analyzer_cv_f1']*100:.0f}%.",
-        fontsize=5.8,
+        fontsize=6.0,
         color=MUTED,
     )
     return _save(fig, "SLOT_evaluation.png", SLOT_IN["eval"])
