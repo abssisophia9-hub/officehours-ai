@@ -275,11 +275,11 @@ def fill_docx(figures: dict[str, Path], sizes: dict[str, tuple[float, float]] | 
     # Display inches MUST match SLOT_IN in build_slot_visuals.py and sit
     # inside each official dashed cell (hRule=exact). Oversized images clip.
     default_sizes = {
-        "gap": (6.55, 0.92),
-        "arch": (6.55, 2.28),
-        "road": (6.55, 0.52),
-        "pipe": (6.55, 2.10),
-        "eval": (6.55, 2.12),
+        "gap": (6.00, 0.92),
+        "arch": (6.00, 2.28),
+        "road": (6.00, 0.52),
+        "pipe": (6.00, 2.10),
+        "eval": (6.00, 2.12),
     }
     if sizes:
         default_sizes.update(sizes)
@@ -553,31 +553,33 @@ def inject_slots_into_existing(docx: Path, figures: dict[str, Path], sizes: dict
         ("image6.png", figures["pipe"], sizes["pipe"]),
         ("image7.png", figures["eval"], sizes["eval"]),
     ]
-    heights: list[float] = []
+    dims: list[tuple[float, float]] = []
     for fname, src, (wi, hi) in mapping:
         shutil.copyfile(src, media / fname)
-        heights.append(hi)
+        dims.append((wi, hi))
     xml_path = work / "word" / "document.xml"
     xml = xml_path.read_text(encoding="utf-8")
-    w_emu = inches_emu(6.20)
-    h_iter = iter(int(h * 914400) for h in heights)
+    dim_iter = iter(dims)
 
     def patch_extent(m):
         cx = int(m.group(2))
         if cx < 4_000_000:
             return m.group(0)
         try:
-            cy = next(h_iter)
+            wi, hi = next(dim_iter)
         except StopIteration:
             return m.group(0)
-        return f"{m.group(1)}{w_emu}{m.group(3)}{cy}{m.group(5)}"
+        return f"{m.group(1)}{inches_emu(wi)}{m.group(3)}{inches_emu(hi)}{m.group(5)}"
 
     xml = re.sub(r'(<wp:extent cx=")(\d+)(" cy=")(\d+)("/>)', patch_extent, xml)
-    h_iter = iter(int(h * 914400) for h in heights)
-    xml = re.sub(r'(<a:ext cx=")\d+(" cy=")\d+("/>)', lambda m: (
-        m.group(0) if int(re.search(r"cx=\"(\d+)\"", m.group(0)).group(1)) < 4_000_000
-        else f'{m.group(1)}{w_emu}{m.group(2)}{next(h_iter)}{m.group(3)}'
-    ), xml)
+    dim_iter = iter(dims)
+    def patch_aext(m):
+        if int(m.group(2)) < 4_000_000:
+            return m.group(0)
+        wi, hi = next(dim_iter)
+        return f"{m.group(1)}{inches_emu(wi)}{m.group(3)}{inches_emu(hi)}{m.group(5)}"
+
+    xml = re.sub(r'(<a:ext cx=")(\d+)(" cy=")(\d+)("/>)', patch_aext, xml)
     xml_path.write_text(xml, encoding="utf-8")
     out = OUT_DIR / "OfficeHours_AI_Capstone_Poster.docx"
     with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED) as z:

@@ -35,12 +35,15 @@ DPI = 220
 
 # Stay inside the dashed cell's content box (cell height minus 0.125in
 # padding, width minus 0.14in). Taller images paint over the section text.
+# Width must stay under the two-column cell. A wider PNG is clipped on the
+# right even when the Word extent is smaller, because the image keeps its
+# own aspect ratio.
 SLOT_IN = {
-    "gap": (6.55, 0.92),
-    "arch": (6.55, 2.28),
-    "road": (6.55, 0.52),
-    "pipe": (6.55, 2.10),
-    "eval": (6.55, 2.12),
+    "gap": (6.00, 0.92),
+    "arch": (6.00, 2.28),
+    "road": (6.00, 0.52),
+    "pipe": (6.00, 2.10),
+    "eval": (6.00, 2.12),
 }
 
 INK = "#1B1F1E"
@@ -174,9 +177,9 @@ def slot_architecture() -> Path:
     ax.text(0.08, h - 0.16, "Containers  ·  one app, local models, Canvas as the external system", fontsize=9, fontweight="bold", color=INK, va="center")
 
     top_y, top_h = 1.32, 0.74
-    top_w = 1.90
-    gap = 0.28
-    xs = [0.10 + i * (top_w + gap) for i in range(3)]
+    side, gap = 0.08, 0.16
+    top_w = (w - 2 * side - 2 * gap) / 3
+    xs = [side + i * (top_w + gap) for i in range(3)]
     _box(ax, xs[0], top_y, top_w, top_h, "officehours-app", "React  ·  :5180  ·  3 roles", title_pt=8, sub_pt=6.2)
     _box(ax, xs[1], top_y, top_w, top_h, "FastAPI", "REST · SQL  ·  SQLite → Postgres", face=GREEN_SOFT, title_pt=8, sub_pt=6.0)
     _box(ax, xs[2], top_y, top_w, top_h, "Canvas LMS", "LTI 1.3  ·  external", face="#F7F7F5", edge=SLATE, title_pt=8, sub_pt=6.2)
@@ -185,9 +188,9 @@ def slot_architecture() -> Path:
     _arrow(ax, xs[1] + top_w, mid_y, xs[2], mid_y)
     # Ask Triage boundary behind the first three components.
     bot_y, bot_h = 0.08, 0.98
-    bot_w = 1.16
-    bot_gap = 0.10
-    bxs = [0.12 + i * (bot_w + bot_gap) for i in range(5)]
+    bot_gap = 0.08
+    bot_w = (w - 2 * side - 4 * bot_gap) / 5
+    bxs = [side + i * (bot_w + bot_gap) for i in range(5)]
     ax.add_patch(
         FancyBboxPatch(
             (bxs[0] - 0.06, bot_y - 0.05),
@@ -260,18 +263,18 @@ def slot_roadmap() -> Path:
         (0.6, "1  Roles + auth", True),
         (1.8, "2  TA / KB gate", True),
         (3.0, "3  Rooms + demo", True),
-        (4.4, "4  LTI live", False),
-        (5.5, "5  Postgres", False),
+        (4.2, "4  LTI live", False),
+        (5.2, "5  Postgres", False),
     ]
-    ax.axvspan(3.7, 6.0, color="#F4F6F5", zorder=0)
-    ax.plot([0.3, 5.8], [0, 0], color=INK, lw=0.9, zorder=1)
+    ax.axvspan(3.5, 5.7, color="#F4F6F5", zorder=0)
+    ax.plot([0.35, 5.55], [0, 0], color=INK, lw=0.9, zorder=1)
     for x, label, done in events:
         ax.plot([x], [0], marker="o", ms=5.5, color=GREEN if done else PAPER, markeredgecolor=GREEN, markeredgewidth=1.1, zorder=3)
         ax.text(x, 0.55, label, ha="center", va="bottom", fontsize=7.2, fontweight="bold", color=INK)
-    ax.set_xlim(0.05, 6.15)
+    ax.set_xlim(0.15, 5.85)
     ax.set_ylim(-1.15, 1.35)
     ax.set_yticks([])
-    ax.set_xticks([0.6, 3.7, 5.7])
+    ax.set_xticks([0.6, 3.2, 5.3])
     ax.set_xticklabels(["Sep 2026", "campus IT", "deadline"], fontsize=6.5, color=MUTED)
     ax.tick_params(axis="x", length=0, pad=1)
     for spine in ax.spines.values():
