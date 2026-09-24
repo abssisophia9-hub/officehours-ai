@@ -12,11 +12,16 @@ timeout 50s google-chrome \
   --headless=new --disable-gpu --no-first-run --no-default-browser-check \
   --user-data-dir="$UD" --hide-scrollbars --no-pdf-header-footer \
   --print-to-pdf="$OUT_PDF" "$HTML"
-timeout 100s google-chrome \
-  --headless=new --disable-gpu --no-first-run --no-default-browser-check \
-  --user-data-dir="$UD" --hide-scrollbars \
-  --window-size=2176,2848 --force-device-scale-factor=1 \
-  --screenshot="$OUT_PNG" "$HTML"
+if command -v pdftoppm >/dev/null 2>&1; then
+  pdftoppm -png -r 150 "$OUT_PDF" /tmp/officehours-poster
+  cp -f /tmp/officehours-poster-1.png "$OUT_PNG"
+else
+  timeout 130s google-chrome \
+    --headless=new --disable-gpu --no-first-run --no-default-browser-check \
+    --user-data-dir="$UD" --hide-scrollbars \
+    --window-size=2176,2848 --force-device-scale-factor=1 \
+    --screenshot="$OUT_PNG" "$HTML" || true
+fi
 pdfinfo "$OUT_PDF" | rg -i 'Pages|Page size' || true
 cp -f "$OUT_PDF" "${HERE}/OfficeHours_AI_Proposal_Poster.pdf"
 cp -f "$OUT_PNG" "${HERE}/OfficeHours_AI_Proposal_Poster.png"
