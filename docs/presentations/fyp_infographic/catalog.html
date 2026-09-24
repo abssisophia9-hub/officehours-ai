@@ -41,10 +41,10 @@
     overflow: hidden;
   }
   body {
-    padding: 0.35in 0.35in 0.30in;
+    padding: 0.35in 0.35in 0.28in;
     display: grid;
-    grid-template-rows: 1.55in 1fr 0.48in;
-    gap: 0.10in;
+    grid-template-rows: auto 1fr;
+    gap: 0.08in;
   }
 
   /* —— reusable graphic system —— */
@@ -137,8 +137,9 @@
   .brand img { width: 1.55in; height: auto; }
   .brand p { margin: 0.04in 0 0; font-size: 7pt; font-weight: 700; color: var(--title); letter-spacing: 0.04em; line-height: 1.25; }
 
-  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0.14in; min-height: 0; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0.14in; min-height: 0; align-items: start; }
   .col { display: flex; flex-direction: column; gap: 0.055in; min-height: 0; }
+  .col > section { flex: 0 0 auto; }
   section { min-height: 0; }
   h2 {
     margin: 0 0 0.045in;
@@ -242,7 +243,32 @@
     margin: 0.04in 0 0.03in;
   }
 
-  .gantt { margin-top: 0.04in; padding: 0.06in 0.07in 0.05in; }
+  .gantt {
+    margin-top: 0.04in;
+    padding: 0.06in 0.07in 0.06in;
+    height: auto;
+    flex: 0 0 auto;
+    align-self: start;
+  }
+  .gantt-note {
+    margin: 0.06in 0 0;
+    padding-top: 0.045in;
+    border-top: 1px solid var(--border);
+    font-size: 6.6pt;
+    line-height: 1.35;
+    color: var(--secondary);
+  }
+  .gantt-note strong { color: var(--title); }
+  .gantt-swatch {
+    display: inline-block;
+    width: 0.14in;
+    height: 0.08in;
+    border-radius: 2px;
+    vertical-align: middle;
+    margin-right: 0.03in;
+  }
+  .gantt-swatch.on { background: var(--header); }
+  .gantt-swatch.off { background: #fff; border: 1.2px solid var(--header); box-sizing: border-box; }
   .gantt-axis {
     display: grid;
     grid-template-columns: 0.78in 1fr 1fr 1fr;
@@ -340,7 +366,7 @@
 
   /* Chart */
   .chart-wrap { margin-top: 0.04in; padding: 0.06in 0.07in 0.03in; }
-  .chart-wrap svg { max-height: 1.72in; }
+  .chart-wrap svg { max-height: 1.82in; }
   .chart-caption { font-size: 7.4pt; font-weight: 700; color: var(--title); margin: 0 0 0.02in; }
   .chart-foot { font-size: 6.3pt; color: var(--secondary); margin: 0.02in 0 0; }
 
@@ -353,6 +379,11 @@
     align-items: stretch;
   }
   .loop .stage-box { min-height: 0.84in; padding: 0.05in 0.03in; }
+  .loop.demo-path {
+    grid-template-columns: 1fr 14px 1fr 14px 1fr 14px 1fr;
+    margin-top: 0.03in;
+  }
+  .loop.demo-path .stage-box { min-height: 0.52in; padding: 0.04in 0.03in; }
   .loop .stage-box .name { font-size: 7.1pt; }
   .loop .stage-box .sub { font-size: 6.1pt; line-height: 1.22; margin-top: 0.03in; white-space: pre-line; }
   .loop-caption { font-size: 7.6pt; font-weight: 700; color: var(--title); margin: 0.02in 0 0.04in; }
@@ -389,8 +420,8 @@
   .path .name { font-size: 7.6pt; font-weight: 700; color: var(--title); }
   .path .sub { font-size: 6.4pt; color: var(--secondary); line-height: 1.25; margin-top: 0.02in; }
 
-  footer h2 { margin-top: 0; }
-  footer p { font-size: 7.5pt; color: var(--secondary); padding: 0.03in 0.02in 0; }
+  .refs { padding-bottom: 0.02in; }
+  .refs p { font-size: 7.2pt; color: var(--secondary); margin: 0; line-height: 1.3; }
 
   .arrow-svg { width: 18px; height: 12px; display: block; }
   .arrow-svg.down { width: 12px; height: 16px; }
@@ -746,7 +777,26 @@
             <div class="gantt-lab">5 Hosted DB<small>IT</small></div>
             <div class="gantt-track"><div class="gantt-bar pending" style="grid-column:9 / 13">Postgres</div></div>
           </div>
+          <p class="gantt-note">
+            <span class="gantt-swatch on"></span><strong>Solid</strong> = built now.
+            &nbsp;<span class="gantt-swatch off"></span><strong>Outline</strong> = planned, waits on IT.
+            &nbsp; Main schedule risk: Canvas launch key and API token — the live course slips if campus credentials are late.
+          </p>
         </div>
+        <p class="fig-cap">Requirement status · what a walkthrough can show today</p>
+        <table class="data">
+          <thead>
+            <tr><th>Requirement</th><th class="ctr">Status</th><th>Evidence</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Roles + one login</td><td class="ctr"><span class="prio hi">Built</span></td><td>Student / TA / professor seats</td></tr>
+            <tr><td>Ask Triage</td><td class="ctr"><span class="prio hi">Built</span></td><td>Lab holdout + demo queue</td></tr>
+            <tr><td>Help Coach + stamp</td><td class="ctr"><span class="prio hi">Built</span></td><td>Draft on TA screen; 0 unstamped quotes</td></tr>
+            <tr><td>Rooms</td><td class="ctr"><span class="prio hi">Built</span></td><td>Named classmate threads</td></tr>
+            <tr><td>Live Canvas login / sync</td><td class="ctr"><span class="prio mid">IT</span></td><td>Launch key + API token</td></tr>
+            <tr><td>Hosted Postgres</td><td class="ctr"><span class="prio mid">IT</span></td><td>After one-course live</td></tr>
+          </tbody>
+        </table>
       </section>
     </div>
 
@@ -950,13 +1000,90 @@ grade gaps.</div>
             <tr><td>A chatbot can invent the syllabus</td><td>Study Agent quotes a stamp or refuses</td></tr>
           </tbody>
         </table>
+        <p class="paths-caption">Three doors · how a student gets that contribution</p>
+        <div class="paths">
+          <div class="path card">
+            <div class="path-art">
+              <svg viewBox="0 0 96 56" aria-hidden="true"><use href="#scene-agent"/></svg>
+            </div>
+            <div class="path-kicker"><svg class="ico"><use href="#ico-agent"/></svg><div class="name">With an agent</div></div>
+            <div class="sub">Study Agent quotes a stamp.<br>Strategist ranks what to review.</div>
+          </div>
+          <div class="path card">
+            <div class="path-art">
+              <svg viewBox="0 0 96 56" aria-hidden="true"><use href="#scene-staff"/></svg>
+            </div>
+            <div class="path-kicker"><svg class="ico"><use href="#ico-roles"/></svg><div class="name">With staff</div></div>
+            <div class="sub">A Quiet or named ask reaches<br>a TA or the professor.</div>
+          </div>
+          <div class="path card">
+            <div class="path-art">
+              <svg viewBox="0 0 96 56" aria-hidden="true"><use href="#scene-peers"/></svg>
+            </div>
+            <div class="path-kicker"><svg class="ico"><use href="#ico-people"/></svg><div class="name">With classmates</div></div>
+            <div class="sub">Rooms stay named.<br>Peers help each other.</div>
+          </div>
+        </div>
+        <p class="fig-cap">Three-seat demo check · pass on one walkthrough</p>
+        <table class="data">
+          <thead>
+            <tr><th>Seat</th><th>What they do</th><th>Pass if</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Student</td><td>File a Quiet ask, open a Room, query Study Agent</td><td>Name hidden on Quiet; agent quotes a stamp or refuses</td></tr>
+            <tr><td>TA</td><td>Claim the card; use Help Coach; send a teaching note</td><td>Draft never leaves the TA screen</td></tr>
+            <tr><td>Professor</td><td>Read the cluster; stamp the only quotable text</td><td>Unstamped notes stay silent</td></tr>
+          </tbody>
+        </table>
+        <p class="fig-cap">60-second demo path · what to click</p>
+        <div class="loop demo-path">
+          <div class="stage-box built">
+            <div class="name">1  Sign in</div>
+            <div class="sub">Sara · one
+AUI email</div>
+          </div>
+          <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#3D7A58">
+            <svg class="arrow-svg"><use href="#arrow-h"/></svg>
+          </div>
+          <div class="stage-box built">
+            <div class="name">2  Quiet ask</div>
+            <div class="sub">Request code.
+No public name.</div>
+          </div>
+          <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#3D7A58">
+            <svg class="arrow-svg"><use href="#arrow-h"/></svg>
+          </div>
+          <div class="stage-box built">
+            <div class="name">3  TA desk</div>
+            <div class="sub">Claim + Help
+Coach draft</div>
+          </div>
+          <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#3D7A58">
+            <svg class="arrow-svg"><use href="#arrow-h"/></svg>
+          </div>
+          <div class="stage-box built">
+            <div class="name">4  Stamp</div>
+            <div class="sub">Agent quotes
+or refuses</div>
+          </div>
+        </div>
+        <p class="fig-cap">IT dependencies · not missing product code</p>
+        <table class="data">
+          <thead>
+            <tr><th>Need</th><th>Owner</th><th>Blocks</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Canvas launch key</td><td>Campus IT</td><td>Live LTI sign-in</td></tr>
+            <tr><td>Canvas API token</td><td>Campus IT</td><td>Module sync</td></tr>
+            <tr><td>HTTPS + one test course</td><td>IT + supervisor</td><td>One-course go-live</td></tr>
+          </tbody>
+        </table>
+      </section>
+      <section class="refs">
+        <h2>Key References</h2>
+        <p>[1] Piazza; Ed Discussion (forum baseline). &nbsp; [2] IMS Global, Learning Tools Interoperability 1.3. &nbsp; [3] Reimers &amp; Gurevych, Sentence-BERT; Pedregosa et al., scikit-learn.</p>
       </section>
     </div>
   </div>
-
-  <footer>
-    <h2>Key References</h2>
-    <p>[1] Piazza; Ed Discussion (forum baseline). &nbsp; [2] IMS Global, Learning Tools Interoperability 1.3. &nbsp; [3] Reimers &amp; Gurevych, Sentence-BERT; Pedregosa et al., scikit-learn.</p>
-  </footer>
 </body>
 </html>
