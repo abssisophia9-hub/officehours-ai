@@ -21,7 +21,9 @@ Rebuild:
 ./docs/presentations/fyp_infographic/build_poster.sh
 ```
 
-QR: phone prototype — https://htmlpreview.github.io/?https://github.com/abssisophia9-hub/officehours-ai/blob/cursor/fyp-infographic-poster-1879/docs/presentations/fyp_infographic/phone-demo.html
+QR: phone prototype (public HTML — the repo is private, so GitHub preview cannot fetch it) — https://litter.catbox.moe/jcx2ln.html
+
+Local fallback after you download the repo: open [`phone-demo.html`](phone-demo.html) on a phone or laptop.
 
 Print the catalog sheet **matte**. The booth sheet is the same story at walk-up size.
 

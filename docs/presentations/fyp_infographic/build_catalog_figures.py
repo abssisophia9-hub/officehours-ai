@@ -21,7 +21,7 @@ HERE = Path(__file__).resolve().parent
 FIGS = HERE / "figures"
 ROOT = HERE.parents[2]
 REPORTS = ROOT / "reports" / "final_report"
-REPO = "https://github.com/abssisophia9-hub/officehours-ai"
+REPO = "https://litter.catbox.moe/jcx2ln.html"
 DPI = 220
 
 # Official cell content sizes (must stay inside the dashed boxes).

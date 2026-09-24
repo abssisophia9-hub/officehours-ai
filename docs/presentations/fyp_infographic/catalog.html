@@ -11,21 +11,24 @@
 
   :root {
     --header: #006633;
+    --blue: #1E4D7B;
+    --blue-mid: #2E6B9A;
+    --blue-soft: #E8F1F8;
     --title: #000000;
     --tint: #EAF3EE;
-    --placeholder: #F1F3F2;
+    --placeholder: #F4F6F8;
     --dash: #AAB3AF;
-    --border: #D9DEDC;
+    --border: #D4DCE3;
     --secondary: #000000;
     --white: #ffffff;
-    --accent: #3D7A58;
+    --accent: #2E6B9A;
     --hold-a: #006633;
     --hold-b: #7BA892;
     --gold-a: #8B7355;
     --gold-b: #C4A882;
     --radius: 8px;
-    --shadow: 0 2px 7px rgba(0, 75, 43, 0.08);
-    --shadow-hub: 0 3px 12px rgba(0, 102, 51, 0.18);
+    --shadow: 0 2px 7px rgba(20, 50, 80, 0.08);
+    --shadow-hub: 0 3px 12px rgba(30, 77, 123, 0.16);
   }
 
   @page { size: 14.5in 19in; margin: 0; }
@@ -55,8 +58,8 @@
     box-shadow: var(--shadow);
   }
   .card-hub {
-    background: var(--tint);
-    border: 2px solid var(--header);
+    background: var(--blue-soft);
+    border: 2px solid var(--blue);
     border-radius: var(--radius);
     box-shadow: var(--shadow-hub);
   }
@@ -72,14 +75,19 @@
     min-height: 0;
   }
   .stage-box.built {
+    background: var(--blue);
+    color: var(--white);
+    border: 1.5px solid var(--blue);
+  }
+  .stage-box.brand {
     background: var(--header);
     color: var(--white);
     border: 1.5px solid var(--header);
   }
   .stage-box.pending {
     background: var(--white);
-    color: var(--header);
-    border: 1.5px solid var(--header);
+    color: var(--blue);
+    border: 1.5px solid var(--blue);
   }
   .badge {
     display: inline-flex;
@@ -177,7 +185,7 @@
     text-align: left;
   }
   table.data thead th, table.obj thead th, table.gap thead th {
-    background: var(--tint);
+    background: var(--blue-soft);
     color: var(--title);
     font-weight: 700;
   }
@@ -213,8 +221,8 @@
     line-height: 1.15;
   }
   .prio.hi { background: var(--header); color: #fff; }
-  .prio.mid { background: var(--tint); color: #000; border: 1px solid var(--header); }
-  .prio.lo { background: #fff; color: #000; border: 1px solid var(--header); }
+  .prio.mid { background: var(--blue-soft); color: #000; border: 1px solid var(--blue); }
+  .prio.lo { background: #fff; color: #000; border: 1px solid var(--blue); }
   .like i {
     width: 0.08in;
     height: 0.08in;
@@ -224,16 +232,16 @@
   }
   .like.hi { background: var(--header); color: #fff; }
   .like.hi i { background: #fff; }
-  .like.mid { background: var(--tint); color: #000; border: 1px solid var(--header); }
-  .like.mid i { background: transparent; border: 1.3px solid var(--header); }
-  .like.lo { background: #fff; color: #000; border: 1px solid var(--header); }
-  .like.lo i { background: transparent; border: 1.3px solid #7BA892; }
+  .like.mid { background: var(--blue-soft); color: #000; border: 1px solid var(--blue); }
+  .like.mid i { background: transparent; border: 1.3px solid var(--blue); }
+  .like.lo { background: #fff; color: #000; border: 1px solid var(--blue); }
+  .like.lo i { background: transparent; border: 1.3px solid var(--blue-mid); }
 
   .decision {
     margin: 0.06in 0 0;
     padding: 0.055in 0.08in;
-    background: var(--tint);
-    border-left: 3px solid var(--header);
+    background: var(--blue-soft);
+    border-left: 3px solid var(--blue);
     font-size: 7.6pt;
     line-height: 1.34;
     color: var(--title);
@@ -270,7 +278,7 @@
     margin-right: 0.03in;
   }
   .gantt-swatch.on { background: var(--header); }
-  .gantt-swatch.off { background: #fff; border: 1.2px solid var(--header); box-sizing: border-box; }
+  .gantt-swatch.off { background: #fff; border: 1.2px solid var(--blue); box-sizing: border-box; }
   .gantt-axis {
     display: grid;
     grid-template-columns: 0.78in 1fr 1fr 1fr;
@@ -309,7 +317,7 @@
     letter-spacing: 0.02em;
   }
   .gantt-bar.built { background: var(--header); color: #fff; }
-  .gantt-bar.pending { background: #fff; color: var(--header); border: 1.2px solid var(--header); box-sizing: border-box; }
+  .gantt-bar.pending { background: #fff; color: var(--blue); border: 1.2px solid var(--blue); box-sizing: border-box; }
 
   /* Architecture */
   .arch {
@@ -538,7 +546,7 @@
       </p>
     </div>
     <div class="qr">
-      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAcgAAAHICAIAAABFw+29AAAMjElEQVR4nO3dy44jNxAAQcuY///l9cFnGqaRdJHaiPNMq/VK8FAofX79+vUHAJ0/p28A4NsIK0BMWAFiwgoQE1aAmLACxIQVICasADFhBYgJK0BMWAFiwgoQE1aAmLACxIQVIPaz+w+fz+fEfeRWe2Z37393X211/dV1XtmfO3X/1efz9Pty23Vuu/5tdp+vEytATFgBYsIKEBNWgJiwAsSEFSAmrACxz21zc7tuu5+VqXm91+cZp+Z8T8+ZVm6bC9aTvzmxAsSEFSAmrAAxYQWICStATFgBYsIKENvex7rr9H7MSjVHufL6ftjd61fP9/Tf73r9fa/mgqfmsl/piRMrQExYAWLCChATVoCYsALEhBUgJqwAseNzrLf51v2Yt+1FPT2nuXJ6j+pt+0arOd/T86237Uc+zYkVICasADFhBYgJK0BMWAFiwgoQE1aA2G83x7qyO2d32xzf63tIb7v/6jpT+1h3r/PKntNXOLECxIQVICasADFhBYgJK0BMWAFiwgoQOz7H+spc29TvpO/61r2iU/tJT+8hnbqflep5TXmlJ06sADFhBYgJK0BMWAFiwgoQE1aAmLACxLI51tvm3Xadnmecup9dt/2OfHX90+/vK39/2ul521c4sQLEhBUgJqwAMWEFiAkrQExYAWLCChD7vLLfsHLbvs5dr8+rvjL3unv9V1Sfz9+tG7ucWAFiwgoQE1aAmLACxIQVICasADFhBYhtz7HeNod4eq7QfOU/e+X36He9vm93ai/qbZ+HqdfNiRUgJqwAMWEFiAkrQExYAWLCChATVoDYz+4/TM3BVX//ynzl1Hzu6T2tr8zzvvI67D7f05+rqTnc214HJ1aAmLACxIQVICasADFhBYgJK0BMWAFi23OsU3Nwp03Nw07NS56e+zv991O/a//KHPS37kdeOf192eXEChATVoCYsALEhBUgJqwAMWEFiAkrQOxz257E1+fvvvV326f2q65MfQ6n9slOfU9f+T7etifaiRUgJqwAMWEFiAkrQExYAWLCChATVoDY9j7WlVd+B/z0nOBte0VP76n81vnNXVN7ilfPa/d1O/06n1a9PvaxAlxKWAFiwgoQE1aAmLACxIQVICasALHtfayn3TYH+vq83unHXbntd9533TbX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" alt="Phone prototype QR" />
+      <img src="data:image/png;base64,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1ALkpBYgJ7UAOakFyEktQG542evcloWn2bsXK1yzZre1iq2ywn3/zXNb1sKcagFyUguQk1qAnNQC5KQWICe1ADmpBchJLUBOagFyUguQk1qAnNQC5KQWILdm2evN3rzbtOXuW/alZr+lN+/zOdUC5KQWICe1ADmpBchJLUBOagFyUguQk1qAnNQC5KQWICe1ADmpBchJLUDOstcC54tE58tJxTVn715cs3Df/tmW91l8S+ecagFyUguQk1qAnNQC5KQWICe1ADmpBchJLUBOagFyUguQk1qAnNQC5KQWILdm2Wt2D+nNZheziv+7XbETsztY57Y8p1MtQE5qAXJSC5CTWoCc1ALkpBYgJ7UAOakFyEktQE5qAXJSC5CTWoCc1ALkhpe9ZleOtph9S8XdZ9eYtvxFs89Z2LLCVXCqBchJLUBOagFyUguQk1qAnNQC5KQWICe1ADmpBchJLUBOagFyUguQk1qA3Od5nulnALicUy1ATmoBclILkJNagJzUAuSkFiAntQA5qQXISS1ATmoBclILkJNagJzUAuSkFiAntQA5qQXISS1ATmoBclILkJNagJzUAuSkFiAntQA5qQXISS1ATmoBclILkPsXqSktb/ZO3T0AAAAASUVORK5CYII=" alt="Phone prototype QR" />
       <small>Phone prototype<br />Scan to walk the vision</small>
     </div>
     <div class="brand">
@@ -674,7 +682,7 @@
           <p class="arch-caption">One product. Three seats. Canvas is the campus door.</p>
           <div class="arch-top">
             <div class="node card">
-              <svg class="ico ico-lg" style="color:#006633"><use href="#ico-web"/></svg>
+              <svg class="ico ico-lg" style="color:#1E4D7B"><use href="#ico-web"/></svg>
               <div class="name">One web app</div>
               <div class="sub">Student · TA · Professor</div>
             </div>
@@ -682,7 +690,7 @@
               <svg class="arrow-svg"><use href="#arrow-h"/></svg>
             </div>
             <div class="node card-hub">
-              <svg class="ico ico-lg" style="color:#006633"><use href="#ico-queue"/></svg>
+              <svg class="ico ico-lg" style="color:#1E4D7B"><use href="#ico-queue"/></svg>
               <div class="name">Campus API</div>
               <div class="sub">Queue · roles · stamps</div>
             </div>
@@ -690,7 +698,7 @@
               <svg class="arrow-svg"><use href="#arrow-h"/></svg>
             </div>
             <div class="node card">
-              <svg class="ico ico-lg" style="color:#006633"><use href="#ico-canvas"/></svg>
+              <svg class="ico ico-lg" style="color:#1E4D7B"><use href="#ico-canvas"/></svg>
               <div class="name">Canvas</div>
               <div class="sub">Login · course · modules</div>
             </div>
@@ -699,7 +707,7 @@
           <p class="arch-row-label">Staff path</p>
           <div class="arch-bot">
             <div class="node card">
-              <svg class="ico" style="color:#006633"><use href="#ico-queue"/></svg>
+              <svg class="ico" style="color:#1E4D7B"><use href="#ico-queue"/></svg>
               <div class="name">Ask Triage</div>
               <div class="sub">labels the ask<br>and names a TA</div>
             </div>
@@ -707,7 +715,7 @@
               <svg class="arrow-svg"><use href="#arrow-h"/></svg>
             </div>
             <div class="node card">
-              <svg class="ico" style="color:#006633"><use href="#ico-chat"/></svg>
+              <svg class="ico" style="color:#1E4D7B"><use href="#ico-chat"/></svg>
               <div class="name">Help Coach</div>
               <div class="sub">draft stays on<br>the TA screen</div>
             </div>
@@ -723,7 +731,7 @@
           <p class="arch-row-label">Student path</p>
           <div class="arch-bot">
             <div class="node card">
-              <svg class="ico" style="color:#006633"><use href="#ico-agent"/></svg>
+              <svg class="ico" style="color:#1E4D7B"><use href="#ico-agent"/></svg>
               <div class="name">Study Agent</div>
               <div class="sub">quotes a stamp<br>or refuses</div>
             </div>
@@ -731,7 +739,7 @@
               <svg class="arrow-svg"><use href="#arrow-h"/></svg>
             </div>
             <div class="node card">
-              <svg class="ico" style="color:#006633"><use href="#ico-plan"/></svg>
+              <svg class="ico" style="color:#1E4D7B"><use href="#ico-plan"/></svg>
               <div class="name">Strategist</div>
               <div class="sub">ranks review topics<br>from local grade gaps</div>
             </div>
@@ -739,7 +747,7 @@
               <svg class="arrow-svg"><use href="#arrow-h"/></svg>
             </div>
             <div class="node card">
-              <svg class="ico" style="color:#006633"><use href="#ico-people"/></svg>
+              <svg class="ico" style="color:#1E4D7B"><use href="#ico-people"/></svg>
               <div class="name">Rooms + notes</div>
               <div class="sub">Stack Overflow Q&amp;A + ranks<br>like / comment feed</div>
             </div>
@@ -804,7 +812,7 @@
 The ticket is still
 tracked.</div>
           </div>
-          <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#3D7A58">
+          <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#2E6B9A">
             <svg class="arrow-svg"><use href="#arrow-h"/></svg>
           </div>
           <div class="stage-box built">
@@ -813,7 +821,7 @@ tracked.</div>
             <div class="sub">Category, a TA,
 and a copied hint.</div>
           </div>
-          <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#3D7A58">
+          <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#2E6B9A">
             <svg class="arrow-svg"><use href="#arrow-h"/></svg>
           </div>
           <div class="stage-box built">
@@ -823,7 +831,7 @@ and a copied hint.</div>
 leaves the TA
 screen.</div>
           </div>
-          <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#3D7A58">
+          <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#2E6B9A">
             <svg class="arrow-svg"><use href="#arrow-h"/></svg>
           </div>
           <div class="stage-box built">
@@ -833,7 +841,7 @@ screen.</div>
 marks the only
 quotable text.</div>
           </div>
-          <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#3D7A58">
+          <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#2E6B9A">
             <svg class="arrow-svg"><use href="#arrow-h"/></svg>
           </div>
           <div class="stage-box built">
@@ -843,7 +851,7 @@ quotable text.</div>
 or refuse a weak
 match.</div>
           </div>
-          <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#3D7A58">
+          <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#2E6B9A">
             <svg class="arrow-svg"><use href="#arrow-h"/></svg>
           </div>
           <div class="stage-box built">
@@ -880,7 +888,7 @@ grade gaps.</div>
             <div class="name">1  Three-seat walkthrough</div>
             <div class="sub">Student, TA, and professor complete the desk on the demo — Quiet ask, stamp, notes, and Rooms.</div>
           </div>
-          <div class="stage-box built">
+          <div class="stage-box brand">
             <div class="name">2  Stamp gate</div>
             <div class="sub">Study Agent refuses unstamped text. Target: 0 unauthorized quotes.</div>
           </div>
