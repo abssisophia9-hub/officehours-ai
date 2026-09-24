@@ -137,8 +137,8 @@
   .brand img { width: 1.55in; height: auto; }
   .brand p { margin: 0.04in 0 0; font-size: 7pt; font-weight: 700; color: var(--title); letter-spacing: 0.04em; line-height: 1.25; }
 
-  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0.16in; min-height: 0; }
-  .col { display: flex; flex-direction: column; gap: 0.07in; min-height: 0; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0.14in; min-height: 0; }
+  .col { display: flex; flex-direction: column; gap: 0.055in; min-height: 0; }
   section { min-height: 0; }
   h2 {
     margin: 0 0 0.045in;
@@ -151,27 +151,137 @@
     font-weight: 700;
     border-radius: 2px;
   }
-  p, li { font-size: 8pt; line-height: 1.28; margin: 0 0 0.03in; color: var(--title); }
+  p, li { font-size: 7.7pt; line-height: 1.26; margin: 0 0 0.025in; color: var(--title); }
   ul { margin: 0; padding-left: 0.16in; }
   strong { color: var(--title); }
 
-  table.obj {
+  /* One table system — header tint, zebra, shared padding */
+  table.data, table.obj, table.gap {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    font-size: 7.4pt;
+    font-size: 7pt;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     overflow: hidden;
+    box-shadow: var(--shadow);
   }
-  table.obj th, table.obj td {
+  table.data th, table.data td,
+  table.obj th, table.obj td,
+  table.gap th, table.gap td {
     border-bottom: 1px solid var(--border);
-    padding: 0.035in 0.05in;
+    padding: 0.032in 0.045in;
     vertical-align: top;
     text-align: left;
   }
-  table.obj tr:last-child td { border-bottom: 0; }
-  table.obj th { background: var(--tint); color: var(--title); font-weight: 700; }
+  table.data thead th, table.obj thead th, table.gap thead th {
+    background: var(--tint);
+    color: var(--title);
+    font-weight: 700;
+  }
+  table.data tbody tr:nth-child(even) th,
+  table.data tbody tr:nth-child(even) td,
+  table.obj tbody tr:nth-child(even) td,
+  table.gap tbody tr:nth-child(even) th,
+  table.gap tbody tr:nth-child(even) td { background: var(--placeholder); }
+  table.data tbody tr:nth-child(odd) th,
+  table.data tbody tr:nth-child(odd) td,
+  table.obj tbody tr:nth-child(odd) td,
+  table.gap tbody tr:nth-child(odd) th,
+  table.gap tbody tr:nth-child(odd) td { background: var(--white); }
+  table.data tr:last-child th, table.data tr:last-child td,
+  table.obj tr:last-child td,
+  table.gap tr:last-child th, table.gap tr:last-child td { border-bottom: 0; }
+  table.data .num, table.obj .num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.data .ctr, table.obj .ctr { text-align: center; white-space: nowrap; }
+  table.gap th, table.gap td { text-align: center; }
+  table.gap tbody th { text-align: left; font-weight: 600; color: var(--title); width: 32%; }
+
+  .prio, .like {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.035in;
+    border-radius: 999px;
+    padding: 0.012in 0.065in;
+    font-size: 6.4pt;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    line-height: 1.15;
+  }
+  .prio.hi { background: var(--header); color: #fff; }
+  .prio.mid { background: var(--tint); color: var(--title); border: 1px solid var(--header); }
+  .prio.lo { background: var(--placeholder); color: var(--secondary); }
+  .like i {
+    width: 0.08in;
+    height: 0.08in;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .like.hi { color: #8A1C12; }
+  .like.hi i { background: #B42318; }
+  .like.mid { color: #8A4B12; }
+  .like.mid i { background: #C47A1A; }
+  .like.lo { color: var(--header); }
+  .like.lo i { background: var(--header); }
+
+  .decision {
+    margin: 0.045in 0 0;
+    padding: 0.04in 0.07in;
+    background: var(--tint);
+    border-left: 3px solid var(--header);
+    font-size: 7pt;
+    line-height: 1.28;
+    color: var(--title);
+  }
+  .fig-cap {
+    font-size: 7.2pt;
+    font-weight: 700;
+    color: var(--title);
+    margin: 0.04in 0 0.03in;
+  }
+
+  .gantt { margin-top: 0.04in; padding: 0.06in 0.07in 0.05in; }
+  .gantt-axis {
+    display: grid;
+    grid-template-columns: 0.78in 1fr 1fr 1fr;
+    font-size: 6.2pt;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--secondary);
+    margin-bottom: 0.035in;
+  }
+  .gantt-axis span:not(:first-child) { text-align: center; }
+  .gantt-row {
+    display: grid;
+    grid-template-columns: 0.78in 1fr;
+    gap: 0.05in;
+    align-items: center;
+    margin-bottom: 0.028in;
+  }
+  .gantt-row:last-child { margin-bottom: 0; }
+  .gantt-lab { font-size: 6.5pt; font-weight: 700; color: var(--title); line-height: 1.15; }
+  .gantt-lab small { display: block; font-weight: 600; color: var(--secondary); font-size: 5.8pt; }
+  .gantt-track {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    height: 0.145in;
+    background: var(--placeholder);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .gantt-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5.8pt;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .gantt-bar.built { background: var(--header); color: #fff; }
+  .gantt-bar.pending { background: #fff; color: var(--header); border: 1.2px solid var(--header); box-sizing: border-box; }
 
   /* Architecture */
   .arch {
@@ -205,9 +315,9 @@
     align-items: center;
     justify-content: center;
     gap: 0.03in;
-    padding: 0.07in 0.05in;
+    padding: 0.06in 0.04in;
     text-align: center;
-    min-height: 0.62in;
+    min-height: 0.56in;
   }
   .node .name { font-size: 8pt; font-weight: 700; color: var(--title); line-height: 1.15; }
   .node .sub { font-size: 6.6pt; color: var(--secondary); line-height: 1.2; }
@@ -224,36 +334,15 @@
   .stage-box .sub { font-size: 6.4pt; opacity: 0.9; margin-top: 0.015in; }
   .stage-box.pending .sub { color: var(--secondary); opacity: 1; }
 
-  /* Gap table */
-  .gap-wrap { margin-top: 0.05in; }
-  .gap-caption { font-size: 7.4pt; font-weight: 700; color: var(--title); margin: 0 0 0.04in; }
-  table.gap {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 7.2pt;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    box-shadow: var(--shadow);
-  }
-  table.gap th, table.gap td {
-    padding: 0.04in 0.045in;
-    text-align: center;
-    border-bottom: 1px solid var(--border);
-  }
-  table.gap tr:last-child th, table.gap tr:last-child td { border-bottom: 0; }
-  table.gap thead th { background: var(--tint); color: var(--title); font-weight: 700; }
-  table.gap tbody th { text-align: left; font-weight: 600; color: var(--title); width: 32%; }
-  table.gap tbody tr:nth-child(even) th,
-  table.gap tbody tr:nth-child(even) td { background: var(--placeholder); }
-  table.gap tbody tr:nth-child(odd) th,
-  table.gap tbody tr:nth-child(odd) td { background: var(--white); }
+  /* Gap table caption */
+  .gap-wrap { margin-top: 0.04in; }
+  .gap-caption { font-size: 7.2pt; font-weight: 700; color: var(--title); margin: 0 0 0.03in; }
 
   /* Chart */
-  .chart-wrap { margin-top: 0.05in; padding: 0.08in 0.08in 0.04in; }
-  .chart-caption { font-size: 8pt; font-weight: 700; color: var(--title); margin: 0 0 0.02in; }
-  .chart-foot { font-size: 6.4pt; color: var(--secondary); margin: 0.02in 0 0; }
+  .chart-wrap { margin-top: 0.04in; padding: 0.06in 0.07in 0.03in; }
+  .chart-wrap svg { max-height: 1.72in; }
+  .chart-caption { font-size: 7.4pt; font-weight: 700; color: var(--title); margin: 0 0 0.02in; }
+  .chart-foot { font-size: 6.3pt; color: var(--secondary); margin: 0.02in 0 0; }
 
   /* Loop uses the same stage-box / flow-arrow system */
   .loop {
@@ -263,7 +352,7 @@
     margin-top: 0.04in;
     align-items: stretch;
   }
-  .loop .stage-box { min-height: 0.98in; padding: 0.06in 0.03in; }
+  .loop .stage-box { min-height: 0.84in; padding: 0.05in 0.03in; }
   .loop .stage-box .name { font-size: 7.1pt; }
   .loop .stage-box .sub { font-size: 6.1pt; line-height: 1.22; margin-top: 0.03in; white-space: pre-line; }
   .loop-caption { font-size: 7.6pt; font-weight: 700; color: var(--title); margin: 0.02in 0 0.04in; }
@@ -276,19 +365,19 @@
     gap: 0.07in;
   }
   .path {
-    padding: 0.06in 0.05in 0.07in;
+    padding: 0.05in 0.05in 0.06in;
     text-align: center;
-    min-height: 1.12in;
+    min-height: 1.00in;
   }
   .path-art {
-    height: 0.62in;
+    height: 0.54in;
     display: flex;
     align-items: flex-end;
     justify-content: center;
     margin-bottom: 0.04in;
     color: var(--header);
   }
-  .path-art svg { width: 100%; height: 0.62in; display: block; }
+  .path-art svg { width: 100%; height: 0.54in; display: block; }
   .path-kicker {
     display: flex;
     align-items: center;
@@ -467,18 +556,25 @@
         <p>Cut repeat load and ask friction without letting a chatbot invent the syllabus.</p>
         <ul>
           <li><strong>Problem statement / research question:</strong> How can campus office hours route asks and still keep professors as the gate on AI answers?</li>
-          <li><strong>Stakeholders / intended users:</strong> Students (Quiet ask, Rooms, Study Agent); TAs (desk, Help Coach); Professors (clusters, stamp, Canvas).</li>
-          <li><strong>Evidence, scope &amp; constraints:</strong> Local models by default; live Canvas needs campus credentials; no portal scrape; no open chatbot.</li>
+          <li><strong>Stakeholders / intended users:</strong> (1) Students — Quiet ask as a request code, named Rooms, stamped Study Agent. (2) TAs — claimed desk + Help Coach draft. (3) Professors — cluster view, stamp, Canvas modules.</li>
+          <li><strong>Evidence, scope &amp; constraints:</strong> (1) Local MiniLM + logistic models by default. (2) Live Canvas blocked on a launch key and API token. (3) No portal scrape. (4) Hosted LLM stays off unless approved.</li>
         </ul>
       </section>
       <section>
         <h2>Related Work, Gap &amp; Proposed Innovation</h2>
         <p>Inbox, Piazza/Ed, and tutoring chatbots do not combine a private ask, a triaged TA queue, and a stamp before student-facing AI.</p>
-        <ul>
-          <li><strong>Existing work / alternatives:</strong> LMS inbox; Piazza/Ed; FAQ bots; unconstrained campus chatbots.</li>
-          <li><strong>Gap / unmet need:</strong> No Quiet receipt + local triage + dual-TA match + professor stamp before an agent quotes.</li>
-          <li><strong>Proposed innovation:</strong> Those four capabilities in one Canvas-linked product.</li>
-        </ul>
+        <p class="fig-cap">Alternative · limitation · our approach</p>
+        <table class="data">
+          <thead>
+            <tr><th>Alternative</th><th>Limitation</th><th>Our approach</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>LMS inbox</td><td>Repeat pile; no private receipt; no routing</td><td>Quiet ask + Ask Triage names a TA</td></tr>
+            <tr><td>Piazza / Ed</td><td>Named public thread; staff still scan</td><td>Rooms stay optional; staff desk is separate</td></tr>
+            <tr><td>FAQ / tutoring bot</td><td>Quotes without a professor gate</td><td>Stamp before Study Agent may speak</td></tr>
+            <tr><td>Open campus chatbot</td><td>Can invent the syllabus</td><td>Local models; hosted LLM off</td></tr>
+          </tbody>
+        </table>
         <div class="gap-wrap">
           <p class="gap-caption">Who already does this job &nbsp;·&nbsp; green = yes &nbsp;·&nbsp; not a score</p>
           <table class="gap">
@@ -528,11 +624,11 @@
         <h2>Objectives &amp; Proposed Success Criteria</h2>
         <p>Three objectives a recruiter can check on the demo and one live Canvas checklist.</p>
         <table class="obj">
-          <thead><tr><th>Objective</th><th>Planned Metric / Evidence</th><th>Target / Criterion</th></tr></thead>
+          <thead><tr><th>Objective</th><th>Planned Metric / Evidence</th><th>Target / Criterion</th><th class="ctr">Priority</th></tr></thead>
           <tbody>
-            <tr><td>Route the ask to the right TA / help mode</td><td>Holdout quality + live demo walkthrough</td><td>Usable demo triage; cite lab scores as lab, not campus</td></tr>
-            <tr><td>Keep Study Agent answers professor-gated</td><td>Refuse unstamped or weakly matched notes</td><td>0 unauthorized Study Agent quotes</td></tr>
-            <tr><td>Open a Canvas-first campus deploy path</td><td>Campus login + module sync on one test course</td><td>Live checklist pass on one AUI course</td></tr>
+            <tr><td>Route the ask to the right TA / help mode</td><td>Holdout quality + live demo walkthrough</td><td>Usable demo triage; cite lab scores as lab, not campus</td><td class="ctr"><span class="prio hi">High</span></td></tr>
+            <tr><td>Keep Study Agent answers professor-gated</td><td>Refuse unstamped or weakly matched notes</td><td class="num">0 unauthorized Study Agent quotes</td><td class="ctr"><span class="prio hi">High</span></td></tr>
+            <tr><td>Open a Canvas-first campus deploy path</td><td>Campus login + module sync on one test course</td><td>Live checklist pass on one AUI course</td><td class="ctr"><span class="prio mid">Med</span></td></tr>
           </tbody>
         </table>
       </section>
@@ -625,34 +721,30 @@
         <p>The demo path runs today. Live Canvas waits on campus credentials.</p>
         <ul>
           <li><strong>Key requirements:</strong> Roles; Ask Triage; TA desk + Help Coach; professor stamp; Rooms; Canvas login and sync.</li>
-          <li><strong>Planned phases:</strong> (1) roles + triage (2) TA / stamp (3) Rooms + demo (4) live Canvas (5) hosted database.</li>
           <li><strong>Dependencies:</strong> Canvas launch key, API token, HTTPS, one AUI test course.</li>
         </ul>
-        <div class="phases">
-          <div class="stage-box built">
-            <svg class="ico" style="color:#fff"><use href="#ico-roles"/></svg>
-            <div class="name">1  Roles</div>
-            <div class="sub">built</div>
+        <p class="fig-cap">Planned phases · solid = built · outline = IT</p>
+        <div class="gantt card">
+          <div class="gantt-axis"><span></span><span>Now / Sep 2026</span><span>Fall 2026</span><span>Capstone</span></div>
+          <div class="gantt-row">
+            <div class="gantt-lab">1 Roles<small>built</small></div>
+            <div class="gantt-track"><div class="gantt-bar built" style="grid-column:1 / 5">roles + triage</div></div>
           </div>
-          <div class="stage-box built">
-            <svg class="ico" style="color:#fff"><use href="#ico-stamp"/></svg>
-            <div class="name">2  Stamp</div>
-            <div class="sub">built</div>
+          <div class="gantt-row">
+            <div class="gantt-lab">2 Stamp<small>built</small></div>
+            <div class="gantt-track"><div class="gantt-bar built" style="grid-column:2 / 6">TA / stamp</div></div>
           </div>
-          <div class="stage-box built">
-            <svg class="ico" style="color:#fff"><use href="#ico-web"/></svg>
-            <div class="name">3  Demo</div>
-            <div class="sub">built</div>
+          <div class="gantt-row">
+            <div class="gantt-lab">3 Demo<small>built</small></div>
+            <div class="gantt-track"><div class="gantt-bar built" style="grid-column:3 / 7">Rooms + demo</div></div>
           </div>
-          <div class="stage-box pending">
-            <svg class="ico" style="color:#006633"><use href="#ico-canvas"/></svg>
-            <div class="name">4  Live Canvas</div>
-            <div class="sub">IT</div>
+          <div class="gantt-row">
+            <div class="gantt-lab">4 Canvas<small>IT</small></div>
+            <div class="gantt-track"><div class="gantt-bar pending" style="grid-column:7 / 11">live course</div></div>
           </div>
-          <div class="stage-box pending">
-            <svg class="ico" style="color:#006633"><use href="#ico-queue"/></svg>
-            <div class="name">5  Hosted DB</div>
-            <div class="sub">IT</div>
+          <div class="gantt-row">
+            <div class="gantt-lab">5 Hosted DB<small>IT</small></div>
+            <div class="gantt-track"><div class="gantt-bar pending" style="grid-column:9 / 13">Postgres</div></div>
           </div>
         </div>
       </section>
@@ -727,15 +819,26 @@ topics from
 grade gaps.</div>
           </div>
         </div>
+        <p class="decision"><strong>Chosen over an open tutoring bot:</strong> local MiniLM plus a professor stamp. The model never speaks first — the stamp is the integrity gate.</p>
       </section>
       <section>
         <h2>Planned Evaluation &amp; Validation</h2>
         <p>Lab checks, a gold-label file, three-seat walkthroughs, and a live Canvas checklist. No campus-quality claim here.</p>
         <ul>
           <li><strong>Validation approach:</strong> Automated tests; holdouts; gold-label lab; student / TA / professor walkthrough; live checklist.</li>
-          <li><strong>Comparison / reference:</strong> Inbox / forum baseline. Accept if demo triage works, the agent never quotes unstamped text, and one course can launch.</li>
-          <li><strong>Planned metrics:</strong> Lab accuracy / F1 (honesty table); stamp refusal; Canvas launch success; walkthrough completion.</li>
         </ul>
+        <p class="fig-cap">Acceptance metrics · lab scores stay lab</p>
+        <table class="data">
+          <thead>
+            <tr><th>Metric</th><th>Baseline / Comparison</th><th>Target</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Demo triage</td><td>Inbox / forum pile</td><td>Usable walkthrough; cite lab F1 as lab</td></tr>
+            <tr><td>Stamp refusal</td><td>Chatbot quotes freely</td><td class="num">0 unauthorized Study Agent quotes</td></tr>
+            <tr><td>Canvas launch</td><td>Local mirror only</td><td>One AUI course checklist pass</td></tr>
+            <tr><td>Three-seat walkthrough</td><td>No shared desk today</td><td>Student / TA / professor complete the path</td></tr>
+          </tbody>
+        </table>
         <div class="chart-wrap card">
           <p class="chart-caption">Laboratory checks &nbsp;·&nbsp; not a live AUI section</p>
           <svg viewBox="0 0 640 268" width="100%" height="auto" role="img" aria-label="Laboratory accuracy and macro-F1">
@@ -805,21 +908,28 @@ grade gaps.</div>
       </section>
       <section>
         <h2>Feasibility, Resources &amp; Risks</h2>
-        <p>Feasible as a demo now and live when credentials arrive. The risk is campus keys, not missing code.</p>
-        <ul>
-          <li><strong>Required resources:</strong> Laptop, GitHub, SQLite then Postgres, Canvas key and token. No GPU required for the demo.</li>
-          <li><strong>Main feasibility concern / risk:</strong> IT delay on the Canvas launch key and API token.</li>
-          <li><strong>Mitigation / fallback:</strong> Local Canvas mirror for showcase; one-course live stage; Postgres at go-live.</li>
-        </ul>
+        <p>Feasible as a demo now and live when credentials arrive. Resources: laptop, GitHub, SQLite. No GPU for the demo. The risk is campus keys, not missing code.</p>
+        <p class="fig-cap">Risk register · likelihood as a status dot</p>
+        <table class="data">
+          <thead>
+            <tr><th>Risk</th><th class="ctr">Likelihood</th><th>Mitigation</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Canvas launch key / API token delay</td><td class="ctr"><span class="like hi"><i></i>High</span></td><td>Local Canvas mirror; one-course live stage</td></tr>
+            <tr><td>Live grade token for Strategist</td><td class="ctr"><span class="like mid"><i></i>Med</span></td><td>Client-side / demo grade gaps until a token</td></tr>
+            <tr><td>Hosted database / HTTPS cutover</td><td class="ctr"><span class="like lo"><i></i>Low</span></td><td>SQLite now; Postgres at go-live</td></tr>
+            <tr><td>Ask Triage label miss or bias</td><td class="ctr"><span class="like mid"><i></i>Med</span></td><td>Human TA owns the reply; stamp blocks an invented syllabus</td></tr>
+          </tbody>
+        </table>
       </section>
       <section>
         <h2>Ethics, Privacy, Security &amp; Responsible AI</h2>
         <p>Privacy, security, and responsible AI are in scope for a campus help product.</p>
         <ul>
-          <li><strong>Privacy / human participants:</strong> Quiet asks hide the name from classmates; course-scoped data; minimize identifiers.</li>
-          <li><strong>Cybersecurity / legal / standards:</strong> Role login; HTTPS for live; no scrape; Canvas LTI 1.3; least-privilege token.</li>
-          <li><strong>AI use plan:</strong> Local Ask Triage and Help Coach; Study Agent quotes stamped notes only; hosted LLM stays off unless approved.</li>
-          <li><strong>AI system risks if applicable:</strong> Label bias and misses go to a human TA; the stamp blocks an invented syllabus.</li>
+          <li><strong>Privacy / human participants:</strong> Quiet asks show a request code, not a name, on any classmate surface. Data stays course-scoped. Logs keep identifiers to a minimum.</li>
+          <li><strong>Cybersecurity / legal / standards:</strong> Role login; HTTPS for live; no Canvas scrape; LTI 1.3 launch; least-privilege API token.</li>
+          <li><strong>AI use plan:</strong> Local Ask Triage and Help Coach only. Study Agent quotes stamped notes. Hosted LLM stays off unless a campus owner approves it.</li>
+          <li><strong>AI system risks if applicable:</strong> A missed label goes to a human TA. The stamp is the only path into student-facing AI — that is the invented-syllabus block.</li>
         </ul>
       </section>
       <section>
@@ -829,6 +939,17 @@ grade gaps.</div>
           <li><strong>Potential value / impact:</strong> Safer campus AI help, and a pattern other LMS schools can copy.</li>
           <li><strong>Expected limitations / boundaries:</strong> Not a student-information system; not live-grade planning yet; not a multilingual chatbot.</li>
         </ul>
+        <p class="fig-cap">Today vs with OfficeHours</p>
+        <table class="data">
+          <thead>
+            <tr><th>Today</th><th>With OfficeHours</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Same stuck point asked five times</td><td>Ask Triage clusters; one stamp serves the next ask</td></tr>
+            <tr><td>Quiet students stay silent</td><td>Quiet ask: request code, no public name</td></tr>
+            <tr><td>A chatbot can invent the syllabus</td><td>Study Agent quotes a stamp or refuses</td></tr>
+          </tbody>
+        </table>
       </section>
     </div>
   </div>
