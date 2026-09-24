@@ -259,47 +259,55 @@
   }
   .gantt-axis {
     display: grid;
-    grid-template-columns: 1.05in 1fr 1fr 1fr 1fr;
-    font-size: 6.8pt;
+    grid-template-columns: 1.12in 1fr 1fr 1fr 1fr;
+    font-size: 6.6pt;
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
     color: #000000;
     margin-bottom: 0.03in;
   }
-  .gantt-axis span:not(:first-child) { text-align: center; }
+  .gantt-axis span:not(:first-child) {
+    text-align: center;
+    border-left: 1px solid var(--border);
+  }
   .gantt-legend {
-    margin: 0.045in 0 0;
+    margin: 0.04in 0 0;
     padding-top: 0.035in;
     border-top: 1px solid var(--border);
-    font-size: 7pt;
-    line-height: 1.35;
+    font-size: 6.7pt;
+    line-height: 1.32;
     color: #000;
+    display: grid;
+    gap: 0.02in;
   }
+  .gantt-legend div { display: grid; grid-template-columns: 0.18in 1fr; gap: 0.05in; align-items: start; }
   .gantt-swatch {
     display: inline-block;
     width: 0.16in;
-    height: 0.08in;
+    height: 0.09in;
     border-radius: 2px;
-    vertical-align: middle;
-    margin: 0 0.03in 0 0;
+    margin-top: 0.02in;
   }
   .gantt-swatch.on { background: var(--header); }
-  .gantt-swatch.off { background: #fff; border: 1.3px solid var(--blue); box-sizing: border-box; }
+  .gantt-swatch.off { background: #F3F7FB; border: 1.4px dashed var(--blue); box-sizing: border-box; }
   .gantt-row {
     display: grid;
-    grid-template-columns: 1.05in 1fr;
+    grid-template-columns: 1.12in 1fr;
     gap: 0.04in;
     align-items: center;
-    margin-bottom: 0.022in;
+    margin-bottom: 0.024in;
   }
-  .gantt-row:last-child { margin-bottom: 0; }
-  .gantt-lab { font-size: 6.7pt; font-weight: 700; color: var(--title); line-height: 1.15; }
+  .gantt-lab { font-size: 6.6pt; font-weight: 700; color: var(--title); line-height: 1.15; }
   .gantt-track {
     display: grid;
     grid-template-columns: repeat(12, 1fr);
-    height: 0.11in;
-    background: var(--placeholder);
+    height: 0.145in;
+    background-color: var(--placeholder);
+    background-image: linear-gradient(to right,
+      transparent 0, transparent calc(25% - 1px), #C5CDD4 calc(25% - 1px), #C5CDD4 25%,
+      transparent 25%, transparent calc(50% - 1px), #C5CDD4 calc(50% - 1px), #C5CDD4 50%,
+      transparent 50%, transparent calc(75% - 1px), #C5CDD4 calc(75% - 1px), #C5CDD4 75%);
     border-radius: 3px;
     overflow: hidden;
   }
@@ -307,16 +315,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 6pt;
+    font-size: 5.8pt;
     font-weight: 700;
     letter-spacing: 0.01em;
+    white-space: nowrap;
   }
   .gantt-bar.planned { background: var(--header); color: #fff; }
-  .gantt-bar.gated { background: #fff; color: var(--blue); border: 1.2px solid var(--blue); box-sizing: border-box; }
+  .gantt-bar.gated { background: #F3F7FB; color: var(--blue); border: 1.4px dashed var(--blue); box-sizing: border-box; }
 
-  table.prio-plan { font-size: 7pt; margin-top: 0.02in; }
-  table.prio-plan th, table.prio-plan td { padding: 0.02in 0.035in; }
+  table.prio-plan { font-size: 6.8pt; margin-top: 0.02in; }
+  table.prio-plan th, table.prio-plan td { padding: 0.018in 0.032in; }
+  table.prio-plan .kind { font-weight: 700; width: 0.62in; }
   table.prio-plan .imp { font-weight: 700; width: 0.42in; }
+  table.prio-plan tr.wish td { color: var(--blue); }
 
   /* Architecture */
   .arch {
@@ -839,42 +850,48 @@
       </section>
       <section>
         <h2>Requirements &amp; Initial Work Plan</h2>
-        <p><strong>1 · Duration of the project:</strong> 4 months · 1 Sep – 15 Dec 2026 (~105 days).</p>
-        <p class="fig-cap">2 · Scheduling — Gantt chart</p>
+        <p><strong>1 · Duration of the project:</strong> 4 months · 1 September – 15 December 2026 (~105 days).</p>
+        <p class="fig-cap">2 · Scheduling — Gantt chart · September · October · November · December</p>
         <div class="gantt card">
-          <div class="gantt-axis"><span></span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span></div>
+          <div class="gantt-axis"><span></span><span>September</span><span>October</span><span>November</span><span>December</span></div>
           <div class="gantt-row">
             <div class="gantt-lab">1.1 Requirements</div>
-            <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:1 / 4"></div></div>
+            <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:1 / 4">September</div></div>
           </div>
           <div class="gantt-row">
             <div class="gantt-lab">2.1 Design / build</div>
-            <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:4 / 10"></div></div>
+            <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:4 / 10">October – November</div></div>
           </div>
           <div class="gantt-row">
             <div class="gantt-lab">3.1 Demo / evaluate</div>
-            <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:7 / 12"></div></div>
+            <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:7 / 12">November – December</div></div>
           </div>
           <div class="gantt-row">
             <div class="gantt-lab">4.1 Live Canvas</div>
-            <div class="gantt-track"><div class="gantt-bar gated" style="grid-column:10 / 13"></div></div>
+            <div class="gantt-track"><div class="gantt-bar gated" style="grid-column:10 / 13">after IT key</div></div>
           </div>
-          <p class="gantt-legend">
-            <span class="gantt-swatch on"></span><strong>Solid green</strong> = work we plan to finish in this cycle (we control the schedule).
-            &nbsp;&nbsp;<span class="gantt-swatch off"></span><strong>Outline</strong> = planned only after campus IT issues the Canvas launch key.
-          </p>
+          <div class="gantt-legend">
+            <div>
+              <span class="gantt-swatch on"></span>
+              <span><strong>Solid green bar</strong> = work on our calendar. The filled months are when we plan to do that task. We control those dates.</span>
+            </div>
+            <div>
+              <span class="gantt-swatch off"></span>
+              <span><strong>Hollow dashed bar</strong> = same plan, but we cannot start until campus IT issues the Canvas launch key. That is why Live Canvas is outlined, not filled.</span>
+            </div>
+          </div>
         </div>
-        <p class="fig-cap">3 · Prioritization · D = must-have for the demo · W = wish (IT-dependent) · Imp. = 1–10</p>
+        <p class="fig-cap">3 · Prioritization · Demand = must-have for the demo · Wish = wanted if campus IT is ready · Imp. = 1–10</p>
         <table class="data prio-plan">
           <thead>
-            <tr><th>D / W</th><th>Requirement</th><th class="imp">Imp.</th></tr>
+            <tr><th class="kind">Kind</th><th>Requirement</th><th class="imp">Imp.</th></tr>
           </thead>
           <tbody>
-            <tr><td>D</td><td>Three-seat desk: roles, Ask Triage, Help Coach</td><td class="imp">10</td></tr>
-            <tr><td>D</td><td>Professor stamp before any agent may quote</td><td class="imp">10</td></tr>
-            <tr><td>D</td><td>Sharing notes + Rooms on the planned demo</td><td class="imp">9</td></tr>
-            <tr><td>W</td><td>Live Canvas login on one AUI test course</td><td class="imp">8</td></tr>
-            <tr><td>W</td><td>Hosted Postgres / HTTPS cutover</td><td class="imp">5</td></tr>
+            <tr><td class="kind">Demand</td><td>Three-seat desk: roles, Ask Triage, Help Coach</td><td class="imp">10</td></tr>
+            <tr><td class="kind">Demand</td><td>Professor stamp before any agent may quote</td><td class="imp">10</td></tr>
+            <tr><td class="kind">Demand</td><td>Sharing notes + Rooms on the planned demo</td><td class="imp">9</td></tr>
+            <tr class="wish"><td class="kind">Wish</td><td>Live Canvas login on one AUI test course</td><td class="imp">8</td></tr>
+            <tr class="wish"><td class="kind">Wish</td><td>Hosted Postgres / HTTPS cutover</td><td class="imp">5</td></tr>
           </tbody>
         </table>
       </section>

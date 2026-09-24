@@ -18,4 +18,10 @@ timeout 100s google-chrome \
   --window-size=2176,2848 --force-device-scale-factor=1 \
   --screenshot="$OUT_PNG" "$HTML"
 pdfinfo "$OUT_PDF" | rg -i 'Pages|Page size' || true
-ls -lh "$OUT_PDF" "$OUT_PNG"
+cp -f "$OUT_PDF" "${HERE}/OfficeHours_AI_Proposal_Poster.pdf"
+cp -f "$OUT_PNG" "${HERE}/OfficeHours_AI_Proposal_Poster.png"
+cp -f "$OUT_PDF" "${HERE}/OfficeHours_AI_FYP_Poster.pdf"
+cp -f "$OUT_PNG" "${HERE}/OfficeHours_AI_FYP_Poster.png"
+cp -f "$OUT_PDF" "${HERE}/OfficeHours_AI_Proposal_WorkPlan.pdf"
+cp -f "$OUT_PNG" "${HERE}/OfficeHours_AI_Proposal_WorkPlan.png"
+ls -lh "$OUT_PDF" "$OUT_PNG" "${HERE}/OfficeHours_AI_Proposal_WorkPlan.pdf"
