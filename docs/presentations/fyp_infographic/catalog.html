@@ -655,7 +655,7 @@
         <p>Office hours break two ways: staff hear the same stuck point five times, and quiet students will not put a name on a public channel. OfficeHours is one Canvas-linked desk: Quiet ask, Sharing notes, Stack Overflow–style Rooms, and a professor stamp before any agent may quote.</p>
         <ul>
           <li><strong>Context / application area:</strong> AUI courses at peak demand — students, TAs, and professors.</li>
-          <li><strong>Proposed idea:</strong> One web app — Quiet ask, Ask Triage, Help Coach, stamped Study Agent, Sharing notes, Stack Overflow Rooms, Canvas login.</li>
+          <li><strong>Proposed idea:</strong> Four cooperating agents on one desk — Ask Triage, Help Coach, Study Agent, Strategist — sharing a MiniLM encoder and campus tools, with a professor stamp as the publish gate.</li>
           <li><strong>Expected contribution:</strong> Less repeat load, a private way to ask, a classmate notes feed and Rooms, and faculty-controlled AI answers.</li>
         </ul>
         <p class="paths-caption">Three doors · a student picks how to ask</p>
@@ -689,7 +689,7 @@
         <ul>
           <li><strong>Problem statement / research question:</strong> How can campus office hours route asks and still keep professors as the gate on AI answers?</li>
           <li><strong>Stakeholders / intended users:</strong> (1) Students — Quiet ask as a request code, Sharing notes feed, named Rooms, stamped Study Agent. (2) TAs — claimed desk + Help Coach draft. (3) Professors — cluster view, stamp, Canvas modules.</li>
-          <li><strong>Evidence, scope &amp; constraints:</strong> (1) Local MiniLM embeds the ask; logistic models classify; Study Agent copies a stamped FAQ — not a ChatGPT loop. (2) Live Canvas blocked on a launch key and API token. (3) No portal scrape. (4) ChatGPT / Claude stay off the student path unless later approved.</li>
+          <li><strong>Evidence, scope &amp; constraints:</strong> (1) Agents embed with <em>all-MiniLM-L6-v2</em>; Analyzer / Matcher / Synthesizer are joblibs; Study Agent cosine-retrieves a stamp and refuses below 0.42. (2) Live Canvas blocked on a launch key. (3) No portal scrape. (4) Student-facing text is copied from a stamp.</li>
         </ul>
       </section>
       <section>
@@ -704,7 +704,7 @@
             <tr><td>LMS inbox</td><td>Repeat pile; no private receipt; no routing</td><td>Quiet ask + Ask Triage names a TA</td></tr>
             <tr><td>Piazza / Ed</td><td>Named public thread; staff still scan</td><td>Rooms + notes feed; staff desk is separate</td></tr>
             <tr><td>FAQ / tutoring bot</td><td>Quotes without a professor gate</td><td>Stamp before Study Agent may speak</td></tr>
-            <tr><td>Open campus chatbot</td><td>Can invent the syllabus</td><td>Local MiniLM ranks text; no ChatGPT / Claude</td></tr>
+            <tr><td>Open campus chatbot</td><td>One model invents answers</td><td>Four agents share MiniLM; stamp is the publish tool</td></tr>
           </tbody>
         </table>
         <div class="gap-wrap">
@@ -769,7 +769,7 @@
         <p>Students, TAs, and professors share one web app. The API owns the queue and stamps. Canvas is the campus door.</p>
         <ul>
           <li><strong>Software:</strong> React web app; FastAPI; SQLite now, Postgres when hosted; live queue; Quiet-ask privacy; notes feed; Rooms.</li>
-          <li><strong>Models:</strong> MiniLM vectors, logistic classifiers, cosine lookup, planner tables. No hosted chatbot on the user path.</li>
+          <li><strong>Agent stack:</strong> Shared <em>all-MiniLM-L6-v2</em> encoder. Ask Triage = three scikit-learn joblibs. Help Coach = same retrieve on the TA screen. Study Agent = cosine ≥ 0.42 or refuse. Strategist = grade-gap planner.</li>
         </ul>
         <div class="arch card">
           <p class="arch-caption">One product. Three seats. Canvas is the campus door.</p>
@@ -802,7 +802,7 @@
             <div class="node card">
               <svg class="ico" style="color:#1E4D7B"><use href="#ico-queue"/></svg>
               <div class="name">Ask Triage</div>
-              <div class="sub">labels the ask<br>and names a TA</div>
+              <div class="sub">Analyzer · Matcher · Synthesizer<br>joblibs on MiniLM</div>
             </div>
             <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center">
               <svg class="arrow-svg"><use href="#arrow-h"/></svg>
@@ -810,7 +810,7 @@
             <div class="node card">
               <svg class="ico" style="color:#1E4D7B"><use href="#ico-chat"/></svg>
               <div class="name">Help Coach</div>
-              <div class="sub">draft stays on<br>the TA screen</div>
+              <div class="sub">MiniLM RAG draft<br>stays on the TA screen</div>
             </div>
             <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center">
               <svg class="arrow-svg"><use href="#arrow-h"/></svg>
@@ -818,7 +818,7 @@
             <div class="node card">
               <svg class="ico" style="color:#006633"><use href="#ico-stamp"/></svg>
               <div class="name">Stamp</div>
-              <div class="sub">professor marks<br>what AI may quote</div>
+              <div class="sub">write-gate into<br>the approved KB</div>
             </div>
           </div>
           <p class="arch-row-label">Student path</p>
@@ -826,7 +826,7 @@
             <div class="node card">
               <svg class="ico" style="color:#1E4D7B"><use href="#ico-agent"/></svg>
               <div class="name">Study Agent</div>
-              <div class="sub">quotes a stamp<br>or refuses</div>
+              <div class="sub">cosine vs stamp<br>refuse if &lt; 0.42</div>
             </div>
             <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center">
               <svg class="arrow-svg"><use href="#arrow-h"/></svg>
@@ -834,7 +834,7 @@
             <div class="node card">
               <svg class="ico" style="color:#1E4D7B"><use href="#ico-plan"/></svg>
               <div class="name">Strategist</div>
-              <div class="sub">ranks review topics<br>from local grade gaps</div>
+              <div class="sub">planner table ranks<br>topics from grade gaps</div>
             </div>
             <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center">
               <svg class="arrow-svg"><use href="#arrow-h"/></svg>
@@ -845,7 +845,7 @@
               <div class="sub">Stack Overflow Q&amp;A + ranks<br>like / comment feed</div>
             </div>
           </div>
-          <p class="arch-note">No hosted chatbot on the student, TA, or professor path.</p>
+          <p class="arch-note">Pipeline: Ask Triage → Help Coach → stamp → Study Agent. Same MiniLM vector space; the stamp is the only publish tool.</p>
         </div>
       </section>
       <section>
@@ -899,12 +899,12 @@
     <div class="col">
       <section>
         <h2>Methodology / Proposed Technical Approach</h2>
-        <p>Local models plus a professor stamp fit campus integrity better than an open tutoring bot.</p>
+        <p>The innovation is agent integration: four software agents share one encoder and call campus tools. Each agent embeds the ask, acts, and hands the result to the next agent until the job is done.</p>
         <ul>
-          <li><strong>Proposed methodology:</strong> Iterative product build, automated tests, and three-seat demos.</li>
-          <li><strong>Technologies / methods:</strong> React, FastAPI, MiniLM, scikit-learn, Canvas LTI 1.3.</li>
-          <li><strong>Data / resources:</strong> Synthetic and silver asks; curated gold file; local Canvas mirror until live modules.</li>
-          <li><strong>Reproducibility / management:</strong> GitHub, documentation, train scripts, and evaluation reports.</li>
+          <li><strong>Agent contract:</strong> model = <em>all-MiniLM-L6-v2</em>; tools = queue, TA roster, teaching bank, stamped KB. Ask Triage writes the ticket; Help Coach drafts for a TA; stamp writes the FAQ; Study Agent quotes or refuses; Strategist ranks review topics.</li>
+          <li><strong>Shared stack:</strong> sentence-transformers encode once → scikit-learn joblibs classify / rank → cosine retrieve. Artifacts: <em>request_classifier.joblib</em>, <em>matcher_classifier.joblib</em>, <em>synthesizer_ranker.joblib</em>.</li>
+          <li><strong>Why this architecture:</strong> one MiniLM process in RAM; classify + retrieve in milliseconds on CPU, so thousands of concurrent asks stay on the campus desk. Student-facing text is copied from a stamp (cosine ≥ 0.42) or the agent refuses — it does not generate a new sentence.</li>
+          <li><strong>Data / reproducibility:</strong> Synthetic and silver asks; curated gold file; train scripts and joblibs in-repo; three-seat demos.</li>
         </ul>
         <div class="loop">
           <div class="stage-box built">
@@ -920,8 +920,8 @@ tracked.</div>
           <div class="stage-box built">
             <svg class="ico" style="color:#fff"><use href="#ico-queue"/></svg>
             <div class="name">2  Ask Triage</div>
-            <div class="sub">Category, a TA,
-and a copied hint.</div>
+            <div class="sub">Analyzer · Matcher ·
+Synthesizer joblibs.</div>
           </div>
           <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#3D7A58">
             <svg class="arrow-svg"><use href="#arrow-h"/></svg>
@@ -929,8 +929,8 @@ and a copied hint.</div>
           <div class="stage-box built">
             <svg class="ico" style="color:#fff"><use href="#ico-chat"/></svg>
             <div class="name">3  Help Coach</div>
-            <div class="sub">The draft never
-leaves the TA
+            <div class="sub">MiniLM RAG draft
+stays on the TA
 screen.</div>
           </div>
           <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#3D7A58">
@@ -939,9 +939,9 @@ screen.</div>
           <div class="stage-box built">
             <svg class="ico" style="color:#fff"><use href="#ico-stamp"/></svg>
             <div class="name">4  Stamp</div>
-            <div class="sub">The professor
-marks the only
-quotable text.</div>
+            <div class="sub">Publish tool:
+writes the only
+quotable FAQ.</div>
           </div>
           <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#3D7A58">
             <svg class="arrow-svg"><use href="#arrow-h"/></svg>
@@ -949,9 +949,8 @@ quotable text.</div>
           <div class="stage-box built">
             <svg class="ico" style="color:#fff"><use href="#ico-agent"/></svg>
             <div class="name">5  Study Agent</div>
-            <div class="sub">Quote the stamp
-or refuse a weak
-match.</div>
+            <div class="sub">Cosine vs stamp.
+Refuse if &lt; 0.42.</div>
           </div>
           <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#3D7A58">
             <svg class="arrow-svg"><use href="#arrow-h"/></svg>
@@ -959,12 +958,12 @@ match.</div>
           <div class="stage-box built">
             <svg class="ico" style="color:#fff"><use href="#ico-plan"/></svg>
             <div class="name">6  Strategist</div>
-            <div class="sub">Ranks review
-topics from
+            <div class="sub">Planner table
+ranks topics from
 grade gaps.</div>
           </div>
         </div>
-        <p class="decision"><strong>Chosen over an open tutoring bot:</strong> local MiniLM plus a professor stamp. The model never speaks first — the stamp is the integrity gate.</p>
+        <p class="decision"><strong>Why these agents, this model:</strong> MiniLM is the shared encoder so every agent lives in one vector space. Campus tools (queue, roster, KB, stamp) are the action layer. The stamp is the write-gate into Study Agent — that is how the pipeline stays an agent system without inventing the syllabus.</p>
       </section>
       <section>
         <h2>Planned Evaluation &amp; Validation</h2>
@@ -1046,14 +1045,14 @@ grade gaps.</div>
         <ul>
           <li><strong>Privacy / human participants:</strong> Quiet asks show a request code, not a name, on any classmate surface. Data stays course-scoped by design; logs minimize identifiers.</li>
           <li><strong>Cybersecurity / legal / standards:</strong> Role-based login for access control. Live data travels over HTTPS. No scraping of Canvas content. LTI 1.3 for the campus hand-shake; API tokens follow least privilege.</li>
-          <li><strong>AI use plan:</strong> Context engineering — know what a model needs, and what to leave out. Write acceptance criteria a machine can be tested against. Find gaps in the backlog, and defend what you reject. Cite it, validate it, review it, own the errors. Responsible judgment — ethics, citation, validation.</li>
-          <li><strong>AI system risks if applicable:</strong> A missed label goes to a human TA. The stamp is the only path into student-facing AI — that is the invented-syllabus block.</li>
+          <li><strong>AI use plan:</strong> Ask Triage, Help Coach, Study Agent, and Strategist share <em>all-MiniLM-L6-v2</em> and call campus tools (queue, roster, KB, stamp). Study Agent may emit stamped FAQ text or a refuse — it does not generate. A missed Analyzer label goes to a human TA.</li>
+          <li><strong>AI system risks if applicable:</strong> A weak cosine match (&lt; 0.42) must refuse. The stamp is the only write into student-facing agent output.</li>
         </ul>
       </section>
       <section>
         <h2>Expected Contribution &amp; Potential Impact</h2>
         <ul>
-          <li><strong>Expected technical / research contribution:</strong> A gated local-NLP office-hours desk with dual-TA routing, a professor-controlled agent, a classmate notes feed, and Stack Overflow–style Rooms.</li>
+          <li><strong>Expected technical / research contribution:</strong> Four cooperating agents (Ask Triage, Help Coach, Study Agent, Strategist) on one MiniLM encoder, with a professor stamp as the publish tool, plus a classmate notes feed and Stack Overflow–style Rooms.</li>
           <li><strong>Potential value / impact:</strong> Safer campus AI help, a classmate notes feed and Rooms, and a pattern other LMS schools can copy.</li>
           <li><strong>Expected limitations / boundaries:</strong> Focused scope—course-scoped help desk (not a student-information system). Supports English-language queries in v1 (monolingual MVP). Triage and routing proven in this cycle; live grade integration planned post-Capstone.</li>
         </ul>

@@ -9,10 +9,10 @@ Official SSE catalog size: **14.5 × 19 in**. Designed print source is one self-
 | [`OfficeHours_AI_Catalog_Poster.png`](OfficeHours_AI_Catalog_Poster.png) | Screen proof |
 | [`OfficeHours_AI_Catalog_Poster.docx`](OfficeHours_AI_Catalog_Poster.docx) | Official Word template fill (copy only) |
 
-**Latest poster (this revision — October on the Gantt, Demand/Wish rows, solid vs hollow legend):**  
-https://github.com/abssisophia9-hub/officehours-ai/blob/cursor/fyp-infographic-poster-1879/docs/presentations/fyp_infographic/OfficeHours_AI_Proposal_WorkPlan.pdf
+**Latest poster (this revision — agent architecture named: MiniLM, joblibs, cosine 0.42, campus tools):**  
+https://github.com/abssisophia9-hub/officehours-ai/blob/cursor/fyp-infographic-poster-1879/docs/presentations/fyp_infographic/OfficeHours_AI_Proposal_Agents.pdf
 
-On the GitHub page, use **Download raw file**. Ignore older files named `OfficeHours_AI_Catalog_Poster.pdf`, `OfficeHours_AI_Proposal_Poster.pdf`, or `OfficeHours_AI_FYP_Poster.pdf` — those names were reused and browsers keep stale copies.
+On the GitHub page, use **Download raw file**. Ignore older Catalog / Proposal / FYP / WorkPlan PDFs already in Downloads.
 
 **Word download:**  
 https://github.com/abssisophia9-hub/officehours-ai/blob/cursor/fyp-infographic-poster-1879/docs/presentations/fyp_infographic/OfficeHours_AI_Catalog_Poster.docx
