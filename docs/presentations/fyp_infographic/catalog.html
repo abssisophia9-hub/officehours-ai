@@ -44,7 +44,7 @@
     overflow: hidden;
   }
   body {
-    padding: 0.38in 0.38in 0.34in;
+    padding: 0.32in 0.38in 0.28in;
     display: grid;
     grid-template-rows: auto 1fr;
     gap: 0.11in;
@@ -146,7 +146,7 @@
   .brand p { margin: 0.05in 0 0; font-size: 7.2pt; font-weight: 700; color: #000000; letter-spacing: 0.04em; line-height: 1.3; }
 
   .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0.18in; min-height: 0; height: 100%; align-items: stretch; }
-  .col { display: flex; flex-direction: column; gap: 0.05in; min-height: 0; }
+  .col { display: flex; flex-direction: column; gap: 0.04in; min-height: 0; }
   .col:last-child { justify-content: space-between; }
   .col > section { flex: 0 0 auto; }
   section { min-height: 0; }
@@ -254,56 +254,46 @@
   }
 
   .gantt {
-    margin-top: 0.045in;
-    padding: 0.055in 0.08in 0.05in;
-    height: auto;
-    flex: 0 0 auto;
-    align-self: start;
+    margin-top: 0.03in;
+    padding: 0.05in 0.07in 0.045in;
+    display: grid;
+    grid-template-columns: 1fr 1.35in;
+    gap: 0.08in;
+    align-items: center;
   }
-  .gantt-note {
-    margin: 0.045in 0 0;
-    padding-top: 0.04in;
-    border-top: 1px solid var(--border);
-    font-size: 7.4pt;
-    line-height: 1.3;
-    color: #000000;
+  .gantt-dates {
+    font-size: 7pt;
+    line-height: 1.35;
+    color: #000;
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
-  .gantt-note strong { color: var(--title); }
-  .gantt-swatch {
-    display: inline-block;
-    width: 0.14in;
-    height: 0.08in;
-    border-radius: 2px;
-    vertical-align: middle;
-    margin-right: 0.03in;
-  }
-  .gantt-swatch.on { background: var(--header); }
-  .gantt-swatch.off { background: #fff; border: 1.2px solid var(--blue); box-sizing: border-box; }
+  .gantt-dates li { margin: 0 0 0.02in; }
   .gantt-axis {
     display: grid;
-    grid-template-columns: 0.78in 1fr 1fr 1fr;
-    font-size: 7.2pt;
+    grid-template-columns: 0.92in 1fr 1fr 1fr;
+    font-size: 6.8pt;
     font-weight: 700;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #000000;
-    margin-bottom: 0.045in;
+    margin-bottom: 0.03in;
   }
   .gantt-axis span:not(:first-child) { text-align: center; }
   .gantt-row {
     display: grid;
-    grid-template-columns: 0.78in 1fr;
-    gap: 0.05in;
+    grid-template-columns: 0.92in 1fr;
+    gap: 0.04in;
     align-items: center;
-    margin-bottom: 0.03in;
+    margin-bottom: 0.022in;
   }
   .gantt-row:last-child { margin-bottom: 0; }
-  .gantt-lab { font-size: 7pt; font-weight: 700; color: var(--title); line-height: 1.15; }
-  .gantt-lab small { display: block; font-weight: 600; color: var(--secondary); font-size: 6.2pt; }
+  .gantt-lab { font-size: 6.7pt; font-weight: 700; color: var(--title); line-height: 1.15; }
   .gantt-track {
     display: grid;
     grid-template-columns: repeat(12, 1fr);
-    height: 0.13in;
+    height: 0.11in;
     background: var(--placeholder);
     border-radius: 3px;
     overflow: hidden;
@@ -312,17 +302,62 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 6.3pt;
+    font-size: 6pt;
     font-weight: 700;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
   }
   .gantt-bar.planned { background: var(--header); color: #fff; }
   .gantt-bar.gated { background: #fff; color: var(--blue); border: 1.2px solid var(--blue); box-sizing: border-box; }
 
+  .pert {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin: 0.04in 0 0.03in;
+  }
+  .pert-node { flex: 1 1 0; text-align: center; min-width: 0; }
+  .pert-node .dot {
+    width: 0.24in;
+    height: 0.24in;
+    border-radius: 50%;
+    background: var(--header);
+    color: #fff;
+    font-size: 6.2pt;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.02in;
+  }
+  .pert-node.gate .dot {
+    background: #fff;
+    color: var(--blue);
+    border: 1.4px solid var(--blue);
+  }
+  .pert-node small {
+    display: block;
+    font-size: 5.9pt;
+    font-weight: 600;
+    line-height: 1.15;
+    color: #000;
+  }
+  .pert-edge {
+    flex: 0 0 0.1in;
+    height: 0.24in;
+    display: flex;
+    align-items: center;
+  }
+  .pert-edge i { display: block; width: 100%; height: 1.6px; background: var(--header); }
+  .pert-note { font-size: 6.8pt; line-height: 1.25; margin: 0 0 0.02in; color: #000; }
+
+  table.prio-plan { font-size: 7pt; margin-top: 0.02in; }
+  table.prio-plan th, table.prio-plan td { padding: 0.02in 0.035in; }
+  table.prio-plan .imp { font-weight: 700; width: 0.42in; }
+
   /* Architecture */
   .arch {
-    margin-top: 0.05in;
-    padding: 0.07in 0.07in 0.06in;
+    margin-top: 0.04in;
+    padding: 0.05in 0.06in 0.04in;
   }
   .arch-caption {
     font-size: 8.2pt;
@@ -342,9 +377,9 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--secondary);
-    margin: 0.07in 0 0.04in;
+    margin: 0.04in 0 0.03in;
   }
-  .arch-down { display: flex; justify-content: center; height: 18px; color: var(--accent); }
+  .arch-down { display: flex; justify-content: center; height: 14px; color: var(--accent); }
   .node {
     display: flex;
     flex-direction: column;
@@ -353,11 +388,11 @@
     gap: 0.035in;
     padding: 0.06in 0.045in;
     text-align: center;
-    min-height: 0.52in;
+    min-height: 0.40in;
   }
   .node .name { font-size: 8.2pt; font-weight: 700; color: var(--title); line-height: 1.15; }
   .node .sub { font-size: 6.9pt; color: var(--secondary); line-height: 1.25; }
-  .arch-note { font-size: 7.1pt; color: var(--secondary); margin: 0.07in 0 0; }
+  .arch-note { font-size: 7.1pt; color: var(--secondary); margin: 0.04in 0 0; }
 
   /* Phases */
   .phases {
@@ -835,45 +870,68 @@
               <div class="sub">Stack Overflow Q&amp;A + ranks<br>like / comment feed</div>
             </div>
           </div>
-          <p class="arch-note">No hosted chatbot on the path students, TAs, or professors run. Strategist ranks from local grade gaps until live Canvas grades.</p>
+          <p class="arch-note">No hosted chatbot on the student, TA, or professor path.</p>
         </div>
       </section>
       <section>
         <h2>Requirements &amp; Initial Work Plan</h2>
-        <p>A three-seat demo is planned for Oct–Nov 2026. Live Canvas is scheduled for Dec 2026, once campus credentials arrive.</p>
-        <ul>
-          <li><strong>Key requirements:</strong> Roles; Ask Triage; TA desk + Help Coach; professor stamp; Sharing notes; Rooms; Canvas login and sync.</li>
-          <li><strong>Dependencies:</strong> Canvas launch key, API token, HTTPS, one AUI test course.</li>
-        </ul>
-        <p class="fig-cap">Proposed schedule · Sep–Dec 2026</p>
+        <p><strong>1 · Duration of the project:</strong> 4 months · 1 Sep – 15 Dec 2026 (~105 days).</p>
+        <p class="fig-cap">2 · Scheduling — Gantt chart</p>
         <div class="gantt card">
-          <div class="gantt-axis"><span></span><span>Sep 2026</span><span>Nov 2026</span><span>Dec 2026</span></div>
-          <div class="gantt-row">
-            <div class="gantt-lab">1 Roles<small>design</small></div>
-            <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:1 / 5">roles + triage</div></div>
+          <div>
+            <div class="gantt-axis"><span></span><span>Sep</span><span>Nov</span><span>Dec</span></div>
+            <div class="gantt-row">
+              <div class="gantt-lab">1.1 Requirements</div>
+              <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:1 / 4"></div></div>
+            </div>
+            <div class="gantt-row">
+              <div class="gantt-lab">2.1 Design / build</div>
+              <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:3 / 8"></div></div>
+            </div>
+            <div class="gantt-row">
+              <div class="gantt-lab">3.1 Demo / evaluate</div>
+              <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:7 / 11"></div></div>
+            </div>
+            <div class="gantt-row">
+              <div class="gantt-lab">4.1 Live Canvas</div>
+              <div class="gantt-track"><div class="gantt-bar gated" style="grid-column:10 / 13"></div></div>
+            </div>
           </div>
-          <div class="gantt-row">
-            <div class="gantt-lab">2 Stamp<small>staff path</small></div>
-            <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:2 / 6">TA / stamp</div></div>
-          </div>
-          <div class="gantt-row">
-            <div class="gantt-lab">3 Demo<small>product</small></div>
-            <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:3 / 7">Rooms + demo</div></div>
-          </div>
-          <div class="gantt-row">
-            <div class="gantt-lab">4 Canvas<small>campus</small></div>
-            <div class="gantt-track"><div class="gantt-bar gated" style="grid-column:7 / 11">live course</div></div>
-          </div>
-          <div class="gantt-row">
-            <div class="gantt-lab">5 Hosted DB<small>deploy</small></div>
-            <div class="gantt-track"><div class="gantt-bar gated" style="grid-column:9 / 13">Postgres</div></div>
-          </div>
-          <p class="gantt-note">
-            <span class="gantt-swatch on"></span><strong>Solid</strong> = planned product work.
-            &nbsp;<span class="gantt-swatch off"></span><strong>Outline</strong> = planned, campus-IT gated.
-            &nbsp; Risk: Canvas launch key / API token.
-          </p>
+          <ul class="gantt-dates">
+            <li><strong>Start:</strong> 1 Sep 2026</li>
+            <li><strong>End:</strong> 15 Dec 2026</li>
+            <li>Solid = planned work</li>
+            <li>Outline = campus-IT gated</li>
+          </ul>
         </div>
+        <p class="fig-cap">3 · CPM / PERT</p>
+        <div class="pert" aria-label="Critical path">
+          <div class="pert-node"><div class="dot">S</div><small>Start</small></div>
+          <div class="pert-edge"><i></i></div>
+          <div class="pert-node"><div class="dot">1.1</div><small>Reqs</small></div>
+          <div class="pert-edge"><i></i></div>
+          <div class="pert-node"><div class="dot">2.1</div><small>Design</small></div>
+          <div class="pert-edge"><i></i></div>
+          <div class="pert-node"><div class="dot">3.1</div><small>Demo</small></div>
+          <div class="pert-edge"><i></i></div>
+          <div class="pert-node"><div class="dot">4.1</div><small>Eval</small></div>
+          <div class="pert-edge"><i></i></div>
+          <div class="pert-node gate"><div class="dot">5</div><small>Canvas</small></div>
+          <div class="pert-edge"><i></i></div>
+          <div class="pert-node"><div class="dot">E</div><small>End</small></div>
+        </div>
+        <p class="pert-note">Critical path 1.1 → 2.1 → 3.1 → 4.1. Node 5 waits on campus IT.</p>
+        <p class="fig-cap">4 · Prioritization · D = demand · W = wish · Imp. = 1–10</p>
+        <table class="data prio-plan">
+          <thead>
+            <tr><th>D / W</th><th>Requirement</th><th class="imp">Imp.</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>D</td><td>Three-seat desk: roles, Ask Triage, Help Coach</td><td class="imp">10</td></tr>
+            <tr><td>D</td><td>Professor stamp before any agent may quote</td><td class="imp">10</td></tr>
+            <tr><td>D</td><td>Sharing notes + Rooms on the planned demo</td><td class="imp">9</td></tr>
+          </tbody>
+        </table>
       </section>
     </div>
 
