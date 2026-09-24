@@ -138,7 +138,7 @@
   .brand p { margin: 0.05in 0 0; font-size: 7.2pt; font-weight: 700; color: #000000; letter-spacing: 0.04em; line-height: 1.3; }
 
   .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0.18in; min-height: 0; height: 100%; align-items: stretch; }
-  .col { display: flex; flex-direction: column; gap: 0.058in; min-height: 0; }
+  .col { display: flex; flex-direction: column; gap: 0.05in; min-height: 0; }
   .col:last-child { justify-content: space-between; }
   .col > section { flex: 0 0 auto; }
   section { min-height: 0; }
@@ -313,8 +313,8 @@
 
   /* Architecture */
   .arch {
-    margin-top: 0.06in;
-    padding: 0.08in 0.08in 0.07in;
+    margin-top: 0.05in;
+    padding: 0.07in 0.07in 0.06in;
   }
   .arch-caption {
     font-size: 8.2pt;
@@ -393,9 +393,9 @@
     gap: 0.09in;
   }
   .path {
-    padding: 0.07in 0.06in 0.08in;
+    padding: 0.06in 0.06in 0.07in;
     text-align: center;
-    min-height: 0.98in;
+    min-height: 0.92in;
   }
   .path-art {
     height: 0.52in;
@@ -547,10 +547,10 @@
     <div class="col">
       <section>
         <h2>Project Overview</h2>
-        <p>Office hours break two ways: staff hear the same stuck point five times, and quiet students will not put a name on a public channel. OfficeHours is one Canvas-linked desk that triages the ask, lets classmates share notes and open Rooms, and lets a professor stamp the only text an agent may quote.</p>
+        <p>Office hours break two ways: staff hear the same stuck point five times, and quiet students will not put a name on a public channel. OfficeHours is one Canvas-linked desk: Quiet ask, Sharing notes, Stack Overflow–style Rooms, and a professor stamp before any agent may quote.</p>
         <ul>
-          <li><strong>Context / application area:</strong> AUI courses at peak demand — students, TAs, professors, and the faculty who review this proposal.</li>
-          <li><strong>Proposed idea:</strong> One web app — Quiet ask, Ask Triage, Help Coach, stamped Study Agent, Sharing notes (like / comment / download feed), Stack Overflow–style Rooms, Canvas login.</li>
+          <li><strong>Context / application area:</strong> AUI courses at peak demand — students, TAs, and professors.</li>
+          <li><strong>Proposed idea:</strong> One web app — Quiet ask, Ask Triage, Help Coach, stamped Study Agent, Sharing notes, Stack Overflow Rooms, Canvas login.</li>
           <li><strong>Expected contribution:</strong> Less repeat load, a private way to ask, a classmate notes feed and Rooms, and faculty-controlled AI answers.</li>
         </ul>
         <p class="paths-caption">Three doors · a student picks how to ask</p>
@@ -589,7 +589,7 @@
       </section>
       <section>
         <h2>Related Work, Gap &amp; Proposed Innovation</h2>
-        <p>Inbox, Piazza/Ed, and tutoring chatbots do not combine a private ask, a triaged TA queue, a classmate notes feed, Stack Overflow–style Rooms, and a stamp before student-facing AI.</p>
+        <p>Inbox, Piazza/Ed, and tutoring chatbots miss the private ask, the triaged TA queue, classmate notes + Rooms, and a stamp before student-facing AI.</p>
         <p class="fig-cap">Alternative · limitation · our approach</p>
         <table class="data">
           <thead>
@@ -597,7 +597,7 @@
           </thead>
           <tbody>
             <tr><td>LMS inbox</td><td>Repeat pile; no private receipt; no routing</td><td>Quiet ask + Ask Triage names a TA</td></tr>
-            <tr><td>Piazza / Ed</td><td>Named public thread; staff still scan</td><td>Stack Overflow–style Rooms + notes feed; staff desk stays separate</td></tr>
+            <tr><td>Piazza / Ed</td><td>Named public thread; staff still scan</td><td>Rooms + notes feed; staff desk is separate</td></tr>
             <tr><td>FAQ / tutoring bot</td><td>Quotes without a professor gate</td><td>Stamp before Study Agent may speak</td></tr>
             <tr><td>Open campus chatbot</td><td>Can invent the syllabus</td><td>Local models; hosted LLM off</td></tr>
           </tbody>
@@ -663,7 +663,7 @@
         <h2>Proposed System / Research Design</h2>
         <p>Students, TAs, and professors share one web app. The API owns the queue and stamps. Canvas is the campus door.</p>
         <ul>
-          <li><strong>Software:</strong> React web app; FastAPI; SQLite now, Postgres when hosted; live queue; Quiet-ask privacy; Sharing notes; Rooms.</li>
+          <li><strong>Software:</strong> React web app; FastAPI; SQLite now, Postgres when hosted; live queue; Quiet-ask privacy; notes feed; Rooms.</li>
           <li><strong>Models:</strong> MiniLM vectors, logistic classifiers, cosine lookup, planner tables. No hosted chatbot on the user path.</li>
         </ul>
         <div class="arch card">
