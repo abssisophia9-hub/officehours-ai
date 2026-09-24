@@ -309,47 +309,6 @@
   .gantt-bar.planned { background: var(--header); color: #fff; }
   .gantt-bar.gated { background: #fff; color: var(--blue); border: 1.2px solid var(--blue); box-sizing: border-box; }
 
-  .pert {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin: 0.04in 0 0.03in;
-  }
-  .pert-node { flex: 1 1 0; text-align: center; min-width: 0; }
-  .pert-node .dot {
-    width: 0.24in;
-    height: 0.24in;
-    border-radius: 50%;
-    background: var(--header);
-    color: #fff;
-    font-size: 6.2pt;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 0.02in;
-  }
-  .pert-node.gate .dot {
-    background: #fff;
-    color: var(--blue);
-    border: 1.4px solid var(--blue);
-  }
-  .pert-node small {
-    display: block;
-    font-size: 5.9pt;
-    font-weight: 600;
-    line-height: 1.15;
-    color: #000;
-  }
-  .pert-edge {
-    flex: 0 0 0.1in;
-    height: 0.24in;
-    display: flex;
-    align-items: center;
-  }
-  .pert-edge i { display: block; width: 100%; height: 1.6px; background: var(--header); }
-  .pert-note { font-size: 6.8pt; line-height: 1.25; margin: 0 0 0.02in; color: #000; }
-
   table.prio-plan { font-size: 7pt; margin-top: 0.02in; }
   table.prio-plan th, table.prio-plan td { padding: 0.02in 0.035in; }
   table.prio-plan .imp { font-weight: 700; width: 0.42in; }
@@ -904,24 +863,7 @@
             <li>Outline = campus-IT gated</li>
           </ul>
         </div>
-        <p class="fig-cap">3 · CPM / PERT</p>
-        <div class="pert" aria-label="Critical path">
-          <div class="pert-node"><div class="dot">S</div><small>Start</small></div>
-          <div class="pert-edge"><i></i></div>
-          <div class="pert-node"><div class="dot">1.1</div><small>Reqs</small></div>
-          <div class="pert-edge"><i></i></div>
-          <div class="pert-node"><div class="dot">2.1</div><small>Design</small></div>
-          <div class="pert-edge"><i></i></div>
-          <div class="pert-node"><div class="dot">3.1</div><small>Demo</small></div>
-          <div class="pert-edge"><i></i></div>
-          <div class="pert-node"><div class="dot">4.1</div><small>Eval</small></div>
-          <div class="pert-edge"><i></i></div>
-          <div class="pert-node gate"><div class="dot">5</div><small>Canvas</small></div>
-          <div class="pert-edge"><i></i></div>
-          <div class="pert-node"><div class="dot">E</div><small>End</small></div>
-        </div>
-        <p class="pert-note">Critical path 1.1 → 2.1 → 3.1 → 4.1. Node 5 waits on campus IT.</p>
-        <p class="fig-cap">4 · Prioritization · D = demand · W = wish · Imp. = 1–10</p>
+        <p class="fig-cap">3 · Prioritization · D = demand · W = wish · Imp. = 1–10</p>
         <table class="data prio-plan">
           <thead>
             <tr><th>D / W</th><th>Requirement</th><th class="imp">Imp.</th></tr>
