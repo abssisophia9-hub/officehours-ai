@@ -689,7 +689,7 @@
         <ul>
           <li><strong>Problem statement / research question:</strong> How can campus office hours route asks and still keep professors as the gate on AI answers?</li>
           <li><strong>Stakeholders / intended users:</strong> (1) Students — Quiet ask as a request code, Sharing notes feed, named Rooms, stamped Study Agent. (2) TAs — claimed desk + Help Coach draft. (3) Professors — cluster view, stamp, Canvas modules.</li>
-          <li><strong>Evidence, scope &amp; constraints:</strong> (1) Local MiniLM + logistic models by default. (2) Live Canvas blocked on a launch key and API token. (3) No portal scrape. (4) Hosted LLM stays off unless approved.</li>
+          <li><strong>Evidence, scope &amp; constraints:</strong> (1) Local MiniLM embeds the ask; logistic models classify; Study Agent copies a stamped FAQ — not a ChatGPT loop. (2) Live Canvas blocked on a launch key and API token. (3) No portal scrape. (4) ChatGPT / Claude stay off the student path unless later approved.</li>
         </ul>
       </section>
       <section>
@@ -704,7 +704,7 @@
             <tr><td>LMS inbox</td><td>Repeat pile; no private receipt; no routing</td><td>Quiet ask + Ask Triage names a TA</td></tr>
             <tr><td>Piazza / Ed</td><td>Named public thread; staff still scan</td><td>Rooms + notes feed; staff desk is separate</td></tr>
             <tr><td>FAQ / tutoring bot</td><td>Quotes without a professor gate</td><td>Stamp before Study Agent may speak</td></tr>
-            <tr><td>Open campus chatbot</td><td>Can invent the syllabus</td><td>Local models; hosted LLM off</td></tr>
+            <tr><td>Open campus chatbot</td><td>Can invent the syllabus</td><td>Local MiniLM ranks text; no ChatGPT / Claude</td></tr>
           </tbody>
         </table>
         <div class="gap-wrap">
