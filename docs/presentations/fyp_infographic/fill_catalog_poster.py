@@ -75,7 +75,7 @@ REPLACEMENTS = {
     "Models: MiniLM + LogReg + RAG joblibs; Strategist client-side until live grades.":
         "Models: MiniLM vectors, logistic classifiers, cosine lookup, planner tables. No hosted chatbot on the user path.",
     "Demo path is implemented; live Canvas is gated on IT credentials.":
-        "The demo path runs today. Live Canvas waits on campus credentials.",
+        "A three-seat demo is planned for Oct–Nov 2026. Live Canvas is scheduled for Dec 2026, once campus credentials arrive.",
     "Key requirements: Multi-role auth; Ask Triage; TA queue + Help Coach; KB stamp; Rooms; LTI/REST":
         "Key requirements: Roles; Ask Triage; TA desk + Help Coach; professor stamp; Rooms; Canvas login and sync.",
     "Planned phases: (1) triage+roles (2) TA/KB gate (3) Rooms+demo (4) LTI live (5) Postgres/grades":
@@ -103,7 +103,7 @@ REPLACEMENTS = {
     "Planned deliverables: Prototype; Ask Triage joblibs; diagrams; demo script; live checklist; Capstone report":
         "Planned deliverables: Running product; trained models; diagrams; demo script; live checklist; Capstone report.",
     "Feasible as staged demo→live. Main risk is campus credential latency.":
-        "Feasible as a demo now and live when credentials arrive. The risk is campus keys, not missing code.",
+        "Feasible as a planned demo in Oct–Nov 2026 and live when campus credentials arrive in Dec 2026. The risk is campus keys, not missing code.",
     "Required resources: Laptop; GitHub; SQLite→Postgres; Canvas LTI/token; optional Entra; no GPU for MiniLM":
         "Required resources: Laptop, GitHub, SQLite then Postgres, Canvas key and token. No GPU required for the demo.",
     "Main feasibility concern / risk: IT delay on LTI/API/Entra; Strategist grades blocked until a live grade token":
