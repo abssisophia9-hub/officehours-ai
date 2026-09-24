@@ -41,10 +41,10 @@
     overflow: hidden;
   }
   body {
-    padding: 0.35in 0.35in 0.28in;
+    padding: 0.38in 0.38in 0.34in;
     display: grid;
     grid-template-rows: auto 1fr;
-    gap: 0.08in;
+    gap: 0.11in;
   }
 
   /* —— reusable graphic system —— */
@@ -122,9 +122,9 @@
     padding-bottom: 0.08in;
   }
   h1 {
-    margin: 0 0 0.05in;
-    font-size: 14.8pt;
-    line-height: 1.18;
+    margin: 0 0 0.06in;
+    font-size: 15.6pt;
+    line-height: 1.2;
     color: var(--title);
     font-weight: 700;
   }
@@ -137,22 +137,22 @@
   .brand img { width: 1.55in; height: auto; }
   .brand p { margin: 0.04in 0 0; font-size: 7pt; font-weight: 700; color: var(--title); letter-spacing: 0.04em; line-height: 1.25; }
 
-  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0.14in; min-height: 0; align-items: start; }
-  .col { display: flex; flex-direction: column; gap: 0.055in; min-height: 0; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0.18in; min-height: 0; align-items: start; }
+  .col { display: flex; flex-direction: column; gap: 0.09in; min-height: 0; }
   .col > section { flex: 0 0 auto; }
   section { min-height: 0; }
   h2 {
-    margin: 0 0 0.045in;
+    margin: 0 0 0.055in;
     background: var(--header);
     color: var(--white);
-    font-size: 8pt;
+    font-size: 8.5pt;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    padding: 0.035in 0.07in;
+    padding: 0.045in 0.08in;
     font-weight: 700;
     border-radius: 2px;
   }
-  p, li { font-size: 7.7pt; line-height: 1.26; margin: 0 0 0.025in; color: var(--title); }
+  p, li { font-size: 8.3pt; line-height: 1.34; margin: 0 0 0.04in; color: var(--title); }
   ul { margin: 0; padding-left: 0.16in; }
   strong { color: var(--title); }
 
@@ -161,7 +161,7 @@
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    font-size: 7pt;
+    font-size: 7.6pt;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     overflow: hidden;
@@ -171,7 +171,7 @@
   table.obj th, table.obj td,
   table.gap th, table.gap td {
     border-bottom: 1px solid var(--border);
-    padding: 0.032in 0.045in;
+    padding: 0.042in 0.055in;
     vertical-align: top;
     text-align: left;
   }
@@ -228,34 +228,34 @@
   .like.lo i { background: var(--header); }
 
   .decision {
-    margin: 0.045in 0 0;
-    padding: 0.04in 0.07in;
+    margin: 0.06in 0 0;
+    padding: 0.055in 0.08in;
     background: var(--tint);
     border-left: 3px solid var(--header);
-    font-size: 7pt;
-    line-height: 1.28;
+    font-size: 7.6pt;
+    line-height: 1.34;
     color: var(--title);
   }
   .fig-cap {
-    font-size: 7.2pt;
+    font-size: 7.7pt;
     font-weight: 700;
     color: var(--title);
-    margin: 0.04in 0 0.03in;
+    margin: 0.055in 0 0.04in;
   }
 
   .gantt {
-    margin-top: 0.04in;
-    padding: 0.06in 0.07in 0.06in;
+    margin-top: 0.055in;
+    padding: 0.08in 0.09in 0.08in;
     height: auto;
     flex: 0 0 auto;
     align-self: start;
   }
   .gantt-note {
-    margin: 0.06in 0 0;
-    padding-top: 0.045in;
+    margin: 0.07in 0 0;
+    padding-top: 0.055in;
     border-top: 1px solid var(--border);
-    font-size: 6.6pt;
-    line-height: 1.35;
+    font-size: 7.1pt;
+    line-height: 1.4;
     color: var(--secondary);
   }
   .gantt-note strong { color: var(--title); }
@@ -272,12 +272,12 @@
   .gantt-axis {
     display: grid;
     grid-template-columns: 0.78in 1fr 1fr 1fr;
-    font-size: 6.2pt;
+    font-size: 6.7pt;
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     color: var(--secondary);
-    margin-bottom: 0.035in;
+    margin-bottom: 0.045in;
   }
   .gantt-axis span:not(:first-child) { text-align: center; }
   .gantt-row {
@@ -285,15 +285,15 @@
     grid-template-columns: 0.78in 1fr;
     gap: 0.05in;
     align-items: center;
-    margin-bottom: 0.028in;
+    margin-bottom: 0.04in;
   }
   .gantt-row:last-child { margin-bottom: 0; }
-  .gantt-lab { font-size: 6.5pt; font-weight: 700; color: var(--title); line-height: 1.15; }
-  .gantt-lab small { display: block; font-weight: 600; color: var(--secondary); font-size: 5.8pt; }
+  .gantt-lab { font-size: 7pt; font-weight: 700; color: var(--title); line-height: 1.15; }
+  .gantt-lab small { display: block; font-weight: 600; color: var(--secondary); font-size: 6.2pt; }
   .gantt-track {
     display: grid;
     grid-template-columns: repeat(12, 1fr);
-    height: 0.145in;
+    height: 0.175in;
     background: var(--placeholder);
     border-radius: 3px;
     overflow: hidden;
@@ -302,7 +302,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 5.8pt;
+    font-size: 6.3pt;
     font-weight: 700;
     letter-spacing: 0.02em;
   }
@@ -311,14 +311,14 @@
 
   /* Architecture */
   .arch {
-    margin-top: 0.05in;
-    padding: 0.08in 0.08in 0.07in;
+    margin-top: 0.06in;
+    padding: 0.1in 0.1in 0.09in;
   }
   .arch-caption {
-    font-size: 8pt;
+    font-size: 8.5pt;
     font-weight: 700;
     color: var(--title);
-    margin: 0 0 0.07in;
+    margin: 0 0 0.08in;
   }
   .arch-top, .arch-bot {
     display: grid;
@@ -327,27 +327,27 @@
   .arch-top { grid-template-columns: 1fr 18px 1.25fr 18px 1fr; gap: 0; }
   .arch-bot { grid-template-columns: 1fr 14px 1fr 14px 1fr; margin-top: 0.02in; }
   .arch-row-label {
-    font-size: 6.4pt;
+    font-size: 6.8pt;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--secondary);
-    margin: 0.06in 0 0.03in;
+    margin: 0.07in 0 0.04in;
   }
-  .arch-down { display: flex; justify-content: center; height: 16px; color: var(--accent); }
+  .arch-down { display: flex; justify-content: center; height: 18px; color: var(--accent); }
   .node {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.03in;
-    padding: 0.06in 0.04in;
+    gap: 0.035in;
+    padding: 0.075in 0.05in;
     text-align: center;
-    min-height: 0.56in;
+    min-height: 0.68in;
   }
-  .node .name { font-size: 8pt; font-weight: 700; color: var(--title); line-height: 1.15; }
-  .node .sub { font-size: 6.6pt; color: var(--secondary); line-height: 1.2; }
-  .arch-note { font-size: 6.6pt; color: var(--secondary); margin: 0.06in 0 0; }
+  .node .name { font-size: 8.5pt; font-weight: 700; color: var(--title); line-height: 1.15; }
+  .node .sub { font-size: 7.1pt; color: var(--secondary); line-height: 1.25; }
+  .arch-note { font-size: 7.1pt; color: var(--secondary); margin: 0.07in 0 0; }
 
   /* Phases */
   .phases {
@@ -361,67 +361,62 @@
   .stage-box.pending .sub { color: var(--secondary); opacity: 1; }
 
   /* Gap table caption */
-  .gap-wrap { margin-top: 0.04in; }
-  .gap-caption { font-size: 7.2pt; font-weight: 700; color: var(--title); margin: 0 0 0.03in; }
+  .gap-wrap { margin-top: 0.055in; }
+  .gap-caption { font-size: 7.7pt; font-weight: 700; color: var(--title); margin: 0 0 0.04in; }
 
   /* Chart */
-  .chart-wrap { margin-top: 0.04in; padding: 0.06in 0.07in 0.03in; }
-  .chart-wrap svg { max-height: 1.82in; }
-  .chart-caption { font-size: 7.4pt; font-weight: 700; color: var(--title); margin: 0 0 0.02in; }
-  .chart-foot { font-size: 6.3pt; color: var(--secondary); margin: 0.02in 0 0; }
+  .chart-wrap { margin-top: 0.055in; padding: 0.08in 0.09in 0.05in; }
+  .chart-wrap svg { max-height: 2.45in; }
+  .chart-caption { font-size: 8pt; font-weight: 700; color: var(--title); margin: 0 0 0.03in; }
+  .chart-foot { font-size: 6.8pt; color: var(--secondary); margin: 0.03in 0 0; }
 
   /* Loop uses the same stage-box / flow-arrow system */
   .loop {
     display: grid;
-    grid-template-columns: 1fr 11px 1fr 11px 1fr 11px 1fr 11px 1fr 11px 1fr;
+    grid-template-columns: 1fr 12px 1fr 12px 1fr 12px 1fr 12px 1fr 12px 1fr;
     gap: 0;
-    margin-top: 0.04in;
+    margin-top: 0.055in;
     align-items: stretch;
   }
-  .loop .stage-box { min-height: 0.84in; padding: 0.05in 0.03in; }
-  .loop.demo-path {
-    grid-template-columns: 1fr 14px 1fr 14px 1fr 14px 1fr;
-    margin-top: 0.03in;
-  }
-  .loop.demo-path .stage-box { min-height: 0.52in; padding: 0.04in 0.03in; }
-  .loop .stage-box .name { font-size: 7.1pt; }
-  .loop .stage-box .sub { font-size: 6.1pt; line-height: 1.22; margin-top: 0.03in; white-space: pre-line; }
-  .loop-caption { font-size: 7.6pt; font-weight: 700; color: var(--title); margin: 0.02in 0 0.04in; }
+  .loop .stage-box { min-height: 1.08in; padding: 0.07in 0.04in; }
+  .loop .stage-box .name { font-size: 7.8pt; }
+  .loop .stage-box .sub { font-size: 6.6pt; line-height: 1.28; margin-top: 0.04in; white-space: pre-line; }
+  .loop-caption { font-size: 8.1pt; font-weight: 700; color: var(--title); margin: 0.03in 0 0.05in; }
 
   /* How a student asks — three doors, catalog-grade line scenes */
-  .paths-caption { font-size: 7.4pt; font-weight: 700; color: var(--title); margin: 0.05in 0 0.03in; }
+  .paths-caption { font-size: 8pt; font-weight: 700; color: var(--title); margin: 0.07in 0 0.045in; }
   .paths {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 0.07in;
+    gap: 0.09in;
   }
   .path {
-    padding: 0.05in 0.05in 0.06in;
+    padding: 0.07in 0.06in 0.08in;
     text-align: center;
-    min-height: 1.00in;
+    min-height: 1.22in;
   }
   .path-art {
-    height: 0.54in;
+    height: 0.68in;
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    margin-bottom: 0.04in;
+    margin-bottom: 0.05in;
     color: var(--header);
   }
-  .path-art svg { width: 100%; height: 0.54in; display: block; }
+  .path-art svg { width: 100%; height: 0.68in; display: block; }
   .path-kicker {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.04in;
-    margin-bottom: 0.02in;
+    gap: 0.045in;
+    margin-bottom: 0.03in;
     color: var(--header);
   }
-  .path .name { font-size: 7.6pt; font-weight: 700; color: var(--title); }
-  .path .sub { font-size: 6.4pt; color: var(--secondary); line-height: 1.25; margin-top: 0.02in; }
+  .path .name { font-size: 8.2pt; font-weight: 700; color: var(--title); }
+  .path .sub { font-size: 7pt; color: var(--secondary); line-height: 1.3; margin-top: 0.03in; }
 
   .refs { padding-bottom: 0.02in; }
-  .refs p { font-size: 7.2pt; color: var(--secondary); margin: 0; line-height: 1.3; }
+  .refs p { font-size: 7.7pt; color: var(--secondary); margin: 0; line-height: 1.38; }
 
   .arrow-svg { width: 18px; height: 12px; display: block; }
   .arrow-svg.down { width: 12px; height: 16px; }
@@ -783,20 +778,6 @@
             &nbsp; Main schedule risk: Canvas launch key and API token — the live course slips if campus credentials are late.
           </p>
         </div>
-        <p class="fig-cap">Requirement status · what a walkthrough can show today</p>
-        <table class="data">
-          <thead>
-            <tr><th>Requirement</th><th class="ctr">Status</th><th>Evidence</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>Roles + one login</td><td class="ctr"><span class="prio hi">Built</span></td><td>Student / TA / professor seats</td></tr>
-            <tr><td>Ask Triage</td><td class="ctr"><span class="prio hi">Built</span></td><td>Lab holdout + demo queue</td></tr>
-            <tr><td>Help Coach + stamp</td><td class="ctr"><span class="prio hi">Built</span></td><td>Draft on TA screen; 0 unstamped quotes</td></tr>
-            <tr><td>Rooms</td><td class="ctr"><span class="prio hi">Built</span></td><td>Named classmate threads</td></tr>
-            <tr><td>Live Canvas login / sync</td><td class="ctr"><span class="prio mid">IT</span></td><td>Launch key + API token</td></tr>
-            <tr><td>Hosted Postgres</td><td class="ctr"><span class="prio mid">IT</span></td><td>After one-course live</td></tr>
-          </tbody>
-        </table>
       </section>
     </div>
 
@@ -989,83 +970,6 @@ grade gaps.</div>
           <li><strong>Potential value / impact:</strong> Safer campus AI help, and a pattern other LMS schools can copy.</li>
           <li><strong>Expected limitations / boundaries:</strong> Not a student-information system; not live-grade planning yet; not a multilingual chatbot.</li>
         </ul>
-        <p class="fig-cap">Today vs with OfficeHours</p>
-        <table class="data">
-          <thead>
-            <tr><th>Today</th><th>With OfficeHours</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>Same stuck point asked five times</td><td>Ask Triage clusters; one stamp serves the next ask</td></tr>
-            <tr><td>Quiet students stay silent</td><td>Quiet ask: request code, no public name</td></tr>
-            <tr><td>A chatbot can invent the syllabus</td><td>Study Agent quotes a stamp or refuses</td></tr>
-          </tbody>
-        </table>
-        <p class="fig-cap">What this project claims · and what it does not</p>
-        <table class="data">
-          <thead>
-            <tr><th>We claim</th><th>We do not claim</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>A walkable gated desk: Quiet ask, local triage, stamp, Study Agent</td><td>Campus-quality F1 on live AUI student text</td></tr>
-            <tr><td>Quiet students can ask without a public name</td><td>A student-information system or SIS</td></tr>
-            <tr><td>One professor stamp can serve the next similar ask</td><td>Live-grade planning — Strategist uses demo gaps</td></tr>
-            <tr><td>Other LMS schools can copy the LTI + stamp pattern</td><td>A multilingual or hosted tutoring chatbot</td></tr>
-          </tbody>
-        </table>
-        <p class="fig-cap">Three-seat demo check · pass on one walkthrough</p>
-        <table class="data">
-          <thead>
-            <tr><th>Seat</th><th>What they do</th><th>Pass if</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>Student</td><td>File a Quiet ask, open a Room, query Study Agent</td><td>Name hidden on Quiet; agent quotes a stamp or refuses</td></tr>
-            <tr><td>TA</td><td>Claim the card; use Help Coach; send a teaching note</td><td>Draft never leaves the TA screen</td></tr>
-            <tr><td>Professor</td><td>Read the cluster; stamp the only quotable text</td><td>Unstamped notes stay silent</td></tr>
-          </tbody>
-        </table>
-        <p class="fig-cap">60-second demo path · what to click</p>
-        <div class="loop demo-path">
-          <div class="stage-box built">
-            <div class="name">1  Sign in</div>
-            <div class="sub">Sara · one
-AUI email</div>
-          </div>
-          <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#3D7A58">
-            <svg class="arrow-svg"><use href="#arrow-h"/></svg>
-          </div>
-          <div class="stage-box built">
-            <div class="name">2  Quiet ask</div>
-            <div class="sub">Request code.
-No public name.</div>
-          </div>
-          <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#3D7A58">
-            <svg class="arrow-svg"><use href="#arrow-h"/></svg>
-          </div>
-          <div class="stage-box built">
-            <div class="name">3  TA desk</div>
-            <div class="sub">Claim + Help
-Coach draft</div>
-          </div>
-          <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center;color:#3D7A58">
-            <svg class="arrow-svg"><use href="#arrow-h"/></svg>
-          </div>
-          <div class="stage-box built">
-            <div class="name">4  Stamp</div>
-            <div class="sub">Agent quotes
-or refuses</div>
-          </div>
-        </div>
-        <p class="fig-cap">IT dependencies · not missing product code</p>
-        <table class="data">
-          <thead>
-            <tr><th>Need</th><th>Owner</th><th>Blocks</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>Canvas launch key</td><td>Campus IT</td><td>Live LTI sign-in</td></tr>
-            <tr><td>Canvas API token</td><td>Campus IT</td><td>Module sync</td></tr>
-            <tr><td>HTTPS + one test course</td><td>IT + supervisor</td><td>One-course go-live</td></tr>
-          </tbody>
-        </table>
       </section>
       <section class="refs">
         <h2>Key References</h2>
