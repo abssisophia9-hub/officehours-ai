@@ -1,0 +1,227 @@
+"""Revision Strategist — LLM (or local planner) + web tools on a learner dossier.
+
+Campus Study Agent still quotes stamps only. This agent recommends YouTube /
+articles from how the student asks and learns. It never invents URLs.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from sqlalchemy.orm import Session
+
+from app.ai.clustering import cosine_similarity, embed_text
+from app.models.strategist import (
+    FocusTopicOut,
+    GradeRowIn,
+    ResourceHitOut,
+    StrategistPlanOut,
+    ToolCallOut,
+)
+from app.services.strategist_llm import (
+    llm_available,
+    llm_model_name,
+    plan_tool_queries_with_llm,
+)
+from app.services.strategist_profile import STYLE_LABELS, build_learner_dossier
+from app.services.strategist_tools import article_search, youtube_search
+
+STYLE_QUERY_HINTS = {
+    "visual_structural": ("diagram", "visualization animation"),
+    "step_by_step": ("step by step tutorial", "walkthrough"),
+    "example_driven": ("worked example", "practice problems"),
+    "conceptual": ("intuition explained", "why it works"),
+    "unknown": ("explained", "introduction"),
+}
+
+
+def build_plan(
+    db: Session,
+    *,
+    user_id: int,
+    course_id: int,
+    course_code: str | None = None,
+    grades: list[GradeRowIn] | None = None,
+    goal: str | None = None,
+) -> StrategistPlanOut:
+    dossier = build_learner_dossier(db, user_id=user_id, course_id=course_id)
+    focus = _focus_topic(grades or [], course_code)
+    natural_goal = (goal or "").strip() or _default_goal(dossier, focus)
+
+    notes: list[str] = []
+    tool_calls: list[dict[str, Any]] = []
+    hits: list[dict[str, Any]] = []
+    planner = "local-planner"
+    model = "all-MiniLM-L6-v2 + web tools"
+
+    def execute(tool: str, query: str) -> list[dict[str, Any]]:
+        if tool == "youtube_search":
+            return youtube_search(query)
+        if tool == "article_search":
+            return article_search(query)
+        return []
+
+    if llm_available():
+        try:
+            hits, tool_calls, model = plan_tool_queries_with_llm(
+                goal=natural_goal,
+                dossier=dossier.model_dump(),
+                focus_topic=focus.topic,
+                execute=execute,
+            )
+            planner = "llm"
+        except Exception as exc:  # pragma: no cover - network/key failures
+            notes.append(f"Hosted LLM planner failed ({exc.__class__.__name__}); local planner used.")
+            hits, tool_calls = _local_tool_loop(dossier.dominant_style, focus.topic, natural_goal, execute)
+            planner = "local-planner"
+            model = "all-MiniLM-L6-v2 + web tools"
+    else:
+        hits, tool_calls = _local_tool_loop(
+            dossier.dominant_style, focus.topic, natural_goal, execute
+        )
+        if not llm_available():
+            notes.append(
+                "Hosted LLM off — local planner still called YouTube/article tools "
+                "from the learner dossier. Set OFFICEHOURS_ALLOW_EXTERNAL_LLM=true "
+                "plus OPENAI_API_KEY or ANTHROPIC_API_KEY for the LLM loop."
+            )
+
+    ranked = _rank_hits(hits, dossier.dominant_style, focus.topic, natural_goal)
+    if not ranked:
+        notes.append(
+            "Web tools returned no structured hits. Add YOUTUBE_API_KEY "
+            "(or OFFICEHOURS_INVIDIOUS_URL) for videos; Wikipedia articles "
+            "need outbound HTTPS."
+        )
+
+    resources = [
+        ResourceHitOut(
+            kind=str(hit.get("kind") or "article"),
+            title=str(hit.get("title") or "Resource"),
+            url=str(hit.get("url")),
+            snippet=(str(hit.get("snippet") or "") or None),
+            query=(str(hit.get("query") or "") or None),
+            why=str(hit.get("why") or _why(hit, dossier.dominant_style, focus.topic)),
+        )
+        for hit in ranked
+        if hit.get("url")
+    ]
+
+    return StrategistPlanOut(
+        focus=focus,
+        dossier=dossier,
+        goal=natural_goal,
+        planner=planner,
+        model=model if planner == "llm" else model,
+        resources=resources[:6],
+        tool_calls=[ToolCallOut(**call) for call in tool_calls],
+        week=_week_plan(focus.topic),
+        notes=notes,
+        trace={
+            "llm_available": llm_available(),
+            "llm_model": llm_model_name(),
+            "style": dossier.dominant_style,
+            "course_code": course_code,
+        },
+    )
+
+
+def _focus_topic(grades: list[GradeRowIn], course_code: str | None) -> FocusTopicOut:
+    if grades:
+        ranked = sorted(
+            grades,
+            key=lambda row: row.weight * max(0.0, 85.0 - row.score),
+            reverse=True,
+        )
+        top = ranked[0]
+        return FocusTopicOut(
+            topic=top.topic,
+            score=top.score,
+            weight=top.weight,
+            source=top.source,
+            gap=round(top.weight * max(0.0, 85.0 - top.score), 2),
+        )
+    code = (course_code or "").upper()
+    topic = "Trees & red-black" if code.startswith("CSC") or "ALGOR" in code else "Core concepts"
+    return FocusTopicOut(topic=topic, score=None, weight=None, source="No grades yet")
+
+
+def _default_goal(dossier, focus: FocusTopicOut) -> str:
+    style = STYLE_LABELS.get(dossier.dominant_style, dossier.dominant_style)
+    struggles = ", ".join(dossier.struggles[:4]) or "the topics in their recent asks"
+    score = f" Current score {focus.score:.0f}%." if focus.score is not None else ""
+    return (
+        f"Find the best YouTube videos and articles for {focus.topic} for a student "
+        f"who learns as {style}. They have asked about {struggles}. "
+        f"{dossier.how_they_ask}{score}"
+    )
+
+
+def _local_tool_loop(
+    style: str,
+    topic: str,
+    goal: str,
+    execute,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    hints = STYLE_QUERY_HINTS.get(style, STYLE_QUERY_HINTS["unknown"])
+    queries = [
+        f"{topic} {hints[0]}",
+        f"{topic} {hints[1] if len(hints) > 1 else 'explained'}",
+    ]
+    if goal and len(goal) < 80:
+        queries.append(goal)
+    hits: list[dict[str, Any]] = []
+    calls: list[dict[str, Any]] = []
+    for query in queries[:3]:
+        for tool in ("youtube_search", "article_search"):
+            found = execute(tool, query)
+            hits.extend(found)
+            calls.append({"tool": tool, "query": query, "hit_count": len(found)})
+    return hits, calls
+
+
+def _rank_hits(
+    hits: list[dict[str, Any]],
+    style: str,
+    topic: str,
+    goal: str,
+) -> list[dict[str, Any]]:
+    unique: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for hit in hits:
+        url = str(hit.get("url") or "")
+        if not url.startswith("http") or url in seen:
+            continue
+        seen.add(url)
+        unique.append(hit)
+    if not unique:
+        return []
+    query = f"{topic} {style} {goal}"
+    q_vec = embed_text(query)
+    scored: list[tuple[float, dict[str, Any]]] = []
+    for hit in unique:
+        blob = f"{hit.get('title') or ''} {hit.get('snippet') or ''}"
+        scored.append((cosine_similarity(q_vec, embed_text(blob)), hit))
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    return [hit for _, hit in scored]
+
+
+def _why(hit: dict[str, Any], style: str, topic: str) -> str:
+    kind = "video" if hit.get("kind") == "youtube" else "article"
+    return (
+        f"{kind.title()} for {topic}, ranked for a {style.replace('_', ' ')} learner "
+        f"from tool query “{hit.get('query') or topic}”."
+    )
+
+
+def _week_plan(focus_topic: str) -> list[list[str]]:
+    short = (focus_topic or "Focus").split("&")[0].strip()
+    return [
+        ["Mon", f"{short} · foundations", "2.5h"],
+        ["Tue", f"{short} · practice", "2h"],
+        ["Wed", f"{short} · check-in", "2.5h"],
+        ["Thu", "Second priority", "2h"],
+        ["Fri", "Keep / project", "1.5h"],
+        ["Sat", "Light review", "1h"],
+        ["Sun", "Rest", "—"],
+    ]

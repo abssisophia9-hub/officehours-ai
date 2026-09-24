@@ -365,8 +365,8 @@ export default function StudentWorkspace() {
             Study Agent
           </button>{" "}
           answers from stamped FAQs &amp; slides ·{" "}
-          <Link to="/student/revision">Revision Strategist</Link> builds a
-          today-first exam plan.
+          <Link to="/student/revision">Revision Strategist</Link> searches
+          YouTube and articles from how you ask and learn.
         </p>
 
         <div className="sd-pulse">

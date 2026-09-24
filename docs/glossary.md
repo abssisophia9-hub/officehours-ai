@@ -21,6 +21,7 @@ A TA is not a classmate in the section they staff.
 | **Ask Triage** | Everyone (runs at submit) | `POST /requests/` | Analyzer → Matcher → Synthesizer. Internal module: `ask_triage_service.py`; columns/API use `triage_*` (renamed from historical `oracle_*`). |
 | **Help Coach** | TA (while helping) | `POST /ta/assist/` | Similar opens, KB neighbors, Socratic steps, draft/rewrite reply, refresh teaching script. |
 | **Study Agent** | Student | `POST /agent/ask` | Answers only from **professor-approved** KB / materials. |
+| **Revision Strategist** | Student | `POST /strategist/plan` | LLM (when allowed) + YouTube/article tools. Builds a learner dossier from how they ask, what they ask, struggles, and learning style; returns structured links. Does not invent URLs and does not quote the syllabus. |
 | **Lifetime confusion** | Professor analytics | `/analytics/lifetime-confusion` | Hotspots from approved KB topics. |
 
 ## Help modes

@@ -692,7 +692,7 @@
         <p>Office hours break two ways: staff hear the same stuck point five times, and quiet students will not put a name on a public channel. OfficeHours is one Canvas-linked desk: Quiet ask, Sharing notes, Stack Overflow–style Rooms, and a professor stamp before any agent may quote.</p>
         <ul>
           <li><strong>Context / application area:</strong> AUI courses at peak demand — students, TAs, and professors.</li>
-          <li><strong>Proposed idea:</strong> Four cooperating agents on one desk — Ask Triage, Help Coach, Study Agent, Strategist — sharing a MiniLM encoder and campus tools, with a professor stamp as the publish gate.</li>
+          <li><strong>Proposed idea:</strong> Four cooperating agents. Ask Triage / Help Coach / Study Agent share MiniLM and a professor stamp. Strategist is the LLM + web-tool agent: it reads how a student asks and learns, then searches YouTube and articles.</li>
           <li><strong>Expected contribution:</strong> Less repeat load, a private way to ask, a classmate notes feed and Rooms, and faculty-controlled AI answers.</li>
         </ul>
         <p class="paths-caption">Three doors · a student picks how to ask</p>
@@ -702,7 +702,7 @@
               <svg viewBox="0 0 96 56" aria-hidden="true"><use href="#scene-agent"/></svg>
             </div>
             <div class="name">With an agent</div>
-            <div class="sub">Study Agent quotes a stamp.<br>Strategist ranks what to review.</div>
+            <div class="sub">Study Agent quotes a stamp.<br>Strategist searches how they learn.</div>
           </div>
           <div class="path card">
             <div class="path-art">
@@ -726,7 +726,7 @@
         <ul>
           <li><strong>Problem statement / research question:</strong> How can campus office hours route asks and still keep professors as the gate on AI answers?</li>
           <li><strong>Stakeholders / intended users:</strong> (1) Students — Quiet ask as a request code, Sharing notes feed, named Rooms, stamped Study Agent. (2) TAs — claimed desk + Help Coach draft. (3) Professors — cluster view, stamp, Canvas modules.</li>
-          <li><strong>Evidence, scope &amp; constraints:</strong> (1) Agents embed with <em>all-MiniLM-L6-v2</em>; Analyzer / Matcher / Synthesizer are joblibs; Study Agent cosine-retrieves a stamp and refuses below 0.42. (2) Live Canvas blocked on a launch key. (3) No portal scrape. (4) Student-facing text is copied from a stamp.</li>
+          <li><strong>Evidence, scope &amp; constraints:</strong> (1) Campus agents embed with MiniLM; Study Agent refuses below cosine 0.42. (2) Strategist is the LLM + YouTube/article-tool agent on the learner dossier. (3) Live Canvas blocked on a launch key. (4) No Canvas portal scrape — search tools return structured JSON.</li>
         </ul>
       </section>
       <section>
@@ -806,7 +806,7 @@
         <p>Students, TAs, and professors share one web app. The API owns the queue and stamps. Canvas is the campus door.</p>
         <ul>
           <li><strong>Software:</strong> React web app; FastAPI; SQLite now, Postgres when hosted; live queue; Quiet-ask privacy; notes feed; Rooms.</li>
-          <li><strong>Agent stack:</strong> Shared <em>all-MiniLM-L6-v2</em> encoder. Ask Triage = three scikit-learn joblibs. Help Coach = same retrieve on the TA screen. Study Agent = cosine ≥ 0.42 or refuse. Strategist = grade-gap planner.</li>
+          <li><strong>Agent stack:</strong> Shared <em>all-MiniLM-L6-v2</em> for the campus path. Ask Triage = three joblibs. Study Agent = cosine ≥ 0.42 or refuse. Strategist = LLM + YouTube/article tools on the learner dossier (how they ask, style, struggles).</li>
         </ul>
         <div class="arch card">
           <p class="arch-caption">One product. Three seats. Canvas is the campus door.</p>
@@ -871,7 +871,7 @@
             <div class="node card">
               <svg class="ico" style="color:#1E4D7B"><use href="#ico-plan"/></svg>
               <div class="name">Strategist</div>
-              <div class="sub">planner table ranks<br>topics from grade gaps</div>
+              <div class="sub">LLM + web tools<br>YouTube / articles</div>
             </div>
             <div class="flow-arrow" style="display:flex;align-items:center;justify-content:center">
               <svg class="arrow-svg"><use href="#arrow-h"/></svg>
@@ -938,7 +938,7 @@
         <h2>Methodology / Proposed Technical Approach</h2>
         <p>The innovation is agent integration: four software agents share one encoder and call campus tools. Each agent embeds the ask, acts, and hands the result to the next agent until the job is done.</p>
         <ul>
-          <li><strong>Agent contract:</strong> model = <em>all-MiniLM-L6-v2</em>; tools = queue, TA roster, teaching bank, stamped KB. Ask Triage writes the ticket; Help Coach drafts for a TA; stamp writes the FAQ; Study Agent quotes or refuses; Strategist ranks review topics.</li>
+          <li><strong>Agent contract:</strong> Campus path: MiniLM + queue / roster / stamp. Study Agent copies a stamp or refuses. Strategist is a different contract: an LLM that reads the dossier and calls <em>youtube_search</em> / <em>article_search</em> — it never invents a URL and never writes the syllabus.</li>
           <li><strong>Shared stack:</strong> sentence-transformers encode once → scikit-learn joblibs classify / rank → cosine retrieve. Artifacts: <em>request_classifier.joblib</em>, <em>matcher_classifier.joblib</em>, <em>synthesizer_ranker.joblib</em>.</li>
           <li><strong>Why this architecture:</strong> one MiniLM process in RAM; classify + retrieve in milliseconds on CPU, so thousands of concurrent asks stay on the campus desk. Student-facing text is copied from a stamp (cosine ≥ 0.42) or the agent refuses — it does not generate a new sentence.</li>
           <li><strong>Data / reproducibility:</strong> Synthetic and silver asks; curated gold file; train scripts and joblibs in-repo; three-seat demos.</li>
@@ -995,12 +995,12 @@ Refuse if &lt; 0.42.</div>
           <div class="stage-box built">
             <svg class="ico" style="color:#fff"><use href="#ico-plan"/></svg>
             <div class="name">6  Strategist</div>
-            <div class="sub">Planner table
-ranks topics from
-grade gaps.</div>
+            <div class="sub">LLM + web tools.
+YouTube / articles
+from how they learn.</div>
           </div>
         </div>
-        <p class="decision"><strong>Why these agents, this model:</strong> MiniLM is the shared encoder so every agent lives in one vector space. Campus tools (queue, roster, KB, stamp) are the action layer. The stamp is the write-gate into Study Agent — that is how the pipeline stays an agent system without inventing the syllabus.</p>
+        <p class="decision"><strong>Why these agents, this model:</strong> MiniLM + stamp keep campus answers from inventing the syllabus. Strategist is the one agent allowed a hosted LLM, because its job is open-web discovery: it turns how the student asks and learns into tool queries, then keeps only structured hits.</p>
       </section>
       <section>
         <h2>Planned Evaluation &amp; Validation</h2>
@@ -1070,7 +1070,7 @@ grade gaps.</div>
           </thead>
           <tbody>
             <tr><td>Canvas launch key / API token delay</td><td><span class="like hi"><i></i>High</span></td><td>Stage a local Canvas mirror until IT issues the key; then one AUI test course</td></tr>
-            <tr><td>Live grade token for Strategist</td><td><span class="like mid"><i></i>Med</span></td><td>Strategist ranks demo grade gaps until campus issues a live grade token</td></tr>
+            <tr><td>LLM / YouTube keys for Strategist</td><td><span class="like mid"><i></i>Med</span></td><td>Local planner still calls the same search tools from the dossier until keys are issued</td></tr>
             <tr><td>Hosted database / HTTPS cutover</td><td><span class="like lo"><i></i>Low</span></td><td>Keep SQLite for the demo; cut over to hosted Postgres at go-live</td></tr>
             <tr><td>Ask Triage label miss or bias</td><td><span class="like mid"><i></i>Med</span></td><td>The TA sends the reply; the professor stamp is the only text Study Agent may quote</td></tr>
           </tbody>
@@ -1082,14 +1082,14 @@ grade gaps.</div>
         <ul>
           <li><strong>Privacy / human participants:</strong> Quiet asks show a request code, not a name, on any classmate surface. Data stays course-scoped by design; logs minimize identifiers.</li>
           <li><strong>Cybersecurity / legal / standards:</strong> Role-based login for access control. Live data travels over HTTPS. No scraping of Canvas content. LTI 1.3 for the campus hand-shake; API tokens follow least privilege.</li>
-          <li><strong>AI use plan:</strong> Ask Triage, Help Coach, Study Agent, and Strategist share <em>all-MiniLM-L6-v2</em> and call campus tools (queue, roster, KB, stamp). Study Agent may emit stamped FAQ text or a refuse — it does not generate. A missed Analyzer label goes to a human TA.</li>
-          <li><strong>AI system risks if applicable:</strong> A weak cosine match (&lt; 0.42) must refuse. The stamp is the only write into student-facing agent output.</li>
+          <li><strong>AI use plan:</strong> Ask Triage / Help Coach / Study Agent stay on MiniLM + campus tools. Strategist may call a hosted LLM and YouTube/article APIs. It recommends links from the learner dossier; it does not generate a course answer. A missed Analyzer label goes to a human TA.</li>
+          <li><strong>AI system risks if applicable:</strong> Study Agent refuses below cosine 0.42. Strategist links are recommendations, not stamped answers — the student still Quiet-asks if stuck.</li>
         </ul>
       </section>
       <section>
         <h2>Expected Contribution &amp; Potential Impact</h2>
         <ul>
-          <li><strong>Expected technical / research contribution:</strong> Four cooperating agents (Ask Triage, Help Coach, Study Agent, Strategist) on one MiniLM encoder, with a professor stamp as the publish tool, plus a classmate notes feed and Stack Overflow–style Rooms.</li>
+          <li><strong>Expected technical / research contribution:</strong> Four cooperating agents with a split contract: MiniLM + stamp on the campus path; Strategist as an LLM + web-tool agent on the learner dossier; plus Sharing notes and Rooms.</li>
           <li><strong>Potential value / impact:</strong> Safer campus AI help, a classmate notes feed and Rooms, and a pattern other LMS schools can copy.</li>
           <li><strong>Expected limitations / boundaries:</strong> Focused scope—course-scoped help desk (not a student-information system). Supports English-language queries in v1 (monolingual MVP). Triage and routing proven in this cycle; live grade integration planned post-Capstone.</li>
         </ul>

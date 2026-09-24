@@ -44,6 +44,7 @@ from app.routes.realtime import router as realtime_router
 from app.routes.requests import router as requests_router
 from app.routes.ta import router as ta_router
 from app.routes.notifications import router as notifications_router
+from app.routes.strategist import router as strategist_router
 from app.database.session import SessionLocal
 from app.services.demo_accounts import ensure_demo_accounts
 from app.services.demo_mode import demo_mode
@@ -218,3 +219,4 @@ app.include_router(help_room_router)
 app.include_router(feedback_router)
 app.include_router(notifications_router)
 app.include_router(realtime_router)
+app.include_router(strategist_router)

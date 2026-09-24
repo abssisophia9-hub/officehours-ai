@@ -78,6 +78,21 @@ Ask Triage Matcher assignment is separate from these professor recommendation ca
 Matcher picks a TA for the live queue; recommendation cards help the professor
 plan office-hours agenda blocks (and optional group meetings).
 
+## Revision Strategist (different contract)
+
+`POST /strategist/plan` is the one student agent allowed a hosted LLM. It is
+**not** a syllabus writer.
+
+1. Build a **learner dossier** from the student's asks in that course: wording,
+   topics, inferred `learning_style`, help mode, struggles.
+2. Form a natural-language goal (optional student goal + grade-gap focus).
+3. An LLM (when `OFFICEHOURS_ALLOW_EXTERNAL_LLM=true` and an API key is set)
+   calls tools: `youtube_search`, `article_search`. No key → a local planner
+   still composes style-aware queries and calls the **same tools**.
+4. Keep only structured hits the tools returned. Never invent a URL.
+
+Study Agent remains stamp-only. Strategist links are recommendations.
+
 ## Train / refresh
 
 ```bash

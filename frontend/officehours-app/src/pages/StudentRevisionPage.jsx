@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router";
+import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 const CSC_SEED = [
@@ -73,38 +74,8 @@ function weekPlan(focusTopic) {
   ];
 }
 
-function resourcesFor(topic) {
-  const t = String(topic || "").toLowerCase();
-  if (t.includes("tree") || t.includes("red-black")) {
-    return [
-      { label: "Start here", text: "3Blue1Brown — red-black intuition" },
-      { label: "Course", text: "Stamped slides — Week 5" },
-      { label: "If stuck", text: "PatrickJMT — step-by-step" },
-    ];
-  }
-  if (t.includes("hash")) {
-    return [
-      { label: "Start here", text: "Course stamped FAQ — chaining vs open addressing" },
-      { label: "Course", text: "Week 6 slides · load factor" },
-      { label: "If stuck", text: "Quiet ask a TA with your collision case" },
-    ];
-  }
-  if (t.includes("heap")) {
-    return [
-      { label: "Start here", text: "Heapify walkthrough (course notes)" },
-      { label: "Course", text: "Stamped slides — priority queues" },
-      { label: "If stuck", text: "Work 3 textbook problems, then Quiet ask" },
-    ];
-  }
-  return [
-    { label: "Start here", text: "Syllabus outline for this topic" },
-    { label: "Course", text: "Latest stamped materials in Study Agent" },
-    { label: "If stuck", text: "Quiet ask with one concrete example" },
-  ];
-}
-
 export default function StudentRevisionPage() {
-  const { activeCourse } = useAuth();
+  const { token, activeCourse } = useAuth();
   const [grades, setGrades] = useState([]);
   const [editingGrade, setEditingGrade] = useState(null);
   const [gradeDraft, setGradeDraft] = useState("");
@@ -112,6 +83,9 @@ export default function StudentRevisionPage() {
   const [loggedScore, setLoggedScore] = useState(null);
   const [loggedTopic, setLoggedTopic] = useState(null);
   const [toast, setToast] = useState("");
+  const [plan, setPlan] = useState(null);
+  const [planError, setPlanError] = useState("");
+  const [planBusy, setPlanBusy] = useState(false);
 
   useEffect(() => {
     if (!activeCourse) return;
@@ -128,8 +102,44 @@ export default function StudentRevisionPage() {
     weight: 0,
     source: "Local plan",
   };
-  const resources = useMemo(() => resourcesFor(focus.topic), [focus.topic]);
-  const week = useMemo(() => weekPlan(focus.topic), [focus.topic]);
+  const week = plan?.week?.length ? plan.week : weekPlan(focus.topic);
+  const resources = plan?.resources || [];
+
+  useEffect(() => {
+    if (!token || !activeCourse) return undefined;
+    let cancelled = false;
+    async function loadPlan() {
+      setPlanBusy(true);
+      setPlanError("");
+      try {
+        const body = await api("/strategist/plan", {
+          method: "POST",
+          token,
+          body: {
+            course_id: activeCourse.id,
+            grades: grades.map((row) => ({
+              topic: row.topic,
+              score: row.score,
+              weight: row.weight,
+              source: row.source,
+            })),
+          },
+        });
+        if (!cancelled) setPlan(body);
+      } catch (err) {
+        if (!cancelled) {
+          setPlan(null);
+          setPlanError(err.message || "Strategist could not build a plan.");
+        }
+      } finally {
+        if (!cancelled) setPlanBusy(false);
+      }
+    }
+    loadPlan();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, activeCourse, grades]);
 
   if (!activeCourse) return <Navigate to="/" replace />;
   if (activeCourse.role !== "student") {
@@ -197,8 +207,8 @@ export default function StudentRevisionPage() {
     <div className="fade-up">
       <h1 className="bh-page-title">Revision Strategist</h1>
       <p className="bh-page-subtitle">
-        Local grade plan for {activeCourse.code} until Canvas grades land in the
-        API. Firm priorities — you can correct a wrong score.
+        An LLM + web-tool agent: it reads how you ask and how you learn, then
+        searches YouTube and articles. It does not invent links.
       </p>
 
       {toast ? (
@@ -208,10 +218,31 @@ export default function StudentRevisionPage() {
       ) : null}
 
       <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-        Grades are seeded locally (not live Canvas yet). Edits stay on this device
-        under key{" "}
-        <code className="font-mono">officehours_revision_{activeCourse.id}</code>.
+        Grades stay on this device until a live Canvas grade token. The agent
+        dossier comes from your asks in {activeCourse.code} (wording, topics,
+        inferred learning style).
       </p>
+
+      {plan?.dossier ? (
+        <section className="bh-card mb-5">
+          <div className="bh-card-title">
+            <h2>Learner dossier</h2>
+          </div>
+          <p className="bh-card-note">{plan.dossier.how_they_ask}</p>
+          <p className="mt-2 text-sm text-aui-ink">
+            Style: <strong>{plan.dossier.dominant_style.replaceAll("_", " ")}</strong>
+            {plan.dossier.struggles?.length
+              ? ` · struggling with ${plan.dossier.struggles.slice(0, 4).join(", ")}`
+              : ""}
+            {` · ${plan.dossier.ask_count} ask(s) in this course`}
+          </p>
+          {plan.goal ? (
+            <p className="mt-2 text-xs text-aui-deep/80">
+              <strong>Agent goal:</strong> {plan.goal}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="bh-card">
@@ -318,14 +349,52 @@ export default function StudentRevisionPage() {
           </ol>
 
           <div className="mt-4 rounded-lg border border-aui-forest/20 bg-[#f3faf5] p-3 text-xs">
-            <p className="font-semibold text-aui-ink">Resources (3 max)</p>
-            <ol className="mt-2 list-decimal space-y-1 pl-4 text-aui-deep/85">
-              {resources.map((item) => (
-                <li key={item.label}>
-                  <strong>{item.label}:</strong> {item.text}
-                </li>
-              ))}
-            </ol>
+            <p className="font-semibold text-aui-ink">
+              Resources from the web tools
+              {plan?.planner ? ` · ${plan.planner}` : ""}
+            </p>
+            {planBusy ? (
+              <p className="mt-2 text-aui-deep/70">Searching YouTube and articles…</p>
+            ) : planError ? (
+              <p className="mt-2 text-amber-900">{planError}</p>
+            ) : resources.length === 0 ? (
+              <p className="mt-2 text-aui-deep/70">
+                {plan?.notes?.[0] ||
+                  "No structured hits yet. The agent will not invent a YouTube URL."}
+              </p>
+            ) : (
+              <ol className="mt-2 list-decimal space-y-2 pl-4 text-aui-deep/85">
+                {resources.map((item) => (
+                  <li key={item.url}>
+                    <span className="font-semibold uppercase tracking-wide">
+                      {item.kind}
+                    </span>
+                    {": "}
+                    <a
+                      className="font-semibold text-aui-forest underline"
+                      href={item.url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {item.title}
+                    </a>
+                    {item.why ? (
+                      <span className="mt-0.5 block text-[11px] text-aui-deep/70">
+                        {item.why}
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ol>
+            )}
+            {plan?.tool_calls?.length ? (
+              <p className="mt-3 text-[11px] text-aui-deep/60">
+                Tools:{" "}
+                {plan.tool_calls
+                  .map((call) => `${call.tool}(“${call.query}”)`)
+                  .join(" · ")}
+              </p>
+            ) : null}
           </div>
 
           <div className="mt-4 rounded-lg border border-[#d7e0d9] bg-white p-3">
