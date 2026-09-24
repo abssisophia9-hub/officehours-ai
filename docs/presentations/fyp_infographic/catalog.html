@@ -547,11 +547,11 @@
     <div class="col">
       <section>
         <h2>Project Overview</h2>
-        <p>Office hours break two ways: staff hear the same stuck point five times, and quiet students will not put a name on a public channel. OfficeHours is one Canvas-linked desk that triages the ask and lets a professor stamp the only text an agent may quote.</p>
+        <p>Office hours break two ways: staff hear the same stuck point five times, and quiet students will not put a name on a public channel. OfficeHours is one Canvas-linked desk that triages the ask, lets classmates share notes and open Rooms, and lets a professor stamp the only text an agent may quote.</p>
         <ul>
-          <li><strong>Context / application area:</strong> AUI courses at peak demand — students, TAs, and professors.</li>
-          <li><strong>Proposed idea:</strong> One web app — Quiet ask, Ask Triage, Help Coach, stamped Study Agent, Rooms, Canvas login.</li>
-          <li><strong>Expected contribution:</strong> Less repeat load, a private way to ask, and faculty-controlled AI answers.</li>
+          <li><strong>Context / application area:</strong> AUI courses at peak demand — students, TAs, professors, and the faculty who review this proposal.</li>
+          <li><strong>Proposed idea:</strong> One web app — Quiet ask, Ask Triage, Help Coach, stamped Study Agent, Sharing notes (like / comment / download feed), Stack Overflow–style Rooms, Canvas login.</li>
+          <li><strong>Expected contribution:</strong> Less repeat load, a private way to ask, a classmate notes feed and Rooms, and faculty-controlled AI answers.</li>
         </ul>
         <p class="paths-caption">Three doors · a student picks how to ask</p>
         <div class="paths">
@@ -574,7 +574,7 @@
               <svg viewBox="0 0 96 56" aria-hidden="true"><use href="#scene-peers"/></svg>
             </div>
             <div class="name">With classmates</div>
-            <div class="sub">Rooms stay named.<br>Peers help each other.</div>
+            <div class="sub">Sharing notes — like, comment, download.<br>Rooms — Stack Overflow Q&amp;A + ranks.</div>
           </div>
         </div>
       </section>
@@ -583,13 +583,13 @@
         <p>Cut repeat load and ask friction without letting a chatbot invent the syllabus.</p>
         <ul>
           <li><strong>Problem statement / research question:</strong> How can campus office hours route asks and still keep professors as the gate on AI answers?</li>
-          <li><strong>Stakeholders / intended users:</strong> (1) Students — Quiet ask as a request code, named Rooms, stamped Study Agent. (2) TAs — claimed desk + Help Coach draft. (3) Professors — cluster view, stamp, Canvas modules.</li>
+          <li><strong>Stakeholders / intended users:</strong> (1) Students — Quiet ask as a request code, Sharing notes feed, named Rooms, stamped Study Agent. (2) TAs — claimed desk + Help Coach draft. (3) Professors — cluster view, stamp, Canvas modules.</li>
           <li><strong>Evidence, scope &amp; constraints:</strong> (1) Local MiniLM + logistic models by default. (2) Live Canvas blocked on a launch key and API token. (3) No portal scrape. (4) Hosted LLM stays off unless approved.</li>
         </ul>
       </section>
       <section>
         <h2>Related Work, Gap &amp; Proposed Innovation</h2>
-        <p>Inbox, Piazza/Ed, and tutoring chatbots do not combine a private ask, a triaged TA queue, and a stamp before student-facing AI.</p>
+        <p>Inbox, Piazza/Ed, and tutoring chatbots do not combine a private ask, a triaged TA queue, a classmate notes feed, Stack Overflow–style Rooms, and a stamp before student-facing AI.</p>
         <p class="fig-cap">Alternative · limitation · our approach</p>
         <table class="data">
           <thead>
@@ -597,7 +597,7 @@
           </thead>
           <tbody>
             <tr><td>LMS inbox</td><td>Repeat pile; no private receipt; no routing</td><td>Quiet ask + Ask Triage names a TA</td></tr>
-            <tr><td>Piazza / Ed</td><td>Named public thread; staff still scan</td><td>Rooms stay optional; staff desk is separate</td></tr>
+            <tr><td>Piazza / Ed</td><td>Named public thread; staff still scan</td><td>Stack Overflow–style Rooms + notes feed; staff desk stays separate</td></tr>
             <tr><td>FAQ / tutoring bot</td><td>Quotes without a professor gate</td><td>Stamp before Study Agent may speak</td></tr>
             <tr><td>Open campus chatbot</td><td>Can invent the syllabus</td><td>Local models; hosted LLM off</td></tr>
           </tbody>
@@ -649,7 +649,7 @@
       </section>
       <section>
         <h2>Objectives &amp; Proposed Success Criteria</h2>
-        <p>Three objectives a recruiter can check on the demo and one live Canvas checklist.</p>
+        <p>Three objectives a supervisor, SSE reviewer, or campus partner can check on the demo, plus one live Canvas checklist.</p>
         <table class="obj">
           <thead><tr><th>Objective</th><th>Planned Metric / Evidence</th><th>Target / Criterion</th><th>Priority</th></tr></thead>
           <tbody>
@@ -663,7 +663,7 @@
         <h2>Proposed System / Research Design</h2>
         <p>Students, TAs, and professors share one web app. The API owns the queue and stamps. Canvas is the campus door.</p>
         <ul>
-          <li><strong>Software:</strong> React web app; FastAPI; SQLite now, Postgres when hosted; live queue; Quiet-ask privacy.</li>
+          <li><strong>Software:</strong> React web app; FastAPI; SQLite now, Postgres when hosted; live queue; Quiet-ask privacy; Sharing notes; Rooms.</li>
           <li><strong>Models:</strong> MiniLM vectors, logistic classifiers, cosine lookup, planner tables. No hosted chatbot on the user path.</li>
         </ul>
         <div class="arch card">
@@ -736,8 +736,8 @@
             </div>
             <div class="node card">
               <svg class="ico" style="color:#006633"><use href="#ico-people"/></svg>
-              <div class="name">Rooms</div>
-              <div class="sub">named classmates<br>help each other</div>
+              <div class="name">Rooms + notes</div>
+              <div class="sub">Stack Overflow Q&amp;A + ranks<br>like / comment feed</div>
             </div>
           </div>
           <p class="arch-note">No hosted chatbot on the path students, TAs, or professors run. Strategist ranks from local grade gaps until live Canvas grades.</p>
@@ -747,7 +747,7 @@
         <h2>Requirements &amp; Initial Work Plan</h2>
         <p>The demo path runs today. Live Canvas waits on campus credentials.</p>
         <ul>
-          <li><strong>Key requirements:</strong> Roles; Ask Triage; TA desk + Help Coach; professor stamp; Rooms; Canvas login and sync.</li>
+          <li><strong>Key requirements:</strong> Roles; Ask Triage; TA desk + Help Coach; professor stamp; Sharing notes; Rooms; Canvas login and sync.</li>
           <li><strong>Dependencies:</strong> Canvas launch key, API token, HTTPS, one AUI test course.</li>
         </ul>
         <p class="fig-cap">Planned phases · solid = built · outline = IT</p>
@@ -959,15 +959,15 @@ grade gaps.</div>
         <ul>
           <li><strong>Privacy / human participants:</strong> Quiet asks show a request code, not a name, on any classmate surface. Data stays course-scoped by design; logs minimize identifiers.</li>
           <li><strong>Cybersecurity / legal / standards:</strong> Role-based login for access control. Live data travels over HTTPS. No scraping of Canvas content. LTI 1.3 for the campus hand-shake; API tokens follow least privilege.</li>
-          <li><strong>AI use plan:</strong> Local Ask Triage and Help Coach only. Study Agent quotes stamped notes. Hosted LLM stays off unless a campus owner approves it.</li>
+          <li><strong>AI use plan:</strong> Generative AI is a development assistant — guidance, copy polish, and re-testing MVP logic. The author keeps every product call and checks it against the vision: a gated campus desk with classmate Rooms and notes, not an open chatbot.</li>
           <li><strong>AI system risks if applicable:</strong> A missed label goes to a human TA. The stamp is the only path into student-facing AI — that is the invented-syllabus block.</li>
         </ul>
       </section>
       <section>
         <h2>Expected Contribution &amp; Potential Impact</h2>
         <ul>
-          <li><strong>Expected technical / research contribution:</strong> A gated local-NLP office-hours desk with dual-TA routing and a professor-controlled agent.</li>
-          <li><strong>Potential value / impact:</strong> Safer campus AI help, and a pattern other LMS schools can copy.</li>
+          <li><strong>Expected technical / research contribution:</strong> A gated local-NLP office-hours desk with dual-TA routing, a professor-controlled agent, a classmate notes feed, and Stack Overflow–style Rooms.</li>
+          <li><strong>Potential value / impact:</strong> Safer campus AI help, a classmate notes feed and Rooms, and a pattern other LMS schools can copy.</li>
           <li><strong>Expected limitations / boundaries:</strong> Focused scope—course-scoped help desk (not a student-information system). Supports English-language queries in v1 (monolingual MVP). Triage and routing proven in this cycle; live grade integration planned post-Capstone.</li>
         </ul>
       </section>
