@@ -21,7 +21,7 @@ Rebuild:
 ./docs/presentations/fyp_infographic/build_poster.sh
 ```
 
-QR: https://github.com/abssisophia9-hub/officehours-ai
+QR: phone prototype — https://raw.githack.com/abssisophia9-hub/officehours-ai/cursor/fyp-infographic-poster-1879/docs/presentations/fyp_infographic/phone-demo.html
 
 Print the catalog sheet **matte**. The booth sheet is the same story at walk-up size.
 

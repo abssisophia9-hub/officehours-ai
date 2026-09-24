@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>OfficeHours AI — phone prototype</title>
+<style>
+  :root {
+    --green: #006633;
+    --ink: #000000;
+    --tint: #EAF3EE;
+    --line: #D9DEDC;
+    --card: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #f7f8f7; color: var(--ink); font-family: Inter, Aptos, "Segoe UI", sans-serif; }
+  body { padding: 0 0 2.4rem; }
+  header {
+    background: var(--green);
+    color: #fff;
+    padding: 1.15rem 1.1rem 1.05rem;
+  }
+  header p { margin: 0 0 0.35rem; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.9; }
+  header h1 { margin: 0; font-size: 1.35rem; line-height: 1.25; }
+  header .lede { margin: 0.55rem 0 0; font-size: 0.92rem; line-height: 1.4; opacity: 0.95; font-weight: 400; text-transform: none; letter-spacing: 0; }
+  main { padding: 1rem 1rem 0; max-width: 32rem; margin: 0 auto; }
+  h2 { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--green); margin: 1.15rem 0 0.55rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 0.85rem 0.9rem; margin: 0 0 0.65rem; }
+  .doors { display: grid; grid-template-columns: 1fr; gap: 0.55rem; }
+  button.door, button.act {
+    width: 100%; text-align: left; border: 1.5px solid var(--green); background: #fff;
+    border-radius: 12px; padding: 0.8rem 0.85rem; color: var(--ink); font: inherit; cursor: pointer;
+  }
+  button.door.on, button.act.on { background: var(--green); color: #fff; }
+  button.door strong, button.act strong { display: block; font-size: 1rem; }
+  button.door span, button.act span { display: block; margin-top: 0.2rem; font-size: 0.84rem; line-height: 1.35; opacity: 0.9; }
+  .note { border-bottom: 1px solid var(--line); padding: 0.65rem 0; }
+  .note:last-child { border-bottom: 0; }
+  .note h3 { margin: 0 0 0.2rem; font-size: 0.95rem; }
+  .note p { margin: 0 0 0.45rem; font-size: 0.86rem; line-height: 1.35; }
+  .row { display: flex; gap: 0.45rem; flex-wrap: wrap; }
+  .chip { border: 1px solid var(--green); background: var(--tint); color: var(--ink); border-radius: 999px; padding: 0.28rem 0.7rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+  .chip.on { background: var(--green); color: #fff; }
+  .agent { min-height: 3.2rem; background: var(--tint); border-radius: 10px; padding: 0.7rem 0.75rem; font-size: 0.9rem; line-height: 1.4; }
+  .foot { margin: 1.2rem 0 0; font-size: 0.78rem; line-height: 1.4; color: var(--ink); }
+  a { color: var(--green); font-weight: 700; }
+</style>
+</head>
+<body>
+  <header>
+    <p>OfficeHours AI · AUI SSE capstone</p>
+    <h1>Ask an agent. Ask staff. Or work with classmates.</h1>
+    <p class="lede">This is a phone prototype of the vision — Sharing notes, Stack Overflow–style Rooms, and a professor stamp before any agent may quote.</p>
+  </header>
+  <main>
+    <h2>1 · Pick a door</h2>
+    <div class="doors" id="doors"></div>
+    <div class="card" id="doorDetail"></div>
+
+    <h2>2 · Sharing notes</h2>
+    <div class="card" id="notes"></div>
+
+    <h2>3 · Rooms · Stack Overflow hybrid</h2>
+    <div class="card">
+      <h3 style="margin:0 0 0.25rem;font-size:1rem;">Hash collisions on insert — anyone?</h3>
+      <p style="margin:0 0 0.55rem;font-size:0.86rem;">Problem · CSC 2302 · Open. Named helpers only. Quiet ask is the anonymous path to staff.</p>
+      <div class="row">
+        <button class="chip" id="up">▲ Vote <span id="votes">7</span></button>
+        <button class="chip" id="interest">Express interest</button>
+      </div>
+      <p class="foot" id="roomMsg"></p>
+    </div>
+
+    <h2>4 · Stamp before the agent speaks</h2>
+    <div class="card">
+      <p style="margin:0 0 0.55rem;font-size:0.9rem;">Ask: “Why do hash collisions happen?”</p>
+      <button class="act" id="stampBtn"><strong>Professor stamp is off</strong><span>Tap to stamp the approved FAQ. Until then the agent must refuse.</span></button>
+      <div class="agent" id="agentOut" style="margin-top:0.65rem;">Study Agent: I can only quote a stamped note. Ask a TA, open a Room, or wait for the professor stamp.</div>
+    </div>
+
+    <p class="foot">Prototype of the product vision for phones. The running campus desk is the full web app — Quiet ask, Ask Triage, Help Coach, Rooms, Sharing notes, and Canvas login. Repo: <a href="https://github.com/abssisophia9-hub/officehours-ai">github.com/abssisophia9-hub/officehours-ai</a></p>
+  </main>
+<script>
+  const doors = [
+    { t: "With an agent", d: "Study Agent quotes a professor stamp. Strategist ranks what to review from grade gaps. No open chatbot." },
+    { t: "With staff", d: "A Quiet or named ask reaches a TA or the professor. Help Coach stays on the TA screen." },
+    { t: "With classmates", d: "Sharing notes: like, comment, download. Rooms: Problem / Discussion / Article, votes, and ranks — like Stack Overflow for the course." }
+  ];
+  let door = 2;
+  const doorsEl = document.getElementById("doors");
+  const detail = document.getElementById("doorDetail");
+  function renderDoors() {
+    doorsEl.innerHTML = doors.map((x, i) =>
+      `<button class="door${i===door?" on":""}" data-i="${i}"><strong>${x.t}</strong><span>${i===door?x.d:"Tap to open this path."}</span></button>`
+    ).join("");
+    detail.textContent = doors[door].d;
+  }
+  doorsEl.addEventListener("click", (e) => {
+    const b = e.target.closest("button.door");
+    if (!b) return;
+    door = +b.dataset.i;
+    renderDoors();
+  });
+  renderDoors();
+
+  const notes = [
+    { t: "Hashing cheat sheet", c: "Collisions are normal — chain or probe.", likes: 12 },
+    { t: "Recurrence unwind", c: "T(n)=2T(n/2)+Θ(n) → Θ(n log n).", likes: 9 }
+  ];
+  const notesEl = document.getElementById("notes");
+  function renderNotes() {
+    notesEl.innerHTML = notes.map((n, i) =>
+      `<div class="note"><h3>${n.t}</h3><p>${n.c}</p><div class="row">
+        <button class="chip" data-like="${i}">♥ ${n.likes}</button>
+        <button class="chip" data-cmt="${i}">Comment</button>
+      </div></div>`
+    ).join("");
+  }
+  notesEl.addEventListener("click", (e) => {
+    const like = e.target.closest("[data-like]");
+    const cmt = e.target.closest("[data-cmt]");
+    if (like) { notes[+like.dataset.like].likes += 1; renderNotes(); }
+    if (cmt) alert("In the full app classmates comment on the note. This prototype just shows the feed.");
+  });
+  renderNotes();
+
+  let votes = 7, upped = false, interested = false;
+  document.getElementById("up").onclick = () => {
+    if (!upped) { votes += 1; upped = true; }
+    document.getElementById("votes").textContent = votes;
+    document.getElementById("up").classList.add("on");
+  };
+  document.getElementById("interest").onclick = () => {
+    interested = !interested;
+    document.getElementById("interest").classList.toggle("on", interested);
+    document.getElementById("roomMsg").textContent = interested
+      ? "You are on the helper list. Your name can appear on the course leaderboard."
+      : "";
+  };
+
+  let stamped = false;
+  const stampBtn = document.getElementById("stampBtn");
+  const agentOut = document.getElementById("agentOut");
+  stampBtn.onclick = () => {
+    stamped = !stamped;
+    stampBtn.classList.toggle("on", stamped);
+    stampBtn.innerHTML = stamped
+      ? "<strong>Professor stamp is on</strong><span>The FAQ is now the only text the agent may quote.</span>"
+      : "<strong>Professor stamp is off</strong><span>Tap to stamp the approved FAQ. Until then the agent must refuse.</span>";
+    agentOut.textContent = stamped
+      ? "Study Agent: A hash table maps a key to a bucket. Collisions are normal; we chain or probe. Quoted from the stamped FAQ + Canvas Module 4."
+      : "Study Agent: I can only quote a stamped note. Ask a TA, open a Room, or wait for the professor stamp.";
+  };
+</script>
+</body>
+</html>
