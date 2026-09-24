@@ -255,24 +255,11 @@
 
   .gantt {
     margin-top: 0.03in;
-    padding: 0.05in 0.07in 0.045in;
-    display: grid;
-    grid-template-columns: 1fr 1.35in;
-    gap: 0.08in;
-    align-items: center;
+    padding: 0.05in 0.07in 0.05in;
   }
-  .gantt-dates {
-    font-size: 7pt;
-    line-height: 1.35;
-    color: #000;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  .gantt-dates li { margin: 0 0 0.02in; }
   .gantt-axis {
     display: grid;
-    grid-template-columns: 0.92in 1fr 1fr 1fr;
+    grid-template-columns: 1.05in 1fr 1fr 1fr 1fr;
     font-size: 6.8pt;
     font-weight: 700;
     letter-spacing: 0.04em;
@@ -281,9 +268,27 @@
     margin-bottom: 0.03in;
   }
   .gantt-axis span:not(:first-child) { text-align: center; }
+  .gantt-legend {
+    margin: 0.045in 0 0;
+    padding-top: 0.035in;
+    border-top: 1px solid var(--border);
+    font-size: 7pt;
+    line-height: 1.35;
+    color: #000;
+  }
+  .gantt-swatch {
+    display: inline-block;
+    width: 0.16in;
+    height: 0.08in;
+    border-radius: 2px;
+    vertical-align: middle;
+    margin: 0 0.03in 0 0;
+  }
+  .gantt-swatch.on { background: var(--header); }
+  .gantt-swatch.off { background: #fff; border: 1.3px solid var(--blue); box-sizing: border-box; }
   .gantt-row {
     display: grid;
-    grid-template-columns: 0.92in 1fr;
+    grid-template-columns: 1.05in 1fr;
     gap: 0.04in;
     align-items: center;
     margin-bottom: 0.022in;
@@ -837,33 +842,29 @@
         <p><strong>1 · Duration of the project:</strong> 4 months · 1 Sep – 15 Dec 2026 (~105 days).</p>
         <p class="fig-cap">2 · Scheduling — Gantt chart</p>
         <div class="gantt card">
-          <div>
-            <div class="gantt-axis"><span></span><span>Sep</span><span>Nov</span><span>Dec</span></div>
-            <div class="gantt-row">
-              <div class="gantt-lab">1.1 Requirements</div>
-              <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:1 / 4"></div></div>
-            </div>
-            <div class="gantt-row">
-              <div class="gantt-lab">2.1 Design / build</div>
-              <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:3 / 8"></div></div>
-            </div>
-            <div class="gantt-row">
-              <div class="gantt-lab">3.1 Demo / evaluate</div>
-              <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:7 / 11"></div></div>
-            </div>
-            <div class="gantt-row">
-              <div class="gantt-lab">4.1 Live Canvas</div>
-              <div class="gantt-track"><div class="gantt-bar gated" style="grid-column:10 / 13"></div></div>
-            </div>
+          <div class="gantt-axis"><span></span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span></div>
+          <div class="gantt-row">
+            <div class="gantt-lab">1.1 Requirements</div>
+            <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:1 / 4"></div></div>
           </div>
-          <ul class="gantt-dates">
-            <li><strong>Start:</strong> 1 Sep 2026</li>
-            <li><strong>End:</strong> 15 Dec 2026</li>
-            <li>Solid = planned work</li>
-            <li>Outline = campus-IT gated</li>
-          </ul>
+          <div class="gantt-row">
+            <div class="gantt-lab">2.1 Design / build</div>
+            <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:4 / 10"></div></div>
+          </div>
+          <div class="gantt-row">
+            <div class="gantt-lab">3.1 Demo / evaluate</div>
+            <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:7 / 12"></div></div>
+          </div>
+          <div class="gantt-row">
+            <div class="gantt-lab">4.1 Live Canvas</div>
+            <div class="gantt-track"><div class="gantt-bar gated" style="grid-column:10 / 13"></div></div>
+          </div>
+          <p class="gantt-legend">
+            <span class="gantt-swatch on"></span><strong>Solid green</strong> = work we plan to finish in this cycle (we control the schedule).
+            &nbsp;&nbsp;<span class="gantt-swatch off"></span><strong>Outline</strong> = planned only after campus IT issues the Canvas launch key.
+          </p>
         </div>
-        <p class="fig-cap">3 · Prioritization · D = demand · W = wish · Imp. = 1–10</p>
+        <p class="fig-cap">3 · Prioritization · D = must-have for the demo · W = wish (IT-dependent) · Imp. = 1–10</p>
         <table class="data prio-plan">
           <thead>
             <tr><th>D / W</th><th>Requirement</th><th class="imp">Imp.</th></tr>
@@ -872,6 +873,8 @@
             <tr><td>D</td><td>Three-seat desk: roles, Ask Triage, Help Coach</td><td class="imp">10</td></tr>
             <tr><td>D</td><td>Professor stamp before any agent may quote</td><td class="imp">10</td></tr>
             <tr><td>D</td><td>Sharing notes + Rooms on the planned demo</td><td class="imp">9</td></tr>
+            <tr><td>W</td><td>Live Canvas login on one AUI test course</td><td class="imp">8</td></tr>
+            <tr><td>W</td><td>Hosted Postgres / HTTPS cutover</td><td class="imp">5</td></tr>
           </tbody>
         </table>
       </section>
