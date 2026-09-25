@@ -425,49 +425,71 @@
   }
   .wbs-outline,
   .plan-gantt {
+    height: 100%;
     box-sizing: border-box;
   }
   .wbs-outline {
-    font-size: 6.15pt;
-    line-height: 1.16;
-    padding: 0.055in 0.08in 0.05in;
+    font-size: 6.05pt;
+    line-height: 1.18;
+    padding: 0.06in 0.07in 0.055in;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    gap: 0.02in;
   }
   .wbs-outline .root {
     font-weight: 700;
     font-size: 6.5pt;
     color: var(--header);
-    margin: 0 0 0.015in;
-  }
-  .wbs-outline .grp,
-  .wbs-outline .pkg,
-  .wbs-outline .leaf {
-    white-space: nowrap;
+    text-align: center;
   }
   .wbs-outline .grp {
     font-weight: 700;
-    margin: 0.012in 0 0;
+    margin: 0;
+    text-align: center;
   }
   .wbs-outline .grp.own { color: var(--header); }
-  .wbs-outline .pkg {
-    font-weight: 700;
-    color: var(--title);
+  .wbs-cols {
+    display: grid;
+    grid-template-columns: 0.95fr 1.2fr 0.95fr;
+    gap: 0.05in;
   }
-  .wbs-outline .leaf { color: #000; }
-  .wbs-outline .tw { color: #7A8690; font-weight: 700; }
+  .wbs-col {
+    border-top: 1.2px solid #C5CDD4;
+    padding-top: 0.025in;
+  }
+  .wbs-col .pkg {
+    font-weight: 700;
+    color: var(--header);
+    margin-bottom: 0.012in;
+  }
+  .wbs-col .leaf {
+    color: #000;
+    padding: 0.004in 0;
+  }
   .wbs-it {
     border: 1.35px dashed var(--header);
     border-radius: 5px;
-    padding: 0.028in 0.055in 0.022in;
-    margin-top: 0.04in;
+    padding: 0.03in 0.06in 0.028in;
+    margin-top: 0.02in;
     background: #fff;
     color: var(--header);
   }
-  .wbs-it .grp,
-  .wbs-it .leaf { color: var(--header); font-weight: 700; }
-  .wbs-it .grp { margin-top: 0; }
+  .wbs-it .grp {
+    color: var(--header);
+    margin-bottom: 0.015in;
+  }
+  .wbs-it .wbs-cols {
+    grid-template-columns: 1fr 1fr;
+  }
+  .wbs-it .wbs-col {
+    border-top: 1.2px dashed var(--header);
+  }
+  .wbs-it .leaf {
+    color: var(--header);
+    font-weight: 700;
+    text-align: center;
+  }
 
   .plan-gantt {
     padding: 0.055in 0.08in 0.05in;
@@ -1016,24 +1038,34 @@
           <div class="req-cell">
           <div class="wbs-outline card">
             <div class="root">OfficeHours</div>
-            <div class="grp own"><span class="tw">├─</span> 1 We build</div>
-            <div class="pkg"><span class="tw">│&nbsp;&nbsp;├─</span> 1.1 Desk</div>
-            <div class="leaf"><span class="tw">│&nbsp;&nbsp;│&nbsp;&nbsp;├─</span> 1.1.1 Three-seat login</div>
-            <div class="leaf"><span class="tw">│&nbsp;&nbsp;│&nbsp;&nbsp;├─</span> 1.1.2 Quiet ask</div>
-            <div class="leaf"><span class="tw">│&nbsp;&nbsp;│&nbsp;&nbsp;└─</span> 1.1.3 Live queue</div>
-            <div class="pkg"><span class="tw">│&nbsp;&nbsp;├─</span> 1.2 Agents</div>
-            <div class="leaf"><span class="tw">│&nbsp;&nbsp;│&nbsp;&nbsp;├─</span> 1.2.1 Ask Triage joblibs</div>
-            <div class="leaf"><span class="tw">│&nbsp;&nbsp;│&nbsp;&nbsp;├─</span> 1.2.2 Help Coach</div>
-            <div class="leaf"><span class="tw">│&nbsp;&nbsp;│&nbsp;&nbsp;├─</span> 1.2.3 Stamp + Study Agent</div>
-            <div class="leaf"><span class="tw">│&nbsp;&nbsp;│&nbsp;&nbsp;└─</span> 1.2.4 Strategist</div>
-            <div class="pkg"><span class="tw">│&nbsp;&nbsp;└─</span> 1.3 Classmates</div>
-            <div class="leaf"><span class="tw">│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─</span> 1.3.1 Sharing notes</div>
-            <div class="leaf"><span class="tw">│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─</span> 1.3.2 Rooms</div>
-            <div class="leaf"><span class="tw">│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─</span> 1.3.3 Demo script</div>
+            <div class="grp own">1 We build</div>
+            <div class="wbs-cols">
+              <div class="wbs-col">
+                <div class="pkg">1.1 Desk</div>
+                <div class="leaf">1.1.1 Three-seat login</div>
+                <div class="leaf">1.1.2 Quiet ask</div>
+                <div class="leaf">1.1.3 Live queue</div>
+              </div>
+              <div class="wbs-col">
+                <div class="pkg">1.2 Agents</div>
+                <div class="leaf">1.2.1 Ask Triage joblibs</div>
+                <div class="leaf">1.2.2 Help Coach</div>
+                <div class="leaf">1.2.3 Stamp + Study Agent</div>
+                <div class="leaf">1.2.4 Strategist</div>
+              </div>
+              <div class="wbs-col">
+                <div class="pkg">1.3 Classmates</div>
+                <div class="leaf">1.3.1 Sharing notes</div>
+                <div class="leaf">1.3.2 Rooms</div>
+                <div class="leaf">1.3.3 Demo script</div>
+              </div>
+            </div>
             <div class="wbs-it">
-              <div class="grp it"><span class="tw">└─</span> 2 Campus IT</div>
-              <div class="leaf it"><span class="tw">&nbsp;&nbsp;&nbsp;├─</span> 2.1 Canvas</div>
-              <div class="leaf it"><span class="tw">&nbsp;&nbsp;&nbsp;└─</span> 2.2 Hosted DB</div>
+              <div class="grp it">2 Campus IT</div>
+              <div class="wbs-cols">
+                <div class="wbs-col"><div class="leaf it">2.1 Canvas</div></div>
+                <div class="wbs-col"><div class="leaf it">2.2 Hosted DB</div></div>
+              </div>
             </div>
           </div>
           </div>
