@@ -269,7 +269,7 @@ export default function StudentRevisionPage() {
                 ? `Why: ${focus.source}${
                     focus.score != null ? ` shows ${focus.score}%` : ""
                   }${focus.weight != null ? ` · ${focus.weight}% of exam weight` : ""}.`
-                : "Build a plan to get today&apos;s three blocks.")}
+                : "Build a plan to get today's three blocks.")}
           </p>
           {planBusy && today.length === 0 ? (
             <p className="mt-3 text-sm text-aui-deep/70">
