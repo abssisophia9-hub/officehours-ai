@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections import Counter
 
 from sqlalchemy.orm import Session
@@ -68,7 +69,7 @@ def build_learner_dossier(
         dominant = style_counts.most_common(1)[0][0]
 
     keywords = extract_keywords(texts, max_keywords=6) if texts else []
-    struggles = _unique([*keywords, *tag_bag])[:8]
+    struggles = [item for item in _unique([*keywords, *tag_bag]) if _usable_struggle(item)][:8]
     how = _how_they_ask(dominant, help_modes, texts)
 
     return LearnerDossierOut(
@@ -85,7 +86,36 @@ def build_learner_dossier(
 def _split_tags(raw: str | None) -> list[str]:
     if not raw:
         return []
-    return [part.strip() for part in raw.replace(";", ",").split(",") if part.strip()]
+    text = raw.strip()
+    if text.startswith("["):
+        try:
+            data = json.loads(text)
+            if isinstance(data, list):
+                return [str(item).strip() for item in data if str(item).strip()]
+        except json.JSONDecodeError:
+            pass
+    return [part.strip() for part in text.replace(";", ",").split(",") if part.strip()]
+
+
+_GENERIC_STRUGGLES = {
+    "black",
+    "red",
+    "help",
+    "need",
+    "draw",
+    "after",
+    "please",
+    "question",
+    "tree",
+    "trees",
+}
+
+
+def _usable_struggle(item: str) -> bool:
+    token = item.strip().lower()
+    if len(token) < 4 or token in _GENERIC_STRUGGLES:
+        return False
+    return True
 
 
 def _unique(items: list[str]) -> list[str]:

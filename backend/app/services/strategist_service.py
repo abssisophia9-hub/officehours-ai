@@ -72,12 +72,22 @@ def build_plan(
             planner = "llm"
         except Exception as exc:  # pragma: no cover - network/key failures
             notes.append(f"Hosted LLM planner failed ({exc.__class__.__name__}); local planner used.")
-            hits, tool_calls = _local_tool_loop(dossier.dominant_style, focus.topic, natural_goal, execute)
+            hits, tool_calls = _local_tool_loop(
+                dossier.dominant_style,
+                focus.topic,
+                natural_goal,
+                execute,
+                struggles=dossier.struggles,
+            )
             planner = "local-planner"
             model = "all-MiniLM-L6-v2 + web tools"
     else:
         hits, tool_calls = _local_tool_loop(
-            dossier.dominant_style, focus.topic, natural_goal, execute
+            dossier.dominant_style,
+            focus.topic,
+            natural_goal,
+            execute,
+            struggles=dossier.struggles,
         )
         if not llm_available():
             notes.append(
@@ -157,27 +167,72 @@ def _default_goal(dossier, focus: FocusTopicOut) -> str:
     )
 
 
+def _clean_topic(topic: str) -> str:
+    return " ".join((topic or "").replace("&", " ").replace("/", " ").split())
+
+
+def _search_seeds(topic: str, struggles: list[str] | None) -> list[str]:
+    clean = _clean_topic(topic)
+    seeds: list[str] = []
+    lowered = clean.lower()
+    if "red-black" in lowered or "red black" in lowered:
+        seeds.append("red-black tree")
+    if "hash" in lowered:
+        seeds.append("hash table")
+    if "heap" in lowered:
+        seeds.append("binary heap")
+    if clean:
+        seeds.append(clean)
+    for item in struggles or []:
+        token = _clean_topic(item)
+        if len(token) >= 4:
+            seeds.append(token)
+    out: list[str] = []
+    seen: set[str] = set()
+    for seed in seeds:
+        key = seed.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(seed)
+    return out[:3]
+
+
 def _local_tool_loop(
     style: str,
     topic: str,
     goal: str,
     execute,
+    *,
+    struggles: list[str] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     hints = STYLE_QUERY_HINTS.get(style, STYLE_QUERY_HINTS["unknown"])
-    queries = [
-        f"{topic} {hints[0]}",
-        f"{topic} {hints[1] if len(hints) > 1 else 'explained'}",
-    ]
-    if goal and len(goal) < 80:
-        queries.append(goal)
+    seeds = _search_seeds(topic, struggles)
+    queries = [f"{seeds[0]} {hints[0]}", seeds[0]] if seeds else [topic]
+    if len(seeds) > 1:
+        queries.append(seeds[1])
     hits: list[dict[str, Any]] = []
     calls: list[dict[str, Any]] = []
-    for query in queries[:3]:
+    seen_q: set[str] = set()
+    for query in queries:
+        q = query.strip()
+        if not q or q.lower() in seen_q:
+            continue
+        seen_q.add(q.lower())
         for tool in ("youtube_search", "article_search"):
-            found = execute(tool, query)
+            found = execute(tool, q)
             hits.extend(found)
-            calls.append({"tool": tool, "query": query, "hit_count": len(found)})
+            calls.append({"tool": tool, "query": q, "hit_count": len(found)})
     return hits, calls
+
+
+def _hit_matches_topic(hit: dict[str, Any], topic: str) -> bool:
+    blob = f"{hit.get('title') or ''} {hit.get('snippet') or ''}".lower().replace("–", "-")
+    clean = _clean_topic(topic).lower()
+    if "red-black" in clean or "red black" in clean:
+        return ("red-black" in blob or "red black" in blob) and "tree" in blob
+    tokens = [part for part in clean.split() if len(part) > 3]
+    return any(part in blob for part in tokens) if tokens else True
 
 
 def _rank_hits(
@@ -191,6 +246,8 @@ def _rank_hits(
     for hit in hits:
         url = str(hit.get("url") or "")
         if not url.startswith("http") or url in seen:
+            continue
+        if not _hit_matches_topic(hit, topic):
             continue
         seen.add(url)
         unique.append(hit)

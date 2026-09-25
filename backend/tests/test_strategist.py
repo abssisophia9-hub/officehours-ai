@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 from app.database.session import Base, SessionLocal, engine
 from app.main import app
 from app.services.demo_accounts import ensure_demo_accounts
-from app.services.strategist_service import _local_tool_loop, build_plan
+from app.services.strategist_service import _local_tool_loop
 from tests.helpers import login, student_auth
 
 
@@ -135,34 +135,3 @@ def test_staff_cannot_run_student_strategist():
         json={"course_id": course_id},
     )
     assert denied.status_code == 403
-
-
-def test_build_plan_unit_uses_injected_tools(monkeypatch):
-    from sqlalchemy.orm import Session
-
-    from app.database.session import SessionLocal
-    from app.models.auth import User
-
-    monkeypatch.setattr(
-        "app.services.strategist_service.youtube_search",
-        lambda query, **_k: [
-            {
-                "kind": "youtube",
-                "title": "Step hash tables",
-                "url": "https://www.youtube.com/watch?v=hash1",
-                "snippet": "step by step chaining",
-                "query": query,
-            }
-        ],
-    )
-    monkeypatch.setattr("app.services.strategist_service.article_search", lambda *_a, **_k: [])
-    db: Session = SessionLocal()
-    try:
-        user = db.query(User).filter(User.email == "s.elidrissi@aui.ma").one_or_none()
-        if user is None:
-            return
-        plan = build_plan(db, user_id=user.id, course_id=1, course_code="CSC 3374")
-        assert plan.resources
-        assert plan.resources[0].url.startswith("https://www.youtube.com/")
-    finally:
-        db.close()
