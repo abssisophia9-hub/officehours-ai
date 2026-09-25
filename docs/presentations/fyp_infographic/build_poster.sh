@@ -8,7 +8,7 @@ OUT_PNG="${HERE}/OfficeHours_AI_Catalog_Poster.png"
 UD="/tmp/chrome-catalog-design"
 rm -rf "$UD"
 mkdir -p "$UD"
-timeout 50s google-chrome \
+timeout 80s google-chrome \
   --headless=new --disable-gpu --no-first-run --no-default-browser-check \
   --user-data-dir="$UD" --hide-scrollbars --no-pdf-header-footer \
   --print-to-pdf="$OUT_PDF" "$HTML"
@@ -41,4 +41,6 @@ cp -f "$OUT_PDF" "${HERE}/OfficeHours_AI_Proposal_Ethics.pdf"
 cp -f "$OUT_PNG" "${HERE}/OfficeHours_AI_Proposal_Ethics.png"
 cp -f "$OUT_PDF" "${HERE}/OfficeHours_AI_Proposal_MorningPlan.pdf"
 cp -f "$OUT_PNG" "${HERE}/OfficeHours_AI_Proposal_MorningPlan.png"
-ls -lh "$OUT_PDF" "$OUT_PNG" "${HERE}/OfficeHours_AI_Proposal_MorningPlan.pdf"
+cp -f "$OUT_PDF" "${HERE}/OfficeHours_AI_Proposal_AskLife.pdf"
+cp -f "$OUT_PNG" "${HERE}/OfficeHours_AI_Proposal_AskLife.png"
+ls -lh "$OUT_PDF" "$OUT_PNG" "${HERE}/OfficeHours_AI_Proposal_AskLife.pdf"
