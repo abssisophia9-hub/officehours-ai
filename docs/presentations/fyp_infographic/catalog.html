@@ -410,7 +410,7 @@
   /* Work-breakdown tree — hierarchy, not a calendar strip */
   .wbs {
     width: 100%;
-    height: 1.72in;
+    height: 2.28in;
     display: block;
     margin-top: 0.02in;
   }
@@ -919,49 +919,72 @@
           <li><strong>Planned phases:</strong> (1) roles + triage &nbsp;(2) TA desk + stamp &nbsp;(3) Rooms + notes + demo &nbsp;(4) live Canvas &nbsp;(5) hosted database.</li>
           <li><strong>Dependencies:</strong> Canvas launch key, API token, HTTPS, one AUI test course. Strategist also needs an LLM key and a YouTube key for live search.</li>
         </ul>
-        <p class="fig-cap">Work-breakdown tree · filled = we own the phase · outline = waits on campus IT</p>
-        <svg class="wbs" viewBox="0 0 640 172" role="img" aria-label="Work-breakdown tree: OfficeHours work plan splits into We build and Campus IT">
-          <g fill="none" stroke="#1E4D7B" stroke-width="1.55" stroke-linecap="square">
-            <path d="M320 34 V50 H155 V58"/>
-            <path d="M320 50 H485 V58"/>
-            <path d="M155 86 V100 H52 V108"/>
-            <path d="M155 100 V108"/>
-            <path d="M155 100 H258 V108"/>
-            <path d="M485 86 V100 H446 V108"/>
-            <path d="M485 100 H574 V108"/>
+        <p class="fig-cap">Work-breakdown tree · leaves = what we build · outline = waits on campus IT</p>
+        <svg class="wbs" viewBox="0 0 640 252" role="img" aria-label="Work-breakdown tree of the OfficeHours build packages">
+          <g fill="none" stroke="#1E4D7B" stroke-width="1.45" stroke-linecap="square">
+            <path d="M320 32 V44 H200 V48"/>
+            <path d="M320 44 H500 V48"/>
+            <path d="M200 74 V84 H88 V88"/>
+            <path d="M200 84 H232 V88"/>
+            <path d="M200 84 H376 V88"/>
+            <path d="M500 74 V84 H468 V88"/>
+            <path d="M500 84 H572 V88"/>
+            <path d="M88 112 V124"/>
+            <path d="M232 112 V124"/>
+            <path d="M376 112 V124"/>
+            <path d="M88 142 V148"/>
+            <path d="M88 166 V172"/>
+            <path d="M232 142 V148"/>
+            <path d="M232 166 V172"/>
+            <path d="M232 190 V196"/>
+            <path d="M376 142 V148"/>
+            <path d="M376 166 V172"/>
           </g>
-          <circle cx="320" cy="50" r="2.6" fill="#1E4D7B"/>
-          <circle cx="155" cy="100" r="2.6" fill="#006633"/>
-          <circle cx="485" cy="100" r="2.6" fill="#1E4D7B"/>
+          <circle cx="320" cy="44" r="2.5" fill="#1E4D7B"/>
+          <circle cx="200" cy="84" r="2.5" fill="#006633"/>
+          <circle cx="500" cy="84" r="2.5" fill="#1E4D7B"/>
 
-          <rect x="216" y="4" width="208" height="30" rx="7" fill="#1E4D7B"/>
-          <text x="320" y="23.5" text-anchor="middle" fill="#fff" font-size="12.5" font-weight="700" font-family="Aptos, Inter, sans-serif">OfficeHours work plan</text>
+          <rect x="216" y="4" width="208" height="28" rx="7" fill="#1E4D7B"/>
+          <text x="320" y="22.5" text-anchor="middle" fill="#fff" font-size="12" font-weight="700" font-family="Aptos, Inter, sans-serif">OfficeHours work plan</text>
 
-          <rect x="85" y="58" width="140" height="28" rx="7" fill="#006633"/>
-          <text x="155" y="76.5" text-anchor="middle" fill="#fff" font-size="11.5" font-weight="700" font-family="Aptos, Inter, sans-serif">1  We build</text>
+          <rect x="135" y="48" width="130" height="26" rx="7" fill="#006633"/>
+          <text x="200" y="65.5" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="Aptos, Inter, sans-serif">1  We build</text>
+          <rect x="435" y="48" width="130" height="26" rx="7" fill="#fff" stroke="#1E4D7B" stroke-width="1.6" stroke-dasharray="4 2.5"/>
+          <text x="500" y="65.5" text-anchor="middle" fill="#1E4D7B" font-size="11" font-weight="700" font-family="Aptos, Inter, sans-serif">2  Campus IT</text>
 
-          <rect x="415" y="58" width="140" height="28" rx="7" fill="#fff" stroke="#1E4D7B" stroke-width="1.7" stroke-dasharray="4 2.5"/>
-          <text x="485" y="76.5" text-anchor="middle" fill="#1E4D7B" font-size="11.5" font-weight="700" font-family="Aptos, Inter, sans-serif">2  Campus IT</text>
+          <rect x="36" y="88" width="104" height="24" rx="6" fill="#006633"/>
+          <text x="88" y="104" text-anchor="middle" fill="#fff" font-size="10" font-weight="700" font-family="Aptos, Inter, sans-serif">1.1 Desk</text>
+          <rect x="180" y="88" width="104" height="24" rx="6" fill="#006633"/>
+          <text x="232" y="104" text-anchor="middle" fill="#fff" font-size="10" font-weight="700" font-family="Aptos, Inter, sans-serif">1.2 Agents</text>
+          <rect x="324" y="88" width="104" height="24" rx="6" fill="#006633"/>
+          <text x="376" y="104" text-anchor="middle" fill="#fff" font-size="10" font-weight="700" font-family="Aptos, Inter, sans-serif">1.3 Classmates</text>
+          <rect x="428" y="88" width="80" height="24" rx="6" fill="#fff" stroke="#1E4D7B" stroke-width="1.5" stroke-dasharray="4 2.5"/>
+          <text x="468" y="104" text-anchor="middle" fill="#1E4D7B" font-size="9.2" font-weight="700" font-family="Aptos, Inter, sans-serif">2.1 Canvas</text>
+          <rect x="532" y="88" width="80" height="24" rx="6" fill="#fff" stroke="#1E4D7B" stroke-width="1.5" stroke-dasharray="4 2.5"/>
+          <text x="572" y="104" text-anchor="middle" fill="#1E4D7B" font-size="9.2" font-weight="700" font-family="Aptos, Inter, sans-serif">2.2 Hosted DB</text>
 
-          <rect x="4" y="108" width="96" height="36" rx="7" fill="#006633"/>
-          <text x="52" y="123" text-anchor="middle" fill="#fff" font-size="9.4" font-weight="700" font-family="Aptos, Inter, sans-serif">1.1</text>
-          <text x="52" y="136" text-anchor="middle" fill="#EAF3EE" font-size="9.2" font-weight="600" font-family="Aptos, Inter, sans-serif">Roles + triage</text>
+          <rect x="24" y="124" width="128" height="18" rx="5" fill="#006633"/>
+          <text x="88" y="136.5" text-anchor="middle" fill="#fff" font-size="8.4" font-weight="600" font-family="Aptos, Inter, sans-serif">1.1.1 Three-seat login</text>
+          <rect x="24" y="148" width="128" height="18" rx="5" fill="#006633"/>
+          <text x="88" y="160.5" text-anchor="middle" fill="#fff" font-size="8.4" font-weight="600" font-family="Aptos, Inter, sans-serif">1.1.2 Quiet ask</text>
+          <rect x="24" y="172" width="128" height="18" rx="5" fill="#006633"/>
+          <text x="88" y="184.5" text-anchor="middle" fill="#fff" font-size="8.4" font-weight="600" font-family="Aptos, Inter, sans-serif">1.1.3 Live queue</text>
 
-          <rect x="107" y="108" width="96" height="36" rx="7" fill="#006633"/>
-          <text x="155" y="123" text-anchor="middle" fill="#fff" font-size="9.4" font-weight="700" font-family="Aptos, Inter, sans-serif">1.2</text>
-          <text x="155" y="136" text-anchor="middle" fill="#EAF3EE" font-size="9.2" font-weight="600" font-family="Aptos, Inter, sans-serif">TA + stamp</text>
+          <rect x="168" y="124" width="128" height="18" rx="5" fill="#006633"/>
+          <text x="232" y="136.5" text-anchor="middle" fill="#fff" font-size="8.2" font-weight="600" font-family="Aptos, Inter, sans-serif">1.2.1 Ask Triage joblibs</text>
+          <rect x="168" y="148" width="128" height="18" rx="5" fill="#006633"/>
+          <text x="232" y="160.5" text-anchor="middle" fill="#fff" font-size="8.4" font-weight="600" font-family="Aptos, Inter, sans-serif">1.2.2 Help Coach</text>
+          <rect x="168" y="172" width="128" height="18" rx="5" fill="#006633"/>
+          <text x="232" y="184.5" text-anchor="middle" fill="#fff" font-size="8.2" font-weight="600" font-family="Aptos, Inter, sans-serif">1.2.3 Stamp + Study Agent</text>
+          <rect x="168" y="196" width="128" height="18" rx="5" fill="#006633"/>
+          <text x="232" y="208.5" text-anchor="middle" fill="#fff" font-size="8.4" font-weight="600" font-family="Aptos, Inter, sans-serif">1.2.4 Strategist</text>
 
-          <rect x="210" y="108" width="96" height="36" rx="7" fill="#006633"/>
-          <text x="258" y="123" text-anchor="middle" fill="#fff" font-size="9.4" font-weight="700" font-family="Aptos, Inter, sans-serif">1.3</text>
-          <text x="258" y="136" text-anchor="middle" fill="#EAF3EE" font-size="9.2" font-weight="600" font-family="Aptos, Inter, sans-serif">Rooms + demo</text>
-
-          <rect x="392" y="108" width="108" height="36" rx="7" fill="#fff" stroke="#1E4D7B" stroke-width="1.7" stroke-dasharray="4 2.5"/>
-          <text x="446" y="123" text-anchor="middle" fill="#1E4D7B" font-size="9.4" font-weight="700" font-family="Aptos, Inter, sans-serif">2.1</text>
-          <text x="446" y="136" text-anchor="middle" fill="#1E4D7B" font-size="9.2" font-weight="600" font-family="Aptos, Inter, sans-serif">Live Canvas</text>
-
-          <rect x="520" y="108" width="108" height="36" rx="7" fill="#fff" stroke="#1E4D7B" stroke-width="1.7" stroke-dasharray="4 2.5"/>
-          <text x="574" y="123" text-anchor="middle" fill="#1E4D7B" font-size="9.4" font-weight="700" font-family="Aptos, Inter, sans-serif">2.2</text>
-          <text x="574" y="136" text-anchor="middle" fill="#1E4D7B" font-size="9.2" font-weight="600" font-family="Aptos, Inter, sans-serif">Hosted DB</text>
+          <rect x="312" y="124" width="128" height="18" rx="5" fill="#006633"/>
+          <text x="376" y="136.5" text-anchor="middle" fill="#fff" font-size="8.4" font-weight="600" font-family="Aptos, Inter, sans-serif">1.3.1 Sharing notes</text>
+          <rect x="312" y="148" width="128" height="18" rx="5" fill="#006633"/>
+          <text x="376" y="160.5" text-anchor="middle" fill="#fff" font-size="8.4" font-weight="600" font-family="Aptos, Inter, sans-serif">1.3.2 Rooms</text>
+          <rect x="312" y="172" width="128" height="18" rx="5" fill="#006633"/>
+          <text x="376" y="184.5" text-anchor="middle" fill="#fff" font-size="8.4" font-weight="600" font-family="Aptos, Inter, sans-serif">1.3.3 Demo script</text>
         </svg>
       </section>
     </div>
