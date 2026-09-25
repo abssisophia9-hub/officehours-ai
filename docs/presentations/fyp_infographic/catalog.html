@@ -410,40 +410,60 @@
   .req-split {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1.78in;
+    grid-template-rows: 2.00in;
     gap: 0.10in;
     align-items: stretch;
     margin-top: 0.04in;
   }
   .wbs-outline,
   .plan-gantt {
-    height: 1.78in;
+    height: 2.00in;
     box-sizing: border-box;
   }
   .wbs-outline {
-    font-size: 7.3pt;
-    line-height: 1.28;
-    padding: 0.08in 0.10in;
+    font-size: 6.15pt;
+    line-height: 1.16;
+    padding: 0.055in 0.08in 0.05in;
     display: flex;
     flex-direction: column;
     justify-content: center;
   }
+  .wbs-outline .root {
+    font-weight: 700;
+    font-size: 6.5pt;
+    color: var(--header);
+    margin: 0 0 0.015in;
+  }
+  .wbs-outline .grp,
+  .wbs-outline .pkg,
+  .wbs-outline .leaf {
+    white-space: nowrap;
+  }
   .wbs-outline .grp {
     font-weight: 700;
-    margin: 0.045in 0 0.02in;
+    margin: 0.012in 0 0;
   }
-  .wbs-outline .grp:first-child { margin-top: 0; }
   .wbs-outline .grp.own { color: var(--header); }
-  .wbs-outline .grp.it { color: var(--blue); }
-  .wbs-outline .leaf {
-    padding: 0.012in 0 0.012in 0.02in;
-    color: #000;
+  .wbs-outline .pkg {
+    font-weight: 700;
+    color: var(--title);
   }
-  .wbs-outline .leaf.it { color: var(--blue); }
+  .wbs-outline .leaf { color: #000; }
   .wbs-outline .tw { color: #7A8690; font-weight: 700; }
+  .wbs-it {
+    border: 1.35px dashed var(--header);
+    border-radius: 5px;
+    padding: 0.028in 0.055in 0.022in;
+    margin-top: 0.04in;
+    background: #fff;
+    color: var(--header);
+  }
+  .wbs-it .grp,
+  .wbs-it .leaf { color: var(--header); font-weight: 700; }
+  .wbs-it .grp { margin-top: 0; }
 
   .plan-gantt {
-    padding: 0.08in 0.10in;
+    padding: 0.055in 0.08in 0.05in;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -488,8 +508,8 @@
   }
   .plan-bar.own { background: var(--header); }
   .plan-bar.it {
-    background: #F3F7FB;
-    border: 1.4px dashed var(--blue);
+    background: #F4F6F8;
+    border: 1.4px dashed var(--header);
     box-sizing: border-box;
   }
   .plan-note {
@@ -987,13 +1007,26 @@
         </ul>
         <div class="req-split">
           <div class="wbs-outline card">
-            <div class="grp own">1 We build</div>
-            <div class="leaf"><span class="tw">├─</span> 1.1 Dashboards</div>
-            <div class="leaf"><span class="tw">├─</span> 1.2 Agents</div>
-            <div class="leaf"><span class="tw">└─</span> 1.3 Notes + Rooms</div>
-            <div class="grp it">2 Campus IT</div>
-            <div class="leaf it"><span class="tw">├─</span> 2.1 Canvas</div>
-            <div class="leaf it"><span class="tw">└─</span> 2.2 Hosted DB</div>
+            <div class="root">OfficeHours</div>
+            <div class="grp own"><span class="tw">├─</span> 1 We build</div>
+            <div class="pkg"><span class="tw">│&nbsp;&nbsp;├─</span> 1.1 Desk</div>
+            <div class="leaf"><span class="tw">│&nbsp;&nbsp;│&nbsp;&nbsp;├─</span> 1.1.1 Three-seat login</div>
+            <div class="leaf"><span class="tw">│&nbsp;&nbsp;│&nbsp;&nbsp;├─</span> 1.1.2 Quiet ask</div>
+            <div class="leaf"><span class="tw">│&nbsp;&nbsp;│&nbsp;&nbsp;└─</span> 1.1.3 Live queue</div>
+            <div class="pkg"><span class="tw">│&nbsp;&nbsp;├─</span> 1.2 Agents</div>
+            <div class="leaf"><span class="tw">│&nbsp;&nbsp;│&nbsp;&nbsp;├─</span> 1.2.1 Ask Triage joblibs</div>
+            <div class="leaf"><span class="tw">│&nbsp;&nbsp;│&nbsp;&nbsp;├─</span> 1.2.2 Help Coach</div>
+            <div class="leaf"><span class="tw">│&nbsp;&nbsp;│&nbsp;&nbsp;├─</span> 1.2.3 Stamp + Study Agent</div>
+            <div class="leaf"><span class="tw">│&nbsp;&nbsp;│&nbsp;&nbsp;└─</span> 1.2.4 Strategist</div>
+            <div class="pkg"><span class="tw">│&nbsp;&nbsp;└─</span> 1.3 Classmates</div>
+            <div class="leaf"><span class="tw">│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─</span> 1.3.1 Sharing notes</div>
+            <div class="leaf"><span class="tw">│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─</span> 1.3.2 Rooms</div>
+            <div class="leaf"><span class="tw">│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─</span> 1.3.3 Demo script</div>
+            <div class="wbs-it">
+              <div class="grp it"><span class="tw">└─</span> 2 Campus IT</div>
+              <div class="leaf it"><span class="tw">&nbsp;&nbsp;&nbsp;├─</span> 2.1 Canvas</div>
+              <div class="leaf it"><span class="tw">&nbsp;&nbsp;&nbsp;└─</span> 2.2 Hosted DB</div>
+            </div>
           </div>
           <div class="plan-gantt card">
             <div class="plan-axis">
@@ -1023,7 +1056,7 @@
               <div class="plan-lab">Phase 5 · Hosted DB</div>
               <div class="plan-track"><div class="plan-bar it" style="grid-column:4 / 5"></div></div>
             </div>
-            <p class="plan-note">Solid green = we own the phase. Outline = waits on campus IT.</p>
+            <p class="plan-note">Solid green = we own the phase. Outline green = waits on campus IT.</p>
           </div>
         </div>
       </section>
