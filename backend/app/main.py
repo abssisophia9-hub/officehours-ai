@@ -42,6 +42,7 @@ from app.routes.peer_notes import router as peer_notes_router
 from app.routes.help_room import router as help_room_router
 from app.routes.realtime import router as realtime_router
 from app.routes.requests import router as requests_router
+from app.routes.strategist import router as strategist_router
 from app.routes.ta import router as ta_router
 from app.routes.notifications import router as notifications_router
 from app.database.session import SessionLocal
@@ -215,6 +216,7 @@ app.include_router(lti_router)
 app.include_router(ta_router)
 app.include_router(peer_notes_router)
 app.include_router(help_room_router)
+app.include_router(strategist_router)
 app.include_router(feedback_router)
 app.include_router(notifications_router)
 app.include_router(realtime_router)
