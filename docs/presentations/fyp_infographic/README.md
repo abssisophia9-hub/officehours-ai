@@ -9,10 +9,10 @@ Official SSE catalog size: **14.5 × 19 in**. Designed print source is one self-
 | [`OfficeHours_AI_Catalog_Poster.png`](OfficeHours_AI_Catalog_Poster.png) | Screen proof |
 | [`OfficeHours_AI_Catalog_Poster.docx`](OfficeHours_AI_Catalog_Poster.docx) | Official Word template fill (copy only) |
 
-**Latest poster (this revision — October is Milestone 2):**  
-https://github.com/abssisophia9-hub/officehours-ai/blob/cursor/fyp-infographic-poster-1879/docs/presentations/fyp_infographic/OfficeHours_AI_Proposal_M2Oct.pdf
+**Latest poster (this revision — Sep–Dec Gantt, matching boxes):**  
+https://github.com/abssisophia9-hub/officehours-ai/blob/cursor/fyp-infographic-poster-1879/docs/presentations/fyp_infographic/OfficeHours_AI_Proposal_SepDec.pdf
 
-On the GitHub page, use **Download raw file**. Ignore older Catalog / Proposal / FYP / WorkPlan / Agents / Aligned / Strategist / UsePlan / Ethics / MorningPlan / AskLife / FYPTitle / Unmix / WBS / WBSDetail / OctTime / NoPhases / ReqSplit PDFs already in Downloads.
+On the GitHub page, use **Download raw file**. Ignore older Catalog / Proposal / FYP / WorkPlan / Agents / Aligned / Strategist / UsePlan / Ethics / MorningPlan / AskLife / FYPTitle / Unmix / WBS / WBSDetail / OctTime / NoPhases / ReqSplit / M2Oct PDFs already in Downloads.
 
 **Word download:**  
 https://github.com/abssisophia9-hub/officehours-ai/blob/cursor/fyp-infographic-poster-1879/docs/presentations/fyp_infographic/OfficeHours_AI_Catalog_Poster.docx

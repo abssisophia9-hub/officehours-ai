@@ -409,15 +409,24 @@
 
   .req-split {
     display: grid;
-    grid-template-columns: 1.72in 1fr;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1.78in;
     gap: 0.10in;
-    align-items: start;
+    align-items: stretch;
     margin-top: 0.04in;
+  }
+  .wbs-outline,
+  .plan-gantt {
+    height: 1.78in;
+    box-sizing: border-box;
   }
   .wbs-outline {
     font-size: 7.3pt;
     line-height: 1.28;
-    padding: 0.05in 0.06in 0.06in;
+    padding: 0.08in 0.10in;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
   .wbs-outline .grp {
     font-weight: 700;
@@ -433,10 +442,15 @@
   .wbs-outline .leaf.it { color: var(--blue); }
   .wbs-outline .tw { color: #7A8690; font-weight: 700; }
 
-  .plan-gantt { padding: 0.05in 0.06in 0.05in; }
+  .plan-gantt {
+    padding: 0.08in 0.10in;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
   .plan-axis {
     display: grid;
-    grid-template-columns: 1.18in repeat(5, 1fr);
+    grid-template-columns: 1.18in repeat(4, 1fr);
     font-size: 6.2pt;
     font-weight: 700;
     letter-spacing: 0.03em;
@@ -448,7 +462,6 @@
     text-align: center;
     border-left: 1px solid var(--border);
   }
-  .plan-axis .now { color: var(--blue); }
   .plan-row {
     display: grid;
     grid-template-columns: 1.18in 1fr;
@@ -459,14 +472,14 @@
   .plan-lab { font-size: 6.5pt; font-weight: 700; color: var(--title); line-height: 1.15; }
   .plan-track {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     height: 0.16in;
-    background: var(--placeholder);
+    background-color: #F4F6F8;
     background-image: linear-gradient(to right,
-      transparent 0, transparent calc(20% - 1px), #C5CDD4 calc(20% - 1px), #C5CDD4 20%,
-      transparent 20%, transparent calc(40% - 1px), #C5CDD4 calc(40% - 1px), #C5CDD4 40%,
-      transparent 40%, transparent calc(60% - 1px), #C5CDD4 calc(60% - 1px), #C5CDD4 60%,
-      transparent 60%, transparent calc(80% - 1px), #C5CDD4 calc(80% - 1px), #C5CDD4 80%);
+      #F4F6F8 0, #F4F6F8 calc(25% - 1px), #C5CDD4 calc(25% - 1px), #C5CDD4 25%,
+      #F4F6F8 25%, #F4F6F8 calc(50% - 1px), #C5CDD4 calc(50% - 1px), #C5CDD4 50%,
+      #F4F6F8 50%, #F4F6F8 calc(75% - 1px), #C5CDD4 calc(75% - 1px), #C5CDD4 75%,
+      #F4F6F8 75%, #F4F6F8 100%);
     border-radius: 3px;
     overflow: hidden;
   }
@@ -968,7 +981,7 @@
       </section>
       <section>
         <h2>Requirements &amp; Initial Work Plan</h2>
-        <p>What we build, and when each phase sits on the calendar. <strong>NOW</strong> is late September 2026.</p>
+        <p>What we build, and when each phase sits on the calendar.</p>
         <ul>
           <li><strong>Key requirements:</strong> Three seats (student / TA / professor); Ask Triage + Help Coach; professor stamp before any agent may quote; Sharing notes + Rooms; Canvas login and sync.</li>
         </ul>
@@ -985,33 +998,32 @@
           <div class="plan-gantt card">
             <div class="plan-axis">
               <span></span>
-              <span class="now">Now</span>
               <span>Sep</span>
               <span>Oct</span>
               <span>Nov</span>
-              <span>Capstone</span>
+              <span>Dec</span>
             </div>
             <div class="plan-row">
               <div class="plan-lab">Phase 1 · Roles + Triage</div>
-              <div class="plan-track"><div class="plan-bar own" style="grid-column:1 / 4"></div></div>
+              <div class="plan-track"><div class="plan-bar own" style="grid-column:1 / 3"></div></div>
             </div>
             <div class="plan-row">
               <div class="plan-lab">Phase 2 · Desk + Stamp</div>
-              <div class="plan-track"><div class="plan-bar own" style="grid-column:2 / 5"></div></div>
+              <div class="plan-track"><div class="plan-bar own" style="grid-column:2 / 4"></div></div>
             </div>
             <div class="plan-row">
               <div class="plan-lab">Phase 3 · Rooms + Demo</div>
-              <div class="plan-track"><div class="plan-bar own" style="grid-column:3 / 5"></div></div>
+              <div class="plan-track"><div class="plan-bar own" style="grid-column:3 / 4"></div></div>
             </div>
             <div class="plan-row">
               <div class="plan-lab">Phase 4 · Canvas</div>
-              <div class="plan-track"><div class="plan-bar it" style="grid-column:4 / 6"></div></div>
+              <div class="plan-track"><div class="plan-bar it" style="grid-column:3 / 5"></div></div>
             </div>
             <div class="plan-row">
               <div class="plan-lab">Phase 5 · Hosted DB</div>
-              <div class="plan-track"><div class="plan-bar it" style="grid-column:5 / 6"></div></div>
+              <div class="plan-track"><div class="plan-bar it" style="grid-column:4 / 5"></div></div>
             </div>
-            <p class="plan-note">Solid green = we own the phase. Outline = waits on campus IT. Capstone = December gate.</p>
+            <p class="plan-note">Solid green = we own the phase. Outline = waits on campus IT.</p>
           </div>
         </div>
       </section>
