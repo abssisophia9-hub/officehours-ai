@@ -448,7 +448,16 @@
     margin: 0;
     text-align: center;
   }
-  .wbs-outline .grp.own { color: var(--header); }
+  .wbs-outline .grp.own { color: var(--header); margin-bottom: 0.02in; }
+  .wbs-fork {
+    align-self: center;
+    width: 68%;
+    height: 0.075in;
+    border-style: solid;
+    border-color: #C5CDD4;
+    border-width: 1.15px 1.15px 0;
+    margin: 0 auto 0.01in;
+  }
   .wbs-cols {
     display: grid;
     grid-template-columns: 0.95fr 1.2fr 0.95fr;
@@ -1039,6 +1048,7 @@
           <div class="wbs-outline card">
             <div class="root">OfficeHours</div>
             <div class="grp own">1 We build</div>
+            <div class="wbs-fork" aria-hidden="true"></div>
             <div class="wbs-cols">
               <div class="wbs-col">
                 <div class="pkg">1.1 Desk</div>
