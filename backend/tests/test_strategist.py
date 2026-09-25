@@ -146,3 +146,76 @@ def test_staff_cannot_run_student_strategist():
         json={"course_id": course_id},
     )
     assert denied.status_code == 403
+
+
+def test_ta_cannot_run_student_strategist():
+    headers, user = login(client, "a.chen@aui.ma")
+    course_id = next(c["id"] for c in user["courses"] if c["code"] == "CSC 2302")
+    denied = client.post(
+        "/strategist/plan",
+        headers=headers,
+        json={"course_id": course_id},
+    )
+    assert denied.status_code == 403
+
+
+def test_focus_picks_largest_weight_gap():
+    headers, course_id = student_auth(client, "CSC 3374")
+    body = client.post(
+        "/strategist/plan",
+        headers=headers,
+        json={
+            "course_id": course_id,
+            "grades": [
+                {
+                    "topic": "Trees & red-black",
+                    "score": 62,
+                    "weight": 35,
+                    "source": "Quiz 4",
+                },
+                {
+                    "topic": "Hashing",
+                    "score": 50,
+                    "weight": 40,
+                    "source": "Assignment 3",
+                },
+            ],
+        },
+    ).json()
+    assert body["focus"]["topic"] == "Hashing"
+    assert body["focus"]["gap"] == 1400.0
+
+
+def test_student_goal_is_used_and_step_ask_gets_walkthrough():
+    headers, course_id = student_auth(client, "CSC 3374")
+    client.post(
+        "/requests/",
+        headers=headers,
+        json={
+            "text": "Walk me through the steps of hash table insert, first then probe.",
+            "anonymous": True,
+            "course_id": course_id,
+            "course": "CSC 3374",
+        },
+    )
+    body = client.post(
+        "/strategist/plan",
+        headers=headers,
+        json={
+            "course_id": course_id,
+            "goal": "I only want a step-by-step hashing walkthrough",
+            "grades": [
+                {
+                    "topic": "Hashing",
+                    "score": 50,
+                    "weight": 40,
+                    "source": "Assignment 3",
+                }
+            ],
+        },
+    ).json()
+    assert body["goal"] == "I only want a step-by-step hashing walkthrough"
+    assert body["dossier"]["dominant_style"] == "step_by_step"
+    assert "walkthrough" in body["today"][0]["title"].lower()
+    assert all(not block.get("resource_url") for block in body["today"])
+    assert "3Blue1Brown" not in str(body)
