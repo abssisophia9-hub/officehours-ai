@@ -408,16 +408,23 @@
   .stage-box.pending .sub { color: var(--secondary); opacity: 1; }
 
   .req-split {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 2.00in;
-    gap: 0.10in;
-    align-items: stretch;
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0.10in 0;
     margin-top: 0.04in;
+  }
+  .req-cell {
+    display: table-cell;
+    width: 50%;
+    vertical-align: top;
+  }
+  .req-cell > .card {
+    height: 100%;
   }
   .wbs-outline,
   .plan-gantt {
-    height: 2.00in;
     box-sizing: border-box;
   }
   .wbs-outline {
@@ -1006,6 +1013,7 @@
           <li><strong>Key requirements:</strong> Three seats (student / TA / professor); Ask Triage + Help Coach; professor stamp before any agent may quote; Sharing notes + Rooms; Canvas login and sync.</li>
         </ul>
         <div class="req-split">
+          <div class="req-cell">
           <div class="wbs-outline card">
             <div class="root">OfficeHours</div>
             <div class="grp own"><span class="tw">├─</span> 1 We build</div>
@@ -1028,6 +1036,8 @@
               <div class="leaf it"><span class="tw">&nbsp;&nbsp;&nbsp;└─</span> 2.2 Hosted DB</div>
             </div>
           </div>
+          </div>
+          <div class="req-cell">
           <div class="plan-gantt card">
             <div class="plan-axis">
               <span></span>
@@ -1057,6 +1067,7 @@
               <div class="plan-track"><div class="plan-bar it" style="grid-column:4 / 5"></div></div>
             </div>
             <p class="plan-note">Solid green = we own the phase. Outline green = waits on campus IT.</p>
+          </div>
           </div>
         </div>
       </section>
