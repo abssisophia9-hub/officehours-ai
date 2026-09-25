@@ -415,29 +415,13 @@
     margin-top: 0.02in;
   }
 
-  /* Official three-gate timeline — dates live here, not in Requirements */
-  .miles {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 0.06in;
-    margin-top: 0.05in;
+  /* Capstone calendar — four months on one rail */
+  .timeline {
+    width: 100%;
+    height: 1.22in;
+    display: block;
+    margin-top: 0.04in;
   }
-  .mile {
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-top: 3px solid var(--header);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 0.05in 0.055in 0.055in;
-  }
-  .mile .when {
-    font-size: 7.4pt;
-    font-weight: 700;
-    color: var(--header);
-    margin: 0 0 0.02in;
-  }
-  .mile .name { font-size: 7.6pt; font-weight: 700; color: var(--title); line-height: 1.2; }
-  .mile .sub { font-size: 6.8pt; color: var(--secondary); line-height: 1.25; margin-top: 0.02in; }
 
   /* Gap table caption */
   .gap-wrap { margin-top: 0.055in; }
@@ -1109,28 +1093,48 @@ from how they learn.</div>
       </section>
       <section>
         <h2>Planned Deliverables &amp; Project Timeline</h2>
-        <p>The artifacts we hand in, and the three official Capstone calendar gates.</p>
+        <p>The artifacts we hand in, and the Capstone calendar from September through December.</p>
         <ul>
           <li><strong>Planned deliverables:</strong> Running three-seat product; trained Ask Triage joblibs; architecture / pipeline diagrams; demo script; live Canvas checklist; Capstone report.</li>
         </ul>
-        <p class="fig-cap">Official timeline · three Capstone gates</p>
-        <div class="miles">
-          <div class="mile">
-            <div class="when">Sep 2026</div>
-            <div class="name">Milestone 1</div>
-            <div class="sub">Problem definition / requirements / literature</div>
-          </div>
-          <div class="mile">
-            <div class="when">Nov 2026</div>
-            <div class="name">Milestone 2</div>
-            <div class="sub">Design / development / experimentation</div>
-          </div>
-          <div class="mile">
-            <div class="when">Dec 2026</div>
-            <div class="name">Milestone 3</div>
-            <div class="sub">Evaluation / refinement / finalization</div>
-          </div>
-        </div>
+        <p class="fig-cap">Project timeline · Sep–Dec 2026 · October is the design month after the subject is approved</p>
+        <svg class="timeline" viewBox="0 0 640 118" role="img" aria-label="Capstone timeline from September through December">
+          <line x1="56" y1="28" x2="584" y2="28" stroke="#006633" stroke-width="3.2" stroke-linecap="round"/>
+          <circle cx="56" cy="28" r="7.5" fill="#006633"/>
+          <circle cx="232" cy="28" r="7.5" fill="#006633"/>
+          <circle cx="408" cy="28" r="7.5" fill="#006633"/>
+          <circle cx="584" cy="28" r="7.5" fill="#006633"/>
+          <circle cx="56" cy="28" r="3.2" fill="#fff"/>
+          <circle cx="232" cy="28" r="3.2" fill="#fff"/>
+          <circle cx="408" cy="28" r="3.2" fill="#fff"/>
+          <circle cx="584" cy="28" r="3.2" fill="#fff"/>
+
+          <text x="56" y="12" text-anchor="middle" fill="#006633" font-size="10.5" font-weight="700" font-family="Aptos, Inter, sans-serif">September</text>
+          <text x="232" y="12" text-anchor="middle" fill="#006633" font-size="10.5" font-weight="700" font-family="Aptos, Inter, sans-serif">October</text>
+          <text x="408" y="12" text-anchor="middle" fill="#006633" font-size="10.5" font-weight="700" font-family="Aptos, Inter, sans-serif">November</text>
+          <text x="584" y="12" text-anchor="middle" fill="#006633" font-size="10.5" font-weight="700" font-family="Aptos, Inter, sans-serif">December</text>
+
+          <text x="56" y="50" text-anchor="middle" fill="#000" font-size="9.4" font-weight="700" font-family="Aptos, Inter, sans-serif">Milestone 1</text>
+          <text x="232" y="50" text-anchor="middle" fill="#000" font-size="9.4" font-weight="700" font-family="Aptos, Inter, sans-serif">Design month</text>
+          <text x="408" y="50" text-anchor="middle" fill="#000" font-size="9.4" font-weight="700" font-family="Aptos, Inter, sans-serif">Milestone 2</text>
+          <text x="584" y="50" text-anchor="middle" fill="#000" font-size="9.4" font-weight="700" font-family="Aptos, Inter, sans-serif">Milestone 3</text>
+
+          <text x="56" y="66" text-anchor="middle" fill="#000" font-size="8.2" font-weight="600" font-family="Aptos, Inter, sans-serif">Problem definition</text>
+          <text x="56" y="78" text-anchor="middle" fill="#000" font-size="8.2" font-family="Aptos, Inter, sans-serif">Proposal written</text>
+          <text x="56" y="90" text-anchor="middle" fill="#000" font-size="8.2" font-family="Aptos, Inter, sans-serif">Subject approved</text>
+
+          <text x="232" y="66" text-anchor="middle" fill="#000" font-size="8.2" font-weight="600" font-family="Aptos, Inter, sans-serif">Design the desk</text>
+          <text x="232" y="78" text-anchor="middle" fill="#000" font-size="8.2" font-family="Aptos, Inter, sans-serif">Architecture + WBS</text>
+          <text x="232" y="90" text-anchor="middle" fill="#000" font-size="8.2" font-family="Aptos, Inter, sans-serif">Build starts</text>
+
+          <text x="408" y="66" text-anchor="middle" fill="#000" font-size="8.2" font-weight="600" font-family="Aptos, Inter, sans-serif">Development</text>
+          <text x="408" y="78" text-anchor="middle" fill="#000" font-size="8.2" font-family="Aptos, Inter, sans-serif">Experimentation</text>
+          <text x="408" y="90" text-anchor="middle" fill="#000" font-size="8.2" font-family="Aptos, Inter, sans-serif">Three-seat demo</text>
+
+          <text x="584" y="66" text-anchor="middle" fill="#000" font-size="8.2" font-weight="600" font-family="Aptos, Inter, sans-serif">Evaluation</text>
+          <text x="584" y="78" text-anchor="middle" fill="#000" font-size="8.2" font-family="Aptos, Inter, sans-serif">Refinement</text>
+          <text x="584" y="90" text-anchor="middle" fill="#000" font-size="8.2" font-family="Aptos, Inter, sans-serif">Finalization</text>
+        </svg>
       </section>
       <section>
         <h2>Feasibility, Resources &amp; Risks</h2>
