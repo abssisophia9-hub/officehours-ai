@@ -402,16 +402,41 @@
   .node .sub { font-size: 6.9pt; color: var(--secondary); line-height: 1.25; }
   .arch-note { font-size: 7.1pt; color: var(--secondary); margin: 0.04in 0 0; }
 
-  /* Phases */
+  /* Phases — work order only, no calendar */
   .phases {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 0.06in;
-    margin-top: 0.05in;
+    gap: 0.05in;
+    margin-top: 0.045in;
   }
+  .phases .stage-box { min-height: 0.62in; padding: 0.045in 0.03in; }
   .stage-box .name { font-size: 7.4pt; font-weight: 700; line-height: 1.15; }
   .stage-box .sub { font-size: 6.4pt; opacity: 0.9; margin-top: 0.015in; }
   .stage-box.pending .sub { color: var(--secondary); opacity: 1; }
+
+  /* Official three-gate timeline — dates live here, not in Requirements */
+  .miles {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.06in;
+    margin-top: 0.05in;
+  }
+  .mile {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--header);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 0.05in 0.055in 0.055in;
+  }
+  .mile .when {
+    font-size: 7.4pt;
+    font-weight: 700;
+    color: var(--header);
+    margin: 0 0 0.02in;
+  }
+  .mile .name { font-size: 7.6pt; font-weight: 700; color: var(--title); line-height: 1.2; }
+  .mile .sub { font-size: 6.8pt; color: var(--secondary); line-height: 1.25; margin-top: 0.02in; }
 
   /* Gap table caption */
   .gap-wrap { margin-top: 0.055in; }
@@ -887,49 +912,20 @@
       </section>
       <section>
         <h2>Requirements &amp; Initial Work Plan</h2>
-        <p class="fig-cap">1 · Scheduling — Gantt chart</p>
-        <div class="gantt card">
-          <div class="gantt-axis"><span></span><span>September</span><span>October</span><span>November</span><span>December</span></div>
-          <div class="gantt-row">
-            <div class="gantt-lab">1.1 Requirements</div>
-            <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:1 / 4"></div></div>
-          </div>
-          <div class="gantt-row">
-            <div class="gantt-lab">2.1 Design / build</div>
-            <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:4 / 10"></div></div>
-          </div>
-          <div class="gantt-row">
-            <div class="gantt-lab">3.1 Demo / evaluate</div>
-            <div class="gantt-track"><div class="gantt-bar planned" style="grid-column:7 / 12"></div></div>
-          </div>
-          <div class="gantt-row">
-            <div class="gantt-lab">4.1 Live Canvas</div>
-            <div class="gantt-track"><div class="gantt-bar gated" style="grid-column:10 / 13"></div></div>
-          </div>
-          <div class="gantt-legend">
-            <div>
-              <span class="gantt-swatch on"></span>
-              <span><strong>Solid green bar</strong> = work on our calendar. The filled months are when we plan to do that task. We control those dates.</span>
-            </div>
-            <div>
-              <span class="gantt-swatch off"></span>
-              <span><strong>Hollow dashed bar</strong> = same plan, but we cannot start until campus IT issues the Canvas launch key. That is why Live Canvas is outlined, not filled.</span>
-            </div>
-          </div>
+        <p>The product contract, the build order, and what we need from outside the team.</p>
+        <ul>
+          <li><strong>Key requirements:</strong> Three seats (student / TA / professor); Ask Triage + Help Coach; professor stamp before any agent may quote; Sharing notes + Rooms; Canvas login and sync.</li>
+          <li><strong>Planned phases:</strong> (1) roles + triage &nbsp;(2) TA desk + stamp &nbsp;(3) Rooms + notes + demo &nbsp;(4) live Canvas &nbsp;(5) hosted database.</li>
+          <li><strong>Dependencies:</strong> Canvas launch key, API token, HTTPS, one AUI test course. Strategist also needs an LLM key and a YouTube key for live search.</li>
+        </ul>
+        <p class="fig-cap">Build order · filled = we own the phase · outline = waits on campus IT</p>
+        <div class="phases">
+          <div class="stage-box brand"><div class="name">1 Roles + triage</div><div class="sub">we build</div></div>
+          <div class="stage-box brand"><div class="name">2 TA + stamp</div><div class="sub">we build</div></div>
+          <div class="stage-box brand"><div class="name">3 Rooms + demo</div><div class="sub">we build</div></div>
+          <div class="stage-box pending"><div class="name">4 Live Canvas</div><div class="sub">campus IT</div></div>
+          <div class="stage-box pending"><div class="name">5 Hosted DB</div><div class="sub">campus IT</div></div>
         </div>
-        <p class="fig-cap">2 · Prioritization · Demand = must-have for the demo · Wish = wanted if campus IT is ready · Imp. = 1–10</p>
-        <table class="data prio-plan">
-          <thead>
-            <tr><th class="kind">Kind</th><th>Requirement</th><th class="imp">Imp.</th></tr>
-          </thead>
-          <tbody>
-            <tr><td class="kind">Demand</td><td>Three-seat desk: roles, Ask Triage, Help Coach</td><td class="imp">10</td></tr>
-            <tr><td class="kind">Demand</td><td>Professor stamp before any agent may quote</td><td class="imp">10</td></tr>
-            <tr><td class="kind">Demand</td><td>Sharing notes + Rooms on the planned demo</td><td class="imp">9</td></tr>
-            <tr class="wish"><td class="kind">Wish</td><td>Live Canvas login on one AUI test course</td><td class="imp">8</td></tr>
-            <tr class="wish"><td class="kind">Wish</td><td>Hosted Postgres / HTTPS cutover</td><td class="imp">5</td></tr>
-          </tbody>
-        </table>
       </section>
     </div>
 
@@ -1053,12 +1049,28 @@ from how they learn.</div>
       </section>
       <section>
         <h2>Planned Deliverables &amp; Project Timeline</h2>
+        <p>The artifacts we hand in, and the three official Capstone calendar gates.</p>
         <ul>
-          <li><strong>Planned deliverables:</strong> Running product; trained models; diagrams; demo script; live checklist; Capstone report.</li>
-          <li><strong>Milestone 1:</strong> Problem definition / requirements / literature → Sep 2026</li>
-          <li><strong>Milestone 2:</strong> Design / development / experimentation → Nov 2026</li>
-          <li><strong>Milestone 3:</strong> Evaluation / refinement / finalization → Dec 2026</li>
+          <li><strong>Planned deliverables:</strong> Running three-seat product; trained Ask Triage joblibs; architecture / pipeline diagrams; demo script; live Canvas checklist; Capstone report.</li>
         </ul>
+        <p class="fig-cap">Official timeline · three Capstone gates</p>
+        <div class="miles">
+          <div class="mile">
+            <div class="when">Sep 2026</div>
+            <div class="name">Milestone 1</div>
+            <div class="sub">Problem definition / requirements / literature</div>
+          </div>
+          <div class="mile">
+            <div class="when">Nov 2026</div>
+            <div class="name">Milestone 2</div>
+            <div class="sub">Design / development / experimentation</div>
+          </div>
+          <div class="mile">
+            <div class="when">Dec 2026</div>
+            <div class="name">Milestone 3</div>
+            <div class="sub">Evaluation / refinement / finalization</div>
+          </div>
+        </div>
       </section>
       <section>
         <h2>Feasibility, Resources &amp; Risks</h2>
