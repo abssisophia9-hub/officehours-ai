@@ -1083,7 +1083,7 @@ from how they learn.</div>
           <li><strong>Privacy / human participants:</strong> Quiet asks show a request code, not a name, on any classmate surface. Data stays course-scoped by design; logs minimize identifiers.</li>
           <li><strong>Cybersecurity / legal / standards:</strong> Role-based login for access control. Live data travels over HTTPS. No scraping of Canvas content. LTI 1.3 for the campus hand-shake; API tokens follow least privilege.</li>
           <li><strong>AI use plan:</strong> Ask Triage, Help Coach, Study Agent, and Strategist share <em>all-MiniLM-L6-v2</em> and call campus tools (queue, roster, KB, stamp). Study Agent may emit stamped FAQ text or a refuse — it does not generate. A missed Analyzer label goes to a human TA.</li>
-          <li><strong>AI system risks if applicable:</strong> Study Agent refuses below cosine 0.42. Strategist links are recommendations, not stamped answers — the student still Quiet-asks if stuck.</li>
+          <li><strong>AI system risks if applicable:</strong> A weak cosine match (&lt; 0.42) must refuse. The stamp is the only write into student-facing agent output.</li>
         </ul>
       </section>
       <section>
