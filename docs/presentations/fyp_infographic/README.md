@@ -9,10 +9,10 @@ Official SSE catalog size: **14.5 × 19 in**. Designed print source is one self-
 | [`OfficeHours_AI_Catalog_Poster.png`](OfficeHours_AI_Catalog_Poster.png) | Screen proof |
 | [`OfficeHours_AI_Catalog_Poster.docx`](OfficeHours_AI_Catalog_Poster.docx) | Official Word template fill (copy only) |
 
-**Latest poster (this revision — title: Ask Freely, Be Met for Life):**  
-https://github.com/abssisophia9-hub/officehours-ai/blob/cursor/fyp-infographic-poster-1879/docs/presentations/fyp_infographic/OfficeHours_AI_Proposal_AskLife.pdf
+**Latest poster (this revision — FYP catalog title):**  
+https://github.com/abssisophia9-hub/officehours-ai/blob/cursor/fyp-infographic-poster-1879/docs/presentations/fyp_infographic/OfficeHours_AI_Proposal_FYPTitle.pdf
 
-On the GitHub page, use **Download raw file**. Ignore older Catalog / Proposal / FYP / WorkPlan / Agents / Aligned / Strategist / UsePlan / Ethics / MorningPlan PDFs already in Downloads.
+On the GitHub page, use **Download raw file**. Ignore older Catalog / Proposal / FYP / WorkPlan / Agents / Aligned / Strategist / UsePlan / Ethics / MorningPlan / AskLife PDFs already in Downloads.
 
 **Word download:**  
 https://github.com/abssisophia9-hub/officehours-ai/blob/cursor/fyp-infographic-poster-1879/docs/presentations/fyp_infographic/OfficeHours_AI_Catalog_Poster.docx
