@@ -407,12 +407,83 @@
   .stage-box .sub { font-size: 6.4pt; opacity: 0.9; margin-top: 0.015in; }
   .stage-box.pending .sub { color: var(--secondary); opacity: 1; }
 
-  /* Work-breakdown tree — hierarchy, not a calendar strip */
-  .wbs {
-    width: 100%;
-    height: 2.28in;
-    display: block;
-    margin-top: 0.02in;
+  .req-split {
+    display: grid;
+    grid-template-columns: 1.72in 1fr;
+    gap: 0.10in;
+    align-items: start;
+    margin-top: 0.04in;
+  }
+  .wbs-outline {
+    font-size: 7.3pt;
+    line-height: 1.28;
+    padding: 0.05in 0.06in 0.06in;
+  }
+  .wbs-outline .grp {
+    font-weight: 700;
+    margin: 0.045in 0 0.02in;
+  }
+  .wbs-outline .grp:first-child { margin-top: 0; }
+  .wbs-outline .grp.own { color: var(--header); }
+  .wbs-outline .grp.it { color: var(--blue); }
+  .wbs-outline .leaf {
+    padding: 0.012in 0 0.012in 0.02in;
+    color: #000;
+  }
+  .wbs-outline .leaf.it { color: var(--blue); }
+  .wbs-outline .tw { color: #7A8690; font-weight: 700; }
+
+  .plan-gantt { padding: 0.05in 0.06in 0.05in; }
+  .plan-axis {
+    display: grid;
+    grid-template-columns: 1.18in repeat(5, 1fr);
+    font-size: 6.2pt;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #000;
+    margin-bottom: 0.03in;
+  }
+  .plan-axis span:not(:first-child) {
+    text-align: center;
+    border-left: 1px solid var(--border);
+  }
+  .plan-axis .now { color: var(--blue); }
+  .plan-row {
+    display: grid;
+    grid-template-columns: 1.18in 1fr;
+    gap: 0.04in;
+    align-items: center;
+    margin-bottom: 0.028in;
+  }
+  .plan-lab { font-size: 6.5pt; font-weight: 700; color: var(--title); line-height: 1.15; }
+  .plan-track {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    height: 0.16in;
+    background: var(--placeholder);
+    background-image: linear-gradient(to right,
+      transparent 0, transparent calc(20% - 1px), #C5CDD4 calc(20% - 1px), #C5CDD4 20%,
+      transparent 20%, transparent calc(40% - 1px), #C5CDD4 calc(40% - 1px), #C5CDD4 40%,
+      transparent 40%, transparent calc(60% - 1px), #C5CDD4 calc(60% - 1px), #C5CDD4 60%,
+      transparent 60%, transparent calc(80% - 1px), #C5CDD4 calc(80% - 1px), #C5CDD4 80%);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .plan-bar {
+    border-radius: 2px;
+  }
+  .plan-bar.own { background: var(--header); }
+  .plan-bar.it {
+    background: #F3F7FB;
+    border: 1.4px dashed var(--blue);
+    box-sizing: border-box;
+  }
+  .plan-note {
+    margin: 0.03in 0 0;
+    font-size: 6.4pt;
+    line-height: 1.3;
+    color: #000;
   }
 
   /* Capstone calendar — four months on one rail */
@@ -897,77 +968,52 @@
       </section>
       <section>
         <h2>Requirements &amp; Initial Work Plan</h2>
-        <p>The product contract — what the desk must do. The tree is the work plan.</p>
+        <p>What we build, and when each phase sits on the calendar. <strong>NOW</strong> is late September 2026.</p>
         <ul>
           <li><strong>Key requirements:</strong> Three seats (student / TA / professor); Ask Triage + Help Coach; professor stamp before any agent may quote; Sharing notes + Rooms; Canvas login and sync.</li>
         </ul>
-        <p class="fig-cap">Work-breakdown tree · leaves = what we build · outline = waits on campus IT</p>
-        <svg class="wbs" viewBox="0 0 640 252" role="img" aria-label="Work-breakdown tree of the OfficeHours build packages">
-          <g fill="none" stroke="#1E4D7B" stroke-width="1.45" stroke-linecap="square">
-            <path d="M320 32 V44 H200 V48"/>
-            <path d="M320 44 H500 V48"/>
-            <path d="M200 74 V84 H88 V88"/>
-            <path d="M200 84 H232 V88"/>
-            <path d="M200 84 H376 V88"/>
-            <path d="M500 74 V84 H468 V88"/>
-            <path d="M500 84 H572 V88"/>
-            <path d="M88 112 V124"/>
-            <path d="M232 112 V124"/>
-            <path d="M376 112 V124"/>
-            <path d="M88 142 V148"/>
-            <path d="M88 166 V172"/>
-            <path d="M232 142 V148"/>
-            <path d="M232 166 V172"/>
-            <path d="M232 190 V196"/>
-            <path d="M376 142 V148"/>
-            <path d="M376 166 V172"/>
-          </g>
-          <circle cx="320" cy="44" r="2.5" fill="#1E4D7B"/>
-          <circle cx="200" cy="84" r="2.5" fill="#006633"/>
-          <circle cx="500" cy="84" r="2.5" fill="#1E4D7B"/>
-
-          <rect x="216" y="4" width="208" height="28" rx="7" fill="#1E4D7B"/>
-          <text x="320" y="22.5" text-anchor="middle" fill="#fff" font-size="12" font-weight="700" font-family="Aptos, Inter, sans-serif">OfficeHours work plan</text>
-
-          <rect x="135" y="48" width="130" height="26" rx="7" fill="#006633"/>
-          <text x="200" y="65.5" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="Aptos, Inter, sans-serif">1  We build</text>
-          <rect x="435" y="48" width="130" height="26" rx="7" fill="#fff" stroke="#1E4D7B" stroke-width="1.6" stroke-dasharray="4 2.5"/>
-          <text x="500" y="65.5" text-anchor="middle" fill="#1E4D7B" font-size="11" font-weight="700" font-family="Aptos, Inter, sans-serif">2  Campus IT</text>
-
-          <rect x="36" y="88" width="104" height="24" rx="6" fill="#006633"/>
-          <text x="88" y="104" text-anchor="middle" fill="#fff" font-size="10" font-weight="700" font-family="Aptos, Inter, sans-serif">1.1 Desk</text>
-          <rect x="180" y="88" width="104" height="24" rx="6" fill="#006633"/>
-          <text x="232" y="104" text-anchor="middle" fill="#fff" font-size="10" font-weight="700" font-family="Aptos, Inter, sans-serif">1.2 Agents</text>
-          <rect x="324" y="88" width="104" height="24" rx="6" fill="#006633"/>
-          <text x="376" y="104" text-anchor="middle" fill="#fff" font-size="10" font-weight="700" font-family="Aptos, Inter, sans-serif">1.3 Classmates</text>
-          <rect x="428" y="88" width="80" height="24" rx="6" fill="#fff" stroke="#1E4D7B" stroke-width="1.5" stroke-dasharray="4 2.5"/>
-          <text x="468" y="104" text-anchor="middle" fill="#1E4D7B" font-size="9.2" font-weight="700" font-family="Aptos, Inter, sans-serif">2.1 Canvas</text>
-          <rect x="532" y="88" width="80" height="24" rx="6" fill="#fff" stroke="#1E4D7B" stroke-width="1.5" stroke-dasharray="4 2.5"/>
-          <text x="572" y="104" text-anchor="middle" fill="#1E4D7B" font-size="9.2" font-weight="700" font-family="Aptos, Inter, sans-serif">2.2 Hosted DB</text>
-
-          <rect x="24" y="124" width="128" height="18" rx="5" fill="#006633"/>
-          <text x="88" y="136.5" text-anchor="middle" fill="#fff" font-size="8.4" font-weight="600" font-family="Aptos, Inter, sans-serif">1.1.1 Three-seat login</text>
-          <rect x="24" y="148" width="128" height="18" rx="5" fill="#006633"/>
-          <text x="88" y="160.5" text-anchor="middle" fill="#fff" font-size="8.4" font-weight="600" font-family="Aptos, Inter, sans-serif">1.1.2 Quiet ask</text>
-          <rect x="24" y="172" width="128" height="18" rx="5" fill="#006633"/>
-          <text x="88" y="184.5" text-anchor="middle" fill="#fff" font-size="8.4" font-weight="600" font-family="Aptos, Inter, sans-serif">1.1.3 Live queue</text>
-
-          <rect x="168" y="124" width="128" height="18" rx="5" fill="#006633"/>
-          <text x="232" y="136.5" text-anchor="middle" fill="#fff" font-size="8.2" font-weight="600" font-family="Aptos, Inter, sans-serif">1.2.1 Ask Triage joblibs</text>
-          <rect x="168" y="148" width="128" height="18" rx="5" fill="#006633"/>
-          <text x="232" y="160.5" text-anchor="middle" fill="#fff" font-size="8.4" font-weight="600" font-family="Aptos, Inter, sans-serif">1.2.2 Help Coach</text>
-          <rect x="168" y="172" width="128" height="18" rx="5" fill="#006633"/>
-          <text x="232" y="184.5" text-anchor="middle" fill="#fff" font-size="8.2" font-weight="600" font-family="Aptos, Inter, sans-serif">1.2.3 Stamp + Study Agent</text>
-          <rect x="168" y="196" width="128" height="18" rx="5" fill="#006633"/>
-          <text x="232" y="208.5" text-anchor="middle" fill="#fff" font-size="8.4" font-weight="600" font-family="Aptos, Inter, sans-serif">1.2.4 Strategist</text>
-
-          <rect x="312" y="124" width="128" height="18" rx="5" fill="#006633"/>
-          <text x="376" y="136.5" text-anchor="middle" fill="#fff" font-size="8.4" font-weight="600" font-family="Aptos, Inter, sans-serif">1.3.1 Sharing notes</text>
-          <rect x="312" y="148" width="128" height="18" rx="5" fill="#006633"/>
-          <text x="376" y="160.5" text-anchor="middle" fill="#fff" font-size="8.4" font-weight="600" font-family="Aptos, Inter, sans-serif">1.3.2 Rooms</text>
-          <rect x="312" y="172" width="128" height="18" rx="5" fill="#006633"/>
-          <text x="376" y="184.5" text-anchor="middle" fill="#fff" font-size="8.4" font-weight="600" font-family="Aptos, Inter, sans-serif">1.3.3 Demo script</text>
-        </svg>
+        <div class="req-split">
+          <div class="wbs-outline card">
+            <div class="grp own">1 We build</div>
+            <div class="leaf"><span class="tw">├─</span> 1.1 Dashboards</div>
+            <div class="leaf"><span class="tw">├─</span> 1.2 Agents</div>
+            <div class="leaf"><span class="tw">└─</span> 1.3 Notes + Rooms</div>
+            <div class="grp it">2 Campus IT</div>
+            <div class="leaf it"><span class="tw">├─</span> 2.1 Canvas</div>
+            <div class="leaf it"><span class="tw">└─</span> 2.2 Hosted DB</div>
+          </div>
+          <div class="plan-gantt card">
+            <div class="plan-axis">
+              <span></span>
+              <span class="now">Now</span>
+              <span>Sep</span>
+              <span>Oct</span>
+              <span>Nov</span>
+              <span>Capstone</span>
+            </div>
+            <div class="plan-row">
+              <div class="plan-lab">Phase 1 · Roles + Triage</div>
+              <div class="plan-track"><div class="plan-bar own" style="grid-column:1 / 4"></div></div>
+            </div>
+            <div class="plan-row">
+              <div class="plan-lab">Phase 2 · Desk + Stamp</div>
+              <div class="plan-track"><div class="plan-bar own" style="grid-column:2 / 5"></div></div>
+            </div>
+            <div class="plan-row">
+              <div class="plan-lab">Phase 3 · Rooms + Demo</div>
+              <div class="plan-track"><div class="plan-bar own" style="grid-column:3 / 5"></div></div>
+            </div>
+            <div class="plan-row">
+              <div class="plan-lab">Phase 4 · Canvas</div>
+              <div class="plan-track"><div class="plan-bar it" style="grid-column:4 / 6"></div></div>
+            </div>
+            <div class="plan-row">
+              <div class="plan-lab">Phase 5 · Hosted DB</div>
+              <div class="plan-track"><div class="plan-bar it" style="grid-column:5 / 6"></div></div>
+            </div>
+            <p class="plan-note">Solid green = we own the phase. Outline = waits on campus IT. Capstone = December gate.</p>
+          </div>
+        </div>
       </section>
     </div>
 
