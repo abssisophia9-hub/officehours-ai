@@ -408,24 +408,25 @@
   .stage-box.pending .sub { color: var(--secondary); opacity: 1; }
 
   .req-split {
-    display: table;
-    width: 100%;
-    table-layout: fixed;
-    border-collapse: separate;
-    border-spacing: 0.10in 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1.82in;
+    gap: 0.10in;
+    align-items: stretch;
     margin-top: 0.04in;
+    height: 1.82in;
   }
   .req-cell {
-    display: table-cell;
-    width: 50%;
-    vertical-align: top;
-  }
-  .req-cell > .card {
-    height: 100%;
+    display: block;
+    height: 1.82in;
+    max-height: 1.82in;
   }
   .wbs-outline,
   .plan-gantt {
-    height: 100%;
+    height: 1.82in;
+    min-height: 1.82in;
+    max-height: 1.82in;
+    overflow: hidden;
     box-sizing: border-box;
   }
   .wbs-outline {
