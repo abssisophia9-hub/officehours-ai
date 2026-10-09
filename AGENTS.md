@@ -23,8 +23,17 @@ milestone archives — not product jobs.
   update script refreshes this venv.
 - Installing `sentence-transformers` pulls in `torch` and the full NVIDIA CUDA
   wheel stack, so a clean dependency install downloads several GB and is slow.
-  The running app uses `sentence-transformers` for request clustering unless
-  `OFFICEHOURS_CLUSTERING_BACKEND=lexical` is set.
+  Cloud Agent setup avoids that by installing CPU PyTorch first
+  (`pip install torch --index-url https://download.pytorch.org/whl/cpu`),
+  then `requirements.txt`, then caching `all-MiniLM-L6-v2`. Do not reinstall
+  torch from PyPI or the CUDA wheel replaces the CPU build.
+- The running app uses `sentence-transformers` for request clustering unless
+  `OFFICEHOURS_CLUSTERING_BACKEND=lexical` is set. Boot starts the API on
+  port 8000 and the product app on port 5180 with `OFFICEHOURS_DEMO=true`
+  and lexical clustering (same defaults as `./scripts/run_product.sh`).
+- `react-router` declares Node `>=22.22`. The base image's Node 22.14 prints
+  an `EBADENGINE` warning during `npm ci`; the app still installs, builds, and
+  serves.
 - Request clustering defaults to sentence-transformer embeddings
   (`OFFICEHOURS_EMBEDDING_MODEL`, default `all-MiniLM-L6-v2`). Tests set
   `OFFICEHOURS_CLUSTERING_BACKEND=lexical` to avoid model downloads.
