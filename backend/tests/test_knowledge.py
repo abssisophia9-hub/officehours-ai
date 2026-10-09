@@ -54,24 +54,23 @@ def test_create_request_seeds_pending_knowledge_entry():
 
 def test_agent_only_uses_approved_entries():
     student_headers, course_id = student_auth(client)
-    created = client.post(
-        "/requests/",
-        headers=student_headers,
+    prof_headers, _ = professor_auth(client, "CSC 3374")
+    ingested = client.post(
+        "/knowledge/materials",
+        headers=prof_headers,
         json={
-            "text": "Please explain recursion tracing with binary search.",
-            "anonymous": True,
+            "title": "Recursion tracing",
+            "content": (
+                "Teaching approach: start from the base case, then show how each "
+                "recursive call halves the search space."
+            ),
             "course_id": course_id,
             "course": "CSC 3374",
+            "source": "slides",
         },
-    ).json()
-    assert created["id"]
-
-    prof_headers, _ = professor_auth(client, "CSC 3374")
-    pending = client.get(
-        f"/knowledge/?status=pending_review&course_id={course_id}",
-        headers=prof_headers,
-    ).json()
-    entry_id = pending[0]["id"]
+    )
+    assert ingested.status_code == 201
+    entry_id = ingested.json()["entry_ids"][0]
 
     blocked = client.post(
         "/agent/ask",
@@ -90,16 +89,13 @@ def test_agent_only_uses_approved_entries():
         headers=prof_headers,
         json={
             "status": "approved",
-            "answer_draft": (
-                "Teaching approach: start from the base case, then show how each "
-                "recursive call halves the search space."
-            ),
             "student_hint": "Think about what happens when the search range becomes empty.",
-            "professor_note": "Canonical recursion FAQ",
+            "professor_note": "Canonical recursion notes",
         },
     )
     assert approved.status_code == 200
     assert approved.json()["status"] == "approved"
+    assert approved.json()["entry_kind"] == "course_material"
 
     answered = client.post(
         "/agent/ask",

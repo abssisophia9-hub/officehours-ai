@@ -92,6 +92,9 @@ def ensure_schema(engine: Engine) -> None:
         _add_column_if_missing(
             engine, "knowledge_entries", columns, "ta_resolution", "VARCHAR"
         )
+        _add_column_if_missing(
+            engine, "knowledge_entries", columns, "entry_kind", "VARCHAR"
+        )
 
     if "courses" in table_names:
         columns = {column["name"] for column in inspector.get_columns("courses")}
@@ -175,6 +178,7 @@ def _ensure_indexes(engine: Engine) -> None:
         "CREATE INDEX IF NOT EXISTS ix_requests_course_created ON requests (course_id, created_at)",
         "CREATE INDEX IF NOT EXISTS ix_requests_course_author ON requests (course_id, created_by_user_id)",
         "CREATE INDEX IF NOT EXISTS ix_knowledge_course_status ON knowledge_entries (course_id, status)",
+        "CREATE INDEX IF NOT EXISTS ix_knowledge_entries_entry_kind ON knowledge_entries (entry_kind)",
         "CREATE INDEX IF NOT EXISTS ix_help_posts_course ON help_posts (course_id)",
         "CREATE INDEX IF NOT EXISTS ix_auth_sessions_token ON auth_sessions (token)",
     ]

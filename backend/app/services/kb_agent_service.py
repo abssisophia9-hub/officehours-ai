@@ -49,8 +49,23 @@ def answer_from_knowledge_base(
     *,
     top_k: int = 3,
     course_id: int | None = None,
+    approved_only: bool = True,
+    course_scoped: bool = True,
 ) -> AgentAskResponse:
-    matches = search_approved_entries(db, question, top_k=top_k, course_id=course_id)
+    """Study-agent answer. Flags stay off the HTTP route (service and tests only).
+
+    Retrieval is limited to uploaded course-material chunks. Approved FAQ
+    drafts from student asks stay on the Ask Triage / Help Coach path.
+    """
+    matches = search_approved_entries(
+        db,
+        question,
+        top_k=top_k,
+        course_id=course_id,
+        approved_only=approved_only,
+        course_scoped=course_scoped,
+        course_material_only=True,
+    )
     sources = [
         KnowledgeSearchHit(entry=to_out(entry), similarity=round(similarity, 4))
         for entry, similarity in matches
@@ -63,7 +78,7 @@ def answer_from_knowledge_base(
             confidence=round(sources[0].similarity, 4) if sources else 0.0,
             matched_count=0,
             sources=[],
-            used_approved_kb_only=True,
+            used_approved_kb_only=approved_only,
             should_seek_help=True,
         )
 
@@ -87,6 +102,6 @@ def answer_from_knowledge_base(
         confidence=round(confidence, 4),
         matched_count=len(sources),
         sources=sources,
-        used_approved_kb_only=True,
+        used_approved_kb_only=approved_only,
         should_seek_help=False,
     )

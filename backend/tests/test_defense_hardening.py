@@ -226,6 +226,7 @@ def test_agent_cites_faq_title_not_entry_id():
             status="approved",
             course_id=course_id,
             material_source="slides",
+            entry_kind="course_material",
         )
         related = KnowledgeEntry(
             question_text="Week 4 hashing slides — linear probing",
@@ -234,6 +235,7 @@ def test_agent_cites_faq_title_not_entry_id():
             status="approved",
             course_id=course_id,
             material_source="slides",
+            entry_kind="course_material",
         )
         db.add_all([primary, related])
         db.commit()

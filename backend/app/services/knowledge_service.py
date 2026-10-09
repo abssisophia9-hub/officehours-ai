@@ -235,6 +235,7 @@ def ingest_course_material(
             cluster_id=None,
             course_id=course_id,
             material_source=source,
+            entry_kind="course_material",
             professor_note=professor_note,
             reviewed_at=now if auto_approve else None,
         )
@@ -294,18 +295,31 @@ def search_approved_entries(
     top_k: int = 3,
     similarity_threshold: float = DEFAULT_SEARCH_THRESHOLD,
     course_id: int | None = None,
+    approved_only: bool = True,
+    course_scoped: bool = True,
+    course_material_only: bool = False,
 ) -> list[tuple[KnowledgeEntry, float]]:
-    query = db.query(KnowledgeEntry).filter(KnowledgeEntry.status == "approved")
-    if course_id is not None:
+    """Semantic search over knowledge rows.
+
+    Defaults match the historical student path: approved rows only, and a
+    course filter when ``course_id`` is set. ``course_material_only`` stays
+    off so Ask Triage and Help Coach still see approved FAQ drafts.
+    """
+    query = db.query(KnowledgeEntry)
+    if approved_only:
+        query = query.filter(KnowledgeEntry.status == "approved")
+    if course_scoped and course_id is not None:
         # Strict course scope so CSC 3323 slides never answer CSC 2302 students.
         query = query.filter(KnowledgeEntry.course_id == course_id)
-    approved = query.order_by(KnowledgeEntry.id).all()
-    if not approved:
+    if course_material_only:
+        query = query.filter(KnowledgeEntry.entry_kind == "course_material")
+    rows = query.order_by(KnowledgeEntry.id).all()
+    if not rows:
         return []
 
     query_embedding = embed_text(question)
     scored: list[tuple[KnowledgeEntry, float]] = []
-    for entry in approved:
+    for entry in rows:
         # Prefer matching material content as well as the title/question.
         haystack = f"{entry.question_text}\n{entry.answer_draft}"
         similarity = cosine_similarity(query_embedding, embed_text(haystack))
@@ -340,6 +354,7 @@ def to_out(entry: KnowledgeEntry) -> KnowledgeEntryOut:
         cluster_id=entry.cluster_id,
         course_id=getattr(entry, "course_id", None),
         material_source=getattr(entry, "material_source", None),
+        entry_kind=getattr(entry, "entry_kind", None),
         ta_resolution=getattr(entry, "ta_resolution", None),
         professor_note=entry.professor_note,
         created_at=entry.created_at,
