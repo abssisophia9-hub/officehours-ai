@@ -30,6 +30,7 @@ from app.models.knowledge import (
     ClusterCommandCenterOut,
     CourseMaterialIngest,
     CourseMaterialIngestOut,
+    MaterialUploadApproveOut,
     EscalationItem,
     FaqFromClusterRequest,
     KnowledgeEntry,
@@ -63,11 +64,14 @@ from app.services.analytics_service import (
 from app.services.canvas_service import canvas_status, sync_course_materials
 from app.services.kb_agent_service import answer_from_knowledge_base
 from app.services.material_extract import extract_material_pages
+from app.services.demo_mode import demo_mode
 from app.services.knowledge_service import (
+    approve_upload,
     create_faq_from_cluster,
     create_faq_from_insight,
     ingest_course_material,
     list_entries,
+    list_upload_entries,
     to_out,
     update_entry,
 )
@@ -76,6 +80,22 @@ from app.services.pagination import clamp_page, page_or_list
 from app.services.retrain_service import run_retrain
 
 router = APIRouter(tags=["knowledge"])
+
+
+def _reject_auto_approve_outside_demo(auto_approve: bool) -> None:
+    """Normal deploys must not skip the professor stamp.
+
+    ``auto_approve`` stays available for local demo and the existing test
+    suite, both of which set ``OFFICEHOURS_DEMO``.
+    """
+    if auto_approve and not demo_mode():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "auto_approve is only available when OFFICEHOURS_DEMO is on. "
+                "Leave the upload pending and approve it after review."
+            ),
+        )
 
 
 @router.get("/knowledge/")
@@ -240,6 +260,7 @@ async def upload_course_materials(
     course, _membership = require_course_role(
         db, user, payload.course_id, roles={"professor"}
     )
+    _reject_auto_approve_outside_demo(payload.auto_approve)
     entries = ingest_course_material(
         db,
         title=payload.title.strip(),
@@ -269,6 +290,7 @@ async def upload_course_materials(
         source=payload.source,
         chunks_created=len(entries),
         entry_ids=[entry.id for entry in entries],
+        upload_id=entries[0].upload_id,
         message=(
             f"Ingested {len(entries)} material chunk(s) into {course.code} KB "
             f"({'approved' if payload.auto_approve else 'pending_review'}). "
@@ -294,6 +316,7 @@ async def upload_course_material_file(
     course, _membership = require_course_role(
         db, user, course_id, roles={"professor"}
     )
+    _reject_auto_approve_outside_demo(auto_approve)
     data = await file.read()
     if len(data) > 20_000_000:
         raise HTTPException(
@@ -339,6 +362,7 @@ async def upload_course_material_file(
         source=material_source,
         chunks_created=len(entries),
         entry_ids=[entry.id for entry in entries],
+        upload_id=entries[0].upload_id,
         message=(
             f"Extracted {file.filename} ({material_source}) into {len(entries)} "
             f"KB chunk(s) for {course.code} — the course agent can use it "
@@ -360,6 +384,7 @@ async def sync_canvas_materials(
     course, _membership = require_course_role(
         db, user, payload.course_id, roles={"professor"}
     )
+    _reject_auto_approve_outside_demo(payload.auto_approve)
     result = sync_course_materials(
         db, course, auto_approve=payload.auto_approve
     )
@@ -374,6 +399,48 @@ async def sync_canvas_materials(
             },
         )
     return CanvasSyncOut(**result)
+
+
+@router.post(
+    "/knowledge/uploads/{upload_id}/approve",
+    response_model=MaterialUploadApproveOut,
+)
+async def approve_material_upload(
+    upload_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Professor stamp for every chunk created by one material upload."""
+    pending = list_upload_entries(db, upload_id)
+    if not pending:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Upload not found",
+        )
+    course_ids = {entry.course_id for entry in pending}
+    if len(course_ids) != 1 or None in course_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Upload is not tied to a single course",
+        )
+    course_id = next(iter(course_ids))
+    require_course_role(db, user, course_id, roles={"professor"})
+    updated = approve_upload(db, upload_id)
+    for entry in updated:
+        await hub.broadcast(
+            "knowledge.updated",
+            {
+                "id": entry.id,
+                "status": entry.status,
+                "course_id": entry.course_id,
+                "upload_id": entry.upload_id,
+            },
+        )
+    return MaterialUploadApproveOut(
+        upload_id=upload_id,
+        course_id=course_id,
+        approved_count=len(updated),
+    )
 
 
 @router.post("/agent/ask", response_model=AgentAskResponse)

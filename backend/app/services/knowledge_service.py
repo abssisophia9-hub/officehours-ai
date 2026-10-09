@@ -5,11 +5,13 @@ Knowledge-base drafting, curation helpers, and semantic retrieval.
 from __future__ import annotations
 
 import json
+import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
 from app.ai.clustering import cosine_similarity, embed_text
+from app.services.demo_mode import demo_mode
 from app.ai.summarizer import extract_keywords, summarize_request_cluster
 from app.ai.synthesizer_model import draft_kb_with_model
 from app.models.knowledge import KnowledgeEntry, KnowledgeEntryOut, KnowledgeEntryUpdate
@@ -206,6 +208,11 @@ def ingest_course_material(
     filename: str | None = None,
     pages: list[tuple[int, str]] | None = None,
 ) -> list[KnowledgeEntry]:
+    if auto_approve and not demo_mode():
+        raise ValueError(
+            "auto_approve requires OFFICEHOURS_DEMO. Leave the upload pending "
+            "for a professor stamp."
+        )
     page_spans = pages if pages is not None else [(1, content)]
     chunks: list[tuple[int, str]] = []
     for page_number, page_text in page_spans:
@@ -221,6 +228,7 @@ def ingest_course_material(
         note_bits.append(f"canvas:{external_id}")
     professor_note = " | ".join(bit for bit in note_bits if bit)
     source_filename = (filename or title).strip() or None
+    upload_id = uuid.uuid4().hex
     for index, (page_number, chunk) in enumerate(chunks, start=1):
         question = f"{title} — part {index}"
         entry = KnowledgeEntry(
@@ -246,6 +254,7 @@ def ingest_course_material(
             source_filename=source_filename,
             page_number=page_number,
             chunk_index=index,
+            upload_id=upload_id,
             professor_note=professor_note,
             reviewed_at=now if auto_approve else None,
         )
@@ -296,6 +305,31 @@ def update_entry(
     db.commit()
     db.refresh(entry)
     return entry
+
+
+def list_upload_entries(db: Session, upload_id: str) -> list[KnowledgeEntry]:
+    return (
+        db.query(KnowledgeEntry)
+        .filter(KnowledgeEntry.upload_id == upload_id)
+        .order_by(KnowledgeEntry.chunk_index, KnowledgeEntry.id)
+        .all()
+    )
+
+
+def approve_upload(db: Session, upload_id: str) -> list[KnowledgeEntry]:
+    """Mark every chunk from one ingest call as approved."""
+    entries = list_upload_entries(db, upload_id)
+    if not entries:
+        return []
+    now = datetime.now(timezone.utc)
+    for entry in entries:
+        entry.status = "approved"
+        entry.reviewed_at = now
+        db.add(entry)
+    db.commit()
+    for entry in entries:
+        db.refresh(entry)
+    return entries
 
 
 def search_approved_entries(
@@ -368,6 +402,7 @@ def to_out(entry: KnowledgeEntry) -> KnowledgeEntryOut:
         source_filename=getattr(entry, "source_filename", None),
         page_number=getattr(entry, "page_number", None),
         chunk_index=getattr(entry, "chunk_index", None),
+        upload_id=getattr(entry, "upload_id", None),
         ta_resolution=getattr(entry, "ta_resolution", None),
         professor_note=entry.professor_note,
         created_at=entry.created_at,

@@ -45,6 +45,7 @@ class KnowledgeEntry(Base):
     source_filename: Mapped[str | None] = mapped_column(String, nullable=True)
     page_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     chunk_index: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    upload_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     # Set when a TA hands the draft to curation: resolved | needs_professor.
     ta_resolution: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     professor_note: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -82,6 +83,7 @@ class KnowledgeEntryOut(BaseModel):
     source_filename: str | None = None
     page_number: int | None = None
     chunk_index: int | None = None
+    upload_id: str | None = None
     ta_resolution: str | None = None
     professor_note: str | None = None
     created_at: datetime
@@ -110,7 +112,14 @@ class CourseMaterialIngestOut(BaseModel):
     source: str
     chunks_created: int
     entry_ids: list[int]
+    upload_id: str | None = None
     message: str
+
+
+class MaterialUploadApproveOut(BaseModel):
+    upload_id: str
+    course_id: int
+    approved_count: int
 
 
 class CanvasSyncRequest(BaseModel):
