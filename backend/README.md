@@ -2,9 +2,9 @@
 
 FastAPI backend for the OfficeHours AI product (Ask Triage + Help Coach + KB).
 
-> **Naming:** docs say **Ask Triage** for the intake pipeline. The implementation
-> module is still `app/services/oracle_service.py` and many columns/fields use
-> the historical `oracle_*` prefix.
+> **Naming:** docs and code both say **Ask Triage** for the intake pipeline.
+> The implementation module is `app/services/ask_triage_service.py` and
+> columns/fields use the `triage_*` prefix (renamed from historical `oracle_*`).
 
 ## Ask Triage pipeline (custom-trained models)
 
@@ -29,6 +29,9 @@ approve → student Study Agent / lifetime confusion agent.
 See `app/services/help_coach_service.py`.
 
 ## Setup
+
+Copy [`backend/.env.example`](.env.example) for community deploy variables.
+Security baseline: [`docs/SECURITY.md`](../docs/SECURITY.md).
 
 ```bash
 cd backend
@@ -96,11 +99,11 @@ Visit:
   shared cluster group meetings
 - `GET /actions/recommendations/`, `…/calendar.ics`
 - `GET /office-hours/`, `POST /office-hours/`, `DELETE /office-hours/{id}`
-- Analytics: `GET /analytics/oracle-metrics` (historical name),
+- Analytics: `GET /analytics/triage-metrics`,
   `/lifetime-confusion`, `/clusters`, `/struggle-heatmap`, `/escalations`,
   `/kb-hit-rate`, gold-labels `GET|POST`
 - `POST /feedback/bugs` — account-menu bug/issue reports
-- `WS /ws` — live events (`request.created`, `oracle.*.done`, `ta.*`,
+- `WS /ws` — live events (`request.created`, `triage.*.done`, `ta.*`,
   `group.meeting.scheduled`, `knowledge.*`, …)
 
 Full interactive catalog: http://127.0.0.1:8000/docs
@@ -122,6 +125,14 @@ Optional environment variables:
 - `OFFICEHOURS_ALLOW_EXTERNAL_LLM=false` — FYP default
 - `OFFICEHOURS_DEMO=true|false` — seed Sara/Youssef + sample chapter outlines +
   local Canvas mirror. **False for community deploy.**
+- `OFFICEHOURS_FRONTEND_URL` / `OFFICEHOURS_CORS_ORIGINS` — CORS allow-list
+  (no `*`). WebSocket `/ws?token=&course_id=` is course-scoped.
+- `OFFICEHOURS_RATE_LIMIT=false` — tests only; leave on for a host.
+- `DATABASE_URL` — SQLite default; `postgresql://…` for campus (pool +
+  `psycopg2`). See `docs/ops_scale.md`.
+- `OFFICEHOURS_SMTP_*` — optional email when a TA claims / replies.
+- `OFFICEHOURS_ALLOW_RETRAIN=true` — required before `POST /analytics/retrain`
+  may rewrite Analyzer `.joblib`.
 - `OFFICEHOURS_CANVAS_MODE=live|local|none` — optional override; live wins when
   `CANVAS_BASE_URL` + `CANVAS_ACCESS_TOKEN` are set
 
@@ -144,6 +155,41 @@ the callback validates the id_token (audience + tenant + domain), creates the
 user on first sign-in (no usable password), mints a normal app session, and
 redirects to the SPA at `/sso#token=…`. Roles still come from course
 memberships (Canvas), not from the Microsoft account.
+
+## Canvas LTI 1.3 (real course tool)
+
+The unsigned `/canvas/launch` simulator and `/canvas-demo` / `/demo/*` pages are
+**off** when `OFFICEHOURS_DEMO` is not true. Production launch is signed LTI 1.3.
+
+Ask AUI Canvas / IT for an **LTI 1.3 developer key** plus a course-level
+**External tool** that uses it. Also set a Canvas API token so Rooms chapters
+and the course agent read **that course’s modules**, not the local demo mirror.
+
+### Developer key (paste from `GET /lti/config` once env is set)
+
+- **OpenID Connect Initiation URL:** `https://YOUR-API/lti/login`
+- **Target Link URI / Redirect URI:** `https://YOUR-API/lti/launch`
+- **JWK method:** Public JWK URL `https://YOUR-API/lti/jwks`
+- **Privacy:** Public (email must be in the launch)
+- **Placement:** Course navigation (or assignment / module)
+
+### Backend env
+
+- `OFFICEHOURS_LTI_ISSUER` — Canvas issuer, e.g. `https://canvas.aui.ma`
+- `OFFICEHOURS_LTI_CLIENT_ID` — developer key client_id
+- `OFFICEHOURS_LTI_AUTH_LOGIN_URL` — optional; defaults to
+  `{issuer}/api/lti/authorize_redirect`
+- `OFFICEHOURS_LTI_JWKS_URL` — optional; defaults to
+  `{issuer}/api/lti/security/jwks`
+- `OFFICEHOURS_LTI_LAUNCH_URL` — must match the developer key redirect URI
+- `OFFICEHOURS_LTI_DEPLOYMENT_ID` — optional; reject other deployments
+- `CANVAS_BASE_URL` + `CANVAS_ACCESS_TOKEN` — live module/page/file sync
+- `OFFICEHOURS_FRONTEND_URL` — SPA origin (launch lands on `/sso#token=…&course=`)
+- `OFFICEHOURS_DEMO=false` — hides demo routes and unsigned `/canvas/launch`
+
+Flow: student clicks **OfficeHours** in a Canvas course → OIDC login → signed
+`id_token` → we provision user + course + role → sync live modules when the
+API token is set → browser opens the matching workspace.
 
 ## Train models
 
@@ -189,7 +235,7 @@ backend/
 │   ├── main.py
 │   ├── routes/          # HTTP + WebSocket
 │   ├── models/
-│   ├── services/        # oracle_service (Ask Triage), help_coach_service, …
+│   ├── services/        # ask_triage_service, help_coach_service, …
 │   ├── database/
 │   ├── realtime/
 │   └── ai/              # Analyzer / Matcher / Synthesizer (custom-trained)

@@ -231,6 +231,7 @@ def test_professor_review_insights_from_asks_and_stuck_room():
 
     first = client.post(
         "/requests/",
+        headers=_headers(sara),
         json={
             "text": "How do hash tables handle collisions with chaining?",
             "anonymous": True,
@@ -241,6 +242,7 @@ def test_professor_review_insights_from_asks_and_stuck_room():
     assert first.status_code == 201, first.text
     second = client.post(
         "/requests/",
+        headers=_headers(sara),
         json={
             "text": "Hash table collisions and chaining explanation please",
             "anonymous": True,

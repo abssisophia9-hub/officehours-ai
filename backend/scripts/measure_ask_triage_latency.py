@@ -75,11 +75,11 @@ def main() -> None:
             {
                 "status_code": response.status_code,
                 "elapsed_ms": round(elapsed_ms, 2),
-                "category": body.get("oracle_category") or body.get("category"),
-                "assigned_ta": (body.get("oracle") or {}).get("matcher", {}).get(
+                "category": body.get("triage_category") or body.get("category"),
+                "assigned_ta": (body.get("triage") or {}).get("matcher", {}).get(
                     "assigned_ta"
                 )
-                if isinstance(body.get("oracle"), dict)
+                if isinstance(body.get("triage"), dict)
                 else body.get("assigned_ta"),
             }
         )

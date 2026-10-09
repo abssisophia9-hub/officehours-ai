@@ -22,9 +22,9 @@ const PERSONAS = [
     ],
   },
   {
-    // TAs are also students: Karim TAs OS and takes Data Structures as a student.
+    // Cross-course only: Karim staffs CSC 2302 (already took it) and is a student elsewhere.
     id: "karim",
-    label: "Karim Bennis (TA + student)",
+    label: "Karim Bennis (TA on 2302)",
     email: "k.bennis@aui.ma",
     display_name: "Karim Bennis",
     student_id: "118310",
@@ -146,7 +146,7 @@ export default function CanvasSimulatorPage() {
         <p className="mt-1 text-sm text-[#2d3b45]/70">
           In real Canvas you are already signed in — the switcher above stands
           in for that. You only see courses you are enrolled in. Role is per
-          course (a TA can also be a student elsewhere).
+          course. A TA is staff on a course they already took.
         </p>
 
         {persona.enrollments.map((enrollment) => {

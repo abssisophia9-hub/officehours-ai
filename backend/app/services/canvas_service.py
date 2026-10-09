@@ -29,6 +29,10 @@ from urllib.request import Request, urlopen
 
 from sqlalchemy.orm import Session
 
+from app.services.material_extract import extract_material_text
+
+CANVAS_EXTRACT_EXTENSIONS = (".pdf", ".docx", ".txt", ".md", ".vtt", ".srt")
+
 from app.models.auth import Course
 from app.models.knowledge import KnowledgeEntry
 from app.services.demo_mode import demo_mode
@@ -326,7 +330,7 @@ def sync_course_materials(
     db: Session,
     course: Course,
     *,
-    auto_approve: bool = True,
+    auto_approve: bool = False,
 ) -> dict[str, Any]:
     files = list_course_files(course)
     if not files:
@@ -444,17 +448,16 @@ def _list_live_canvas_files(canvas_course_id: str) -> list[CanvasFile]:
                     (detail or {}).get("display_name") or item.get("title") or "file"
                 )
                 url = (detail or {}).get("url")
-                if url and name.lower().endswith((".txt", ".md", ".html", ".htm")):
-                    content = _canvas_get_text(str(url), headers)
-                    if len(content) >= 20:
-                        files.append(
-                            CanvasFile(
-                                external_id=f"file-{item['content_id']}",
-                                title=name,
-                                content=content,
-                                module=module_name,
-                            )
+                content = _extract_live_canvas_file(name, url, headers)
+                if content:
+                    files.append(
+                        CanvasFile(
+                            external_id=f"file-{item['content_id']}",
+                            title=name,
+                            content=content,
+                            module=module_name,
                         )
+                    )
     if files:
         return files
 
@@ -484,13 +487,9 @@ def _list_live_canvas_files(canvas_course_id: str) -> list[CanvasFile]:
         headers,
     ):
         name = str(item.get("display_name") or item.get("filename") or "Canvas file")
-        if not name.lower().endswith((".txt", ".md", ".html", ".htm")):
-            continue
         download_url = item.get("url")
-        if not download_url:
-            continue
-        content = _canvas_get_text(str(download_url), headers)
-        if len(content) >= 20:
+        content = _extract_live_canvas_file(name, download_url, headers)
+        if content:
             files.append(
                 CanvasFile(
                     external_id=f"file-{item.get('id')}",
@@ -502,17 +501,27 @@ def _list_live_canvas_files(canvas_course_id: str) -> list[CanvasFile]:
 
 
 def _canvas_get_json(url: str, headers: dict[str, str]) -> list[dict[str, Any]]:
-    try:
-        request = Request(url, headers=headers)
-        with urlopen(request, timeout=20) as response:
-            import json
+    """Follow Canvas ``Link: rel=next`` pagination so a full module list is read."""
+    import json
+    import re
 
-            payload = json.loads(response.read().decode("utf-8"))
-    except (HTTPError, URLError, TimeoutError, ValueError):
-        return []
-    if isinstance(payload, list):
-        return [item for item in payload if isinstance(item, dict)]
-    return []
+    collected: list[dict[str, Any]] = []
+    next_url: str | None = url
+    pages = 0
+    while next_url and pages < 20:
+        pages += 1
+        try:
+            request = Request(next_url, headers=headers)
+            with urlopen(request, timeout=20) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+                link = response.headers.get("Link") or response.headers.get("link") or ""
+        except (HTTPError, URLError, TimeoutError, ValueError):
+            break
+        if isinstance(payload, list):
+            collected.extend(item for item in payload if isinstance(item, dict))
+        match = re.search(r'<([^>]+)>;\s*rel="next"', link)
+        next_url = match.group(1) if match else None
+    return collected
 
 
 def _canvas_get_single(url: str, headers: dict[str, str]) -> dict[str, Any] | None:
@@ -525,6 +534,38 @@ def _canvas_get_single(url: str, headers: dict[str, str]) -> dict[str, Any] | No
     except (HTTPError, URLError, TimeoutError, ValueError):
         return None
     return payload if isinstance(payload, dict) else None
+
+
+def _extract_live_canvas_file(
+    name: str, url: str | None, headers: dict[str, str]
+) -> str | None:
+    """Download a Canvas file and turn it into KB text (PDF/DOCX included)."""
+    if not url:
+        return None
+    lower = name.lower()
+    if lower.endswith((".html", ".htm")):
+        raw = _canvas_get_text(str(url), headers)
+        text = _strip_html(raw)
+        return text if len(text) >= 20 else None
+    if not lower.endswith(CANVAS_EXTRACT_EXTENSIONS):
+        return None
+    data = _canvas_get_bytes(str(url), headers)
+    if not data:
+        return None
+    try:
+        text, _source = extract_material_text(name, data)
+    except ValueError:
+        return None
+    return text if len(text) >= 20 else None
+
+
+def _canvas_get_bytes(url: str, headers: dict[str, str]) -> bytes:
+    try:
+        request = Request(url, headers=headers)
+        with urlopen(request, timeout=30) as response:
+            return response.read()
+    except (HTTPError, URLError, TimeoutError, ValueError):
+        return b""
 
 
 def _canvas_get_text(url: str, headers: dict[str, str]) -> str:

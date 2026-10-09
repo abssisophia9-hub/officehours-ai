@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from app.database.session import Base, SessionLocal, engine
 from app.main import app
 from app.services.demo_accounts import ensure_demo_accounts
+from tests.helpers import post_student_request, professor_auth
 
 client = TestClient(app)
 
@@ -26,28 +27,27 @@ def setup_function():
 
 
 def test_group_meeting_appears_on_every_cluster_request_status():
-    first = client.post(
-        "/requests/",
-        json={
-            "text": "Red-black tree delete fixup loops forever after uncle rotation.",
-            "anonymous": True,
-            "course": "CSC 2302",
-            "help_mode": "face_to_face",
-        },
-    ).json()
-    second = client.post(
-        "/requests/",
-        json={
-            "text": "My red-black deletion fixup never terminates on uncle rotation.",
-            "anonymous": False,
-            "student_name": "Sara",
-            "course": "CSC 2302",
-            "help_mode": "face_to_face",
-        },
-    ).json()
+    first, headers, _ = post_student_request(
+        client,
+        "Red-black tree delete fixup loops forever after uncle rotation.",
+        code="CSC 2302",
+        help_mode="face_to_face",
+    )
+    second, _, _ = post_student_request(
+        client,
+        "My red-black deletion fixup never terminates on uncle rotation.",
+        code="CSC 2302",
+        anonymous=False,
+        student_name="Sara",
+        help_mode="face_to_face",
+    )
+    first = first.json()
+    second = second.json()
+    staff, _ = professor_auth(client, "CSC 2302")
 
     response = client.post(
         "/actions/recommendations/",
+        headers=staff,
         json={
             "card_id": f"group-cluster-{first.get('cluster_id') or first['id']}",
             "action_kind": "group_session",
@@ -67,7 +67,9 @@ def test_group_meeting_appears_on_every_cluster_request_status():
     assert "RB deletion" in plan["student_update"]
 
     for request_id in (first["id"], second["id"]):
-        status = client.get(f"/requests/{request_id}/status").json()
+        status = client.get(
+            f"/requests/{request_id}/status", headers=headers
+        ).json()
         assert status["status"] == "action_planned"
         assert status["headline"] == "Group meeting scheduled"
         assert status["meeting_title"] == "RB deletion board session"
@@ -78,16 +80,16 @@ def test_group_meeting_appears_on_every_cluster_request_status():
 
 
 def test_group_session_without_meeting_fields_still_works():
-    created = client.post(
-        "/requests/",
-        json={
-            "text": "Please explain AVL double rotation after insert.",
-            "anonymous": True,
-            "course": "CSC 2302",
-        },
-    ).json()
+    created, headers, _ = post_student_request(
+        client,
+        "Please explain AVL double rotation after insert.",
+        code="CSC 2302",
+    )
+    created = created.json()
+    staff, _ = professor_auth(client, "CSC 2302")
     response = client.post(
         "/actions/recommendations/",
+        headers=staff,
         json={
             "card_id": "group-legacy",
             "action_kind": "group_session",
@@ -98,6 +100,8 @@ def test_group_session_without_meeting_fields_still_works():
     )
     assert response.status_code == 201
     assert response.json()["action_plan"]["meeting"] is None
-    status = client.get(f"/requests/{created['id']}/status").json()
+    status = client.get(
+        f"/requests/{created['id']}/status", headers=headers
+    ).json()
     assert status["status"] == "action_planned"
     assert status["meeting_title"] is None

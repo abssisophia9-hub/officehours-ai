@@ -1,5 +1,6 @@
 """
-In-process WebSocket broadcast hub for live dashboard updates.
+In-process WebSocket hub. Connections subscribe to one course; events
+without a course_id are dropped (no campus-wide fan-out).
 """
 
 from __future__ import annotations
@@ -20,25 +21,36 @@ def set_main_loop(loop: asyncio.AbstractEventLoop) -> None:
 
 class ConnectionHub:
     def __init__(self) -> None:
-        self._connections: set[WebSocket] = set()
+        self._course_ids: dict[WebSocket, int] = {}
         self._lock = asyncio.Lock()
 
-    async def connect(self, websocket: WebSocket) -> None:
-        await websocket.accept()
+    async def connect(self, websocket: WebSocket, *, course_id: int) -> None:
         async with self._lock:
-            self._connections.add(websocket)
+            self._course_ids[websocket] = course_id
 
     async def disconnect(self, websocket: WebSocket) -> None:
         async with self._lock:
-            self._connections.discard(websocket)
+            self._course_ids.pop(websocket, None)
 
     async def broadcast(self, event_type: str, payload: dict[str, Any]) -> None:
+        course_id = payload.get("course_id")
+        if course_id is None:
+            return
+        try:
+            course_id = int(course_id)
+        except (TypeError, ValueError):
+            return
+
         message = json.dumps({"type": event_type, "payload": payload})
         async with self._lock:
-            connections = list(self._connections)
+            targets = [
+                socket
+                for socket, subscribed in self._course_ids.items()
+                if subscribed == course_id
+            ]
 
         stale: list[WebSocket] = []
-        for connection in connections:
+        for connection in targets:
             try:
                 await connection.send_text(message)
             except Exception:
@@ -47,11 +59,11 @@ class ConnectionHub:
         if stale:
             async with self._lock:
                 for connection in stale:
-                    self._connections.discard(connection)
+                    self._course_ids.pop(connection, None)
 
     @property
     def connection_count(self) -> int:
-        return len(self._connections)
+        return len(self._course_ids)
 
 
 hub = ConnectionHub()
@@ -79,5 +91,4 @@ def broadcast_event(event_type: str, payload: dict[str, Any]) -> None:
         asyncio.run_coroutine_threadsafe(coroutine, _main_loop)
         return
 
-    # No live loop (e.g. unit tests without ASGI lifespan) — drop quietly.
     coroutine.close()

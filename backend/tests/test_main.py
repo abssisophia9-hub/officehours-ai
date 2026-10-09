@@ -35,13 +35,19 @@ def test_health_check():
 
 
 def test_create_request():
+    from tests.helpers import student_auth
+
+    headers, course_id = student_auth(client)
     payload = {
         "text": "I need help understanding recursion.",
         "anonymous": False,
         "student_id": "student-123",
+        "student_name": "Sara El Idrissi",
+        "course_id": course_id,
+        "course": "CSC 3374",
     }
 
-    response = client.post("/requests/", json=payload)
+    response = client.post("/requests/", headers=headers, json=payload)
 
     assert response.status_code == 201
     data = response.json()

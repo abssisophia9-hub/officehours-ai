@@ -43,10 +43,13 @@ def build_kb_hit_rate_report(
     db: Session,
     *,
     course_id: int | None = None,
+    course_ids: list[int] | None = None,
 ) -> KbHitRateReport:
     query = db.query(KbAskEvent)
     if course_id is not None:
         query = query.filter(KbAskEvent.course_id == course_id)
+    elif course_ids is not None:
+        query = query.filter(KbAskEvent.course_id.in_(course_ids or [-1]))
     events = query.all()
 
     total = len(events)
@@ -121,9 +124,22 @@ def list_gold_labels(
     db: Session,
     *,
     department: str | None = None,
+    course_id: int | None = None,
+    course_ids: list[int] | None = None,
     limit: int = 200,
 ) -> list[AgentGoldLabel]:
     query = db.query(AgentGoldLabel).order_by(AgentGoldLabel.id.desc())
     if department:
         query = query.filter(AgentGoldLabel.department == department.strip())
+    if course_id is not None:
+        query = query.filter(AgentGoldLabel.course_id == course_id)
+    elif course_ids is not None:
+        from sqlalchemy import or_
+
+        query = query.filter(
+            or_(
+                AgentGoldLabel.course_id.in_(course_ids or [-1]),
+                AgentGoldLabel.course_id.is_(None),
+            )
+        )
     return query.limit(limit).all()

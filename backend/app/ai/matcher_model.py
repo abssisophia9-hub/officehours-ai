@@ -89,6 +89,15 @@ def match_with_model(
             "backend": "custom_matcher_unassigned",
         }
 
+    if roster and all(row.get("course_scoped") for row in roster):
+        result = _heuristic_match(analyzer, roster)
+        result["rationale"] = (
+            f"Course-scoped load balance across {len(roster)} TA(s) "
+            f"(expertise overlap + queue depth; not the demo-name classifier)."
+        )
+        result["backend"] = "course_scoped_heuristic"
+        return result
+
     try:
         bundle = load_matcher(model_path)
     except FileNotFoundError:

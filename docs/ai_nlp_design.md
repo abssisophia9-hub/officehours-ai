@@ -4,9 +4,9 @@ Product vocabulary: [`glossary.md`](glossary.md). Training inventory:
 [`training_data.md`](training_data.md). Performance backlog:
 [`agent_performance.md`](agent_performance.md).
 
-> **Naming:** docs and UI say **Ask Triage**. The intake module is still
-> `backend/app/services/oracle_service.py` and many columns/API fields use the
-> historical `oracle_*` prefix — same pipeline.
+> **Naming:** docs, UI, and code all say **Ask Triage**. The intake module is
+> `backend/app/services/ask_triage_service.py` and columns/API fields use the
+> `triage_*` prefix (renamed from the historical `oracle_*`).
 
 ## FYP constraint
 

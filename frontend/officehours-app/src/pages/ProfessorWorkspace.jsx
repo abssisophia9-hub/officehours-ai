@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router";
 import { api, apiUpload } from "../api/client.js";
+import { pageItems } from "../api/page.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 const ICONS = {
@@ -47,6 +48,10 @@ export default function ProfessorWorkspace() {
   const [insightFilter, setInsightFilter] = useState("all");
   const [openInsight, setOpenInsight] = useState(null);
   const [cohortNotes, setCohortNotes] = useState({});
+  const [hitRate, setHitRate] = useState(null);
+  const [goldCount, setGoldCount] = useState(0);
+  const [retrainBusy, setRetrainBusy] = useState(false);
+  const [retrainReport, setRetrainReport] = useState(null);
   const fileInputRef = useRef(null);
 
   function meetingDraft(clusterId) {
@@ -72,9 +77,9 @@ export default function ProfessorWorkspace() {
 
   const load = useCallback(async () => {
     try {
-      const [req, kb, clusters, canvas, load, insights] = await Promise.all([
-        api("/requests/", { token }),
-        api(`/knowledge/?status=pending_review&course_id=${activeCourse.id}`, { token }),
+      const [req, kb, clusters, canvas, load, insights, rate, gold] = await Promise.all([
+        api(`/requests/?course_id=${activeCourse.id}&limit=50`, { token }),
+        api(`/knowledge/?status=pending_review&course_id=${activeCourse.id}&limit=50`, { token }),
         api(
           `/analytics/clusters?course_id=${activeCourse.id}&course=${encodeURIComponent(activeCourse.code)}`,
           { token },
@@ -82,14 +87,16 @@ export default function ProfessorWorkspace() {
         api(`/knowledge/canvas/status?course_id=${activeCourse.id}`, { token }),
         api(`/ta/load/?course_id=${activeCourse.id}`, { token }),
         api(`/analytics/review-insights?course_id=${activeCourse.id}`, { token }),
+        api(`/analytics/kb-hit-rate?course_id=${activeCourse.id}`, { token }),
+        api(`/analytics/gold-labels?course_id=${activeCourse.id}`, { token }),
       ]);
       setRequests(
-        req.filter((item) => !item.course || item.course === activeCourse.code),
+        pageItems(req).filter((item) => !item.course || item.course === activeCourse.code),
       );
       setEntries(
-        kb.filter((item) => {
+        pageItems(kb).filter((item) => {
           if (item.course_id && item.course_id !== activeCourse.id) return false;
-          const linked = req.find((r) => r.id === item.source_request_id);
+          const linked = pageItems(req).find((r) => r.id === item.source_request_id);
           return !linked?.course || linked.course === activeCourse.code;
         }),
       );
@@ -106,6 +113,8 @@ export default function ProfessorWorkspace() {
       });
       setCanvasInfo(canvas);
       setTaLoad(load);
+      setHitRate(rate);
+      setGoldCount(Array.isArray(gold) ? gold.length : 0);
     } catch (err) {
       setError(err.message);
     }
@@ -288,7 +297,7 @@ export default function ProfessorWorkspace() {
           course_id: activeCourse.id,
           course: activeCourse.code,
           source: "slides",
-          auto_approve: true,
+          auto_approve: false,
         },
       });
       setMessage(result.message);
@@ -317,7 +326,7 @@ export default function ProfessorWorkspace() {
       for (const file of files) {
         const formData = new FormData();
         formData.append("course_id", String(activeCourse.id));
-        formData.append("auto_approve", "true");
+        formData.append("auto_approve", "false");
         formData.append("file", file);
         const result = await apiUpload("/knowledge/materials/upload", {
           token,
@@ -349,7 +358,7 @@ export default function ProfessorWorkspace() {
         token,
         body: {
           course_id: activeCourse.id,
-          auto_approve: true,
+          auto_approve: false,
         },
       });
       setMessage(result.message);
@@ -365,57 +374,108 @@ export default function ProfessorWorkspace() {
   const anonCount = requests.filter((item) => item.anonymous).length;
 
   return (
-    <div className="fade-up">
-      <h1 className="bh-page-title">Professor Dashboard</h1>
-      <p className="bh-page-subtitle">
-        Group repeats, see what to emphasize at chapter end, and ground the study
-        agent in your Canvas materials · {activeCourse.code} — {activeCourse.title}
-      </p>
+    <div className="pd fade-up">
+      <header className="pd-hero">
+        <p className="pd-kicker">
+          AUI · {activeCourse.code} · {activeCourse.title}
+        </p>
+        <h1 className="pd-title">What should you act on?</h1>
+        <p className="pd-lead">
+          <strong>Repeated Topics</strong> is the main action — see what students
+          keep struggling with, then stamp FAQs so Study Agent stays trustworthy.
+        </p>
+        <p className="pd-alt">
+          Knowledge Review and Canvas Materials ground the agent. Requests is the
+          full ask list when you need detail.
+        </p>
+        <div className="pd-pulse">
+          <span className="pd-chip">
+            <strong>{requests.length}</strong> requests
+          </span>
+          <span className="pd-chip">
+            <strong>{commandCenter?.clusters?.length || 0}</strong> topic clusters
+          </span>
+          {sensitiveCount > 0 ? (
+            <span className="pd-chip pd-chip-hot">
+              <strong>{sensitiveCount}</strong> sensitive
+            </span>
+          ) : (
+            <span className="pd-chip">
+              <strong>{anonCount}</strong> quiet asks
+            </span>
+          )}
+          <span className="pd-chip">
+            Agent hit-rate{" "}
+            <strong>
+              {hitRate && hitRate.total_asks
+                ? `${Math.round((hitRate.overall_hit_rate || 0) * 100)}%`
+                : "—"}
+            </strong>
+          </span>
+        </div>
+      </header>
 
       {error ? (
-        <p className="clay-blob clay-blob-coral mt-4 block w-full px-4 py-2.5 text-sm font-semibold">
+        <p className="clay-blob clay-blob-coral mb-4 block w-full px-4 py-2.5 text-sm font-semibold">
           {error}
         </p>
       ) : null}
       {message ? (
-        <p className="clay-blob clay-blob-mint mt-4 block w-full px-4 py-2.5 text-sm font-semibold">
+        <p className="clay-blob clay-blob-mint mb-4 block w-full px-4 py-2.5 text-sm font-semibold">
           {message}
         </p>
       ) : null}
 
-      <div className="bh-stats">
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Requests {ICONS.doc}</div>
-          <p className="bh-stat-value">{requests.length}</p>
-          <p className="bh-stat-note">All asks in {activeCourse.code}</p>
-        </article>
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Topic Clusters {ICONS.clusters}</div>
-          <p className="bh-stat-value">{commandCenter?.clusters?.length || 0}</p>
-          <p className="bh-stat-note">Repeated struggles grouped</p>
-        </article>
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Sensitive Flags {ICONS.shield}</div>
-          <p className="bh-stat-value">{sensitiveCount}</p>
-          <p className="bh-stat-note">Kept private, never grouped</p>
-        </article>
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Anonymous Asks {ICONS.alert}</div>
-          <p className="bh-stat-value">{anonCount}</p>
-          <p className="bh-stat-note">Identity never stored</p>
-        </article>
-      </div>
+      <section className="pd-panel mb-4">
+        <p className="pd-panel-label">Agent quality</p>
+        <h3>Gold labels &amp; hit-rate</h3>
+        <p>
+          {hitRate
+            ? `${hitRate.total_hits || 0} hit · ${hitRate.total_misses || 0} refused · ${goldCount} TA gold labels`
+            : "No student agent asks yet — stamp KB entries when repeats appear."}
+        </p>
+        <button
+          type="button"
+          className="btn-ghost mt-3 px-3 py-1.5 text-sm"
+          disabled={retrainBusy}
+          onClick={async () => {
+            setRetrainBusy(true);
+            try {
+              const report = await api(
+                `/analytics/retrain?course_id=${activeCourse.id}&apply_models=false`,
+                { method: "POST", token },
+              );
+              setRetrainReport(report);
+              setMessage(
+                report.message ||
+                  `Evaluated ${report.n_labels || 0} gold labels. Joblib not rewritten.`,
+              );
+            } catch (err) {
+              setError(err.message);
+            } finally {
+              setRetrainBusy(false);
+            }
+          }}
+        >
+          {retrainBusy ? "Evaluating…" : "Evaluate gold now"}
+        </button>
+        {retrainReport?.analyzer?.accuracy != null ? (
+          <p className="mt-2 text-sm text-[var(--theme-text-muted)]">
+            Analyzer {Math.round(retrainReport.analyzer.accuracy * 100)}% on{" "}
+            {retrainReport.n_labels} labels
+          </p>
+        ) : null}
+      </section>
 
-      <section id="ta-load" className="bh-card scroll-mt-6">
-        <div className="bh-card-title">
-          <h2>TA load (dual staffing)</h2>
-        </div>
-        <p className="bh-card-note">
+      <section id="ta-load" className="pd-panel mb-4 scroll-mt-6">
+        <p className="pd-panel-label">Staffing</p>
+        <h3>TA load (dual staffing)</h3>
+        <p>
           {taLoad?.message ||
             "Typical AUI sections use up to two TAs. Matcher assigns primary + backup from this course."}
         </p>
         {(taLoad?.tas || []).length === 0 ? (
-          <p className="mt-3 text-sm text-aui-deep/70">No TAs enrolled on this course yet.</p>
+          <p className="td-empty">No TAs enrolled on this course yet.</p>
         ) : (
           <table className="bh-table mt-3">
             <thead>
@@ -440,11 +500,19 @@ export default function ProfessorWorkspace() {
         )}
       </section>
 
-      <section id="clusters" className="bh-card scroll-mt-6">
-        <div className="bh-card-title">
-          <h2>Repeated Topics</h2>
+      <div className="pd-layout">
+      <section id="clusters" className="pd-primary scroll-mt-6">
+        <div className="pd-primary-head">
+          <div>
+            <h2>Repeated Topics</h2>
+            <p className="pd-primary-copy">
+              Use when the same struggle repeats — FAQ once, group-review, or keep
+              sensitive cases private.
+            </p>
+          </div>
+          <span className="pd-badge">Primary</span>
         </div>
-        <p className="bh-card-note">
+        <p className="bh-card-note mt-3 pl-2">
           {commandCenter?.message ||
             "Similar questions are clustered so you can FAQ or group-review once."}
         </p>
@@ -572,14 +640,12 @@ export default function ProfessorWorkspace() {
             </li>
           ))}
           {(commandCenter?.clusters || []).length === 0 ? (
-            <p className="text-sm text-aui-deep/60">
-              No clustered repeats yet for this course.
-            </p>
+            <p className="td-empty">No clustered repeats yet for this course.</p>
           ) : null}
         </ul>
       </section>
 
-      <section id="review-insights" className="bh-card scroll-mt-6">
+      <section id="review-insights" className="pd-secondary scroll-mt-6">
         <div className="bh-card-title">
           <h2>Chapter &amp; topic review insights</h2>
           <span className="bh-pill bh-pill-green">
@@ -781,13 +847,14 @@ export default function ProfessorWorkspace() {
         </ul>
       </section>
 
-      <section id="knowledge" className="bh-card scroll-mt-6">
+      <section id="knowledge" className="pd-secondary scroll-mt-6">
         <div className="bh-card-title">
-          <h2>Pending Knowledge Curation</h2>
+          <h2>Knowledge Review</h2>
           <span className="bh-pill bh-pill-amber">{entries.length} pending</span>
         </div>
         <p className="bh-card-note">
-          Nothing reaches students until you approve it.
+          Secondary to Repeated Topics — stamp drafts so Study Agent only answers
+          from materials you trust. Nothing reaches students until you approve.
         </p>
         {entries.length === 0 ? (
           <p className="bh-card-note mt-3">No pending drafts for this course.</p>
@@ -831,7 +898,7 @@ export default function ProfessorWorkspace() {
         )}
       </section>
 
-      <section id="materials" className="bh-card scroll-mt-6">
+      <section id="materials" className="pd-secondary scroll-mt-6">
         <div className="bh-card-title">
           <h2>Canvas LMS → Course KB</h2>
           <span
@@ -842,8 +909,9 @@ export default function ProfessorWorkspace() {
           </span>
         </div>
         <p className="bh-card-note">
-          Sync pulls module slides/pages from this course&apos;s Canvas link into
-          the same approved KB the study agent searches. Live mode uses{" "}
+          Sync pulls module slides/pages (including PDF/DOCX) into{" "}
+          <strong>pending review</strong>. Stamp them below before the study
+          agent can use them. Live mode uses{" "}
           <code className="text-xs">CANVAS_BASE_URL</code> +{" "}
           <code className="text-xs">CANVAS_ACCESS_TOKEN</code>; otherwise the
           local AUI mirror is used for demos.
@@ -882,7 +950,7 @@ export default function ProfessorWorkspace() {
         <p className="bh-card-note">
           PDF slides, DOCX/TXT/MD notes, or lecture-video transcripts
           (.vtt/.srt captions). Text is extracted, chunked, and made available
-          to the course agent immediately.
+          to pending review — stamp them above before students see them.
         </p>
         <form onSubmit={uploadFiles} className="mt-3 flex flex-wrap items-center gap-3">
           <input
@@ -922,7 +990,7 @@ export default function ProfessorWorkspace() {
         </form>
       </section>
 
-      <section id="requests" className="bh-card scroll-mt-6">
+      <section id="requests" className="pd-secondary scroll-mt-6">
         <div className="bh-card-title">
           <h2>Recent Requests</h2>
         </div>
@@ -975,6 +1043,7 @@ export default function ProfessorWorkspace() {
           </table>
         )}
       </section>
+      </div>
     </div>
   );
 }

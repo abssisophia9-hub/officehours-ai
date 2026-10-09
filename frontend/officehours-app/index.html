@@ -3,10 +3,35 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      // Set the theme before first paint so there is no flash of wrong theme.
+      (function () {
+        try {
+          var theme = localStorage.getItem("officehours_theme");
+          if (theme !== "light" && theme !== "dark") {
+            theme = window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+          }
+          document.documentElement.setAttribute("data-theme", theme);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      })();
+    </script>
     <meta
       name="description"
       content="OfficeHours AI — AUI campus product. Quiet ask, Rooms, TA queue, professor KB gate."
     />
+    <meta property="og:title" content="OfficeHours AI — AUI campus office hours" />
+    <meta
+      property="og:description"
+      content="Students ask. TAs staff a course they already took. Professors stamp what the agent may say."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

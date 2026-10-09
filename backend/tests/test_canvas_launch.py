@@ -19,6 +19,21 @@ def setup_function():
     Base.metadata.create_all(bind=engine)
 
 
+def _approve_pending(client, token, course_id):
+    headers = {"Authorization": f"Bearer {token}"}
+    pending = client.get(
+        f"/knowledge/?status=pending_review&course_id={course_id}",
+        headers=headers,
+    ).json()
+    for entry in pending:
+        response = client.patch(
+            f"/knowledge/{entry['id']}",
+            headers=headers,
+            json={"status": "approved"},
+        )
+        assert response.status_code == 200, response.text
+
+
 def _launch(**overrides):
     payload = {
         "canvas_course_id": "2101",
@@ -43,23 +58,42 @@ def test_student_click_provisions_course_user_and_agent():
     assert result["course_code"] == "CSC 3351"
     assert result["course_title"] == "Operating Systems"
     assert result["synced"] is True
-    assert result["agent_ready"] is True
-    assert result["kb_chunks"] >= 2  # two module slide decks
+    assert result["agent_ready"] is False
+    assert result["kb_chunks"] == 0
     assert result["sync"]["files_seen"] == 2
+    assert result["sync"]["chunks_created"] >= 2
 
     # Session token works and shows the auto-created membership.
-    me = client.get(
-        "/auth/me", headers={"Authorization": f"Bearer {result['token']}"}
-    )
+    headers = {"Authorization": f"Bearer {result['token']}"}
+    me = client.get("/auth/me", headers=headers)
     assert me.status_code == 200
     body = me.json()
     assert body["email"] == "o.tazi@aui.ma"
     assert [c["role"] for c in body["courses"]] == ["student"]
     assert body["courses"][0]["canvas_course_id"] == "2101"
 
-    # The dedicated course agent answers from the professor's module slides.
+    # Slides are pending until a professor stamps them.
+    blocked = client.post(
+        "/agent/ask",
+        headers=headers,
+        json={
+            "question": "What does round robin scheduling do with the time quantum?",
+            "course_id": result["course_id"],
+        },
+    ).json()
+    assert blocked["matched_count"] == 0
+    assert blocked["should_seek_help"] is True
+
+    professor = _launch(
+        email="l.mansouri@aui.ma",
+        display_name="Prof. Leila Mansouri",
+        canvas_role="TeacherEnrollment",
+        student_id=None,
+    )
+    _approve_pending(client, professor["token"], result["course_id"])
     answer = client.post(
         "/agent/ask",
+        headers=headers,
         json={
             "question": "What does round robin scheduling do with the time quantum?",
             "course_id": result["course_id"],
@@ -77,7 +111,7 @@ def test_teacher_launch_maps_professor_and_can_resync():
         student_id=None,
     )
     assert result["role"] == "professor"
-    assert result["agent_ready"] is True
+    assert result["agent_ready"] is False
 
     # Professor session can hit the protected canvas status endpoint.
     status = client.get(
@@ -85,8 +119,12 @@ def test_teacher_launch_maps_professor_and_can_resync():
         headers={"Authorization": f"Bearer {result['token']}"},
     )
     assert status.status_code == 200
-    assert status.json()["agent_ready"] is True
-    assert status.json()["kb_chunks"] >= 2
+    assert status.json()["agent_ready"] is False
+    pending = client.get(
+        f"/knowledge/?status=pending_review&course_id={result['course_id']}",
+        headers={"Authorization": f"Bearer {result['token']}"},
+    ).json()
+    assert len(pending) >= 2
 
 
 def test_second_launch_is_idempotent():
@@ -135,14 +173,18 @@ def test_full_community_loop_ask_ta_professor_agent():
     question = "Why does my scheduler starve long processes when I use priorities?"
 
     # 1. Slides don't cover starvation — the agent honestly says so.
+    student_headers = {"Authorization": f"Bearer {student['token']}"}
     before = client.post(
-        "/agent/ask", json={"question": question, "course_id": course_id}
+        "/agent/ask",
+        headers=student_headers,
+        json={"question": question, "course_id": course_id},
     ).json()
     assert before["matched_count"] == 0
 
-    # 2. Student submits a quiet ask; Oracle runs and seeds a pending draft.
+    # 2. Student submits a quiet ask; Ask Triage runs and seeds a pending draft.
     created = client.post(
         "/requests/",
+        headers=student_headers,
         json={
             "text": question,
             "anonymous": True,
@@ -185,7 +227,9 @@ def test_full_community_loop_ask_ta_professor_agent():
 
     # 4. Still gated: nothing reaches students before professor approval.
     mid = client.post(
-        "/agent/ask", json={"question": question, "course_id": course_id}
+        "/agent/ask",
+        headers=student_headers,
+        json={"question": question, "course_id": course_id},
     ).json()
     assert mid["matched_count"] == 0
 
@@ -197,11 +241,13 @@ def test_full_community_loop_ask_ta_professor_agent():
         student_id=None,
     )
     pending = client.get(
-        f"/knowledge/?status=pending_review&course_id={course_id}"
+        f"/knowledge/?status=pending_review&course_id={course_id}",
+        headers={"Authorization": f"Bearer {professor['token']}"},
     ).json()
     entry = next(e for e in pending if e["source_request_id"] == request_id)
     approved = client.patch(
         f"/knowledge/{entry['id']}",
+        headers={"Authorization": f"Bearer {professor['token']}"},
         json={"status": "approved"},
     )
     assert approved.status_code == 200
@@ -209,7 +255,9 @@ def test_full_community_loop_ask_ta_professor_agent():
 
     # 6. The next student with the same struggle gets the answer instantly.
     after = client.post(
-        "/agent/ask", json={"question": question, "course_id": course_id}
+        "/agent/ask",
+        headers=student_headers,
+        json={"question": question, "course_id": course_id},
     ).json()
     assert after["matched_count"] >= 1
     assert "aging" in after["answer"].lower()
@@ -238,10 +286,11 @@ def test_launch_into_existing_course_joins_without_reprovision():
     assert result["role"] == "student"
     assert result["course_code"] == "CSC 2302"
 
-    # Agent was provisioned on this first launch (no canvas chunks existed).
-    assert result["agent_ready"] is True
+    assert result["agent_ready"] is False
+    _approve_pending(client, login.json()["token"], result["course_id"])
     answer = client.post(
         "/agent/ask",
+        headers={"Authorization": f"Bearer {result['token']}"},
         json={
             "question": "How do hash tables handle collisions?",
             "course_id": result["course_id"],
@@ -260,9 +309,18 @@ def test_course_agents_stay_isolated_across_launches():
         student_id="117400",
     )
 
+    professor = _launch(
+        email="l.mansouri@aui.ma",
+        display_name="Prof. Leila Mansouri",
+        canvas_role="TeacherEnrollment",
+        student_id=None,
+    )
+    _approve_pending(client, professor["token"], os_launch["course_id"])
+
     # CSC 3351 agent knows scheduling; CSC 2302 agent does not.
     scheduling_in_ds = client.post(
         "/agent/ask",
+        headers={"Authorization": f"Bearer {ds_launch['token']}"},
         json={
             "question": "What does round robin scheduling do with the time quantum?",
             "course_id": ds_launch["course_id"],
@@ -272,6 +330,7 @@ def test_course_agents_stay_isolated_across_launches():
 
     scheduling_in_os = client.post(
         "/agent/ask",
+        headers={"Authorization": f"Bearer {os_launch['token']}"},
         json={
             "question": "What does round robin scheduling do with the time quantum?",
             "course_id": os_launch["course_id"],

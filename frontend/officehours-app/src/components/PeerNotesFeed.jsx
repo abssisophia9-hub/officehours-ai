@@ -204,9 +204,9 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
   }
 
   return (
-    <section id="peer-notes" className="bh-card mt-5 scroll-mt-6">
+    <section id="peer-notes" className="bh-card scroll-mt-6">
       <div className="bh-card-title">
-        <h2>Classmate notes</h2>
+        <h2>Share with classmates</h2>
       </div>
       <p className="bh-card-note">
         Share study notes with classmates in {courseCode}. Describe what they

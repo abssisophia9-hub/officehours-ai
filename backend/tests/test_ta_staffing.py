@@ -56,6 +56,7 @@ def test_claim_in_progress_helped_and_reply():
 
     created = client.post(
         "/requests/",
+        headers=_auth(student),
         json={
             "text": "Walk me through open addressing vs chaining step by step.",
             "anonymous": True,
@@ -93,7 +94,7 @@ def test_claim_in_progress_helped_and_reply():
     assert replied.status_code == 200, replied.text
     assert "chaining" in replied.json()["request"]["ta_reply"].lower()
 
-    status = client.get(f"/requests/{rid}/status").json()
+    status = client.get(f"/requests/{rid}/status", headers=_auth(student)).json()
     assert status["status"] == "ta_replied"
     assert "chaining" in (status["ta_reply"] or "").lower()
     assert "chaining" in (status["message"] or "").lower()
@@ -121,6 +122,7 @@ def test_backup_takeover_and_resolve_auth():
 
     created = client.post(
         "/requests/",
+        headers=_auth(student),
         json={
             "text": "Red-black deletion fixup rotations confuse me.",
             "anonymous": True,
@@ -188,12 +190,13 @@ def test_backup_takeover_and_resolve_auth():
     assert denied.status_code == 403
 
 
-def test_oracle_fields_present_on_queue_item():
+def test_ask_triage_fields_present_on_queue_item():
     student = _login("s.elidrissi@aui.ma")
     alice = _login("a.chen@aui.ma")
     course_id = _csc2302(student)
     created = client.post(
         "/requests/",
+        headers=_auth(student),
         json={
             "text": "Show an example of recursion tracing on a small call tree.",
             "anonymous": True,

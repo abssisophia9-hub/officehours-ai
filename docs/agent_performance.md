@@ -12,7 +12,7 @@ CSC supplements are demo enrichment for SSE walkthroughs — not the product bou
 ## What runs today (FYP path)
 
 ```
-POST /requests                    # Ask Triage (oracle_service.py)
+POST /requests                    # Ask Triage (ask_triage_service.py)
   → classify_and_recommend (ML category + learning-style ML by default)
   → Analyzer (embedding LogReg + topic overlays)
   → Matcher (embedding LogReg + expertise/queue blend on DEFAULT_TA_ROSTER)

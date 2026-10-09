@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { API_BASE, api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
+import ThemeToggle from "../components/ThemeToggle.jsx";
 
 // AUI emails are Initial.Lastname@aui.ma — role comes from course membership, not email.
 const DEMO_ACCOUNTS = [
@@ -12,8 +13,8 @@ const DEMO_ACCOUNTS = [
   },
   {
     email: "a.chen@aui.ma",
-    role: "TA + student",
-    note: "TAs CSC 2302 · takes 3323 / MTH / COM",
+    role: "TA (staff on 2302)",
+    note: "Assigned to CSC 2302 — a course she already took",
   },
   {
     email: "a.benali@aui.ma",
@@ -99,6 +100,7 @@ export default function LoginPage() {
           ← How it works
         </Link>
         <span className="oh-land-login-hint">AUI email · role per course</span>
+        <ThemeToggle />
       </div>
       <div className="fade-up mx-auto grid w-full max-w-5xl flex-1 items-center gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <form onSubmit={handleSubmit} className="glass-panel p-8 sm:p-10">
@@ -112,8 +114,9 @@ export default function LoginPage() {
             OfficeHours AI
           </h1>
           <p className="mt-3 max-w-md text-base font-medium text-aui-deep/70">
-            Sign in with your AUI email (Initial.Lastname@aui.ma). Your role is
-            per course — a TA can also be a student in other courses.
+            Sign in with your AUI email (Initial.Lastname@aui.ma). Role is per
+            course. A TA is staff on a course they already completed — not a
+            student in that section.
           </p>
 
           {microsoft ? (

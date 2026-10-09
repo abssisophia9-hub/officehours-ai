@@ -4,7 +4,7 @@ All current training fixtures are **synthetic / silver / curated** for the FYP.
 They are **not** scraped private student emails or real AUI transcripts.
 
 Product name: **Ask Triage** (Analyzer → Matcher → Synthesizer). Implementation
-paths still use `oracle_*` / `oracle_service.py` — see [`glossary.md`](glossary.md).
+lives in `ask_triage_service.py` with `triage_*` fields — see [`glossary.md`](glossary.md).
 
 **Help Coach** (`POST /ta/assist/`) reuses the Synthesizer teaching bank / approved
 KB RAG at runtime; it has **no separate joblib artifact**.
@@ -72,6 +72,12 @@ Silver labels align question text / category with TA expertise tags from
 
 `train_matcher.py` writes holdout metrics to `reports/final_report/matcher_evaluation.json`.
 Treat silver holdout as **demo metrics**, not gold TA judgment.
+
+**Runtime on a real course roster:** Matcher does **not** use
+`matcher_classifier.joblib` (those labels are demo names Alice/Bob/Priya/Sam).
+It load-balances among **this course’s TA memberships** by expertise-tag overlap
+and per-course open-ask depth. That is the correct campus path: AUI staff names
+are not in the silver CSV.
 
 ## Human gold labels (evaluation)
 

@@ -114,7 +114,8 @@ DEMO_USERS = [
         ],
     },
     {
-        # TAs are also students: Alice TAs CSC 2302 and takes other courses.
+        # Alice is staff on CSC 2302 (a course she already took).
+        # Other memberships are leftover demo enrollments, not "TA of 2302 = student of 2302".
         "email": "a.chen@aui.ma",
         "display_name": "Alice Chen",
         "student_id": "118110",
@@ -293,6 +294,9 @@ def ensure_demo_accounts(db: Session) -> None:
                 db.add(row)
 
     db.commit()
+    from app.services.gold_label_seed import seed_alice_gold_pass
+
+    seed_alice_gold_pass(db)
 
 
 def _migrate_legacy_emails(db: Session) -> None:

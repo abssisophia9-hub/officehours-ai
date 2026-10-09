@@ -64,8 +64,7 @@ async def upload_note(
 ):
     """Students share notes with classmates. Title + about are required before file."""
     _require_course_member(db, user, course_id)
-    # Only students (and dual-role TAs acting as classmates) post peer notes —
-    # professors/TAs may also share if they are members; keep open to all members.
+    # Course members may share notes. A TA on this course is staff, not a classmate.
     data = await file.read()
     note = create_peer_note(
         db,

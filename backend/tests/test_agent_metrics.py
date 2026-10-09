@@ -37,8 +37,10 @@ def test_kb_hit_rate_is_tracked_per_course():
     ).json()
     course_id = courses[0]["id"]
 
+    headers = {"Authorization": f"Bearer {token}"}
     miss = client.post(
         "/agent/ask",
+        headers=headers,
         json={
             "question": "What is the yoga blockchain midterm policy for this course?",
             "course_id": course_id,
@@ -64,13 +66,14 @@ def test_kb_hit_rate_is_tracked_per_course():
 
     client.post(
         "/agent/ask",
+        headers=headers,
         json={
             "question": "How does red-black deletion fixup restore black-height?",
             "course_id": course_id,
         },
     )
 
-    report = client.get("/analytics/kb-hit-rate").json()
+    report = client.get("/analytics/kb-hit-rate", headers=headers).json()
     assert report["total_asks"] >= 2
     course_row = next(
         row for row in report["by_course"] if row["course_id"] == course_id
@@ -80,8 +83,11 @@ def test_kb_hit_rate_is_tracked_per_course():
 
 
 def test_gold_label_api_roundtrip():
+    token = _login_professor()
+    headers = {"Authorization": f"Bearer {token}"}
     created = client.post(
         "/analytics/gold-labels",
+        headers=headers,
         json={
             "text": "How do I structure an induction proof base case vs inductive step?",
             "gold_category": "conceptual_question",
@@ -97,7 +103,7 @@ def test_gold_label_api_roundtrip():
     assert body["gold_category"] == "conceptual_question"
     assert body["department"] == "MTH"
 
-    listed = client.get("/analytics/gold-labels?department=MTH").json()
+    listed = client.get("/analytics/gold-labels?department=MTH", headers=headers).json()
     assert any(row["id"] == body["id"] for row in listed)
 
 

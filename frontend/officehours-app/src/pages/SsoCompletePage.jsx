@@ -15,14 +15,16 @@ export default function SsoCompletePage() {
   useEffect(() => {
     if (ran.current) return;
     ran.current = true;
-    const token = new URLSearchParams(window.location.hash.slice(1)).get("token");
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    const token = params.get("token");
+    const courseId = params.get("course");
     // Drop the token from the address bar immediately.
     window.history.replaceState(null, "", "/sso");
     if (!token) {
       setError("No sign-in token found. Please try signing in again.");
       return;
     }
-    adoptSession(token)
+    adoptSession(token, courseId ? Number(courseId) : undefined)
       .then(({ activeCourse }) => {
         navigate(
           activeCourse?.role === "professor"
@@ -53,7 +55,7 @@ export default function SsoCompletePage() {
           <>
             <h1 className="font-display text-2xl font-semibold text-aui-ink">Signing you in…</h1>
             <p className="mt-3 text-sm font-medium text-aui-deep/70">
-              Finishing your Microsoft sign-in.
+              Finishing your campus sign-in.
             </p>
           </>
         )}

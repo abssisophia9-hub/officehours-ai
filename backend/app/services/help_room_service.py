@@ -402,7 +402,9 @@ def list_posts(
     room_type: str | None = None,
     chapter: str | None = None,
     status_filter: str | None = None,
-) -> list[HelpPostOut]:
+    limit: int | None = None,
+    offset: int = 0,
+) -> list[HelpPostOut] | dict:
     key = (sort or "hot").strip().lower()
     if key not in _SORTS:
         raise HTTPException(
@@ -418,14 +420,15 @@ def list_posts(
         query = query.filter(HelpPost.chapter == normalize_chapter(chapter))
     if status_filter in ("open", "solved"):
         query = query.filter(HelpPost.status == status_filter)
-    rows = query.order_by(HelpPost.created_at.desc(), HelpPost.id.desc()).limit(80).all()
+    fetch_cap = 500 if limit is None else max(offset + (limit or 0), 80)
+    rows = query.order_by(HelpPost.created_at.desc(), HelpPost.id.desc()).limit(fetch_cap).all()
     serialized = [
         serialize_post(db, post, viewer, include_replies=False) for post in rows
     ]
     if key == "new":
-        return serialized
-    if key == "top":
-        return sorted(
+        ordered = serialized
+    elif key == "top":
+        ordered = sorted(
             serialized,
             key=lambda item: (
                 item.score,
@@ -435,7 +438,7 @@ def list_posts(
             ),
             reverse=True,
         )
-    if key == "rising":
+    elif key == "rising":
         cutoff = datetime.now(timezone.utc).timestamp() - (36 * 3600)
         recent = [
             item
@@ -443,24 +446,29 @@ def list_posts(
             if _aware(post.created_at).timestamp() >= cutoff
         ]
         pool = recent or serialized
-        return sorted(
+        ordered = sorted(
             pool,
             key=lambda item: (item.same_here_count + item.reply_count, item.id),
             reverse=True,
         )
-    return sorted(
-        serialized,
-        key=lambda item: (
-            _hot_score(
-                next(post for post in rows if post.id == item.id),
-                item.same_here_count,
-                item.reply_count,
-                item.unlocked_count,
+    else:
+        ordered = sorted(
+            serialized,
+            key=lambda item: (
+                _hot_score(
+                    next(post for post in rows if post.id == item.id),
+                    item.same_here_count,
+                    item.reply_count,
+                    item.unlocked_count,
+                ),
+                item.id,
             ),
-            item.id,
-        ),
-        reverse=True,
-    )
+            reverse=True,
+        )
+    from app.services.pagination import clamp_page, page_or_list
+
+    limit, offset = clamp_page(limit, offset)
+    return page_or_list(ordered, limit=limit, offset=offset)
 
 
 def serialize_reply(db: Session, reply: HelpReply, viewer: User) -> HelpReplyOut:
@@ -1056,25 +1064,21 @@ def attach_file(
         )
     if not data:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty file.")
-    if len(data) > _MAX_FILE_BYTES:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail="File too large (10 MB max).",
-        )
-    name = (filename or "file.bin").lower()
-    ext = name[name.rfind(".") :] if "." in name else ""
-    if ext not in _FILE_EXTENSIONS:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Supported: CSV, PDF, MATLAB, STEP, PNG, ZIP, TXT, MD, DOCX.",
-        )
+    from app.services.upload_security import assert_upload_allowed, safe_filename
+
+    ext = assert_upload_allowed(
+        filename=filename or "file.bin",
+        data=data,
+        allowed_extensions=_FILE_EXTENSIONS,
+        max_bytes=_MAX_FILE_BYTES,
+    )
     folder = _STORAGE_ROOT / str(post.course_id)
     folder.mkdir(parents=True, exist_ok=True)
     stored = f"{uuid.uuid4().hex}{ext}"
     (folder / stored).write_bytes(data)
     row = HelpPostFile(
         post_id=post.id,
-        original_filename=Path(filename or stored).name[:120],
+        original_filename=safe_filename(filename or stored)[:120],
         stored_filename=stored,
         content_type=content_type,
         byte_size=len(data),

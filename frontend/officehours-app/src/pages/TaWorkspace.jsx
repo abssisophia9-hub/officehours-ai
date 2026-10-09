@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Navigate } from "react-router";
 import { api } from "../api/client.js";
+import { pageItems, pageMeta } from "../api/page.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 const ICONS = {
@@ -50,21 +51,28 @@ export default function TaWorkspace() {
   const [toast, setToast] = useState("");
   const [resolvedCount, setResolvedCount] = useState(0);
   const [helpedCount, setHelpedCount] = useState(0);
-  const [assignmentFilter, setAssignmentFilter] = useState("mine");
+  const [assignmentFilter, setAssignmentFilter] = useState("desk");
   const [busy, setBusy] = useState(false);
   const [meetingOpen, setMeetingOpen] = useState(false);
   const [meetingTitle, setMeetingTitle] = useState("");
   const [meetingWhen, setMeetingWhen] = useState("");
   const [meetingPlace, setMeetingPlace] = useState("");
+  const [goldCategory, setGoldCategory] = useState("conceptual_question");
+  const [goldHintUseful, setGoldHintUseful] = useState("1");
+  const [goldBusy, setGoldBusy] = useState(false);
+  const [queuePage, setQueuePage] = useState({ has_more: false, total: 0 });
 
   const loadQueue = useCallback(async () => {
     try {
       const params = new URLSearchParams({
         course_id: String(activeCourse.id),
         assignment: assignmentFilter,
+        limit: "50",
+        offset: "0",
       });
       const data = await api(`/ta/queue/?${params.toString()}`, { token });
-      setQueue(data);
+      setQueue(pageItems(data));
+      setQueuePage(pageMeta(data));
       setError("");
     } catch (err) {
       setError(err.message);
@@ -127,27 +135,49 @@ export default function TaWorkspace() {
     (item) => item.request.work_status === "in_progress",
   ).length;
 
-  function selectItem(item) {
+  async function selectItem(item) {
     setSelectedId(item.request.id);
-    const coach = item.help_coach;
+    const existing = item.help_coach;
     setNotes(
-      coach?.teaching_approach || item.knowledge_entry?.answer_draft || "",
+      existing?.teaching_approach || item.knowledge_entry?.answer_draft || "",
     );
     setHint(
-      coach?.student_hint ||
+      existing?.student_hint ||
         item.knowledge_entry?.student_hint ||
         item.request.student_hint ||
         "",
     );
     setReply(item.request.ta_reply || item.knowledge_entry?.student_hint || "");
-    setSocraticSteps(coach?.socratic_steps || []);
+    setSocraticSteps(existing?.socratic_steps || []);
     setMeetingOpen(false);
     setMeetingTitle(
-      `Group review: ${item.request.oracle_category || item.request.category || "topic"}`,
+      `Group review: ${item.request.triage_category || item.request.category || "topic"}`,
     );
     setMeetingWhen("");
     setMeetingPlace("");
     setError("");
+    if (existing) return;
+    setCoachBusy(true);
+    try {
+      const coach = await api(`/ta/coach/?request_id=${item.request.id}`, { token });
+      setNotes(coach.teaching_approach || item.knowledge_entry?.answer_draft || "");
+      setHint(
+        coach.student_hint ||
+          item.knowledge_entry?.student_hint ||
+          item.request.student_hint ||
+          "",
+      );
+      setSocraticSteps(coach.socratic_steps || []);
+      setQueue((prev) =>
+        prev.map((row) =>
+          row.request.id === item.request.id ? { ...row, help_coach: coach } : row,
+        ),
+      );
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCoachBusy(false);
+    }
   }
 
   async function runHelpCoach(mode) {
@@ -200,7 +230,7 @@ export default function TaWorkspace() {
     const requestIds = Array.from(new Set([req.id, ...peerIds]));
     const title = (
       meetingTitle ||
-      `Group review: ${req.oracle_category || req.category || "topic"}`
+      `Group review: ${req.triage_category || req.category || "topic"}`
     ).trim();
     setBusy(true);
     setError("");
@@ -293,61 +323,60 @@ export default function TaWorkspace() {
   }
 
   const req = selected?.request;
-  const tags = req?.oracle_tags || [];
+  const tags = req?.triage_tags || [];
   const work = workPill(req?.work_status);
   const iAmPrimary = req?.assigned_ta === user.display_name;
   const iAmBackup = req?.alternative_ta === user.display_name;
-  const iClaimed = req?.claimed_by === user.display_name;
+  const iClaimed =
+    req?.claimed_by_user_id === user.id || req?.claimed_by === user.display_name;
 
   return (
-    <div className="fade-up">
-      <h1 className="bh-page-title">TA Dashboard</h1>
-      <p className="bh-page-subtitle">
-        Claim asks, help with Help Coach, reply async, then send drafts for
-        professor curation · {activeCourse.code} — {activeCourse.title}
-      </p>
-
-      <div className="bh-stats">
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Open Queue {ICONS.queue}</div>
-          <p className="bh-stat-value">{queue.length}</p>
-          <p className="bh-stat-note">Visible with current filter</p>
-        </article>
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Helping now {ICONS.flame}</div>
-          <p className="bh-stat-value">{inProgressCount}</p>
-          <p className="bh-stat-note">In-progress in this filter</p>
-        </article>
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Urgent {ICONS.flame}</div>
-          <p className="bh-stat-value">{urgentCount}</p>
-          <p className="bh-stat-note">High-urgency asks to take first</p>
-        </article>
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Avg Wait {ICONS.clock}</div>
-          <p className="bh-stat-value">{avgWait === null ? "—" : `${avgWait}m`}</p>
-          <p className="bh-stat-note">Matcher wait estimate</p>
-        </article>
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">Helped {ICONS.check}</div>
-          <p className="bh-stat-value">{helpedCount}</p>
-          <p className="bh-stat-note">Done helping this session</p>
-        </article>
-        <article className="bh-stat-card">
-          <div className="bh-stat-head">To curation {ICONS.check}</div>
-          <p className="bh-stat-value">{resolvedCount}</p>
-          <p className="bh-stat-note">Sent to professor review</p>
-        </article>
-      </div>
+    <div className="td fade-up">
+      <header className="td-hero">
+        <p className="td-kicker">
+          AUI · {activeCourse.code} · {activeCourse.title}
+        </p>
+        <h1 className="td-title">Who needs help next?</h1>
+        <p className="td-lead">
+          <strong>Live Queue</strong> is the main action — claim an ask, help with
+          Help Coach, reply async, then send drafts for professor curation.
+        </p>
+        <p className="td-alt">
+          Dual-TA Matcher assigns primary + backup. Work your desk first; open
+          asks still need a human.
+        </p>
+        <div className="td-pulse">
+          <span className="td-chip">
+            <strong>{queue.length}</strong> open on desk
+          </span>
+          {urgentCount > 0 ? (
+            <span className="td-chip td-chip-hot">
+              <strong>{urgentCount}</strong> urgent
+            </span>
+          ) : (
+            <span className="td-chip">
+              <strong>{inProgressCount}</strong> helping now
+            </span>
+          )}
+          <span className="td-chip">
+            Avg wait <strong>{avgWait === null ? "—" : `${avgWait}m`}</strong>
+          </span>
+          <span className="td-chip">
+            Helped <strong>{helpedCount}</strong>
+          </span>
+          <span className="td-chip">
+            To curation <strong>{resolvedCount}</strong>
+          </span>
+        </div>
+      </header>
 
       {loadInfo ? (
-        <section className="bh-card mb-5">
-          <div className="bh-card-title">
-            <h2>TA load (you + partner)</h2>
-          </div>
-          <p className="bh-card-note">
-            Dual-TA Matcher depth for {activeCourse.code}
-            {loadInfo.ta_count ? ` · ${loadInfo.ta_count} TAs` : ""}.
+        <section className="td-panel mb-4">
+          <p className="td-panel-label">TA load (you + partner)</p>
+          <h3>Dual staffing for {activeCourse.code}</h3>
+          <p>
+            {loadInfo.ta_count ? `${loadInfo.ta_count} TAs` : "Matcher depth"} —
+            take asks where you are primary or backup first.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {(loadInfo.tas || []).map((ta) => (
@@ -369,13 +398,21 @@ export default function TaWorkspace() {
         </section>
       ) : null}
 
-      <section id="queue" className="bh-card scroll-mt-6">
-        <div className="bh-card-title">
-          <h2>Live Queue</h2>
-          <span className="bh-pill bh-pill-green live-pulse">live</span>
+      <div className="td-layout">
+      <section id="queue" className="td-primary scroll-mt-6">
+        <div className="td-primary-head">
+          <div>
+            <h2>Live Queue</h2>
+            <p className="td-primary-copy">
+              Use when a student is waiting. Pick a row to claim, help, and reply —
+              students read your reply in My asks.
+            </p>
+          </div>
+          <span className="td-badge">Primary</span>
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="td-filters">
           {[
+            ["desk", "My desk"],
             ["mine", "Assigned / claimed by me"],
             ["backup", "I'm backup"],
             ["in_progress", "I'm helping now"],
@@ -385,20 +422,18 @@ export default function TaWorkspace() {
             <button
               key={value}
               type="button"
-              className={`btn-ghost px-3 py-1.5 text-xs ${
-                assignmentFilter === value ? "ring-2 ring-aui-deep/30" : ""
-              }`}
+              className={`td-filter${assignmentFilter === value ? " td-filter-on" : ""}`}
               onClick={() => setAssignmentFilter(value)}
             >
               {label}
             </button>
           ))}
         </div>
-        {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
-        {toast ? <p className="mt-2 text-sm text-emerald-700">{toast}</p> : null}
+        {error ? <p className="mt-2 pl-2 text-sm text-[var(--theme-red-fg)]">{error}</p> : null}
+        {toast ? <p className="mt-2 pl-2 text-sm text-[var(--theme-emerald-fg)]">{toast}</p> : null}
 
         {queue.length === 0 ? (
-          <p className="bh-card-note mt-4">No open requests for this filter.</p>
+          <p className="td-empty">No open requests for this filter.</p>
         ) : (
           <table className="bh-table">
             <thead>
@@ -421,7 +456,8 @@ export default function TaWorkspace() {
                 const urgency = (request.urgency || "n/a").toLowerCase();
                 const helpMode = request.help_mode || "message";
                 const status = workPill(request.work_status);
-                const similarN = item.help_coach?.similar_open_count || 0;
+                const similarN =
+                  item.similar_open_count || item.help_coach?.similar_open_count || 0;
                 return (
                   <tr
                     key={request.id}
@@ -457,7 +493,7 @@ export default function TaWorkspace() {
                             : "message"}
                       </span>
                     </td>
-                    <td>{request.oracle_category || request.category || "n/a"}</td>
+                    <td>{request.triage_category || request.category || "n/a"}</td>
                     <td>
                       {similarN > 0 ? (
                         <span
@@ -493,10 +529,17 @@ export default function TaWorkspace() {
             </tbody>
           </table>
         )}
+        {queuePage.has_more ? (
+          <p className="mt-2 text-xs text-aui-deep/70">
+            Showing {queue.length} of {queuePage.total}. Refine the desk filter
+            or raise the page size — this is a paged queue.
+          </p>
+        ) : null}
       </section>
 
+      <aside className="td-rail">
       {selected && req ? (
-        <section className="bh-card">
+        <section className="td-panel">
           <div className="bh-card-title">
             <h2>Ask · #{req.id}</h2>
             <span className={`bh-pill ${work.className}`}>{work.label}</span>
@@ -504,33 +547,45 @@ export default function TaWorkspace() {
           <p className="bh-card-note">{req.text}</p>
 
           <div className="mt-3 rounded-xl border border-aui-forest/20 bg-[#f3faf5] p-3 text-xs text-aui-deep">
-            <p className="font-semibold text-aui-ink">Triage context</p>
+            <p className="font-semibold text-aui-ink">Ask Triage</p>
+            <p className="mt-0.5 text-[11px] text-aui-deep/60">
+              Analyzer → Matcher → Synthesizer for this ask (local models)
+            </p>
             <ul className="mt-2 space-y-1">
               <li>
-                <strong>Category:</strong> {req.oracle_category || req.category || "n/a"}
+                <strong>Category:</strong> {req.triage_category || req.category || "n/a"}
                 {" · "}
-                <strong>Difficulty:</strong> {req.oracle_difficulty || "n/a"}
+                <strong>Difficulty:</strong> {req.triage_difficulty || "n/a"}
                 {" · "}
                 <strong>Est.:</strong>{" "}
-                {req.oracle_estimated_minutes != null
-                  ? `${req.oracle_estimated_minutes} min`
+                {req.triage_estimated_minutes != null
+                  ? `${req.triage_estimated_minutes} min`
                   : "n/a"}
               </li>
-              <li>
-                <strong>Learning style:</strong>{" "}
-                {selected.learning_style || req.learning_style || "n/a"}
-                {" · "}
-                <strong>Urgency:</strong> {req.urgency || "n/a"}
-              </li>
+              {selected.learning_style &&
+              selected.learning_style !== "unknown" &&
+              req.learning_style &&
+              req.learning_style !== "unknown" ? (
+                <li>
+                  <strong>Learning style:</strong>{" "}
+                  {selected.learning_style || req.learning_style}
+                  {" · "}
+                  <strong>Urgency:</strong> {req.urgency || "n/a"}
+                </li>
+              ) : (
+                <li>
+                  <strong>Urgency:</strong> {req.urgency || "n/a"}
+                </li>
+              )}
               <li>
                 <strong>Tags:</strong> {tags.length ? tags.join(", ") : "none"}
               </li>
               <li>
                 <strong>Sensitive:</strong> {req.sensitive ? "yes — keep private" : "no"}
               </li>
-              {req.oracle?.matcher?.rationale ? (
+              {req.triage?.matcher?.rationale ? (
                 <li>
-                  <strong>Matcher:</strong> {req.oracle.matcher.rationale}
+                  <strong>Matcher:</strong> {req.triage.matcher.rationale}
                 </li>
               ) : (
                 <li>
@@ -539,11 +594,11 @@ export default function TaWorkspace() {
                 </li>
               )}
               {(selected.help_coach?.kb_insight ||
-                req.oracle?.synthesizer?.kb_insight) ? (
+                req.triage?.synthesizer?.kb_insight) ? (
                 <li>
                   <strong>KB insight:</strong>{" "}
                   {selected.help_coach?.kb_insight ||
-                    req.oracle?.synthesizer?.kb_insight}
+                    req.triage?.synthesizer?.kb_insight}
                 </li>
               ) : null}
             </ul>
@@ -887,15 +942,93 @@ export default function TaWorkspace() {
               Needs professor
             </button>
           </div>
+
+          <div className="mt-5 rounded-xl border border-[#d7e0d9] p-3">
+            <p className="text-sm font-semibold text-aui-ink">Gold label this ask</p>
+            <p className="mt-1 text-xs text-aui-deep/70">
+              Staff judgment for evaluation — category + whether the Synthesizer
+              hint helped. This does not retrain the live student agent. Protocol:
+              one 45-minute TA lab, ≥40 asks, not a satisfaction survey.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <select
+                className="field-glass px-3 py-2 text-xs"
+                value={goldCategory}
+                onChange={(event) => setGoldCategory(event.target.value)}
+              >
+                {[
+                  "conceptual_question",
+                  "exam_logistics",
+                  "retake_request",
+                  "accessibility_accommodation",
+                  "grading_dispute",
+                  "emotional_stress",
+                  "project_submission",
+                  "office_hours_access",
+                  "academic_integrity",
+                  "uncategorized",
+                ].map((value) => (
+                  <option key={value} value={value}>
+                    {value.replaceAll("_", " ")}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="field-glass px-3 py-2 text-xs"
+                value={goldHintUseful}
+                onChange={(event) => setGoldHintUseful(event.target.value)}
+              >
+                <option value="1">Hint was useful</option>
+                <option value="0">Hint was not useful</option>
+              </select>
+              <button
+                type="button"
+                disabled={goldBusy}
+                className="btn-ghost px-3 py-2 text-xs"
+                onClick={async () => {
+                  setGoldBusy(true);
+                  setError("");
+                  try {
+                    await api("/analytics/gold-labels", {
+                      method: "POST",
+                      token,
+                      body: {
+                        text: req.text,
+                        gold_category: goldCategory,
+                        gold_assigned_ta: req.assigned_ta || user.display_name,
+                        gold_hint_useful: Number(goldHintUseful),
+                        course_id: activeCourse.id,
+                        course_code: activeCourse.code,
+                        department: activeCourse.code.split(" ")[0],
+                        labeled_by: user.email,
+                        notes: `request #${req.id}`,
+                      },
+                    });
+                    setToast(`Gold label saved for #${req.id}`);
+                  } catch (err) {
+                    setError(err.message);
+                  } finally {
+                    setGoldBusy(false);
+                  }
+                }}
+              >
+                {goldBusy ? "Saving…" : "Save gold label"}
+              </button>
+            </div>
+          </div>
         </section>
       ) : (
-        <section className="bh-card">
-          <p className="bh-card-note">
-            Select a request to claim it, help the student, reply, and prepare a
-            teaching draft.
+        <section className="td-panel">
+          <p className="td-panel-label">Working ask</p>
+          <h3>Select a row in Live Queue</h3>
+          <p>
+            Claim it, help with Help Coach, reply async — the student sees your
+            reply in My asks.
           </p>
         </section>
       )}
+      </aside>
+      </div>
     </div>
   );
 }

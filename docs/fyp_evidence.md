@@ -14,15 +14,15 @@ overload** and **improve student comfort** seeking academic help during finals?
 
 | Claim | Evidence |
 | --- | --- |
-| One multi-role campus app (role per course) | `frontend/officehours-app`, login + course picker |
-| Ask Triage at intake (Analyzer → Matcher → Synthesizer) with **local** models | `oracle_service.py`, `backend/models/*.joblib`, `OFFICEHOURS_ALLOW_EXTERNAL_LLM=false` |
+| One multi-role campus app (one role per course; TA ≠ student of that course) | `frontend/officehours-app`, login + course picker |
+| Ask Triage at intake (Analyzer → Matcher → Synthesizer) with **local** models | `ask_triage_service.py`, `backend/models/*.joblib`, `OFFICEHOURS_ALLOW_EXTERNAL_LLM=false` |
 | Professor remains the Study Agent publication gate | KB `pending_review` → approve → `/agent/ask` |
 | TA staffing + Help Coach mid-session | `/ta/claim/`, `/ta/assist/` |
 | Privacy-preserving Quiet ask + request-code status | student workspace, `GET /requests/{id}/status` |
 | **Rooms** classmate forum + Hilbert ranks | `/student/room` + `/help-room/`; named helpers; Canvas-module chapters; students only |
 | Professor chapter/topic review insights | `GET /analytics/review-insights` (asks + Rooms posts) |
-| Canvas is the intended community enrollment **and** chapter source | `/canvas/launch` **simulator** (unsigned demo); live modules when credentials are set |
-| Automated regression | ~133 backend pytest cases + CI builds |
+| Canvas is the intended community enrollment **and** chapter source | Signed **LTI 1.3** (`/lti/login`, `/lti/launch`) when IT installs the key; `/canvas-demo` only if `OFFICEHOURS_DEMO=true`; live modules when `CANVAS_*` credentials are set |
+| Automated regression | 162 backend pytest cases; CI = backend + product app |
 
 ## Metric honesty (read before citing)
 
@@ -36,16 +36,15 @@ overload** and **improve student comfort** seeking academic help during finals?
 
 ## Gaps supervisors will ask about
 
-1. **Gold labels** — n=80 curated held-out set from public uni OH research
-   (`docs/research/office_hours_public_sources.md`); still collect real TA
-   `human_gold` when possible.
-2. **Surveys** — a legacy pilot already exists. **No new survey collection** is
-   required before the capstone presentation, and surveys are not a post-product
-   submission. Optional templates remain in `docs/surveys/`.
-3. **Canvas LTI 1.3** — production needs signed launches; today is unsigned JIT demo.
-4. **Open demo APIs** — some list endpoints are convenient for local demos; not
-   campus-hardened ACLs.
-5. **Screenshots** — unified-app pack lives in `demo/screenshots/product-*.png`.
+1. **Gold labels** — n=80 curated held-out + Alice demo pass (n=20) are **not**
+   a section lab. Run [`gold_label_lab.md`](gold_label_lab.md) (≥40 `human_gold`
+   from TAs). Do not use a Likert survey for this.
+2. **Surveys** — optional UX only (`docs/surveys/`). Not gold labels.
+3. **Canvas LTI 1.3** — code is in; campus needs a developer key + API token. Unsigned `/canvas-demo` is demo-only.
+4. **Host leftovers** — CORS is origin-locked; `/ws` requires token +
+   `course_id`; TA queue requires staff `course_id`. Favicon + OG ship with the
+   product app. See [`repo_audit.md`](repo_audit.md).
+5. **Crib** — print [`defense_crib.md`](defense_crib.md).
 
 ## Defense checklist (day-of)
 
@@ -54,7 +53,7 @@ overload** and **improve student comfort** seeking academic help during finals?
 - [ ] Alice: claim → Help Coach → reply **or** group meeting
 - [ ] Benali: approve KB → Study Agent only answers approved material
 - [ ] Student Rooms: named post, Canvas/demo chapter pick, leaderboard shows names
-- [ ] `/canvas-demo`: say clearly **unsigned simulator**, LTI next
+- [ ] `/canvas-demo`: say clearly **unsigned simulator**, only when `OFFICEHOURS_DEMO=true`; LTI is the production path
 - [ ] Cite CV/silver metrics with caveats; do **not** cite seed gold 100% as quality
 - [ ] Point to this page + `agent_performance.md` for ceilings
 
@@ -62,6 +61,6 @@ overload** and **improve student comfort** seeking academic help during finals?
 
 1. Keep `reports/final_report/main.tex` synced with the shipped product.
 2. Optional: real TA `human_gold` labels when a lab is available.
-3. Production: Canvas LTI 1.3 (launch is an unsigned simulator today).
+3. Production: Canvas LTI 1.3 (installed by IT). Unsigned simulator is demo-only.
 
 New user surveys are **not** on this list for the capstone.

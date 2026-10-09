@@ -45,24 +45,27 @@ courses** per term.
 | --- | --- | --- |
 | `s.elidrissi@aui.ma` | student | CSC 2302, 3323, 3374, 3326, 3324 + MTH 1304 + COM 1301 (7) |
 | `y.amrani@aui.ma` | student | CSC 3323, 3374 + MTH 1304 |
-| `a.chen@aui.ma` | **TA + student** | TA: CSC 2302 · Student: CSC 3323, MTH 1304, COM 1301 |
-| `b.martinez@aui.ma` | **TA + student** | TA: CSC 2302, 3323, 3374 · Student: MTH 1304, COM 1301 |
-| `p.nair@aui.ma` | **TA + student** | TA: CSC 3323, 3326 · Student: MTH 1304 |
-| `s.ortiz@aui.ma` | **TA + student** | TA: CSC 3374, 3324 · Student: COM 1301 |
+| `a.chen@aui.ma` | **TA** | Staff on CSC 2302 (already took Data Structures) |
+| `b.martinez@aui.ma` | **TA** | Staff on CSC 2302, 3323, 3374 |
+| `p.nair@aui.ma` | **TA** | Staff on CSC 3323, 3326 |
+| `s.ortiz@aui.ma` | **TA** | Staff on CSC 3374, 3324 |
 | `a.benali@aui.ma` | professor | CSC 2302, 3323, 3374 |
 
 Dual-TA sections (primary + backup Matcher): CSC 2302 (Alice/Bob), CSC 3323
 (Bob/Priya), CSC 3374 (Bob/Sam).
 
+Print [`docs/defense_crib.md`](defense_crib.md) the morning of the viva.
+Gold labels: [`docs/gold_label_lab.md`](gold_label_lab.md) — a TA labeling lab, not a survey.
+
 ## What a supervisor does
 
 1. Run `./scripts/run_product.sh` (or start backend + `officehours-app`)
-2. Open **http://127.0.0.1:5180** — guest landing walks Student → TA → Professor (Three.js path), then **Sign in**
+2. Open **http://127.0.0.1:5180** — opening story (Student → TA → Professor), then **Sign in**
 3. Sign in as student → **Quiet ask** or **Identify me** → pick message / face-to-face / online;
    optionally open **Rooms** (`/student/room`) and accept a classmate solution
    that unlocked it — helpers are **named** so they appear on the leaderboard
-4. Sign in as Alice (`a.chen@aui.ma`) → TA queue filters **Assigned to me** /
-   **I'm backup** / **All** → switch course picker to a **student** course
+4. Sign in as Alice (`a.chen@aui.ma`) → TA desk filter **My desk (assigned, backup, open)**
+   — she is staff on CSC 2302, not a classmate in that section
 5. Sign in as professor (`a.benali@aui.ma`) → **TA load** panel + command center:
    - dual-TA primary/backup counts
    - repeated topic clusters (group review vs FAQ)
@@ -88,9 +91,13 @@ source:
 **Community recommendation:** Canvas LTI 1.3 as primary. Not AUI portal scraping.
 Manual admin entry only as a rare support escape hatch.
 
-> **Demo honesty:** today’s `POST /canvas/launch` and `/canvas-demo` are an
-> **unsigned** JIT simulator (optional lock via `OFFICEHOURS_CANVAS_LAUNCH_SECRET`).
-> Do not claim signed LTI in a defense. See [`fyp_evidence.md`](fyp_evidence.md).
+> **Demo honesty:** `POST /canvas/launch` and `/canvas-demo` are an **unsigned**
+> JIT simulator, and they are **off** unless `OFFICEHOURS_DEMO=true` (or a launch
+> secret is set). Production launch is signed **LTI 1.3** (`/lti/login`,
+> `/lti/launch`) once AUI IT installs the developer key. Do not claim the tool
+> is already live inside AUI Canvas until that key + `CANVAS_*` credentials
+> exist. See [`fyp_evidence.md`](fyp_evidence.md) and
+> [`session_log_opening_auth_canvas.md`](session_log_opening_auth_canvas.md).
 
 ## Asking for help (identity + meeting preference)
 

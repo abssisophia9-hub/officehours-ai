@@ -69,7 +69,7 @@ def _require_member(db: Session, user: User, course_id: int):
     )
 
 
-@router.get("/", response_model=list[HelpPostOut])
+@router.get("/")
 def feed(
     course_id: int,
     sort: str = Query(default="hot"),
@@ -77,6 +77,8 @@ def feed(
     room_type: str | None = Query(default=None),
     chapter: str | None = Query(default=None),
     status_filter: str | None = Query(default=None, alias="status"),
+    limit: int | None = Query(default=None, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
@@ -91,6 +93,8 @@ def feed(
         room_type=room_type,
         chapter=chapter,
         status_filter=status_filter,
+        limit=limit,
+        offset=offset,
     )
 
 

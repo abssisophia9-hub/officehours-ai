@@ -139,7 +139,7 @@ def launch_from_canvas(
     )
     sync_result: dict[str, Any] | None = None
     if role == "professor" or existing_chunks == 0:
-        sync_result = sync_course_materials(db, course, auto_approve=True)
+        sync_result = sync_course_materials(db, course, auto_approve=False)
 
     approved_chunks = (
         db.query(KnowledgeEntry.id)

@@ -34,7 +34,7 @@ are not a pre-presentation checklist.
 2. Claim → start helping → done / reply felt workable.
 3. Help Coach drafts / Socratic steps were useful (or N/A).
 4. A shared group meeting for a repeated cluster made sense.
-5. Switching to a student course with the same login was clear.
+5. It was clear that I am staff on this course, not a classmate in the section.
 6. This would reduce repeated 1:1 typing for common questions.
 7. Free text: Biggest campus-wide risk?
 8. Free text: What would you change in the TA workspace?

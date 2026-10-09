@@ -1,5 +1,7 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import AccountMenu from "../components/AccountMenu.jsx";
+import NotificationBell from "../components/NotificationBell.jsx";
+import ThemeToggle from "../components/ThemeToggle.jsx";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 const ICONS = {
@@ -80,22 +82,144 @@ const ICONS = {
 
 const SECTION_NAV = {
   student: [
-    { id: "ask", label: "Ask for Help", icon: "ask" },
-    { id: "agent", label: "Study Agent", icon: "agent" },
-    { id: "stuck-room", label: "Rooms", icon: "stuck", to: "/student/room" },
-    { id: "peer-notes", label: "Classmate Notes", icon: "notes" },
+    {
+      group: "Get help",
+      items: [
+        {
+          id: "ask",
+          label: "Ask for help",
+          icon: "ask",
+          hint: "Stuck? Get matched to a TA",
+        },
+        {
+          id: "asks",
+          label: "My asks",
+          icon: "requests",
+          to: "/student/asks",
+          hint: "Track quiet & named asks",
+        },
+      ],
+    },
+    {
+      group: "Study",
+      items: [
+        {
+          id: "agent",
+          label: "Study Agent",
+          icon: "agent",
+          hint: "Approved FAQs & slides only",
+        },
+        {
+          id: "revision",
+          label: "Revision Strategist",
+          icon: "insights",
+          to: "/student/revision",
+          hint: "Today-first exam plan",
+        },
+      ],
+    },
+    {
+      group: "Community",
+      items: [
+        {
+          id: "stuck-room",
+          label: "Rooms",
+          icon: "stuck",
+          to: "/student/room",
+          hint: "Peer help threads",
+        },
+        {
+          id: "peer-notes",
+          label: "Classmate Notes",
+          icon: "notes",
+          to: "/student/notes",
+          hint: "Shared course notes",
+        },
+      ],
+    },
   ],
   ta: [
-    { id: "queue", label: "Live Queue", icon: "queue" },
+    {
+      group: "Desk",
+      items: [
+        {
+          id: "queue",
+          label: "Live Queue",
+          icon: "queue",
+          hint: "Claim, help, reply to students",
+        },
+      ],
+    },
   ],
   professor: [
-    { id: "clusters", label: "Repeated Topics", icon: "clusters" },
-    { id: "review-insights", label: "Review Insights", icon: "insights" },
-    { id: "knowledge", label: "Knowledge Review", icon: "knowledge" },
-    { id: "materials", label: "Canvas Materials", icon: "canvas" },
-    { id: "requests", label: "Requests", icon: "requests" },
+    {
+      group: "Teaching",
+      items: [
+        {
+          id: "clusters",
+          label: "Repeated Topics",
+          icon: "clusters",
+          hint: "What to emphasize next",
+        },
+        {
+          id: "review-insights",
+          label: "Review Insights",
+          icon: "insights",
+          hint: "Chapter-end teaching notes",
+        },
+      ],
+    },
+    {
+      group: "Study Agent",
+      items: [
+        {
+          id: "knowledge",
+          label: "Knowledge Review",
+          icon: "knowledge",
+          hint: "Stamp answers students can trust",
+        },
+        {
+          id: "materials",
+          label: "Canvas Materials",
+          icon: "canvas",
+          hint: "Ground the agent in your slides",
+        },
+      ],
+    },
+    {
+      group: "Asks",
+      items: [
+        {
+          id: "requests",
+          label: "Requests",
+          icon: "requests",
+          hint: "All course asks",
+        },
+      ],
+    },
   ],
 };
+
+function flattenSections(sections) {
+  if (!sections.length) return [];
+  if (sections[0]?.items) {
+    return sections.flatMap((group) => group.items);
+  }
+  return sections;
+}
+
+function NavItemContent({ section }) {
+  return (
+    <>
+      {ICONS[section.icon]}
+      <span className="bh-nav-item-stack">
+        <strong>{section.label}</strong>
+        {section.hint ? <span className="bh-nav-hint">{section.hint}</span> : null}
+      </span>
+      {section.badge ? <span className="bh-nav-badge">{section.badge}</span> : null}
+    </>
+  );
+}
 
 export default function AppShell() {
   const { user, activeCourse, setActiveCourse } = useAuth();
@@ -106,16 +230,58 @@ export default function AppShell() {
   const roleHome =
     role === "professor" ? "/professor" : role === "ta" ? "/ta" : "/student";
   const sections = SECTION_NAV[role] || [];
+  const grouped = Boolean(sections[0]?.items);
+  const flatSections = flattenSections(sections);
+
+  const SECTION_ROUTES = {
+    "peer-notes": "/student/notes",
+    asks: "/student/asks",
+    revision: "/student/revision",
+    "stuck-room": "/student/room",
+  };
 
   function scrollToSection(id) {
+    const routed = SECTION_ROUTES[id];
+    if (routed) {
+      navigate(routed);
+      return;
+    }
+    const hashTarget = id === "agent" || id === "ask" ? id : null;
     if (location.pathname !== roleHome) {
-      navigate(roleHome);
+      navigate(hashTarget ? `${roleHome}#${hashTarget}` : roleHome);
       setTimeout(() => {
         document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 150);
     } else {
+      if (hashTarget) {
+        window.history.replaceState(null, "", `${roleHome}#${hashTarget}`);
+      }
       document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
+  }
+
+  function renderNavItem(section) {
+    if (section.to) {
+      return (
+        <NavLink
+          key={section.id}
+          to={section.to}
+          className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+        >
+          <NavItemContent section={section} />
+        </NavLink>
+      );
+    }
+    return (
+      <button
+        key={section.id}
+        type="button"
+        className="bh-nav-item"
+        onClick={() => scrollToSection(section.id)}
+      >
+        <NavItemContent section={section} />
+      </button>
+    );
   }
 
   return (
@@ -135,37 +301,27 @@ export default function AppShell() {
             {ICONS.dashboard}
             Dashboard
           </NavLink>
-          {sections.map((section) =>
-            section.to ? (
-              <NavLink
-                key={section.id}
-                to={section.to}
-                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
-              >
-                {ICONS[section.icon]}
-                {section.label}
-              </NavLink>
-            ) : (
-              <button
-                key={section.id}
-                type="button"
-                className="bh-nav-item"
-                onClick={() => scrollToSection(section.id)}
-              >
-                {ICONS[section.icon]}
-                {section.label}
-              </button>
-            ),
-          )}
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
-          >
-            {ICONS.courses}
-            My Courses
-          </NavLink>
+          {grouped
+            ? sections.map((group) => (
+                <div key={group.group} className="bh-nav-group">
+                  <p className="bh-nav-label">{group.group}</p>
+                  {group.items.map((section) => renderNavItem(section))}
+                </div>
+              ))
+            : flatSections.map((section) => renderNavItem(section))}
+          <div className="bh-nav-group">
+            <NavLink
+              to="/"
+              end
+              className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+            >
+              {ICONS.courses}
+              My Courses
+            </NavLink>
+          </div>
+        </nav>
 
+        <div className="bh-sidebar-footer">
           <p className="bh-nav-label">Course</p>
           <select
             className="bh-course-select"
@@ -192,9 +348,10 @@ export default function AppShell() {
               </option>
             ))}
           </select>
-        </nav>
-
-        <AccountMenu onScrollToSection={scrollToSection} />
+          <NotificationBell />
+          <ThemeToggle className="theme-toggle-sidebar" />
+          <AccountMenu onScrollToSection={scrollToSection} />
+        </div>
       </aside>
 
       <main className="bh-main">

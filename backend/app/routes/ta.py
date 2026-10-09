@@ -7,6 +7,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import or_, update
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
@@ -29,11 +30,13 @@ from app.models.ta import (
 from app.models.ta_roster import TaRoster, TaRosterOut
 from app.realtime.hub import hub
 from app.routes.auth import get_current_user
-from app.services.access_control import require_course_role
+from app.services.access_control import require_course_role, require_staff_anywhere
 from app.services.course_ta_service import build_course_ta_load
 from app.services.help_coach_service import build_help_coach, run_help_coach_assist
 from app.services.knowledge_service import to_out
-from app.services.oracle_service import ensure_default_roster
+from app.services.ask_triage_service import ensure_default_roster
+from app.services.notify_service import notify_request_owner
+from app.services.pagination import clamp_page, page_or_list
 from app.services.request_serializer import to_request_out
 
 router = APIRouter(prefix="/ta", tags=["ta"])
@@ -72,7 +75,8 @@ def list_ta_roster(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    del user  # auth gate only
+    """Campus TA roster seed — staff only (not a student-facing surface)."""
+    require_staff_anywhere(db, user)
     return [TaRosterOut.from_orm_row(row) for row in ensure_default_roster(db)]
 
 
@@ -88,40 +92,59 @@ def course_ta_load(
     return build_course_ta_load(db, course_id=course_id)
 
 
-@router.get("/queue/", response_model=list[TaQueueItem])
+@router.get("/queue/")
 def list_ta_queue(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
     course_id: int | None = Query(default=None),
-    course: str | None = Query(default=None),
     assignment: str | None = Query(
         default=None,
-        description="mine | backup | unassigned | all | in_progress",
+        description="desk | mine | backup | unassigned | all | in_progress",
     ),
     include_helped: bool = Query(default=False),
+    limit: int | None = Query(default=None, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
 ):
-    if course_id is None and not course:
+    if course_id is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="course_id is required.",
         )
-    if course_id is not None:
-        require_course_role(db, user, course_id, roles={"ta", "professor"})
+    require_course_role(db, user, course_id, roles={"ta", "professor"})
 
-    query = db.query(Request).order_by(Request.created_at.desc())
-    if course_id is not None:
-        query = query.filter(Request.course_id == course_id)
-    elif course:
-        query = query.filter(Request.course == course)
-    requests = query.all()
-    entries = {
-        entry.source_request_id: entry
-        for entry in db.query(KnowledgeEntry).all()
-        if entry.source_request_id is not None
-    }
+    # Bound the SQL read: course-scoped, newest first, hard cap before desk filters.
+    sql_cap = 500 if limit is None else min(max(limit + offset, limit or 1), 500)
+    requests = (
+        db.query(Request)
+        .filter(Request.course_id == course_id)
+        .order_by(Request.created_at.desc())
+        .limit(sql_cap)
+        .all()
+    )
+    source_ids = [row.id for row in requests]
+    entries = {}
+    if source_ids:
+        for entry in (
+            db.query(KnowledgeEntry)
+            .filter(KnowledgeEntry.course_id == course_id)
+            .filter(KnowledgeEntry.source_request_id.in_(source_ids))
+            .all()
+        ):
+            entries[entry.source_request_id] = entry
 
-    mode = (assignment or "all").strip().lower()
+    mode = (assignment or "desk").strip().lower()
     name = _ta_display(user)
+
+    def _is_mine(request: Request, work: str) -> bool:
+        assigned = (request.assigned_ta or "").strip()
+        claimed = (getattr(request, "claimed_by", None) or "").strip()
+        claimed_id = getattr(request, "claimed_by_user_id", None)
+        return (
+            assigned == name
+            or claimed == name
+            or claimed_id == user.id
+            or (work in {"claimed", "in_progress"} and (claimed == name or claimed_id == user.id))
+        )
 
     items: list[TaQueueItem] = []
     for request in requests:
@@ -139,35 +162,77 @@ def list_ta_queue(
         assigned = (request.assigned_ta or "").strip()
         backup = (request.alternative_ta or "").strip()
         claimed = (getattr(request, "claimed_by", None) or "").strip()
+        claimed_id = getattr(request, "claimed_by_user_id", None)
+        unassigned = (not assigned or assigned == "Unassigned") and not claimed and not claimed_id
 
         if mode == "mine":
-            if not (
-                assigned == name
-                or claimed == name
-                or (work in {"claimed", "in_progress"} and claimed == name)
-            ):
+            if not _is_mine(request, work):
                 continue
         elif mode == "backup":
             if backup != name:
                 continue
         elif mode == "unassigned":
-            if (assigned and assigned != "Unassigned") or claimed:
+            if not unassigned:
                 continue
         elif mode == "in_progress":
-            if work != "in_progress" or claimed != name:
+            if work != "in_progress" or not _is_mine(request, work):
+                continue
+        elif mode == "desk":
+            if not (_is_mine(request, work) or backup == name or unassigned):
                 continue
 
-        coach = build_help_coach(db, request, knowledge_entry=entry)
+        similar_n = sum(
+            1
+            for peer in requests
+            if peer.id != request.id
+            and (
+                (
+                    peer.cluster_id is not None
+                    and peer.cluster_id == request.cluster_id
+                )
+                or (
+                    (peer.category or peer.triage_category)
+                    and (peer.category or peer.triage_category)
+                    == (request.category or request.triage_category)
+                )
+            )
+        )
         items.append(
             TaQueueItem(
                 request=to_request_out(request, db=db),
                 knowledge_entry=to_out(entry) if entry else None,
-                learning_style=request.learning_style,
+                learning_style=(
+                    request.learning_style
+                    if request.learning_style and request.learning_style != "unknown"
+                    else None
+                ),
                 urgency=request.urgency,
-                help_coach=HelpCoachOut.model_validate(coach),
+                similar_open_count=similar_n,
+                help_coach=None,
             )
         )
-    return items
+    limit, offset = clamp_page(limit, offset)
+    return page_or_list(items, limit=limit, offset=offset)
+
+
+@router.get("/coach/", response_model=HelpCoachOut)
+def get_help_coach(
+    request_id: int = Query(..., ge=1),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Help Coach for one selected ask — not computed on the full queue list."""
+    request = _get_request(db, request_id)
+    _require_ta_for_request(db, user, request)
+    entry = (
+        db.query(KnowledgeEntry)
+        .filter(KnowledgeEntry.source_request_id == request.id)
+        .order_by(KnowledgeEntry.id.desc())
+        .first()
+    )
+    return HelpCoachOut.model_validate(
+        build_help_coach(db, request, knowledge_entry=entry)
+    )
 
 
 @router.post("/assist/", response_model=TaAssistResponse)
@@ -232,33 +297,64 @@ async def claim_request(
     _require_ta_for_request(db, user, request)
     ta_name = _ta_display(user)
     work = str(getattr(request, "work_status", None) or "open")
-    claimed = (getattr(request, "claimed_by", None) or "").strip()
-    if work in {"claimed", "in_progress"} and claimed and claimed != ta_name:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Already claimed by {claimed}.",
-        )
     if work == "helped":
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="This ask was already marked helped.",
         )
 
-    request.work_status = "claimed"
-    request.claimed_by = ta_name
-    request.claimed_at = _utcnow()
-    # Claimer becomes primary if unassigned.
+    claimed_at = _utcnow()
+    result = db.execute(
+        update(Request)
+        .where(Request.id == request.id)
+        .where(Request.work_status != "helped")
+        .where(
+            or_(
+                Request.claimed_by_user_id.is_(None),
+                Request.claimed_by_user_id == user.id,
+            )
+        )
+        .values(
+            work_status="claimed",
+            claimed_by=ta_name,
+            claimed_by_user_id=user.id,
+            claimed_at=claimed_at,
+        )
+    )
+    if result.rowcount != 1:
+        db.rollback()
+        fresh = _get_request(db, payload.request_id)
+        owner = (getattr(fresh, "claimed_by", None) or "another TA").strip()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Already claimed by {owner}.",
+        )
+    db.commit()
+    request = _get_request(db, payload.request_id)
     if not (request.assigned_ta or "").strip() or request.assigned_ta == "Unassigned":
         previous_primary = (request.assigned_ta or "").strip()
         request.assigned_ta = ta_name
         if previous_primary and previous_primary not in {ta_name, "Unassigned"}:
             request.alternative_ta = previous_primary
-    db.add(request)
-    db.commit()
-    db.refresh(request)
+        db.add(request)
+        db.commit()
+        db.refresh(request)
     await hub.broadcast(
         "ta.claimed",
-        {"request_id": request.id, "claimed_by": ta_name, "work_status": "claimed"},
+        {
+            "request_id": request.id,
+            "claimed_by": ta_name,
+            "claimed_by_user_id": user.id,
+            "work_status": "claimed",
+            "course_id": request.course_id,
+        },
+    )
+    await notify_request_owner(
+        db,
+        request,
+        kind="claimed",
+        title=f"A TA claimed your ask #{request.id}",
+        body=f"{ta_name} claimed request #{request.id}. Check status with your request code.",
     )
     return TaActionResponse(
         request=to_request_out(request, db=db),
@@ -282,16 +378,19 @@ async def update_work_status(
         )
 
     claimed = (getattr(request, "claimed_by", None) or "").strip()
+    claimed_id = getattr(request, "claimed_by_user_id", None)
     assigned = (request.assigned_ta or "").strip()
     backup = (request.alternative_ta or "").strip()
     if payload.status in {"in_progress", "helped"}:
-        if claimed and claimed != ta_name and assigned != ta_name and backup != ta_name:
+        owns = claimed_id == user.id or claimed == ta_name
+        if (claimed or claimed_id) and not owns and assigned != ta_name and backup != ta_name:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only the claimed / assigned TA can update this status.",
             )
-        if not claimed:
+        if not claimed and not claimed_id:
             request.claimed_by = ta_name
+            request.claimed_by_user_id = user.id
             request.claimed_at = _utcnow()
 
     request.work_status = payload.status
@@ -306,6 +405,8 @@ async def update_work_status(
             "request_id": request.id,
             "work_status": payload.status,
             "claimed_by": request.claimed_by,
+            "claimed_by_user_id": getattr(request, "claimed_by_user_id", None),
+            "course_id": request.course_id,
         },
     )
     label = {
@@ -346,6 +447,7 @@ async def take_as_backup(
         request.alternative_ta = previous
     request.work_status = "claimed"
     request.claimed_by = ta_name
+    request.claimed_by_user_id = user.id
     request.claimed_at = _utcnow()
     db.add(request)
     db.commit()
@@ -356,6 +458,7 @@ async def take_as_backup(
             "request_id": request.id,
             "assigned_ta": ta_name,
             "alternative_ta": request.alternative_ta,
+            "course_id": request.course_id,
         },
     )
     return TaActionResponse(
@@ -382,6 +485,8 @@ async def reply_to_student(
     if str(getattr(request, "work_status", None) or "open") == "open":
         request.work_status = "in_progress"
         request.claimed_by = request.claimed_by or ta_name
+        if not getattr(request, "claimed_by_user_id", None):
+            request.claimed_by_user_id = user.id
         request.claimed_at = request.claimed_at or _utcnow()
 
     entry = (
@@ -399,7 +504,14 @@ async def reply_to_student(
     db.refresh(request)
     await hub.broadcast(
         "ta.replied",
-        {"request_id": request.id, "ta_name": ta_name},
+        {"request_id": request.id, "ta_name": ta_name, "course_id": request.course_id},
+    )
+    await notify_request_owner(
+        db,
+        request,
+        kind="replied",
+        title=f"A TA replied to ask #{request.id}",
+        body=reply[:400],
     )
     return TaActionResponse(
         request=to_request_out(request, db=db),
@@ -479,6 +591,8 @@ async def resolve_for_curation(
         request.work_status = "helped"
         request.helped_at = _utcnow()
         request.claimed_by = request.claimed_by or ta_name
+        if not getattr(request, "claimed_by_user_id", None):
+            request.claimed_by_user_id = user.id
 
     db.add(entry)
     db.add(request)
@@ -488,7 +602,12 @@ async def resolve_for_curation(
     out = to_out(entry)
     await hub.broadcast(
         "knowledge.updated",
-        {"id": out.id, "status": out.status, "source_request_id": out.source_request_id},
+        {
+            "id": out.id,
+            "status": out.status,
+            "source_request_id": out.source_request_id,
+            "course_id": request.course_id,
+        },
     )
     await hub.broadcast(
         "ta.resolved",
@@ -497,6 +616,7 @@ async def resolve_for_curation(
             "ta_name": ta_name,
             "knowledge_entry_id": out.id,
             "resolution_status": payload.resolution_status,
+            "course_id": request.course_id,
         },
     )
 

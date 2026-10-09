@@ -43,8 +43,13 @@ GROUP_REVIEW_MIN = 3
 FAQ_MIN = 2
 
 
-def build_struggle_heatmap(db: Session) -> StruggleHeatmapOut:
-    requests = db.query(Request).order_by(Request.created_at).all()
+def build_struggle_heatmap(
+    db: Session, *, course_ids: list[int] | None = None
+) -> StruggleHeatmapOut:
+    query = db.query(Request)
+    if course_ids is not None:
+        query = query.filter(Request.course_id.in_(course_ids))
+    requests = query.order_by(Request.created_at).all()
     counts: dict[tuple[str, str], int] = defaultdict(int)
 
     for request in requests:
@@ -68,11 +73,14 @@ def build_escalation_feed(
     age_threshold_minutes: int = ESCALATION_AGE_MINUTES,
     course: str | None = None,
     course_id: int | None = None,
+    course_ids: list[int] | None = None,
 ) -> list[EscalationItem]:
     now = datetime.now(timezone.utc)
     query = db.query(Request)
     if course_id is not None:
         query = query.filter(Request.course_id == course_id)
+    elif course_ids is not None:
+        query = query.filter(Request.course_id.in_(course_ids or [-1]))
     elif course:
         query = query.filter(Request.course == course)
     requests = query.order_by(Request.created_at.desc()).all()
@@ -123,10 +131,13 @@ def build_cluster_command_center(
     *,
     course: str | None = None,
     course_id: int | None = None,
+    course_ids: list[int] | None = None,
 ) -> ClusterCommandCenterOut:
     query = db.query(Request)
     if course_id is not None:
         query = query.filter(Request.course_id == course_id)
+    elif course_ids is not None:
+        query = query.filter(Request.course_id.in_(course_ids or [-1]))
     elif course:
         query = query.filter(Request.course == course)
     requests = query.order_by(Request.created_at.desc()).all()
@@ -187,7 +198,9 @@ def build_cluster_command_center(
         course_id=course_id,
         total_requests=len(requests),
         clusters=clusters,
-        escalations=build_escalation_feed(db, course=course, course_id=course_id)[:8],
+        escalations=build_escalation_feed(
+            db, course=course, course_id=course_id, course_ids=course_ids
+        )[:8],
         message=(
             "Group similar questions, prefer shared review when a topic repeats, "
             "draft FAQ answers for the KB, and route sensitive cases privately."
@@ -195,27 +208,34 @@ def build_cluster_command_center(
     )
 
 
-def build_oracle_metrics(db: Session) -> dict:
-    requests = db.query(Request).all()
-    entries = db.query(KnowledgeEntry).all()
+def build_triage_metrics(
+    db: Session, *, course_ids: list[int] | None = None
+) -> dict:
+    request_q = db.query(Request)
+    entry_q = db.query(KnowledgeEntry)
+    if course_ids is not None:
+        request_q = request_q.filter(Request.course_id.in_(course_ids or [-1]))
+        entry_q = entry_q.filter(KnowledgeEntry.course_id.in_(course_ids or [-1]))
+    requests = request_q.all()
+    entries = entry_q.all()
     approved = [entry for entry in entries if entry.status == "approved"]
     pending = [entry for entry in entries if entry.status == "pending_review"]
-    with_oracle = [request for request in requests if request.oracle_trace_json]
+    with_triage = [request for request in requests if request.triage_trace_json]
     assigned = [request for request in requests if request.assigned_ta]
 
     time_saved = max(
         0,
-        len(with_oracle) * (MANUAL_MINUTES_PER_REQUEST - AI_ASSIST_MINUTES_PER_REQUEST),
+        len(with_triage) * (MANUAL_MINUTES_PER_REQUEST - AI_ASSIST_MINUTES_PER_REQUEST),
     )
 
     recent_traces = []
     for request in sorted(requests, key=lambda item: item.id, reverse=True)[:8]:
-        if not request.oracle_trace_json:
+        if not request.triage_trace_json:
             continue
         try:
             import json
 
-            trace = json.loads(request.oracle_trace_json)
+            trace = json.loads(request.triage_trace_json)
         except Exception:
             continue
         recent_traces.append(
@@ -227,13 +247,13 @@ def build_oracle_metrics(db: Session) -> dict:
                     for step in trace.get("steps") or []
                 ],
                 "assigned_ta": request.assigned_ta,
-                "oracle_category": request.oracle_category,
+                "triage_category": request.triage_category,
             }
         )
 
     return {
         "total_requests": len(requests),
-        "oracle_runs": len(with_oracle),
+        "triage_runs": len(with_triage),
         "matched_assignments": len(assigned),
         "kb_pending_review": len(pending),
         "kb_approved": len(approved),
@@ -289,10 +309,10 @@ def build_review_insights(db: Session, *, course_id: int) -> ReviewInsightsOut:
 
     public_requests = 0
     for request in requests:
-        category = request.oracle_category or request.category or "uncategorized"
+        category = request.triage_category or request.category or "uncategorized"
         if bool(getattr(request, "sensitive", False)) or is_sensitive_category(
             request.category
-        ) or is_sensitive_category(request.oracle_category):
+        ) or is_sensitive_category(request.triage_category):
             continue
         public_requests += 1
         display = category.replace("_", " ")

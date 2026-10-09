@@ -6,9 +6,9 @@ OfficeHours AI is a **packaged multi-role campus application** for office-hours
 triage at Al Akhawayn University.
 
 Users enter via login or Canvas launch. **Course memberships** decide whether
-they work as a student, TA, or professor for each course. The same person may
-be a TA in one course and a student in another. Professors may teach multiple
-courses; courses may have multiple TAs.
+they work as a student, TA, or professor for each course. A TA is staff on a
+course they already completed — not a classmate in that section. Professors
+may teach multiple courses; courses may have two TAs.
 
 | Surface | Port (dev) | Who uses it |
 | --- | --- | --- |
@@ -28,7 +28,7 @@ history: [`project_journey.md`](project_journey.md) · training: [`training_data
    knowledge, peer notes, **Rooms** (`/help-room/`), Canvas launch/sync, TA roster/staffing, analytics,
    action plans / group meetings, feedback, `.ics`
 3. **Ask Triage AI (custom-trained)** — Analyzer / Matcher / Synthesizer at
-   intake (implementation: `oracle_service.py` / `oracle_*` fields)
+   intake (implementation: `ask_triage_service.py` / `triage_*` fields)
 4. **Help Coach AI** — TA mid-session assist (`help_coach_service.py`)
 5. **Canvas integration** — JIT launch provisioning + materials → course KB
    **and Rooms chapter grid**. Live API when credentials are set; local mirror

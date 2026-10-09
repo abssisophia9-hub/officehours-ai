@@ -1,0 +1,18 @@
+# Optional campus host. Demo and tests stay on SQLite.
+#   docker compose -f docker-compose.postgres.yml up -d
+#   export DATABASE_URL=postgresql://officehours:officehours@127.0.0.1:5432/officehours
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: officehours
+      POSTGRES_PASSWORD: officehours
+      POSTGRES_DB: officehours
+    ports:
+      - "5432:5432"
+    volumes:
+      - officehours_pg:/var/lib/postgresql/data
+
+volumes:
+  officehours_pg:
