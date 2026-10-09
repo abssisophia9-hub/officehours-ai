@@ -6,8 +6,10 @@ before hosting.
 
 Product shape: one React app (`frontend/officehours-app`) talking to one
 FastAPI process (`backend/`). Ask Triage, Help Coach, and Study Agent are
-**local models** (MiniLM + scikit-learn + approved-KB retrieval). External
-LLMs stay off (`OFFICEHOURS_ALLOW_EXTERNAL_LLM=false`).
+**local models** (MiniLM + scikit-learn + approved-KB retrieval), behind one
+model interface. The external Claude API is allowed for the MVP with demo
+data only. Do not send real student data or real course material without
+further approval. Self-hosting a model is not required.
 
 Protocol: REST for requests, WebSocket `/ws` for live course events.
 See [`system_architecture.md`](system_architecture.md) and [`SECURITY.md`](SECURITY.md).
@@ -17,7 +19,7 @@ See [`system_architecture.md`](system_architecture.md) and [`SECURITY.md`](SECUR
 | Item | Verdict |
 | --- | --- |
 | Close the AI response loop | **Already closed.** `POST /requests/` runs Analyzer → Matcher → Synthesizer and returns the row (hint, TA, category) in the HTTP response, then pushes `triage.*` on `/ws`. Help Coach is `POST /ta/assist/`. Study Agent is `POST /agent/ask` and quotes stamped KB only. Action plans are `POST /actions/recommendations/`. |
-| Add an external LLM provider | **Do not.** Campus path is local. `analyzer_agent.py` refuses Claude unless `OFFICEHOURS_ALLOW_EXTERNAL_LLM=true`, which deploy leaves false. |
+| Add an external LLM provider | **Allowed for the MVP, demo data only.** One Claude interface, gated by `OFFICEHOURS_ALLOW_EXTERNAL_LLM`. No real student data and no real course material without further approval. `analyzer_agent.py` still refuses Claude when that flag is false. |
 | Celery / RQ / SQS for LLM calls | **Do not.** There is no remote LLM call on the request path. Intake is an in-process joblib predict. |
 | Auth must go through `client.js` | **Already true.** `AuthContext.jsx` and `LoginPage.jsx` call `api()` from `frontend/officehours-app/src/api/client.js`. `App.jsx` only declares routes. |
 | Role checks on every route | **Already true.** `access_control.py` checks course membership (student / TA / professor). WebSocket `/ws` requires a token and that course. Quiet-ask status is the documented exception in `SECURITY.md`. |
@@ -53,4 +55,4 @@ These are credential and deploy steps, not missing subsystems. Full list: [`SECU
 2. Canvas LTI 1.3 key and API token from campus IT
 3. HTTPS origin in `OFFICEHOURS_FRONTEND_URL` and `OFFICEHOURS_CORS_ORIGINS`
 4. Postgres via `DATABASE_URL` when leaving the laptop
-5. Leave `OFFICEHOURS_ALLOW_EXTERNAL_LLM=false` and `OFFICEHOURS_RATE_LIMIT=true`
+5. Claude for the MVP may set `OFFICEHOURS_ALLOW_EXTERNAL_LLM=true`, demo data only, through that single interface. Leave the flag false once real student data or real course material is in play and that use is not approved. Leave `OFFICEHOURS_RATE_LIMIT=true`.
