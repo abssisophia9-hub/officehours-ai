@@ -203,8 +203,14 @@ def ingest_course_material(
     course: str | None = None,
     auto_approve: bool = False,
     external_id: str | None = None,
+    filename: str | None = None,
+    pages: list[tuple[int, str]] | None = None,
 ) -> list[KnowledgeEntry]:
-    chunks = _chunk_material(content)
+    page_spans = pages if pages is not None else [(1, content)]
+    chunks: list[tuple[int, str]] = []
+    for page_number, page_text in page_spans:
+        for chunk in _chunk_material(page_text):
+            chunks.append((page_number, chunk))
     if not chunks:
         return []
     entries: list[KnowledgeEntry] = []
@@ -214,7 +220,8 @@ def ingest_course_material(
     if external_id:
         note_bits.append(f"canvas:{external_id}")
     professor_note = " | ".join(bit for bit in note_bits if bit)
-    for index, chunk in enumerate(chunks, start=1):
+    source_filename = (filename or title).strip() or None
+    for index, (page_number, chunk) in enumerate(chunks, start=1):
         question = f"{title} — part {index}"
         entry = KnowledgeEntry(
             question_text=question,
@@ -236,6 +243,9 @@ def ingest_course_material(
             course_id=course_id,
             material_source=source,
             entry_kind="course_material",
+            source_filename=source_filename,
+            page_number=page_number,
+            chunk_index=index,
             professor_note=professor_note,
             reviewed_at=now if auto_approve else None,
         )
@@ -355,6 +365,9 @@ def to_out(entry: KnowledgeEntry) -> KnowledgeEntryOut:
         course_id=getattr(entry, "course_id", None),
         material_source=getattr(entry, "material_source", None),
         entry_kind=getattr(entry, "entry_kind", None),
+        source_filename=getattr(entry, "source_filename", None),
+        page_number=getattr(entry, "page_number", None),
+        chunk_index=getattr(entry, "chunk_index", None),
         ta_resolution=getattr(entry, "ta_resolution", None),
         professor_note=entry.professor_note,
         created_at=entry.created_at,

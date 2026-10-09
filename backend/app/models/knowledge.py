@@ -42,6 +42,9 @@ class KnowledgeEntry(Base):
     material_source: Mapped[str | None] = mapped_column(String, nullable=True)
     # course_material = uploaded/synced course file. Null = FAQ draft from a student ask.
     entry_kind: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    source_filename: Mapped[str | None] = mapped_column(String, nullable=True)
+    page_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    chunk_index: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # Set when a TA hands the draft to curation: resolved | needs_professor.
     ta_resolution: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     professor_note: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -76,6 +79,9 @@ class KnowledgeEntryOut(BaseModel):
     course_id: int | None = None
     material_source: str | None = None
     entry_kind: str | None = None
+    source_filename: str | None = None
+    page_number: int | None = None
+    chunk_index: int | None = None
     ta_resolution: str | None = None
     professor_note: str | None = None
     created_at: datetime

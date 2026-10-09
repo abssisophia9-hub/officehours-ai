@@ -62,7 +62,7 @@ from app.services.analytics_service import (
 )
 from app.services.canvas_service import canvas_status, sync_course_materials
 from app.services.kb_agent_service import answer_from_knowledge_base
-from app.services.material_extract import extract_material_text
+from app.services.material_extract import extract_material_pages
 from app.services.knowledge_service import (
     create_faq_from_cluster,
     create_faq_from_insight,
@@ -301,7 +301,7 @@ async def upload_course_material_file(
             detail="File too large (20 MB max).",
         )
     try:
-        content, material_source = extract_material_text(file.filename or "", data)
+        pages, material_source = extract_material_pages(file.filename or "", data)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
@@ -311,11 +311,13 @@ async def upload_course_material_file(
     entries = ingest_course_material(
         db,
         title=material_title,
-        content=content,
+        content="\n\n".join(page.text for page in pages),
         source=material_source,
         course_id=course.id,
         course=course.code,
         auto_approve=auto_approve,
+        filename=file.filename or material_title,
+        pages=[(page.page_number, page.text) for page in pages],
     )
     if not entries:
         raise HTTPException(

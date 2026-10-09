@@ -227,6 +227,9 @@ def test_agent_cites_faq_title_not_entry_id():
             course_id=course_id,
             material_source="slides",
             entry_kind="course_material",
+            source_filename="week4-hashing.pdf",
+            page_number=4,
+            chunk_index=1,
         )
         related = KnowledgeEntry(
             question_text="Week 4 hashing slides — linear probing",
@@ -236,6 +239,9 @@ def test_agent_cites_faq_title_not_entry_id():
             course_id=course_id,
             material_source="slides",
             entry_kind="course_material",
+            source_filename="week4-hashing.pdf",
+            page_number=4,
+            chunk_index=2,
         )
         db.add_all([primary, related])
         db.commit()
@@ -247,7 +253,7 @@ def test_agent_cites_faq_title_not_entry_id():
     finally:
         db.close()
     assert body.should_seek_help is False
-    assert "Week 4 hashing slides" in body.answer
+    assert "week4-hashing.pdf, p. 4, chunk 1" in body.answer
     assert "#" not in body.answer.split(":")[0]
     assert "Related approved material:" in body.answer
     assert "#1 (" not in body.answer

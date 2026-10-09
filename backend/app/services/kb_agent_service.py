@@ -34,6 +34,11 @@ NO_MATCH_HINT = (
 
 
 def _cite_entry(entry) -> str:
+    filename = (getattr(entry, "source_filename", None) or "").strip()
+    page = getattr(entry, "page_number", None)
+    chunk = getattr(entry, "chunk_index", None)
+    if filename and page is not None and chunk is not None:
+        return f"{filename}, p. {page}, chunk {chunk}"
     title = (getattr(entry, "question_text", None) or "").strip()
     if len(title) > 72:
         title = title[:69] + "…"

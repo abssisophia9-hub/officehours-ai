@@ -62,6 +62,53 @@ def _minimal_pdf(text: str) -> bytes:
     return bytes(out)
 
 
+def _multipage_pdf(pages: list[str]) -> bytes:
+    """Build a valid PDF with one short text line per page."""
+    font_id = 3
+    objects: dict[int, bytes] = {
+        1: b"<< /Type /Catalog /Pages 2 0 R >>",
+        3: b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    }
+    kids: list[int] = []
+    next_id = 4
+    for text in pages:
+        page_id = next_id
+        content_id = next_id + 1
+        next_id += 2
+        kids.append(page_id)
+        escaped = text.replace("\\", r"\\").replace("(", r"\(").replace(")", r"\)")
+        stream = f"BT /F1 12 Tf 72 720 Td ({escaped}) Tj ET".encode()
+        objects[content_id] = (
+            b"<< /Length "
+            + str(len(stream)).encode()
+            + b" >>\nstream\n"
+            + stream
+            + b"\nendstream"
+        )
+        objects[page_id] = (
+            f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+            f"/Contents {content_id} 0 R /Resources << /Font << /F1 {font_id} 0 R >> >> >>"
+        ).encode()
+    kids_ref = " ".join(f"{kid} 0 R" for kid in kids)
+    objects[2] = f"<< /Type /Pages /Kids [{kids_ref}] /Count {len(pages)} >>".encode()
+
+    out = bytearray(b"%PDF-1.4\n")
+    offsets = [0]
+    for index in range(1, next_id):
+        offsets.append(len(out))
+        out += f"{index} 0 obj\n".encode() + objects[index] + b"\nendobj\n"
+    xref_at = len(out)
+    out += f"xref\n0 {next_id}\n".encode()
+    out += b"0000000000 65535 f \n"
+    for offset in offsets[1:]:
+        out += f"{offset:010d} 00000 n \n".encode()
+    out += (
+        f"trailer\n<< /Size {next_id} /Root 1 0 R >>\n"
+        f"startxref\n{xref_at}\n%%EOF\n"
+    ).encode()
+    return bytes(out)
+
+
 def test_upload_requires_professor_auth():
     _, course_id = _professor()
     response = client.post(
@@ -173,6 +220,42 @@ def test_upload_vtt_video_transcript():
         },
     ).json()
     assert answer["matched_count"] >= 1
+
+
+def test_pdf_citation_uses_filename_page_and_chunk():
+    headers, course_id = _professor()
+    pdf = _multipage_pdf(
+        [
+            "Zephyr valves open when the copper kettle reaches a rolling boil.",
+            "Lantern buffers store spare wicks for the night lab.",
+        ]
+    )
+    response = client.post(
+        "/knowledge/materials/upload",
+        headers=headers,
+        data={"course_id": str(course_id), "title": "Demo lab notes", "auto_approve": "true"},
+        files={"file": ("lab-notes.pdf", pdf, "application/pdf")},
+    )
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["chunks_created"] == 2
+
+    stored = client.get(f"/knowledge/{body['entry_ids'][1]}", headers=headers).json()
+    assert stored["source_filename"] == "lab-notes.pdf"
+    assert stored["page_number"] == 2
+    assert stored["chunk_index"] == 2
+    assert stored["entry_kind"] == "course_material"
+
+    answer = client.post(
+        "/agent/ask",
+        headers=headers,
+        json={
+            "question": "What do lantern buffers store for the night lab?",
+            "course_id": course_id,
+        },
+    ).json()
+    assert answer["matched_count"] >= 1
+    assert "lab-notes.pdf, p. 2, chunk 2" in answer["answer"]
 
 
 def test_upload_scoped_to_course():
