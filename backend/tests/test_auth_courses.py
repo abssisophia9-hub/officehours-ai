@@ -39,7 +39,8 @@ def test_login_returns_courses_for_roles():
         ).json()
         assert student["user"]["student_id"] == "117400"
         student_codes = {c["code"] for c in student["user"]["courses"]}
-        assert len(student_codes) == 7
+        assert len(student_codes) == 8
+        assert "CSC 3390" in student_codes
         assert "CSC 3374" in student_codes
         assert "COM 1301" in student_codes
         assert "MTH 1304" in student_codes

@@ -82,6 +82,7 @@ export default function StudentWorkspace() {
   const [buddyBusy, setBuddyBusy] = useState(false);
   const [statusCode, setStatusCode] = useState("");
   const [statusResult, setStatusResult] = useState(null);
+  const [routingLine, setRoutingLine] = useState("");
   const [statusBusy, setStatusBusy] = useState(false);
   const [todayFocus, setTodayFocus] = useState({ topic: "Revision plan" });
   const [roomCount, setRoomCount] = useState(null);
@@ -120,6 +121,21 @@ export default function StudentWorkspace() {
     loadAsks();
     loadRooms();
   }, [loadAsks, loadRooms]);
+
+  useEffect(() => {
+    if (!activeCourse || !token) return;
+    let cancelled = false;
+    api(`/requests/routing?course_id=${activeCourse.id}`, { token })
+      .then((data) => {
+        if (!cancelled) setRoutingLine(data?.line || "");
+      })
+      .catch(() => {
+        if (!cancelled) setRoutingLine("");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeCourse, token]);
 
   useEffect(() => {
     if (!activeCourse) return;
@@ -405,6 +421,7 @@ export default function StudentWorkspace() {
                 Use when you&apos;re stuck and need a TA or professor. Quiet asks
                 hide your name; you still own the thread in My asks.
               </p>
+              {routingLine ? <p className="sd-ask-copy">{routingLine}</p> : null}
             </div>
             <span className="sd-badge">Primary</span>
           </div>
@@ -561,6 +578,12 @@ export default function StudentWorkspace() {
                 {result.anonymous ? "Submitted quietly" : "Submitted as you"} ·
                 request <span className="bh-pill bh-pill-green">#{result.id}</span>
               </p>
+              {result.assigned_ta ? (
+                <p className="mt-1 text-xs text-[var(--theme-text-muted)]">
+                  Assigned to: {result.assigned_ta}
+                  {result.assignee_role === "professor" ? " (professor)" : ""}
+                </p>
+              ) : null}
               <p className="mt-1 text-xs text-[var(--theme-text-muted)]">
                 Help mode:{" "}
                 {result.help_mode === "face_to_face"

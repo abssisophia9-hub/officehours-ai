@@ -74,6 +74,7 @@ def to_request_out(
         triage_tags=tags,
         assigned_ta=request.assigned_ta,
         alternative_ta=request.alternative_ta,
+        assignee_role=getattr(request, "assignee_role", None),
         estimated_wait_minutes=request.estimated_wait_minutes,
         student_hint=request.student_hint,
         triage=triage_payload,

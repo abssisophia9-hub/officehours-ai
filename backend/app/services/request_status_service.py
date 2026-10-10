@@ -44,6 +44,7 @@ def build_request_status(
         "ta_reply": ta_reply,
         "student_hint": getattr(request, "student_hint", None),
         "assigned_ta": getattr(request, "assigned_ta", None),
+        "assignee_role": getattr(request, "assignee_role", None),
         "estimated_wait_minutes": getattr(request, "estimated_wait_minutes", None),
         "meeting_title": None,
         "meeting_when": None,
@@ -173,6 +174,13 @@ def _status_copy(
         )
 
     if decision is None:
+        if str(getattr(request, "assignee_role", "") or "") == "professor":
+            who = getattr(request, "assigned_ta", None) or "your professor"
+            return (
+                STATUS_QUEUED,
+                "Assigned to your professor",
+                f"This course has no TA. Your ask went to {who}.",
+            )
         return (
             STATUS_QUEUED,
             "Waiting in queue",
