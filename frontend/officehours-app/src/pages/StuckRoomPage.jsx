@@ -510,7 +510,7 @@ export default function StuckRoomPage() {
               <li>Staff are not in this room.</li>
             </ol>
             <p className="rf-quiet">
-              Need staff? <Link to="/student#ask">Quiet ask</Link>
+              Need staff? <Link to="/student/ask">Ask staff</Link>
             </p>
           </div>
         </aside>
@@ -846,7 +846,7 @@ function CreateWizard({
             />
             <p className="bh-card-note">
               Rooms are named. Helping here puts you on the course leaderboard.
-              Need to ask staff privately? Use Quiet ask.
+              Need to ask staff privately? <Link to="/student/ask">Ask staff</Link>.
             </p>
           </>
         ) : null}

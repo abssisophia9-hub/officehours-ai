@@ -6,6 +6,7 @@ import LandingPage from "./pages/LandingPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import SsoCompletePage from "./pages/SsoCompletePage.jsx";
 import CourseHomePage from "./pages/CourseHomePage.jsx";
+import StudentAgentPage from "./pages/StudentAgentPage.jsx";
 import StudentWorkspace from "./pages/StudentWorkspace.jsx";
 import StudentAsksPage from "./pages/StudentAsksPage.jsx";
 import StudentRevisionPage from "./pages/StudentRevisionPage.jsx";
@@ -69,7 +70,8 @@ export default function App() {
         }
       >
         <Route index element={<CourseHomePage />} />
-        <Route path="student" element={<StudentWorkspace />} />
+        <Route path="student" element={<StudentAgentPage />} />
+        <Route path="student/ask" element={<StudentWorkspace />} />
         <Route path="student/asks" element={<StudentAsksPage />} />
         <Route path="student/revision" element={<StudentRevisionPage />} />
         <Route path="student/notes" element={<StudentNotesPage />} />

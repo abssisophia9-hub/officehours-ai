@@ -188,7 +188,7 @@ export default function StudentAsksPage() {
               <p className="mt-1 text-xs text-aui-deep/70">
                 Submit from the dashboard — Quiet or identified.
               </p>
-              <Link to="/student#ask" className="btn-primary mt-4 inline-flex px-5 py-2.5 text-sm">
+              <Link to="/student/ask" className="btn-primary mt-4 inline-flex px-5 py-2.5 text-sm">
                 Ask for help
               </Link>
             </div>
