@@ -165,8 +165,11 @@ def test_ta_launch_maps_ta_role():
 
 
 def test_full_community_loop_ask_ta_professor_agent():
-    """The problem this product solves: one student's question, answered once
-    by a human, becomes instant approved knowledge for the whole course."""
+    """Quiet ask still reaches a TA and a professor stamp.
+
+    The study agent does not serve that FAQ draft. It answers only from
+    uploaded course material.
+    """
     student = _launch()  # Omar, CSC 3351
     course_id = student["course_id"]
 
@@ -253,14 +256,14 @@ def test_full_community_loop_ask_ta_professor_agent():
     assert approved.status_code == 200
     assert professor["role"] == "professor"
 
-    # 6. The next student with the same struggle gets the answer instantly.
+    # 6. An approved FAQ draft is not study-agent material.
     after = client.post(
         "/agent/ask",
         headers=student_headers,
         json={"question": question, "course_id": course_id},
     ).json()
-    assert after["matched_count"] >= 1
-    assert "aging" in after["answer"].lower()
+    assert after["matched_count"] == 0
+    assert after["should_seek_help"] is True
 
 
 def test_launch_into_existing_course_joins_without_reprovision():

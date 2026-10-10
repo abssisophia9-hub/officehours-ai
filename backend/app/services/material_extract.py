@@ -9,19 +9,30 @@ Supported today:
   professors upload the lecture recording's caption file; automatic
   speech-to-text, e.g. Whisper, can later feed this same route)
 
-Returns ``(text, material_source)``; raises ``ValueError`` for unsupported
-or unreadable files.
+``extract_material_pages`` returns ``(pages, material_source)`` with PDF page
+numbers kept. ``extract_material_text`` joins those pages for callers that
+only need a string. Raises ``ValueError`` for unsupported or unreadable files.
 """
 
 from __future__ import annotations
 
 import io
 import re
+from dataclasses import dataclass
 
 SUPPORTED_EXTENSIONS = {".pdf", ".docx", ".txt", ".md", ".vtt", ".srt"}
 
 
-def extract_material_text(filename: str, data: bytes) -> tuple[str, str]:
+@dataclass(frozen=True)
+class MaterialPage:
+    """One page of extracted text. Non-PDF files are a single page numbered 1."""
+
+    page_number: int
+    text: str
+
+
+def extract_material_pages(filename: str, data: bytes) -> tuple[list[MaterialPage], str]:
+    """Return ``(pages, material_source)``. PDF page numbers are 1-based."""
     name = (filename or "").lower().strip()
     extension = name[name.rfind(".") :] if "." in name else ""
     if extension not in SUPPORTED_EXTENSIONS:
@@ -31,37 +42,43 @@ def extract_material_text(filename: str, data: bytes) -> tuple[str, str]:
         )
 
     if extension == ".pdf":
-        return _extract_pdf(data), "slides"
+        return _extract_pdf_pages(data), "slides"
     if extension == ".docx":
-        return _extract_docx(data), "notes"
+        return [MaterialPage(1, _extract_docx(data))], "notes"
     if extension in {".vtt", ".srt"}:
-        return _extract_transcript(data), "video_transcript"
-    return _decode(data), "notes"
+        return [MaterialPage(1, _extract_transcript(data))], "video_transcript"
+    return [MaterialPage(1, _decode(data))], "notes"
+
+
+def extract_material_text(filename: str, data: bytes) -> tuple[str, str]:
+    pages, source = extract_material_pages(filename, data)
+    return "\n\n".join(page.text for page in pages), source
 
 
 def _decode(data: bytes) -> str:
     return data.decode("utf-8", errors="ignore").strip()
 
 
-def _extract_pdf(data: bytes) -> str:
+def _extract_pdf_pages(data: bytes) -> list[MaterialPage]:
     from pypdf import PdfReader
 
     try:
         reader = PdfReader(io.BytesIO(data))
     except Exception as exc:  # pypdf raises many concrete types
         raise ValueError(f"Could not read PDF: {exc}") from exc
-    pages = []
-    for page in reader.pages:
+    pages: list[MaterialPage] = []
+    for index, page in enumerate(reader.pages, start=1):
         try:
-            pages.append(page.extract_text() or "")
+            text = (page.extract_text() or "").strip()
         except Exception:
             continue
-    text = "\n\n".join(part.strip() for part in pages if part.strip())
-    if not text:
+        if text:
+            pages.append(MaterialPage(index, text))
+    if not pages:
         raise ValueError(
             "No extractable text found in the PDF (scanned images need OCR)."
         )
-    return text
+    return pages
 
 
 def _extract_docx(data: bytes) -> str:

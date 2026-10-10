@@ -1,0 +1,97 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R 8 0 R 10 0 R] /Count 4 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 5 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+5 0 obj
+<< /Length 274 >>
+stream
+BT /F1 12 Tf 72 720 Td
+(DEMO DATA. Not a real course.) Tj
+0 -18 Td
+(The OfficeHours demo kettle stores brew tickets in a binary heap.) Tj
+0 -18 Td
+(Each brew ticket records a student id and a priority number.) Tj
+0 -18 Td
+(The highest priority ticket is served first.) Tj
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 7 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+7 0 obj
+<< /Length 279 >>
+stream
+BT /F1 12 Tf 72 720 Td
+(DEMO DATA. Not a real course.) Tj
+0 -18 Td
+(A circular queue of mugs holds at most eight mugs.) Tj
+0 -18 Td
+(Enqueue adds a mug at the rear. Dequeue removes the mug at the front.) Tj
+0 -18 Td
+(When the queue is full, the kettle refuses another mug.) Tj
+ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 9 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+9 0 obj
+<< /Length 254 >>
+stream
+BT /F1 12 Tf 72 720 Td
+(DEMO DATA. Not a real course.) Tj
+0 -18 Td
+(The locker-code hash table uses separate chaining.) Tj
+0 -18 Td
+(A collision hangs a linked list on that bucket.) Tj
+0 -18 Td
+(Lookup walks the list until the locker code matches.) Tj
+ET
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 11 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+11 0 obj
+<< /Length 276 >>
+stream
+BT /F1 12 Tf 72 720 Td
+(DEMO DATA. Not a real course.) Tj
+0 -18 Td
+(Demo office hours are Tuesdays at 14:00 in room N-12.) Tj
+0 -18 Td
+(The demo passphrase for the kettle closet is copper-kettles.) Tj
+0 -18 Td
+(This page is synthetic material for the study-agent slice.) Tj
+ET
+endstream
+endobj
+xref
+0 12
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000134 00000 n 
+0000000204 00000 n 
+0000000330 00000 n 
+0000000655 00000 n 
+0000000781 00000 n 
+0000001111 00000 n 
+0000001237 00000 n 
+0000001542 00000 n 
+0000001670 00000 n 
+trailer
+<< /Size 12 /Root 1 0 R >>
+startxref
+1998
+%%EOF

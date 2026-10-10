@@ -5,11 +5,13 @@ Knowledge-base drafting, curation helpers, and semantic retrieval.
 from __future__ import annotations
 
 import json
+import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
 from app.ai.clustering import cosine_similarity, embed_text
+from app.services.demo_mode import demo_mode
 from app.ai.summarizer import extract_keywords, summarize_request_cluster
 from app.ai.synthesizer_model import draft_kb_with_model
 from app.models.knowledge import KnowledgeEntry, KnowledgeEntryOut, KnowledgeEntryUpdate
@@ -203,8 +205,19 @@ def ingest_course_material(
     course: str | None = None,
     auto_approve: bool = False,
     external_id: str | None = None,
+    filename: str | None = None,
+    pages: list[tuple[int, str]] | None = None,
 ) -> list[KnowledgeEntry]:
-    chunks = _chunk_material(content)
+    if auto_approve and not demo_mode():
+        raise ValueError(
+            "auto_approve requires OFFICEHOURS_DEMO. Leave the upload pending "
+            "for a professor stamp."
+        )
+    page_spans = pages if pages is not None else [(1, content)]
+    chunks: list[tuple[int, str]] = []
+    for page_number, page_text in page_spans:
+        for chunk in _chunk_material(page_text):
+            chunks.append((page_number, chunk))
     if not chunks:
         return []
     entries: list[KnowledgeEntry] = []
@@ -214,7 +227,9 @@ def ingest_course_material(
     if external_id:
         note_bits.append(f"canvas:{external_id}")
     professor_note = " | ".join(bit for bit in note_bits if bit)
-    for index, chunk in enumerate(chunks, start=1):
+    source_filename = (filename or title).strip() or None
+    upload_id = uuid.uuid4().hex
+    for index, (page_number, chunk) in enumerate(chunks, start=1):
         question = f"{title} — part {index}"
         entry = KnowledgeEntry(
             question_text=question,
@@ -235,6 +250,11 @@ def ingest_course_material(
             cluster_id=None,
             course_id=course_id,
             material_source=source,
+            entry_kind="course_material",
+            source_filename=source_filename,
+            page_number=page_number,
+            chunk_index=index,
+            upload_id=upload_id,
             professor_note=professor_note,
             reviewed_at=now if auto_approve else None,
         )
@@ -287,6 +307,31 @@ def update_entry(
     return entry
 
 
+def list_upload_entries(db: Session, upload_id: str) -> list[KnowledgeEntry]:
+    return (
+        db.query(KnowledgeEntry)
+        .filter(KnowledgeEntry.upload_id == upload_id)
+        .order_by(KnowledgeEntry.chunk_index, KnowledgeEntry.id)
+        .all()
+    )
+
+
+def approve_upload(db: Session, upload_id: str) -> list[KnowledgeEntry]:
+    """Mark every chunk from one ingest call as approved."""
+    entries = list_upload_entries(db, upload_id)
+    if not entries:
+        return []
+    now = datetime.now(timezone.utc)
+    for entry in entries:
+        entry.status = "approved"
+        entry.reviewed_at = now
+        db.add(entry)
+    db.commit()
+    for entry in entries:
+        db.refresh(entry)
+    return entries
+
+
 def search_approved_entries(
     db: Session,
     question: str,
@@ -294,18 +339,31 @@ def search_approved_entries(
     top_k: int = 3,
     similarity_threshold: float = DEFAULT_SEARCH_THRESHOLD,
     course_id: int | None = None,
+    approved_only: bool = True,
+    course_scoped: bool = True,
+    course_material_only: bool = False,
 ) -> list[tuple[KnowledgeEntry, float]]:
-    query = db.query(KnowledgeEntry).filter(KnowledgeEntry.status == "approved")
-    if course_id is not None:
+    """Semantic search over knowledge rows.
+
+    Defaults match the historical student path: approved rows only, and a
+    course filter when ``course_id`` is set. ``course_material_only`` stays
+    off so Ask Triage and Help Coach still see approved FAQ drafts.
+    """
+    query = db.query(KnowledgeEntry)
+    if approved_only:
+        query = query.filter(KnowledgeEntry.status == "approved")
+    if course_scoped and course_id is not None:
         # Strict course scope so CSC 3323 slides never answer CSC 2302 students.
         query = query.filter(KnowledgeEntry.course_id == course_id)
-    approved = query.order_by(KnowledgeEntry.id).all()
-    if not approved:
+    if course_material_only:
+        query = query.filter(KnowledgeEntry.entry_kind == "course_material")
+    rows = query.order_by(KnowledgeEntry.id).all()
+    if not rows:
         return []
 
     query_embedding = embed_text(question)
     scored: list[tuple[KnowledgeEntry, float]] = []
-    for entry in approved:
+    for entry in rows:
         # Prefer matching material content as well as the title/question.
         haystack = f"{entry.question_text}\n{entry.answer_draft}"
         similarity = cosine_similarity(query_embedding, embed_text(haystack))
@@ -340,6 +398,11 @@ def to_out(entry: KnowledgeEntry) -> KnowledgeEntryOut:
         cluster_id=entry.cluster_id,
         course_id=getattr(entry, "course_id", None),
         material_source=getattr(entry, "material_source", None),
+        entry_kind=getattr(entry, "entry_kind", None),
+        source_filename=getattr(entry, "source_filename", None),
+        page_number=getattr(entry, "page_number", None),
+        chunk_index=getattr(entry, "chunk_index", None),
+        upload_id=getattr(entry, "upload_id", None),
         ta_resolution=getattr(entry, "ta_resolution", None),
         professor_note=entry.professor_note,
         created_at=entry.created_at,
