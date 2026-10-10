@@ -1,0 +1,18 @@
+{
+  "course_a": "CSC 2302",
+  "course_b": "CSC 3323",
+  "approved_a": [
+    "demo_kettle_notes.pdf",
+    "eval/csc2302_lecture_notes.pdf",
+    "eval/csc2302_policy_sheet.pdf",
+    "eval/csc2302_exam_prep.pdf"
+  ],
+  "pending_a": [
+    "eval/csc2302_draft_exam_notice.pdf",
+    "eval/csc2302_pending_lab_extension.pdf"
+  ],
+  "approved_b": [
+    "eval/csc3323_lecture_notes.pdf",
+    "eval/csc3323_policy_sheet.pdf"
+  ]
+}

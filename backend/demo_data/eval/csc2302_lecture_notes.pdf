@@ -1,0 +1,82 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R 8 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 5 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+5 0 obj
+<< /Length 418 >>
+stream
+BT /F1 11 Tf 72 740 Td
+(DEMO DATA. Not a real lecture and not a real course.) Tj
+0 -16 Td
+(CSC 2302 Data Structures, synthetic notes, page 1.) Tj
+0 -16 Td
+(A stack is last-in first-out. Push puts a value on top. Pop takes the top value off.) Tj
+0 -16 Td
+(The lab trace for this demo section uses a stack named cedar-stack with capacity 6.) Tj
+0 -16 Td
+(Students write the trace in C. Recursion is not this page.) Tj
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 7 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+7 0 obj
+<< /Length 361 >>
+stream
+BT /F1 11 Tf 72 740 Td
+(DEMO DATA. CSC 2302 synthetic notes, page 2.) Tj
+0 -16 Td
+(A queue is first-in first-out. Enqueue adds at the rear. Dequeue removes at the front.) Tj
+0 -16 Td
+(The circular queue lab wraps the rear index when it passes the last slot.) Tj
+0 -16 Td
+(This lab is about index wrap in C. It is not a count of mugs and it is not a heap.) Tj
+ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 9 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+9 0 obj
+<< /Length 452 >>
+stream
+BT /F1 11 Tf 72 740 Td
+(DEMO DATA. CSC 2302 synthetic notes, page 3.) Tj
+0 -16 Td
+(Separate chaining handles a collision by hanging a linked list on that bucket.) Tj
+0 -16 Td
+(Open addressing is only named here. No probe sequence is taught on this page.) Tj
+0 -16 Td
+(A binary search tree puts smaller keys on the left. Recursion stops at a null child.) Tj
+0 -16 Td
+(Red-black deletion, splay trees, and AVL balance factors are not on this page.) Tj
+ET
+endstream
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000197 00000 n 
+0000000323 00000 n 
+0000000792 00000 n 
+0000000918 00000 n 
+0000001330 00000 n 
+0000001456 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+1959
+%%EOF

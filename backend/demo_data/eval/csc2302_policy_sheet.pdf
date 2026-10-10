@@ -1,0 +1,88 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R 8 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 5 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+5 0 obj
+<< /Length 537 >>
+stream
+BT /F1 11 Tf 72 740 Td
+(DEMO DATA. Synthetic section sheet for CSC 2302. Not a university catalog.) Tj
+0 -16 Td
+(This demo section meets Monday, Wednesday, and Friday.) Tj
+0 -16 Td
+(The instructor records every miss. On the seventh recorded miss in the semester,) Tj
+0 -16 Td
+(the instructor may request an administrative withdrawal graded WF.) Tj
+0 -16 Td
+(A short illness starts at the Health Center, then the Dean of Student Affairs, then the instructor.) Tj
+0 -16 Td
+(A visa appointment still counts inside those seven misses.) Tj
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 7 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+7 0 obj
+<< /Length 423 >>
+stream
+BT /F1 11 Tf 72 740 Td
+(DEMO DATA. CSC 2302 synthetic section sheet, page 2.) Tj
+0 -16 Td
+(Office hours for this section are Tuesdays from 14:10 to 15:40 in Building 8, room 211.) Tj
+0 -16 Td
+(Bring the smallest C snippet that shows where you are stuck.) Tj
+0 -16 Td
+(A late lab loses 10 points per calendar day and is refused after 72 hours.) Tj
+0 -16 Td
+(The late-policy token printed on this sheet is cedar-stamp.) Tj
+ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 9 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+9 0 obj
+<< /Length 523 >>
+stream
+BT /F1 11 Tf 72 740 Td
+(DEMO DATA. CSC 2302 synthetic section sheet, page 3.) Tj
+0 -16 Td
+(Weights for this demo section: labs 25, quizzes 15, midterm 25, final 35.) Tj
+0 -16 Td
+(A make-up midterm exists only with a Health Center note brought within 48 hours.) Tj
+0 -16 Td
+(That make-up sits on the next Saturday at 09:00 in the SSE lab.) Tj
+0 -16 Td
+(The final is a common exam at the registrar's posted time. This sheet does not move it.) Tj
+0 -16 Td
+(The review meeting is the last class before that posted final.) Tj
+ET
+endstream
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000197 00000 n 
+0000000323 00000 n 
+0000000911 00000 n 
+0000001037 00000 n 
+0000001511 00000 n 
+0000001637 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+2211
+%%EOF
