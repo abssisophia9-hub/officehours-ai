@@ -1,13 +1,14 @@
 """Measure the study agent. Does not change retrieval or the 0.42 cutoff.
 
-Filtered mode is the student path (approved rows, one course). Plain mode
-passes approved_only=False and course_scoped=False into the service. Those
-flags are not added to any HTTP route.
+Four modes pass approved_only and course_scoped into the service. Those
+flags are not added to any HTTP route. The threshold sweep only re-reads
+scores that were already recorded.
 """
 
 from __future__ import annotations
 
 import json
+import os
 import statistics
 from collections import defaultdict
 from pathlib import Path
@@ -15,9 +16,10 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from app.ai.clustering import cosine_similarity, embed_text
+from app.ai import clustering
 from app.models.knowledge import AgentAskRequest, KnowledgeEntry
-from app.services.kb_agent_service import answer_from_knowledge_base
+from app.services import knowledge_service
+from app.services.kb_agent_service import WEAK_MATCH_CONFIDENCE, answer_from_knowledge_base
 from app.services.knowledge_service import (
     DEFAULT_SEARCH_THRESHOLD,
     _question_containment,
@@ -37,14 +39,17 @@ MINIMUM_COUNTS = {
     "other_course_only": 10,
     "injection": 15,
 }
-LEAK_CATEGORIES = ("unapproved_only", "other_course_only")
 SCORE_CATEGORIES = ("in_document", "hard_negative")
 MODES = {
-    "filtered": {"approved_only": True, "course_scoped": True},
-    "plain": {"approved_only": False, "course_scoped": False},
+    "both_on": {"approved_only": True, "course_scoped": True},
+    "approval_off": {"approved_only": False, "course_scoped": True},
+    "course_off": {"approved_only": True, "course_scoped": False},
+    "both_off": {"approved_only": False, "course_scoped": False},
 }
+MODE_ORDER = ("both_on", "approval_off", "course_off", "both_off")
 INCLUDE_THRESHOLD = DEFAULT_SEARCH_THRESHOLD
-ANSWER_THRESHOLD = 0.42
+ANSWER_THRESHOLD = WEAK_MATCH_CONFIDENCE
+SWEEP_THRESHOLDS = [round(step / 100, 2) for step in range(30, 72, 2)]
 
 
 def load_questions(path: Path) -> dict[str, list[dict[str, Any]]]:
@@ -104,6 +109,17 @@ def _validate_row(row: dict[str, Any], *, author: str, section: str) -> None:
         not isinstance(source, dict) or "file" not in source or "page" not in source
     ):
         raise ValueError(f"{row['id']} expected_source must be null or file plus page.")
+
+
+def corpus_files(manifest: dict[str, Any]) -> dict[str, set[str]]:
+    def names(paths: list[str]) -> set[str]:
+        return {Path(path).name for path in paths}
+
+    return {
+        "approved_a": names(manifest["approved_a"]),
+        "pending_a": names(manifest["pending_a"]),
+        "approved_b": names(manifest["approved_b"]),
+    }
 
 
 def ingest_corpus(client, manifest: dict[str, Any], demo_root: Path) -> dict[str, Any]:
@@ -167,20 +183,41 @@ def ingest_corpus(client, manifest: dict[str, Any], demo_root: Path) -> dict[str
     }
 
 
-def best_blended_score(
+def _patch_embed_cache():
+    """Cache embeddings for this process. Scores stay the same."""
+    original = clustering.embed_text
+    cache: dict[tuple[str, str], list[float]] = {}
+
+    def cached(text: str) -> list[float]:
+        backend = os.getenv("OFFICEHOURS_CLUSTERING_BACKEND", "sentence-transformers")
+        key = (backend, text)
+        if key not in cache:
+            cache[key] = original(text)
+        return cache[key]
+
+    clustering.embed_text = cached
+    knowledge_service.embed_text = cached
+    return original
+
+
+def _restore_embed(original) -> None:
+    clustering.embed_text = original
+    knowledge_service.embed_text = original
+
+
+def best_blended_hit(
     db: Session,
     question: str,
     *,
     course_id: int,
     approved_only: bool,
     course_scoped: bool,
-) -> tuple[float, str | None]:
+) -> dict[str, Any] | None:
     """Highest score the search function would compare with 0.42.
 
-    Rows below the include cutoff are kept here so the distribution can show
-    them. The cutoff inside search_approved_entries is not modified.
-    Containment still replaces cosine only when cosine is under 0.35, matching
-    that function.
+    Rows below the include cutoff are kept here so the sweep can show them.
+    The cutoff inside search_approved_entries is not modified. Containment
+    still replaces cosine only when cosine is under 0.35, matching that function.
     """
     query = db.query(KnowledgeEntry).filter(KnowledgeEntry.entry_kind == "course_material")
     if approved_only:
@@ -189,45 +226,79 @@ def best_blended_score(
         query = query.filter(KnowledgeEntry.course_id == course_id)
     rows = query.order_by(KnowledgeEntry.id).all()
     if not rows:
-        return 0.0, None
-    query_embedding = embed_text(question)
-    best_score = -1.0
-    best_label = None
+        return None
+    query_embedding = clustering.embed_text(question)
+    best: dict[str, Any] | None = None
     for entry in rows:
         haystack = f"{entry.question_text}\n{entry.answer_draft}"
-        similarity = cosine_similarity(query_embedding, embed_text(haystack))
+        similarity = clustering.cosine_similarity(query_embedding, clustering.embed_text(haystack))
         if similarity < INCLUDE_THRESHOLD:
             similarity = max(similarity, _question_containment(question, haystack))
-        if similarity > best_score:
-            best_score = similarity
-            best_label = (
-                f"{entry.source_filename}, p. {entry.page_number}, chunk {entry.chunk_index}"
-            )
-    if best_score < 0:
-        return 0.0, None
-    return round(best_score, 4), best_label
+        if best is None or similarity > best["score"]:
+            best = {
+                "score": round(similarity, 4),
+                "file": entry.source_filename,
+                "page": entry.page_number,
+                "chunk": entry.chunk_index,
+                "citation": (
+                    f"{entry.source_filename}, p. {entry.page_number}, "
+                    f"chunk {entry.chunk_index}"
+                ),
+            }
+    return best
 
 
 def evaluate(
     db: Session,
     course_id: int,
     questions: dict[str, list[dict[str, Any]]],
+    files: dict[str, set[str]],
 ) -> dict[str, Any]:
-    sections = {}
-    for section_name in ("agent_generated", "human_written"):
-        sections[section_name] = _evaluate_section(
-            db, course_id, questions[section_name]
-        )
-    return {"sections": sections, "thresholds": {
-        "include": INCLUDE_THRESHOLD,
-        "answer": ANSWER_THRESHOLD,
-    }}
+    original = _patch_embed_cache()
+    try:
+        sections = {}
+        for section_name in ("agent_generated", "human_written"):
+            sections[section_name] = _evaluate_section(
+                db, course_id, questions[section_name], files
+            )
+        return {
+            "sections": sections,
+            "thresholds": {
+                "include": INCLUDE_THRESHOLD,
+                "answer": ANSWER_THRESHOLD,
+                "cutoff_changed": False,
+            },
+        }
+    finally:
+        _restore_embed(original)
+
+
+def _same_page(retrieved: dict[str, Any] | None, expected: dict[str, Any] | None) -> bool:
+    return bool(
+        retrieved
+        and expected
+        and retrieved.get("file") == expected.get("file")
+        and retrieved.get("page") == expected.get("page")
+    )
+
+
+def _page_kind(filename: str | None, files: dict[str, set[str]]) -> str:
+    if not filename:
+        return "none"
+    if filename in files["pending_a"]:
+        return "unapproved"
+    if filename in files["approved_b"]:
+        return "other_course"
+    if filename in files["approved_a"]:
+        return "approved_course_a"
+    return "other"
 
 
 def _evaluate_section(
     db: Session,
     course_id: int,
     rows: list[dict[str, Any]],
+    files: dict[str, set[str]],
 ) -> dict[str, Any]:
     modes = {}
     for mode_name, flags in MODES.items():
@@ -240,7 +311,7 @@ def _evaluate_section(
                 approved_only=flags["approved_only"],
                 course_scoped=flags["course_scoped"],
             )
-            blended, blended_source = best_blended_score(
+            blended = best_blended_hit(
                 db,
                 row["question"],
                 course_id=course_id,
@@ -262,23 +333,21 @@ def _evaluate_section(
                     "similarity": response.sources[0].similarity,
                 }
             expected_source = row["expected_source"]
+            kind = _page_kind(retrieved["file"], files) if retrieved else "none"
+            hidden_page_cited = kind in {"unapproved", "other_course"}
+            spurious_answer = bool(
+                answered and row["expected"] == "not_found" and kind == "approved_course_a"
+            )
+            wrong_source = bool(
+                row["category"] == "in_document"
+                and answered
+                and not _same_page(retrieved, expected_source)
+            )
             if row["expected"] == "not_found":
                 correct = not answered
             else:
-                correct = bool(
-                    retrieved
-                    and expected_source
-                    and retrieved["file"] == expected_source["file"]
-                    and retrieved["page"] == expected_source["page"]
-                )
-            leaked = row["category"] in LEAK_CATEGORIES and answered
-            leaked_expected = bool(
-                leaked
-                and expected_source
-                and retrieved
-                and retrieved["file"] == expected_source["file"]
-                and retrieved["page"] == expected_source["page"]
-            )
+                correct = _same_page(retrieved, expected_source)
+            blended_match = _same_page(blended, expected_source)
             details.append(
                 {
                     "id": row["id"],
@@ -289,18 +358,26 @@ def _evaluate_section(
                     "author": row["author"],
                     "correct": correct,
                     "answered": answered,
-                    "leaked": leaked,
-                    "leaked_expected_source": leaked_expected,
+                    "hidden_page_cited": hidden_page_cited,
+                    "spurious_answer": spurious_answer,
+                    "wrong_source": wrong_source,
+                    "cited_page_kind": kind,
                     "retrieved": retrieved,
                     "agent_confidence": response.confidence,
-                    "blended_score": blended,
-                    "blended_source": blended_source,
+                    "blended_score": blended["score"] if blended else 0.0,
+                    "blended_source": blended["citation"] if blended else None,
+                    "blended_file": blended["file"] if blended else None,
+                    "blended_page": blended["page"] if blended else None,
+                    "blended_matches_expected": blended_match,
+                    "blended_page_kind": _page_kind(blended["file"], files) if blended else "none",
                 }
             )
         modes[mode_name] = {
+            "flags": flags,
             "counts": _counts(details),
-            "leaks": _leaks(details),
             "score_distribution": _distribution(details),
+            "threshold_sweep": threshold_sweep(details),
+            "separation": separation(details),
             "failures": [row for row in details if not row["correct"]],
             "questions": details,
         }
@@ -314,24 +391,15 @@ def _counts(details: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
         if not rows:
             continue
         counts[category] = {
-            "correct": sum(1 for row in rows if row["correct"]),
             "n": len(rows),
+            "correct": sum(1 for row in rows if row["correct"]),
+            "hidden_page_cited": sum(1 for row in rows if row["hidden_page_cited"]),
+            "cited_unapproved": sum(1 for row in rows if row["cited_page_kind"] == "unapproved"),
+            "cited_other_course": sum(1 for row in rows if row["cited_page_kind"] == "other_course"),
+            "spurious_answer": sum(1 for row in rows if row["spurious_answer"]),
+            "wrong_source": sum(1 for row in rows if row["wrong_source"]),
         }
     return counts
-
-
-def _leaks(details: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
-    leaks = {}
-    for category in LEAK_CATEGORIES:
-        rows = [row for row in details if row["category"] == category]
-        if not rows:
-            continue
-        leaks[category] = {
-            "leaked": sum(1 for row in rows if row["leaked"]),
-            "leaked_expected_source": sum(1 for row in rows if row["leaked_expected_source"]),
-            "n": len(rows),
-        }
-    return leaks
 
 
 def _distribution(details: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -355,12 +423,83 @@ def _distribution(details: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return found
 
 
+def threshold_sweep(details: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Re-count recorded best scores. Does not change the production cutoff."""
+    in_document = [row for row in details if row["category"] == "in_document"]
+    hard_negative = [row for row in details if row["category"] == "hard_negative"]
+    not_found = [row for row in details if row["expected"] == "not_found"]
+    rows = []
+    for threshold in SWEEP_THRESHOLDS:
+        correct = sum(
+            1
+            for row in in_document
+            if row["blended_matches_expected"] and row["blended_score"] >= threshold
+        )
+        hard_answered = sum(1 for row in hard_negative if row["blended_score"] >= threshold)
+        spurious = sum(
+            1
+            for row in not_found
+            if row["blended_page_kind"] == "approved_course_a" and row["blended_score"] >= threshold
+        )
+        rows.append(
+            {
+                "threshold": threshold,
+                "in_document_correct_citation": correct,
+                "in_document_n": len(in_document),
+                "hard_negative_answered": hard_answered,
+                "hard_negative_n": len(hard_negative),
+                "spurious_answer": spurious,
+                "spurious_n": len(not_found),
+            }
+        )
+    return rows
+
+
+def separation(details: list[dict[str, Any]]) -> dict[str, Any]:
+    """Whether any cutoff keeps every correct top page and rejects every hard negative."""
+    correct_scores = [
+        row["blended_score"]
+        for row in details
+        if row["category"] == "in_document" and row["blended_matches_expected"]
+    ]
+    hard_scores = [
+        row["blended_score"] for row in details if row["category"] == "hard_negative"
+    ]
+    in_document_n = sum(1 for row in details if row["category"] == "in_document")
+    if not correct_scores or not hard_scores:
+        return {
+            "separates": False,
+            "reason": "one of the two groups has no recorded scores",
+            "in_document_with_correct_top_page": len(correct_scores),
+            "in_document_n": in_document_n,
+        }
+    min_correct = min(correct_scores)
+    max_hard = max(hard_scores)
+    separates = min_correct > max_hard
+    return {
+        "separates": separates,
+        "min_in_document_correct_top_page": round(min_correct, 4),
+        "max_hard_negative": round(max_hard, 4),
+        "in_document_with_correct_top_page": len(correct_scores),
+        "in_document_n": in_document_n,
+        "hard_negative_n": len(hard_scores),
+        "reason": (
+            "The lowest correct in_document top page scores above the highest hard negative."
+            if separates
+            else "The two score ranges overlap, so no cutoff keeps every correct citation and rejects every hard negative."
+        ),
+    }
+
+
 def format_summary(report: dict[str, Any]) -> str:
+    """One backend. human_written is printed apart from agent_generated."""
     lines = [
-        "Study-agent eval. Correct means the question file's contract:",
+        "Retrieval-only baseline. Correct means the question file's contract:",
         "an in-document item must cite the named file and page; every other",
-        "category must be not found. Plain mode is scored on that same contract,",
-        "so a leak is not correct. Counts are not percentages.",
+        "category must come back not found.",
+        "hidden_page_cited: the answer cited an unapproved or other-course page.",
+        "spurious_answer: expected not_found, but the answer cited an approved Course A page.",
+        "wrong_source: in_document was answered from the wrong file or page.",
         "agent_generated and human_written are never added together.",
         f"Include cutoff {report['thresholds']['include']}. "
         f"Answer cutoff {report['thresholds']['answer']} (unchanged).",
@@ -369,40 +508,35 @@ def format_summary(report: dict[str, Any]) -> str:
         lines.append("")
         lines.append(f"## {section_name}: {section['n']} questions")
         if section["n"] == 0:
-            lines.append("(empty — not scored)")
+            lines.append("(empty — not scored, not merged with agent_generated)")
             continue
-        for mode_name, mode in section["modes"].items():
+        for mode_name in MODE_ORDER:
+            mode = section["modes"][mode_name]
             lines.append("")
-            lines.append(f"### {mode_name}")
+            lines.append(f"### {mode_name} {mode['flags']}")
             for category, count in mode["counts"].items():
+                n = count["n"]
                 lines.append(
-                    f"{category}: {count['correct']}/{count['n']} correct"
+                    f"{category}: correct {count['correct']}/{n}, "
+                    f"hidden_page_cited {count['hidden_page_cited']}/{n}, "
+                    f"spurious_answer {count['spurious_answer']}/{n}, "
+                    f"wrong_source {count['wrong_source']}/{n}"
                 )
-            if mode["leaks"]:
-                lines.append("Leaks (an answer was returned):")
-                for category, leak in mode["leaks"].items():
-                    lines.append(
-                        f"  {category}: {leak['leaked']}/{leak['n']} leaked, "
-                        f"{leak['leaked_expected_source']}/{leak['n']} cited the hidden page"
-                    )
-            if mode["score_distribution"]:
-                lines.append(
-                    "Blended score (cosine, or containment when cosine is under 0.35):"
-                )
-                for category, dist in mode["score_distribution"].items():
-                    lines.append(
-                        f"  {category} n={dist['n']} "
-                        f"under 0.35: {dist['under_0.35']}/{dist['n']}, "
-                        f"0.35 to below 0.42: {dist['from_0.35_below_0.42']}/{dist['n']}, "
-                        f"0.42 or higher: {dist['at_or_above_0.42']}/{dist['n']}, "
-                        f"min {dist['min']}, median {dist['median']}, max {dist['max']}"
-                    )
             if mode["failures"]:
                 lines.append(f"Failures: {len(mode['failures'])}")
                 for failure in mode["failures"]:
                     retrieved = failure["retrieved"]["citation"] if failure["retrieved"] else "none"
+                    tags = []
+                    if failure["hidden_page_cited"]:
+                        tags.append("hidden_page_cited")
+                    if failure["spurious_answer"]:
+                        tags.append("spurious_answer")
+                    if failure["wrong_source"]:
+                        tags.append("wrong_source")
+                    if not tags:
+                        tags.append("not_found_miss" if failure["expected"] == "answer" else "other")
                     lines.append(
-                        f"- {failure['id']} ({failure['category']}) "
+                        f"- {failure['id']} ({failure['category']}) {', '.join(tags)} "
                         f"score {failure['blended_score']} "
                         f"agent_confidence {failure['agent_confidence']}"
                     )
@@ -415,9 +549,153 @@ def format_summary(report: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _count_cell(count: dict[str, int], key: str) -> str:
+    return f"{count[key]}/{count['n']}"
+
+
+def format_baseline(baseline: dict[str, Any]) -> str:
+    """Side-by-side counts, the ablation grid, and the threshold sweep."""
+    lines = [
+        "Retrieval-only baseline. No LLM writes or decides the answer.",
+        "Production answer cutoff 0.42 is unchanged. The sweep is analysis only.",
+        "human_written is reported separately and is not added to agent_generated.",
+        "",
+        "Modes: both_on (approval and course), approval_off, course_off, both_off.",
+        "hidden_page_cited = unapproved or other-course page was cited.",
+        "spurious_answer = expected not_found, cited an approved Course A page.",
+        "wrong_source = in_document answered from the wrong file or page.",
+    ]
+    backends = list(baseline["backends"])
+    labels = {
+        backend: ("minilm" if backend == "sentence-transformers" else backend)
+        for backend in backends
+    }
+    for section_name in ("agent_generated", "human_written"):
+        first = baseline["backends"][backends[0]]["sections"][section_name]
+        lines.append("")
+        lines.append(f"## {section_name}: {first['n']} questions")
+        if first["n"] == 0:
+            lines.append("(empty — not scored, not merged with agent_generated)")
+            continue
+        for mode_name in MODE_ORDER:
+            lines.append("")
+            lines.append(f"### {mode_name}")
+            lines.append("category".ljust(22) + "metric".ljust(22) + "".join(labels[backend].rjust(16) for backend in backends))
+            categories = first["modes"][mode_name]["counts"]
+            for category in categories:
+                for metric in ("correct", "hidden_page_cited", "spurious_answer", "wrong_source"):
+                    cells = []
+                    for backend in backends:
+                        count = baseline["backends"][backend]["sections"][section_name]["modes"][mode_name]["counts"][category]
+                        cells.append(_count_cell(count, metric))
+                    lines.append(
+                        category.ljust(22) + metric.ljust(22) + "".join(cell.rjust(16) for cell in cells)
+                    )
+        lines.append("")
+        lines.append("### Which filter blocks which hidden page")
+        lines.append("A hidden page is either unapproved or from the other course. The two are counted apart.")
+        lines.append("page kind".ljust(22) + "mode".ljust(16) + "".join(labels[backend].rjust(16) for backend in backends))
+        for kind, label in (
+            ("cited_unapproved", "unapproved page"),
+            ("cited_other_course", "other-course page"),
+        ):
+            for mode_name in MODE_ORDER:
+                cells = []
+                for backend in backends:
+                    cells.append(_kind_total(baseline, backend, section_name, mode_name, kind))
+                lines.append(
+                    label.ljust(22) + mode_name.ljust(16) + "".join(cell.rjust(16) for cell in cells)
+                )
+            lines.extend(_kind_note(baseline, section_name, kind, backends))
+        lines.append("Matching category only (the question's own hidden page, not a different hidden page):")
+        lines.append("category".ljust(22) + "mode".ljust(16) + "".join(labels[backend].rjust(16) for backend in backends))
+        for category, kind in (
+            ("unapproved_only", "cited_unapproved"),
+            ("other_course_only", "cited_other_course"),
+        ):
+            for mode_name in MODE_ORDER:
+                cells = []
+                for backend in backends:
+                    count = baseline["backends"][backend]["sections"][section_name]["modes"][mode_name]["counts"][category]
+                    cells.append(_count_cell(count, kind))
+                lines.append(
+                    category.ljust(22) + mode_name.ljust(16) + "".join(cell.rjust(16) for cell in cells)
+                )
+    lines.append("")
+    lines.append("### Threshold sweep (both_on, recorded best score, analysis only)")
+    lines.append("in_document: best page is the expected file and page, and the score is at least the threshold.")
+    lines.append("hard_negative: best score is at least the threshold, so this cutoff would answer.")
+    lines.append("spurious: expected not_found, best page is approved Course A, score at least the threshold.")
+    lines.append(
+        "threshold".ljust(12)
+        + "".join(
+            f"{labels[backend]} in_doc".rjust(16)
+            + f"{labels[backend]} hard_neg".rjust(18)
+            + f"{labels[backend]} spurious".rjust(18)
+            for backend in backends
+        )
+    )
+    sweep_len = len(
+        baseline["backends"][backends[0]]["sections"]["agent_generated"]["modes"]["both_on"]["threshold_sweep"]
+    )
+    for index in range(sweep_len):
+        pieces = []
+        for backend in backends:
+            row = baseline["backends"][backend]["sections"]["agent_generated"]["modes"]["both_on"]["threshold_sweep"][index]
+            if not pieces:
+                pieces.append(f"{row['threshold']:.2f}".ljust(12))
+            pieces.append(f"{row['in_document_correct_citation']}/{row['in_document_n']}".rjust(16))
+            pieces.append(f"{row['hard_negative_answered']}/{row['hard_negative_n']}".rjust(18))
+            pieces.append(f"{row['spurious_answer']}/{row['spurious_n']}".rjust(18))
+        lines.append("".join(pieces))
+    lines.append("")
+    lines.append("### Does any threshold separate in_document from hard_negative?")
+    for backend in backends:
+        info = baseline["backends"][backend]["sections"]["agent_generated"]["modes"]["both_on"]["separation"]
+        lines.append(f"{backend}: separates={info['separates']}. {info['reason']}")
+        if "min_in_document_correct_top_page" in info:
+            lines.append(
+                f"  correct top pages {info['in_document_with_correct_top_page']}/{info['in_document_n']}, "
+                f"lowest of those scores {info['min_in_document_correct_top_page']}, "
+                f"highest hard_negative {info['max_hard_negative']}"
+            )
+    return "\n".join(lines) + "\n"
+
+
+def _kind_total(baseline, backend: str, section_name: str, mode_name: str, kind: str) -> str:
+    modes = baseline["backends"][backend]["sections"][section_name]["modes"]
+    counts = modes[mode_name]["counts"]
+    hit = sum(count[kind] for count in counts.values())
+    n = sum(count["n"] for count in counts.values())
+    return f"{hit}/{n}"
+
+
+def _kind_note(baseline, section_name: str, kind: str, backends: list[str]) -> list[str]:
+    lines = []
+    for backend in backends:
+        modes = baseline["backends"][backend]["sections"][section_name]["modes"]
+
+        def total(mode_name: str) -> int:
+            return sum(count[kind] for count in modes[mode_name]["counts"].values())
+
+        both = total("both_on")
+        approval_off = total("approval_off")
+        course_off = total("course_off")
+        if kind == "cited_unapproved" and approval_off > both and course_off == both:
+            note = "the approval filter blocks unapproved pages; turning only the course filter off does not"
+        elif kind == "cited_other_course" and course_off > both and approval_off == both:
+            note = "the course filter blocks other-course pages; turning only the approval filter off does not"
+        elif approval_off == both and course_off == both:
+            note = "neither single filter changes this count"
+        else:
+            note = "the four counts do not isolate one filter"
+        lines.append(f"  {backend}: {note}")
+    return lines
+
+
 def assert_flags_not_on_ask_route() -> None:
     """The eval flags stay off the student request model."""
     fields = set(AgentAskRequest.model_fields)
-    leaked = fields & {"approved_only", "course_scoped", "course_material_only"}
-    if leaked:
-        raise RuntimeError(f"Student ask model exposes {sorted(leaked)}")
+    exposed = fields & {"approved_only", "course_scoped", "course_material_only"}
+    if exposed:
+        raise RuntimeError(f"Student ask model exposes {sorted(exposed)}")
