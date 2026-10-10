@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Run the study-agent eval in filtered mode and plain RAG.
+"""Run the retrieval-only baseline in four filter modes, twice.
 
-MiniLM (all-MiniLM-L6-v2) is the default. Set OFFICEHOURS_CLUSTERING_BACKEND
-before launch to override (use lexical to match the test suite).
+Once with MiniLM and once with the lexical backend. The production answer
+cutoff stays 0.42. The threshold sweep only re-reads recorded scores.
 
-Writes a timestamped JSON file under docs/eval_results/ and prints the same
-summary. Does not change retrieval.
+Writes docs/eval_results/baseline_retrieval_only_<timestamp>.json and prints
+the same summary.
 """
 
 from __future__ import annotations
@@ -25,7 +25,6 @@ if str(BACKEND) not in sys.path:
 os.environ.setdefault("OFFICEHOURS_DEMO", "true")
 os.environ.setdefault("OFFICEHOURS_ALLOW_EXTERNAL_LLM", "false")
 os.environ.setdefault("OFFICEHOURS_RATE_LIMIT", "false")
-os.environ.setdefault("OFFICEHOURS_CLUSTERING_BACKEND", "sentence-transformers")
 
 _DB_DIR = tempfile.mkdtemp(prefix="study-eval-")
 os.environ["DATABASE_URL"] = f"sqlite:///{_DB_DIR}/study_eval.db"
@@ -34,8 +33,11 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from app.database.session import SessionLocal  # noqa: E402
 from app.eval.study_harness import (  # noqa: E402
+    ANSWER_THRESHOLD,
     assert_flags_not_on_ask_route,
+    corpus_files,
     evaluate,
+    format_baseline,
     format_summary,
     ingest_corpus,
     load_questions,
@@ -46,14 +48,16 @@ QUESTIONS = REPO / "docs" / "eval_questions" / "study_agent_questions.json"
 MANIFEST = BACKEND / "demo_data" / "eval" / "manifest.json"
 DEMO_ROOT = BACKEND / "demo_data"
 RESULTS = REPO / "docs" / "eval_results"
+BACKENDS = ("sentence-transformers", "lexical")
 
 
 def main() -> int:
     assert_flags_not_on_ask_route()
+    if ANSWER_THRESHOLD != 0.42:
+        raise RuntimeError(f"Production cutoff moved to {ANSWER_THRESHOLD}")
     questions = load_questions(QUESTIONS)
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    backend = os.environ["OFFICEHOURS_CLUSTERING_BACKEND"]
-    print(f"Embedding backend: {backend}")
+    files = corpus_files(manifest)
     print(f"Questions: {QUESTIONS}")
     print(f"Database: {os.environ['DATABASE_URL']}")
 
@@ -68,22 +72,36 @@ def main() -> int:
         state = "approved" if upload["approved"] else "pending"
         print(f"  {upload['file']}: {upload['chunks']} chunks, {state}")
 
-    db = SessionLocal()
-    try:
-        report = evaluate(db, ingested["course_a_id"], questions)
-    finally:
-        db.close()
+    reports = {}
+    for backend in BACKENDS:
+        os.environ["OFFICEHOURS_CLUSTERING_BACKEND"] = backend
+        print(f"Evaluating {backend}")
+        db = SessionLocal()
+        try:
+            report = evaluate(db, ingested["course_a_id"], questions, files)
+        finally:
+            db.close()
+        report["embedding_backend"] = backend
+        reports[backend] = report
+        print(format_summary(report))
 
-    report["embedding_backend"] = backend
-    report["course_a"] = manifest["course_a"]
-    report["course_b"] = manifest["course_b"]
-    report["uploads"] = ingested["uploads"]
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    baseline = {
+        "label": "baseline_retrieval_only",
+        "answering": "retrieval_only",
+        "created_at": stamp,
+        "production_answer_cutoff": ANSWER_THRESHOLD,
+        "cutoff_changed": False,
+        "course_a": manifest["course_a"],
+        "course_b": manifest["course_b"],
+        "uploads": ingested["uploads"],
+        "backends": reports,
+    }
     RESULTS.mkdir(parents=True, exist_ok=True)
-    out = RESULTS / f"study_eval_{stamp}.json"
-    out.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    out = RESULTS / f"baseline_retrieval_only_{stamp}.json"
+    out.write_text(json.dumps(baseline, indent=2), encoding="utf-8")
     print(f"Wrote {out}")
-    print(format_summary(report))
+    print(format_baseline(baseline))
     return 0
 
 

@@ -1,4 +1,4 @@
-"""Eval corpus, question file, and both retrieval modes. Lexical only."""
+"""Eval corpus, question file, four filter modes, and the score sweep."""
 
 import json
 import os
@@ -12,20 +12,29 @@ from fastapi.testclient import TestClient
 
 from app.database.session import Base, SessionLocal, engine
 from app.eval.study_harness import (
+    ANSWER_THRESHOLD,
+    MODE_ORDER,
+    SWEEP_THRESHOLDS,
     assert_flags_not_on_ask_route,
+    corpus_files,
     evaluate,
+    format_baseline,
     format_summary,
     ingest_corpus,
     load_questions,
+    separation,
+    threshold_sweep,
     validate_questions,
 )
 from app.main import app
 from app.models.knowledge import KnowledgeEntry
+from app.services.kb_agent_service import WEAK_MATCH_CONFIDENCE
 
 REPO = Path(__file__).resolve().parents[2]
 QUESTIONS = REPO / "docs" / "eval_questions" / "study_agent_questions.json"
 MANIFEST = REPO / "backend" / "demo_data" / "eval" / "manifest.json"
 DEMO_ROOT = REPO / "backend" / "demo_data"
+GUIDE = REPO / "docs" / "eval_questions" / "HOW_TO_WRITE_QUESTIONS.md"
 
 client = TestClient(app)
 
@@ -49,6 +58,10 @@ def test_question_file_meets_the_schema_and_keeps_authors_apart():
         "other_course_only": 10,
         "injection": 15,
     }
+    guide = GUIDE.read_text(encoding="utf-8")
+    assert "human_written" in guide
+    assert "agent_generated" in guide
+    assert "without" not in guide or "Do not read" in guide
     broken = json.loads(QUESTIONS.read_text(encoding="utf-8"))
     broken["agent_generated"][0]["author"] = "human"
     try:
@@ -107,30 +120,134 @@ def test_corpus_ingests_approved_and_pending_on_two_courses():
         db.close()
 
 
-def test_runner_scores_filtered_and_plain_separately():
+def test_runner_scores_four_modes_without_merging_authors():
     assert_flags_not_on_ask_route()
+    assert WEAK_MATCH_CONFIDENCE == 0.42
+    assert ANSWER_THRESHOLD == 0.42
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    files = corpus_files(manifest)
     ingested = ingest_corpus(client, manifest, DEMO_ROOT)
     questions = load_questions(QUESTIONS)
     db = SessionLocal()
     try:
-        report = evaluate(db, ingested["course_a_id"], questions)
+        report = evaluate(db, ingested["course_a_id"], questions, files)
     finally:
         db.close()
 
     assert set(report["sections"]) == {"agent_generated", "human_written"}
     assert report["sections"]["human_written"]["n"] == 0
     generated = report["sections"]["agent_generated"]
-    assert set(generated["modes"]) == {"filtered", "plain"}
+    assert list(generated["modes"]) == list(MODE_ORDER)
+    both_on = generated["modes"]["both_on"]
+    approval_off = generated["modes"]["approval_off"]
+    course_off = generated["modes"]["course_off"]
+    both_off = generated["modes"]["both_off"]
+    assert both_on["flags"] == {"approved_only": True, "course_scoped": True}
+    assert approval_off["flags"] == {"approved_only": False, "course_scoped": True}
+    assert course_off["flags"] == {"approved_only": True, "course_scoped": False}
+    assert both_off["flags"] == {"approved_only": False, "course_scoped": False}
+
     for mode in generated["modes"].values():
         assert mode["counts"]["in_document"]["n"] == 20
         assert mode["counts"]["hard_negative"]["n"] == 20
-        assert mode["leaks"]["unapproved_only"]["n"] == 10
-        assert mode["leaks"]["other_course_only"]["n"] == 10
-        assert "under_0.35" in mode["score_distribution"]["in_document"]
-        assert "at_or_above_0.42" in mode["score_distribution"]["hard_negative"]
+        for count in mode["counts"].values():
+            assert {"hidden_page_cited", "spurious_answer", "wrong_source", "correct"} <= set(count)
+        assert [row["threshold"] for row in mode["threshold_sweep"]] == SWEEP_THRESHOLDS
+        assert mode["threshold_sweep"][0]["threshold"] == 0.30
+        assert mode["threshold_sweep"][-1]["threshold"] == 0.70
+
+    for row in both_on["questions"]:
+        assert row["hidden_page_cited"] is False
+        assert row["cited_page_kind"] != "unapproved"
+        assert row["cited_page_kind"] != "other_course"
+        if row["retrieved"]:
+            assert row["retrieved"]["file"] in files["approved_a"]
+    for row in approval_off["questions"]:
+        assert row["cited_page_kind"] != "other_course"
+        if row["hidden_page_cited"]:
+            assert row["retrieved"]["file"] in files["pending_a"]
+    for row in course_off["questions"]:
+        assert row["cited_page_kind"] != "unapproved"
+        if row["hidden_page_cited"]:
+            assert row["retrieved"]["file"] in files["approved_b"]
+
     summary = format_summary(report)
     assert "agent_generated: 75 questions" in summary
     assert "human_written: 0 questions" in summary
-    assert "filtered" in summary and "plain" in summary
+    assert "not merged with agent_generated" in summary
+    assert "both_on" in summary and "approval_off" in summary
+    assert "course_off" in summary and "both_off" in summary
+    assert "hidden_page_cited" in summary
+    assert "spurious_answer" in summary
+    assert "wrong_source" in summary
+    assert "leak" not in summary.lower()
     assert "%" not in summary
+
+    baseline = {
+        "backends": {"lexical": report},
+    }
+    side_by_side = format_baseline(baseline)
+    assert "Threshold sweep" in side_by_side
+    assert "0.42" in side_by_side
+    assert "human_written: 0 questions" in side_by_side
+    assert "leak" not in side_by_side.lower()
+
+
+def test_threshold_sweep_uses_recorded_scores_only():
+    details = [
+        {
+            "category": "in_document",
+            "expected": "answer",
+            "blended_score": 0.80,
+            "blended_matches_expected": True,
+            "blended_page_kind": "approved_course_a",
+        },
+        {
+            "category": "in_document",
+            "expected": "answer",
+            "blended_score": 0.50,
+            "blended_matches_expected": False,
+            "blended_page_kind": "approved_course_a",
+        },
+        {
+            "category": "hard_negative",
+            "expected": "not_found",
+            "blended_score": 0.90,
+            "blended_matches_expected": False,
+            "blended_page_kind": "approved_course_a",
+        },
+        {
+            "category": "hard_negative",
+            "expected": "not_found",
+            "blended_score": 0.20,
+            "blended_matches_expected": False,
+            "blended_page_kind": "approved_course_a",
+        },
+    ]
+    sweep = {row["threshold"]: row for row in threshold_sweep(details)}
+    assert sweep[0.42]["in_document_correct_citation"] == 1
+    assert sweep[0.42]["hard_negative_answered"] == 1
+    assert sweep[0.42]["spurious_answer"] == 1
+    assert sweep[0.60]["in_document_correct_citation"] == 1
+    assert sweep[0.60]["hard_negative_answered"] == 1
+    assert sweep[0.60]["spurious_answer"] == 1
+    info = separation(details)
+    assert info["separates"] is False
+    assert info["min_in_document_correct_top_page"] == 0.80
+    assert info["max_hard_negative"] == 0.90
+
+    separated = separation(
+        [
+            {
+                "category": "in_document",
+                "blended_score": 0.70,
+                "blended_matches_expected": True,
+            },
+            {
+                "category": "hard_negative",
+                "blended_score": 0.40,
+                "blended_matches_expected": False,
+            },
+        ]
+    )
+    assert separated["separates"] is True
