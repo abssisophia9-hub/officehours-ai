@@ -6498,3 +6498,19 @@ html:has(.oh-open) {
   font-size: 0.8125rem;
   color: var(--theme-text-muted);
 }
+
+.rs-goal { margin-bottom: 1.1rem; }
+.rs-goal-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+}
+.rs-goal-input { flex: 1 1 16rem; min-width: 0; }
+.rs-goal-go { white-space: nowrap; }
+.rs-meta, .rs-dossier-line, .rs-dossier-goal {
+  margin: 0.7rem 0 0;
+  font-size: 0.78rem;
+  color: var(--theme-text-muted, #3d4a40);
+}
+.rs-dossier { margin-bottom: 1.1rem; }

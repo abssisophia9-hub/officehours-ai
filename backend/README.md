@@ -122,7 +122,14 @@ Optional environment variables:
 - `OFFICEHOURS_CLASSIFIER_MODEL`, `OFFICEHOURS_MATCHER_MODEL`,
   `OFFICEHOURS_SYNTHESIZER_MODEL`, `OFFICEHOURS_TEACHING_BANK`,
   `OFFICEHOURS_LEARNING_STYLE_BACKEND`, `OFFICEHOURS_LEARNING_STYLE_MODEL`
-- `OFFICEHOURS_ALLOW_EXTERNAL_LLM=false` — FYP default
+- `OFFICEHOURS_ALLOW_EXTERNAL_LLM=false` — FYP default for Ask Triage / Study Agent
+- `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` — optional. When LLM is allowed, the
+  Revision Strategist uses the key to plan YouTube/article tool queries from
+  the learner dossier. Without a key it still calls the same web tools via a
+  local planner.
+- `YOUTUBE_API_KEY` — optional YouTube Data API v3 search for Strategist
+- `OFFICEHOURS_INVIDIOUS_URL` — optional Invidious base if no YouTube key
+- `OFFICEHOURS_STRATEGIST_WEB=false` — disable outbound search (tests)
 - `OFFICEHOURS_DEMO=true|false` — seed Sara/Youssef + sample chapter outlines +
   local Canvas mirror. **False for community deploy.**
 - `OFFICEHOURS_FRONTEND_URL` / `OFFICEHOURS_CORS_ORIGINS` — CORS allow-list

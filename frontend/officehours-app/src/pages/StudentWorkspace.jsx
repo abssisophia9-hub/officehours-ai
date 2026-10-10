@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from "react-router";
 import { api } from "../api/client.js";
 import { pageItems } from "../api/page.js";
 import { useAuth } from "../auth/AuthContext.jsx";
+import { loadStrategistPlan } from "../student/strategistStorage.js";
 
 function needsReply(ask) {
   if (ask?.ta_reply) return true;
@@ -14,10 +15,6 @@ const ONBOARD_STORAGE_KEY = "officehours_student_onboarded";
 
 const ASK_GUIDE =
   "Write one concrete question below. Quiet ask hides your name; Ask Triage matches you to staff.";
-
-function revisionStorageKey(courseId) {
-  return `officehours_revision_${courseId}`;
-}
 
 function readOnboarded() {
   try {
@@ -36,28 +33,22 @@ function writeOnboarded() {
 }
 
 function readTodayFocus(courseId, courseCode) {
-  try {
-    const raw = localStorage.getItem(revisionStorageKey(courseId));
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      const grades = Array.isArray(parsed?.grades) ? parsed.grades : [];
-      if (grades.length) {
-        const ranked = [...grades].sort(
-          (a, b) =>
-            b.weight * Math.max(0, 85 - b.score) -
-            a.weight * Math.max(0, 85 - a.score),
-        );
-        return ranked[0];
-      }
-    }
-  } catch {
-    // fall through
+  const plan = loadStrategistPlan(courseId);
+  if (plan?.focus?.topic) {
+    return {
+      topic: plan.focus.topic,
+      score: plan.focus.score,
+      weight: plan.focus.weight,
+      source: plan.focus.source,
+      today: Array.isArray(plan.today) ? plan.today : [],
+      summary: plan.today_summary || "",
+    };
   }
   const code = String(courseCode || "").toUpperCase();
   if (code.startsWith("CSC") || code.includes("DATA")) {
-    return { topic: "Trees & red-black", score: 62, weight: 35 };
+    return { topic: "Trees & red-black", score: 62, weight: 35, today: [] };
   }
-  return { topic: "Core concepts", score: null, weight: null };
+  return { topic: "Core concepts", score: null, weight: null, today: [] };
 }
 
 export default function StudentWorkspace() {
@@ -365,8 +356,8 @@ export default function StudentWorkspace() {
             Study Agent
           </button>{" "}
           answers from stamped FAQs &amp; slides ·{" "}
-          <Link to="/student/revision">Revision Strategist</Link> builds a
-          today-first exam plan.
+          <Link to="/student/revision">Revision Strategist</Link> searches
+          YouTube and articles from how you ask and learn.
         </p>
 
         <div className="sd-pulse">
@@ -643,18 +634,19 @@ export default function StudentWorkspace() {
               )}
             </p>
             <div className="sd-focus-blocks">
-              <div className="sd-focus-block">
-                <strong>Block 1 · Start here</strong>
-                <span>45 min</span>
-              </div>
-              <div className="sd-focus-block">
-                <strong>Block 2 · Practice</strong>
-                <span>60 min</span>
-              </div>
-              <div className="sd-focus-block">
-                <strong>Block 3 · Check</strong>
-                <span>30 min</span>
-              </div>
+              {(todayFocus?.today?.length
+                ? todayFocus.today
+                : [
+                    { title: "Start here", minutes: 45, action: "Open Revision Strategist" },
+                    { title: "Practice", minutes: 60, action: "Worked problems" },
+                    { title: "Check", minutes: 30, action: "Self-quiz · 75%+" },
+                  ]
+              ).map((block) => (
+                <div className="sd-focus-block" key={block.title}>
+                  <strong>{block.title}</strong>
+                  <span>{block.minutes} min</span>
+                </div>
+              ))}
             </div>
             <Link className="sd-link" to="/student/revision">
               Open full Revision Strategist →
