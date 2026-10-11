@@ -34,6 +34,9 @@ class Request(Base):
     triage_tags: Mapped[str | None] = mapped_column(Text, nullable=True)
     assigned_ta: Mapped[str | None] = mapped_column(String, nullable=True)
     alternative_ta: Mapped[str | None] = mapped_column(String, nullable=True)
+    # "ta" when Matcher assigned a TA; "professor" when the course has no TA.
+    assignee_role: Mapped[str | None] = mapped_column(String, nullable=True)
+    assignee_user_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     estimated_wait_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     student_hint: Mapped[str | None] = mapped_column(Text, nullable=True)
     triage_trace_json: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -95,6 +98,7 @@ class TriageMatcherOut(BaseModel):
     alternative_ta: str | None = None
     estimated_wait_minutes: int | None = None
     rationale: str | None = None
+    assignee_role: str | None = None
 
 
 class TriageSynthesizerOut(BaseModel):
@@ -136,6 +140,7 @@ class RequestOut(RequestCreate):
     triage_tags: list[str] = Field(default_factory=list)
     assigned_ta: str | None = None
     alternative_ta: str | None = None
+    assignee_role: str | None = None
     estimated_wait_minutes: int | None = None
     student_hint: str | None = None
     triage: TriageResultOut | None = None
@@ -164,6 +169,7 @@ class RequestStatusOut(BaseModel):
     agenda_hint: str | None = None
     student_hint: str | None = None
     assigned_ta: str | None = None
+    assignee_role: str | None = None
     estimated_wait_minutes: int | None = None
     # Shared cluster group meeting (same for every request_id on the decision).
     meeting_title: str | None = None

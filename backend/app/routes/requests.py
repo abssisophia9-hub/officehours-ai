@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.ai.clustering import assign_cluster_id
 from app.database.session import get_db
-from app.models.auth import User
+from app.models.auth import Course, User
 from app.routes.auth import get_current_user
 from app.services.access_control import (
     require_course_member,
@@ -37,6 +37,8 @@ from app.services.ask_triage_service import (
     build_triage_public_payload,
     run_ask_triage_pipeline,
 )
+from app.services.course_ta_service import NoCourseStaffError, describe_course_routing
+from app.services.notify_service import notify_user
 from app.services.pagination import clamp_page
 from app.services.request_serializer import to_request_out
 from app.services.request_status_service import build_request_status
@@ -101,14 +103,20 @@ async def create_request(
         request_data["student_name"] = name
         request_data["student_id"] = sid
 
-    triage = run_ask_triage_pipeline(
-        db,
-        question_text=payload.text,
-        code_snippet=payload.code_snippet,
-        course=payload.course,
-        course_id=payload.course_id,
-        learning_style=payload.learning_style,
-    )
+    try:
+        triage = run_ask_triage_pipeline(
+            db,
+            question_text=payload.text,
+            code_snippet=payload.code_snippet,
+            course=payload.course,
+            course_id=payload.course_id,
+            learning_style=payload.learning_style,
+        )
+    except NoCourseStaffError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=exc.detail,
+        ) from exc
     classification = triage["classification"]
     analyzer = triage["analyzer"]
     synthesizer = triage["synthesizer"]
@@ -255,7 +263,35 @@ async def create_request(
             },
         )
 
+    await _notify_professor_route(db, db_request)
+
     return to_request_out(db_request, triage=public_triage, db=db)
+
+
+async def _notify_professor_route(db: Session, db_request: Request) -> None:
+    """Inbox row for the professor who received an ask because the course has no TA."""
+    if getattr(db_request, "assignee_role", None) != "professor":
+        return
+    professor_id = getattr(db_request, "assignee_user_id", None)
+    if not professor_id:
+        return
+    professor = db.get(User, professor_id)
+    if professor is None:
+        return
+    course = db.get(Course, db_request.course_id) if db_request.course_id else None
+    code = (course.code if course and course.code else None) or db_request.course or "this course"
+    # Quiet asks store no name or student id. The notice stays free of both.
+    await notify_user(
+        db,
+        professor,
+        kind="routed",
+        title=f"New ask on {code}",
+        body=(
+            f"Ask #{db_request.id} was assigned to you because {code} has no TA."
+        ),
+        request_id=db_request.id,
+        course_id=db_request.course_id,
+    )
 
 
 def _is_request_owner(user: User, db_request: Request) -> bool:
@@ -291,6 +327,17 @@ def _require_status_access(db: Session, user: User, db_request: Request) -> None
         require_staff_anywhere(db, user)
         return
     require_course_member(db, user, db_request.course_id)
+
+
+@router.get("/routing")
+def request_routing_preview(
+    course_id: int = Query(..., ge=1),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Who an ask will go to, before the student submits the form."""
+    require_course_member(db, user, course_id)
+    return describe_course_routing(db, course_id)
 
 
 @router.get("/")

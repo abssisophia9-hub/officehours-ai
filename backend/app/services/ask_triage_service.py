@@ -23,7 +23,11 @@ from app.models.knowledge import KnowledgeEntry
 from app.models.request import Request
 from app.models.ta_roster import DEFAULT_TA_ROSTER, TaRoster
 from app.services.classification_service import classify_and_recommend
-from app.services.course_ta_service import build_course_matcher_roster
+from app.services.course_ta_service import (
+    assign_professor_when_no_ta,
+    build_course_matcher_roster,
+    course_ta_memberships,
+)
 from app.services.demo_mode import demo_mode
 from app.services.knowledge_service import search_approved_entries
 
@@ -110,16 +114,27 @@ def run_ask_triage_pipeline(
     )
 
     ensure_default_roster(db)
-    roster = build_course_matcher_roster(db, course_id=course_id)
-
     t1 = time.perf_counter()
-    matcher = match_ta(analyzer, roster, question_text=question_text)
-    if roster and all(row.get("course_scoped") for row in roster):
-        matcher["rationale"] = (
-            f"{matcher.get('rationale') or ''} "
-            f"[course-scoped: {len(roster)} TA(s) on this course; "
-            f"primary + backup with queue-depth load balance]."
-        ).strip()
+    # A course with at least one TA keeps the expertise + queue matcher.
+    # No TA membership at all: the professor (lowest user id) gets the ask.
+    if course_id is not None and not course_ta_memberships(db, course_id):
+        matcher = assign_professor_when_no_ta(
+            db,
+            course_id=course_id,
+            analyzer=analyzer,
+            course_code=course,
+        )
+    else:
+        roster = build_course_matcher_roster(db, course_id=course_id)
+        matcher = match_ta(analyzer, roster, question_text=question_text)
+        if roster and all(row.get("course_scoped") for row in roster):
+            matcher["rationale"] = (
+                f"{matcher.get('rationale') or ''} "
+                f"[course-scoped: {len(roster)} TA(s) on this course; "
+                f"primary + backup with queue-depth load balance]."
+            ).strip()
+        if matcher.get("assigned_ta") and matcher.get("assigned_ta") != "Unassigned":
+            matcher["assignee_role"] = "ta"
     steps.append(
         {
             "agent": "matcher",
@@ -205,6 +220,8 @@ def apply_triage_to_request(
     request.triage_tags = json.dumps(list(analyzer.get("tags") or []))
     request.assigned_ta = matcher.get("assigned_ta")
     request.alternative_ta = matcher.get("alternative_ta")
+    request.assignee_role = matcher.get("assignee_role")
+    request.assignee_user_id = matcher.pop("assignee_user_id", None)
     request.estimated_wait_minutes = int(matcher.get("estimated_wait_minutes") or 15)
     request.student_hint = synthesizer.get("student_hint")
     request.triage_trace_json = json.dumps(triage)
@@ -243,6 +260,7 @@ def build_triage_public_payload(triage: dict[str, Any]) -> dict[str, Any]:
             "alternative_ta": triage["matcher"].get("alternative_ta"),
             "estimated_wait_minutes": triage["matcher"].get("estimated_wait_minutes"),
             "rationale": triage["matcher"].get("rationale"),
+            "assignee_role": triage["matcher"].get("assignee_role"),
         },
         "synthesizer": {
             "student_hint": triage["synthesizer"].get("student_hint"),

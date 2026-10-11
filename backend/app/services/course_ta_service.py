@@ -22,6 +22,17 @@ from app.services.demo_mode import demo_mode
 TYPICAL_TA_CAP = 2
 
 
+class NoCourseStaffError(Exception):
+    """The course has no TA and no active professor, so an ask cannot be stored."""
+
+    def __init__(self, course_code: str | None = None):
+        code = (course_code or "").strip() or "This course"
+        self.detail = (
+            f"{code} has no TA and no professor, so this ask cannot be sent."
+        )
+        super().__init__(self.detail)
+
+
 def course_ta_memberships(db: Session, course_id: int) -> list[tuple[User, CourseMembership]]:
     rows = (
         db.query(User, CourseMembership)
@@ -109,6 +120,90 @@ def build_course_matcher_roster(
         for row in db.query(TaRoster).order_by(TaRoster.id).all()
         if row.is_available
     ]
+
+
+def course_professor_users(db: Session, course_id: int) -> list[User]:
+    """Active professors on a course, lowest user id first.
+
+    When several professors share a course, the smallest ``user.id`` is the
+    assignee. Email is only a tie-break; a user has one membership per course.
+    """
+    rows = (
+        db.query(User)
+        .join(CourseMembership, CourseMembership.user_id == User.id)
+        .filter(
+            CourseMembership.course_id == course_id,
+            CourseMembership.role == "professor",
+            User.is_active.is_(True),
+        )
+        .order_by(User.id.asc(), User.email.asc())
+        .all()
+    )
+    return list(rows)
+
+
+def _person_label(user: User) -> str:
+    name = (user.display_name or "").strip()
+    return name or (user.email or "Professor")
+
+
+def describe_course_routing(db: Session, course_id: int) -> dict[str, Any]:
+    """One line for the Ask form, before the student submits."""
+    course = db.get(Course, course_id)
+    code = course.code if course and course.code else "this course"
+    if course_ta_memberships(db, course_id):
+        return {
+            "course_id": course_id,
+            "course_code": code,
+            "destination": "ta",
+            "assignee_name": None,
+            "line": f"Goes to: a TA for {code} (matched automatically)",
+        }
+    professors = course_professor_users(db, course_id)
+    if professors:
+        return {
+            "course_id": course_id,
+            "course_code": code,
+            "destination": "professor",
+            "assignee_name": _person_label(professors[0]),
+            "line": f"Goes to: the professor of {code} (this course has no TA)",
+        }
+    return {
+        "course_id": course_id,
+        "course_code": code,
+        "destination": "none",
+        "assignee_name": None,
+        "line": f"{code} has no TA and no professor, so this ask cannot be sent.",
+    }
+
+
+def assign_professor_when_no_ta(
+    db: Session,
+    *,
+    course_id: int,
+    analyzer: dict[str, Any],
+    course_code: str | None = None,
+) -> dict[str, Any]:
+    """Route to the professor with the lowest user id. Raises if none exist."""
+    professors = course_professor_users(db, course_id)
+    if not professors:
+        code = (course_code or "").strip() or None
+        if not code:
+            course = db.get(Course, course_id)
+            code = course.code if course else None
+        raise NoCourseStaffError(code)
+    chosen = professors[0]
+    name = _person_label(chosen)
+    wait = int(analyzer.get("estimated_minutes") or 15)
+    return {
+        "assigned_ta": name,
+        "alternative_ta": None,
+        "estimated_wait_minutes": wait,
+        "assignee_role": "professor",
+        "assignee_user_id": chosen.id,
+        "rationale": f"This course has no TA, so the ask went to {name}.",
+        "backend": "professor_no_ta",
+    }
 
 
 def _default_tags_for(name: str) -> list[str]:

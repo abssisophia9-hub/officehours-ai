@@ -88,6 +88,12 @@ DEMO_COURSES = {
         "term": "Spring 2026",
         "canvas_course_id": None,
     },
+    # Labeled demo section: professor, no TA. Used to show professor routing.
+    "CSC 3390": {
+        "title": "Demo seminar (no TA — professor only)",
+        "term": "Spring 2026",
+        "canvas_course_id": "3390",
+    },
 }
 
 
@@ -111,6 +117,7 @@ DEMO_USERS = [
             _membership("CSC 2302", "professor"),
             _membership("CSC 3323", "professor"),
             _membership("CSC 3374", "professor"),
+            _membership("CSC 3390", "professor"),
         ],
     },
     {
@@ -183,6 +190,8 @@ DEMO_USERS = [
             _membership("CSC 3324", "student"),
             _membership("MTH 1304", "student"),
             _membership("COM 1301", "student"),
+            # Labeled demo: professor only, so Sara can show no-TA routing.
+            _membership("CSC 3390", "student"),
         ],
     },
     {

@@ -184,7 +184,16 @@ def test_full_community_loop_ask_ta_professor_agent():
     ).json()
     assert before["matched_count"] == 0
 
-    # 2. Student submits a quiet ask; Ask Triage runs and seeds a pending draft.
+    # 2. A TA joins before the ask. A course with no TA and no professor
+    # cannot store a silent unassigned request.
+    ta = _launch(
+        email="k.bennis@aui.ma",
+        display_name="Karim Bennis",
+        canvas_role="TaEnrollment",
+        student_id=None,
+    )
+    assert ta["role"] == "ta"
+
     created = client.post(
         "/requests/",
         headers=student_headers,
@@ -199,13 +208,6 @@ def test_full_community_loop_ask_ta_professor_agent():
     request_id = created.json()["id"]
 
     # 3. TA works the queue and writes the teaching answer.
-    ta = _launch(
-        email="k.bennis@aui.ma",
-        display_name="Karim Bennis",
-        canvas_role="TaEnrollment",
-        student_id=None,
-    )
-    assert ta["role"] == "ta"
     queue = client.get(
         f"/ta/queue/?course_id={course_id}&assignment=all",
         headers={"Authorization": f"Bearer {ta['token']}"},
