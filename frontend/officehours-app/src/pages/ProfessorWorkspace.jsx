@@ -194,6 +194,11 @@ export default function ProfessorWorkspace() {
     );
   }
 
+  function dropReceipt(uploadId) {
+    if (!uploadId) return;
+    setUploadReceipts((prev) => prev.filter((item) => item.uploadId !== uploadId));
+  }
+
   function showReview(uploadId) {
     setFocusUploadId(uploadId || null);
     window.setTimeout(() => {
@@ -220,6 +225,7 @@ export default function ProfessorWorkspace() {
         body: { status: "approved" },
       });
       setStatusNote(`Approved a chunk from ${name}${page}. Students can see it now.`);
+      if (typeof entry === "object") dropReceipt(entry.upload_id);
       await load();
     } catch (err) {
       setError(err.message);
@@ -238,6 +244,7 @@ export default function ProfessorWorkspace() {
       setStatusNote(
         `Approved all ${result.approved_count} chunks from ${name}. Students can see them now.`,
       );
+      dropReceipt(uploadId);
       setFocusUploadId(uploadId);
       await load();
     } catch (err) {
@@ -255,6 +262,7 @@ export default function ProfessorWorkspace() {
         token,
       });
       setStatusNote(`Rejected ${upload.filename}. Students can't see it.`);
+      dropReceipt(upload.upload_id);
       await load();
     } catch (err) {
       setUploadError(err.message || "Could not reject that file.");
