@@ -89,26 +89,21 @@ const SECTION_NAV = {
           id: "ask",
           label: "Ask for help",
           icon: "ask",
-          hint: "Stuck? Get matched to a TA",
+          to: "/student/ask",
+          hint: "Message a TA or your professor",
         },
         {
           id: "asks",
           label: "My asks",
           icon: "requests",
           to: "/student/asks",
-          hint: "Track quiet & named asks",
+          hint: "Replies to your questions",
         },
       ],
     },
     {
       group: "Study",
       items: [
-        {
-          id: "agent",
-          label: "Study Agent",
-          icon: "agent",
-          hint: "Approved FAQs & slides only",
-        },
         {
           id: "revision",
           label: "Revision Strategist",
@@ -236,6 +231,8 @@ export default function AppShell() {
   const SECTION_ROUTES = {
     "peer-notes": "/student/notes",
     asks: "/student/asks",
+    ask: "/student/ask",
+    agent: "/student",
     revision: "/student/revision",
     "stuck-room": "/student/room",
   };
@@ -285,7 +282,7 @@ export default function AppShell() {
   }
 
   return (
-    <div className="bh-frame">
+    <div className={`bh-frame${role === "student" ? " bh-frame-student" : ""}`}>
       <aside className="bh-sidebar">
         <div className="bh-logo">
           OfficeHours AI
@@ -298,8 +295,13 @@ export default function AppShell() {
             end
             className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
           >
-            {ICONS.dashboard}
-            Dashboard
+            {role === "student" ? ICONS.agent : ICONS.dashboard}
+            <span className="bh-nav-item-stack">
+              <strong>{role === "student" ? "Study Agent" : "Dashboard"}</strong>
+              {role === "student" ? (
+                <span className="bh-nav-hint">Ask this course</span>
+              ) : null}
+            </span>
           </NavLink>
           {grouped
             ? sections.map((group) => (

@@ -34,14 +34,14 @@ const MENU_ICONS = {
 const TOURS = {
   student: [
     {
-      title: "Ask for Help",
-      body: "Quiet ask hides your name. Identify me shares it. Pick a TA or the professor when that choice is available, then choose message, face-to-face, or online.",
-      sectionId: "ask",
+      title: "Study Agent",
+      body: "Ask a question about this course. Answers only come from material your professor approved.",
+      sectionId: "agent",
     },
     {
-      title: "Course Study Agent",
-      body: "Answers only from professor-approved FAQs and Canvas materials for this course. If nothing matches, ask a human — don't keep guessing.",
-      sectionId: "agent",
+      title: "Ask for help",
+      body: "If the study agent has no answer, send the question to a TA or your professor. You can hide your name.",
+      sectionId: "ask",
     },
     {
       title: "Classmate notes",

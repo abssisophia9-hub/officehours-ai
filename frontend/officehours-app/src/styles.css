@@ -6499,6 +6499,319 @@ html:has(.oh-open) {
   color: var(--theme-text-muted);
 }
 
+/* Student shell: the course page fills the screen. The thread scrolls;
+   the course name and question box stay put and do not cover the answer. */
+.bh-frame-student {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.bh-frame-student .bh-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Student home: Study Agent fills the course page. */
+.sa-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  gap: 0.85rem;
+  overflow: hidden;
+}
+
+.sa-course {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0.15rem 0 0.35rem;
+  font-family: "Fraunces", serif;
+  font-size: clamp(1.7rem, 3.4vw, 2.55rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--theme-title);
+}
+
+.sa-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 0.4rem;
+}
+
+.sa-empty {
+  margin: 0.4rem 0 0;
+  color: var(--theme-text-muted);
+  font-size: 1rem;
+}
+
+.sa-bubble {
+  margin: 0;
+  max-width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.sa-bubble-student {
+  align-self: flex-end;
+  max-width: min(40rem, 88%);
+  padding: 0.75rem 0.95rem;
+  border-radius: 1rem 1rem 0.3rem 1rem;
+  background: var(--theme-forest, #1f4d38);
+  color: #fff;
+}
+
+.sa-bubble-agent {
+  align-self: stretch;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid var(--theme-border);
+  background: var(--theme-surface);
+  color: var(--theme-text);
+}
+
+.sa-bubble-pending {
+  color: var(--theme-text-muted);
+  font-style: italic;
+}
+
+.sa-bubble-error {
+  border-color: var(--theme-red-fg, #9b2c2c);
+  background: color-mix(in srgb, var(--theme-red-fg, #9b2c2c) 8%, var(--theme-surface));
+  color: var(--theme-red-fg, #9b2c2c);
+}
+
+.sa-answer {
+  margin: 0;
+}
+
+.sa-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.sa-source {
+  max-width: 100%;
+}
+
+.sa-chip {
+  display: inline-flex;
+  max-width: 100%;
+  border: 1px solid var(--theme-border-strong);
+  background: var(--theme-surface-muted, var(--theme-surface));
+  color: var(--theme-title);
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 650;
+  cursor: pointer;
+  text-align: left;
+}
+
+.sa-chip:hover,
+.sa-source-open .sa-chip {
+  border-color: var(--theme-forest);
+}
+
+.sa-quote {
+  margin: 0.4rem 0 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.7rem;
+  background: var(--theme-surface-muted);
+  color: var(--theme-text);
+  font-size: 0.88rem;
+  white-space: pre-wrap;
+}
+
+.sa-staff {
+  margin-top: 0.8rem;
+  border: none;
+  border-radius: 999px;
+  padding: 0.55rem 0.95rem;
+  background: var(--theme-forest, #1f4d38);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sa-staff:hover {
+  filter: brightness(1.08);
+}
+
+.sa-composer {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem 0.7rem;
+  align-items: end;
+  padding: 0.35rem 0 0.15rem;
+  background: var(--theme-page);
+}
+
+.sa-trust {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--theme-text-muted);
+}
+
+.sa-input {
+  width: 100%;
+  min-height: 3.1rem;
+  max-height: 17.5rem;
+  resize: none;
+  overflow-y: auto;
+  border-radius: 0.9rem;
+  border: 1px solid var(--theme-border-strong);
+  background: var(--theme-surface);
+  color: var(--theme-text);
+  padding: 0.75rem 0.9rem;
+  font: inherit;
+  line-height: 1.45;
+}
+
+.sa-input:focus {
+  outline: 2px solid color-mix(in srgb, var(--theme-forest) 55%, transparent);
+  outline-offset: 1px;
+}
+
+.sa-input:disabled {
+  opacity: 0.7;
+}
+
+.sa-send {
+  border: none;
+  border-radius: 0.9rem;
+  padding: 0.75rem 1.1rem;
+  background: var(--theme-forest, #1f4d38);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sa-send:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.sa-help {
+  margin-top: 0.4rem;
+}
+
+@media (max-width: 800px) {
+  .bh-frame-student {
+    flex-direction: column;
+  }
+
+  .bh-frame-student .bh-sidebar {
+    width: 100%;
+    height: auto;
+    max-height: none;
+    position: relative;
+    flex-shrink: 0;
+    padding: 0.55rem 0.55rem 0.35rem;
+  }
+
+  .bh-frame-student .bh-logo {
+    font-size: 1.25rem;
+  }
+
+  .bh-frame-student .bh-nav {
+    margin-top: 0.45rem;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 0.25rem;
+    padding-bottom: 0.2rem;
+  }
+
+  .bh-frame-student .bh-nav-group {
+    display: contents;
+  }
+
+  .bh-frame-student .bh-nav-label,
+  .bh-frame-student .bh-nav-hint,
+  .bh-frame-student .bh-logo small {
+    display: none;
+  }
+
+  .bh-frame-student .bh-nav-item {
+    width: auto;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 0.45rem 0.65rem;
+  }
+
+  .bh-frame-student .bh-sidebar-footer {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.35rem;
+    overflow-x: auto;
+  }
+
+  .bh-frame-student .bh-course-select {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 7.5rem;
+    margin-top: 0;
+  }
+
+  .bh-frame-student .theme-toggle-sidebar {
+    width: auto;
+    margin-top: 0;
+    flex-shrink: 0;
+  }
+
+  .bh-frame-student .bh-account {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .bh-frame-student .bh-account-trigger {
+    width: auto;
+    max-width: 11rem;
+  }
+
+  .bh-frame-student .bh-main {
+    flex: 1;
+    min-height: 0;
+    padding: 0.75rem 0.75rem 0.6rem;
+  }
+
+  .sa-page {
+    min-height: 0;
+  }
+
+  .sa-composer {
+    grid-template-columns: 1fr;
+  }
+
+  .sa-send {
+    width: 100%;
+  }
+
+  .sa-bubble-student {
+    max-width: 100%;
+  }
+}
+
 .pd-upload-line {
   margin: 0.35rem 0 0;
   font-size: 0.92rem;
