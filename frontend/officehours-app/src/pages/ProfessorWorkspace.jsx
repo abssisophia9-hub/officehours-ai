@@ -4,6 +4,52 @@ import { api, apiUpload } from "../api/client.js";
 import { pageItems } from "../api/page.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
+const UPLOAD_BADGE = {
+  pending: ["Pending", "bh-pill-amber"],
+  approved: ["Approved", "bh-pill-green"],
+  rejected: ["Rejected", "bh-pill-red"],
+  partly_approved: ["Partly approved", "bh-pill-amber"],
+};
+
+function reviewGroups(entries) {
+  const groups = new Map();
+  for (const entry of entries) {
+    const key = entry.upload_id || "drafts";
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        uploadId: entry.upload_id || null,
+        name: entry.source_filename || (entry.upload_id ? "Uploaded file" : "Other drafts"),
+        entries: [],
+      });
+    }
+    const group = groups.get(key);
+    if (entry.source_filename) group.name = entry.source_filename;
+    group.entries.push(entry);
+  }
+  for (const group of groups.values()) {
+    group.entries.sort(
+      (a, b) =>
+        (a.page_number || 0) - (b.page_number || 0) ||
+        (a.chunk_index || 0) - (b.chunk_index || 0),
+    );
+  }
+  return [...groups.values()];
+}
+
+function formatUploadedAt(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 const ICONS = {
   doc: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -35,6 +81,7 @@ export default function ProfessorWorkspace() {
   const { token, activeCourse } = useAuth();
   const [requests, setRequests] = useState([]);
   const [entries, setEntries] = useState([]);
+  const [uploads, setUploads] = useState([]);
   const [commandCenter, setCommandCenter] = useState(null);
   const [reviewInsights, setReviewInsights] = useState(null);
   const [taLoad, setTaLoad] = useState(null);
@@ -52,6 +99,12 @@ export default function ProfessorWorkspace() {
   const [goldCount, setGoldCount] = useState(0);
   const [retrainBusy, setRetrainBusy] = useState(false);
   const [retrainReport, setRetrainReport] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadHint, setUploadHint] = useState("");
+  const [uploadError, setUploadError] = useState("");
+  const [uploadReceipts, setUploadReceipts] = useState([]);
+  const [statusNote, setStatusNote] = useState("");
+  const [focusUploadId, setFocusUploadId] = useState(null);
   const fileInputRef = useRef(null);
 
   function meetingDraft(clusterId) {
@@ -77,9 +130,9 @@ export default function ProfessorWorkspace() {
 
   const load = useCallback(async () => {
     try {
-      const [req, kb, clusters, canvas, load, insights, rate, gold] = await Promise.all([
+      const [req, kb, clusters, canvas, load, insights, rate, gold, files] = await Promise.all([
         api(`/requests/?course_id=${activeCourse.id}&limit=50`, { token }),
-        api(`/knowledge/?status=pending_review&course_id=${activeCourse.id}&limit=50`, { token }),
+        api(`/knowledge/?status=pending_review&course_id=${activeCourse.id}&limit=200`, { token }),
         api(
           `/analytics/clusters?course_id=${activeCourse.id}&course=${encodeURIComponent(activeCourse.code)}`,
           { token },
@@ -89,6 +142,7 @@ export default function ProfessorWorkspace() {
         api(`/analytics/review-insights?course_id=${activeCourse.id}`, { token }),
         api(`/analytics/kb-hit-rate?course_id=${activeCourse.id}`, { token }),
         api(`/analytics/gold-labels?course_id=${activeCourse.id}`, { token }),
+        api(`/knowledge/uploads?course_id=${activeCourse.id}`, { token }),
       ]);
       setRequests(
         pageItems(req).filter((item) => !item.course || item.course === activeCourse.code),
@@ -115,6 +169,7 @@ export default function ProfessorWorkspace() {
       setTaLoad(load);
       setHitRate(rate);
       setGoldCount(Array.isArray(gold) ? gold.length : 0);
+      setUploads(Array.isArray(files) ? files : []);
     } catch (err) {
       setError(err.message);
     }
@@ -124,6 +179,14 @@ export default function ProfessorWorkspace() {
     load();
   }, [load]);
 
+  useEffect(() => {
+    setUploadHint("");
+    setUploadError("");
+    setUploadReceipts([]);
+    setStatusNote("");
+    setFocusUploadId(null);
+  }, [activeCourse?.id]);
+
   if (!activeCourse) return <Navigate to="/" replace />;
   if (activeCourse.role !== "professor") {
     return (
@@ -131,18 +194,70 @@ export default function ProfessorWorkspace() {
     );
   }
 
-  async function approve(entryId) {
-    setMessage("");
+  function showReview(uploadId) {
+    setFocusUploadId(uploadId || null);
+    window.setTimeout(() => {
+      document.getElementById("knowledge")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 30);
+  }
+
+  async function approve(entry) {
+    setStatusNote("");
+    setError("");
+    const entryId = typeof entry === "object" ? entry.id : entry;
+    const name =
+      typeof entry === "object"
+        ? entry.source_filename || "this draft"
+        : "this draft";
+    const page =
+      typeof entry === "object" && entry.page_number != null
+        ? `, page ${entry.page_number}`
+        : "";
     try {
       await api(`/knowledge/${entryId}`, {
         method: "PATCH",
         token,
         body: { status: "approved" },
       });
-      setMessage(`Approved knowledge entry #${entryId}`);
+      setStatusNote(`Approved a chunk from ${name}${page}. Students can see it now.`);
       await load();
     } catch (err) {
       setError(err.message);
+    }
+  }
+
+  async function approveUpload(uploadId, name) {
+    setStatusNote("");
+    setError("");
+    setUploadError("");
+    try {
+      const result = await api(`/knowledge/uploads/${uploadId}/approve`, {
+        method: "POST",
+        token,
+      });
+      setStatusNote(
+        `Approved all ${result.approved_count} chunks from ${name}. Students can see them now.`,
+      );
+      setFocusUploadId(uploadId);
+      await load();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function rejectUpload(upload) {
+    setStatusNote("");
+    setError("");
+    setUploadError("");
+    try {
+      await api(`/knowledge/uploads/${upload.upload_id}/reject`, {
+        method: "POST",
+        token,
+      });
+      setStatusNote(`Rejected ${upload.filename}. Students can't see it.`);
+      await load();
+    } catch (err) {
+      setUploadError(err.message || "Could not reject that file.");
     }
   }
 
@@ -315,13 +430,15 @@ export default function ProfessorWorkspace() {
     event.preventDefault();
     const files = Array.from(fileInputRef.current?.files || []);
     if (files.length === 0) {
-      setError("Choose at least one file to upload.");
+      setUploadHint("Choose a file first");
+      setUploadError("");
       return;
     }
-    setBusy(true);
-    setError("");
-    setMessage("");
-    const summaries = [];
+    setUploading(true);
+    setUploadHint("");
+    setUploadError("");
+    setUploadReceipts([]);
+    const receipts = [];
     try {
       for (const file of files) {
         const formData = new FormData();
@@ -332,19 +449,26 @@ export default function ProfessorWorkspace() {
           token,
           formData,
         });
-        summaries.push(`${file.name}: ${result.chunks_created} chunk(s)`);
+        receipts.push({
+          filename: file.name,
+          chunks: result.chunks_created,
+          uploadId: result.upload_id,
+        });
       }
-      setMessage(`Uploaded to ${activeCourse.code} KB — ${summaries.join(" · ")}`);
+      setUploadReceipts(receipts);
       if (fileInputRef.current) fileInputRef.current.value = "";
       await load();
     } catch (err) {
-      setError(
-        summaries.length
-          ? `${err.message} (already uploaded: ${summaries.join(" · ")})`
-          : err.message,
+      setUploadReceipts(receipts);
+      const reason = err?.message || "The upload failed. Try again.";
+      setUploadError(
+        receipts.length
+          ? `${reason} The files above were uploaded.`
+          : reason,
       );
+      if (receipts.length) await load();
     } finally {
-      setBusy(false);
+      setUploading(false);
     }
   }
 
@@ -856,46 +980,84 @@ export default function ProfessorWorkspace() {
           Secondary to Repeated Topics — stamp drafts so Study Agent only answers
           from materials you trust. Nothing reaches students until you approve.
         </p>
+        {statusNote ? (
+          <p className="pd-upload-receipt mt-3">{statusNote}</p>
+        ) : null}
         {entries.length === 0 ? (
           <p className="bh-card-note mt-3">No pending drafts for this course.</p>
         ) : (
-          <table className="bh-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Question</th>
-                <th>Draft</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((entry) => (
-                <tr key={entry.id}>
-                  <td className="font-semibold">#{entry.id}</td>
-                  <td className="max-w-[18rem]">
-                    <span className="line-clamp-2 font-medium">
-                      {entry.question_text}
-                    </span>
-                  </td>
-                  <td className="max-w-[22rem]">
-                    <span className="line-clamp-2 text-aui-deep/75">
-                      {entry.answer_draft}
-                    </span>
-                  </td>
-                  <td>
+          reviewGroups(entries)
+            .sort((a, b) => {
+              if (a.uploadId && a.uploadId === focusUploadId) return -1;
+              if (b.uploadId && b.uploadId === focusUploadId) return 1;
+              if (a.uploadId && !b.uploadId) return -1;
+              if (!a.uploadId && b.uploadId) return 1;
+              return a.name.localeCompare(b.name);
+            })
+            .map((group) => (
+              <div
+                key={group.key}
+                className={`mt-4${group.uploadId === focusUploadId ? " pd-upload-focus" : ""}`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-display text-lg font-semibold">{group.name}</h3>
+                  {group.uploadId ? (
                     <button
                       type="button"
                       className="btn-primary px-3.5 py-1.5 text-xs"
-                      onClick={() => approve(entry.id)}
+                      onClick={() => approveUpload(group.uploadId, group.name)}
                     >
-                      Approve for student KB
+                      Approve all {group.entries.length} chunks
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  ) : null}
+                </div>
+                <table className="bh-table">
+                  <thead>
+                    <tr>
+                      <th>Page</th>
+                      <th>Question</th>
+                      <th>Draft</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.entries.map((entry) => (
+                      <tr key={entry.id}>
+                        <td className="whitespace-nowrap font-semibold">
+                          {entry.page_number != null ? `p. ${entry.page_number}` : "—"}
+                        </td>
+                        <td className="max-w-[18rem]">
+                          <span className="line-clamp-2 font-medium">
+                            {entry.question_text}
+                          </span>
+                        </td>
+                        <td className="max-w-[22rem]">
+                          <span className="line-clamp-2 text-aui-deep/75">
+                            {entry.answer_draft}
+                          </span>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="btn-ghost px-3.5 py-1.5 text-xs"
+                            onClick={() => approve(entry)}
+                          >
+                            Approve
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ))
         )}
+        {focusUploadId && !entries.some((entry) => entry.upload_id === focusUploadId) ? (
+          <p className="bh-card-note mt-3">
+            {uploads.find((item) => item.upload_id === focusUploadId)?.filename || "This file"}{" "}
+            has nothing left to review.
+          </p>
+        ) : null}
       </section>
 
       <section id="materials" className="pd-secondary scroll-mt-6">
@@ -947,10 +1109,10 @@ export default function ProfessorWorkspace() {
         <h3 className="font-display mt-7 text-lg font-semibold">
           Upload files directly
         </h3>
+        <p className="pd-upload-line">Students can't see this until you approve.</p>
         <p className="bh-card-note">
           PDF slides, DOCX/TXT/MD notes, or lecture-video transcripts
-          (.vtt/.srt captions). Text is extracted, chunked, and made available
-          to pending review — stamp them above before students see them.
+          (.vtt/.srt captions).
         </p>
         <form onSubmit={uploadFiles} className="mt-3 flex flex-wrap items-center gap-3">
           <input
@@ -959,11 +1121,104 @@ export default function ProfessorWorkspace() {
             multiple
             accept=".pdf,.docx,.txt,.md,.vtt,.srt"
             className="field-glass max-w-md px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-aui-mist file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-aui-deep"
+            onChange={() => {
+              if (fileInputRef.current?.files?.length) setUploadHint("");
+            }}
           />
-          <button type="submit" disabled={busy} className="btn-primary px-5 py-2.5 text-sm">
-            {busy ? "Uploading…" : "Upload to course KB"}
+          <button
+            type="submit"
+            disabled={uploading || busy}
+            className="btn-primary px-5 py-2.5 text-sm"
+          >
+            {uploading ? "Uploading..." : "Upload to course KB"}
           </button>
         </form>
+        {uploadHint ? <p className="pd-upload-error">{uploadHint}</p> : null}
+        {uploadError ? <p className="pd-upload-error">{uploadError}</p> : null}
+        {uploadReceipts.length > 0 ? (
+          <div className="pd-upload-receipt">
+            {uploadReceipts.map((receipt) => (
+              <p key={receipt.uploadId || receipt.filename}>
+                <strong>{receipt.filename}</strong>
+                {" · "}
+                {receipt.chunks} {receipt.chunks === 1 ? "chunk" : "chunks"}
+                {" · Pending your approval"}
+              </p>
+            ))}
+            <button
+              type="button"
+              className="btn-primary mt-2 px-3.5 py-1.5 text-xs"
+              onClick={() => showReview(uploadReceipts[0]?.uploadId)}
+            >
+              Review these chunks
+            </button>
+          </div>
+        ) : null}
+
+        <h3 className="font-display mt-7 text-lg font-semibold">Uploaded files</h3>
+        {statusNote ? <p className="pd-upload-receipt">{statusNote}</p> : null}
+        {uploads.length === 0 ? (
+          <p className="bh-card-note mt-2">No files uploaded for this course yet.</p>
+        ) : (
+          <table className="bh-table">
+            <thead>
+              <tr>
+                <th>File</th>
+                <th>Uploaded</th>
+                <th>Chunks</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {uploads.map((upload) => {
+                const [label, pill] = UPLOAD_BADGE[upload.status] || [
+                  "Pending",
+                  "bh-pill-amber",
+                ];
+                return (
+                  <tr key={upload.upload_id}>
+                    <td className="font-medium">{upload.filename}</td>
+                    <td className="whitespace-nowrap">{formatUploadedAt(upload.uploaded_at)}</td>
+                    <td>{upload.chunk_count}</td>
+                    <td>
+                      <span className={`bh-pill ${pill}`}>{label}</span>
+                    </td>
+                    <td>
+                      <div className="flex flex-wrap gap-2">
+                        {upload.status !== "approved" ? (
+                          <button
+                            type="button"
+                            className="btn-primary px-3 py-1.5 text-xs"
+                            onClick={() => approveUpload(upload.upload_id, upload.filename)}
+                          >
+                            Approve all
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          className="btn-ghost px-3 py-1.5 text-xs"
+                          onClick={() => showReview(upload.upload_id)}
+                        >
+                          Review chunks
+                        </button>
+                        {upload.status !== "rejected" ? (
+                          <button
+                            type="button"
+                            className="btn-ghost px-3 py-1.5 text-xs"
+                            onClick={() => rejectUpload(upload)}
+                          >
+                            Reject
+                          </button>
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
 
         <h3 className="font-display mt-7 text-lg font-semibold">
           Or paste slides / notes

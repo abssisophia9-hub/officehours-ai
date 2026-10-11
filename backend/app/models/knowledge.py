@@ -122,6 +122,26 @@ class MaterialUploadApproveOut(BaseModel):
     approved_count: int
 
 
+class MaterialUploadRejectOut(BaseModel):
+    upload_id: str
+    course_id: int
+    rejected_count: int
+
+
+UploadListStatus = Literal["pending", "approved", "rejected", "partly_approved"]
+
+
+class MaterialUploadOut(BaseModel):
+    upload_id: str
+    filename: str
+    uploaded_at: datetime
+    chunk_count: int
+    pending_count: int
+    approved_count: int
+    rejected_count: int
+    status: UploadListStatus
+
+
 class CanvasSyncRequest(BaseModel):
     course_id: int = Field(ge=1)
     auto_approve: bool = False

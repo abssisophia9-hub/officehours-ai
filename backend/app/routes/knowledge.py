@@ -31,6 +31,8 @@ from app.models.knowledge import (
     CourseMaterialIngest,
     CourseMaterialIngestOut,
     MaterialUploadApproveOut,
+    MaterialUploadOut,
+    MaterialUploadRejectOut,
     EscalationItem,
     FaqFromClusterRequest,
     KnowledgeEntry,
@@ -67,6 +69,8 @@ from app.services.material_extract import extract_material_pages
 from app.services.demo_mode import demo_mode
 from app.services.knowledge_service import (
     approve_upload,
+    list_course_uploads,
+    reject_upload,
     create_faq_from_cluster,
     create_faq_from_insight,
     ingest_course_material,
@@ -154,6 +158,17 @@ def get_canvas_status(
         db, user, course_id, roles={"professor", "ta"}
     )
     return canvas_status(db, course)
+
+
+@router.get("/knowledge/uploads", response_model=list[MaterialUploadOut])
+def list_material_uploads(
+    course_id: int = Query(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Professor view of files uploaded to one course, grouped by upload."""
+    require_course_role(db, user, course_id, roles={"professor"})
+    return list_course_uploads(db, course_id)
 
 
 @router.get("/knowledge/{entry_id}", response_model=KnowledgeEntryOut)
@@ -440,6 +455,48 @@ async def approve_material_upload(
         upload_id=upload_id,
         course_id=course_id,
         approved_count=len(updated),
+    )
+
+
+@router.post(
+    "/knowledge/uploads/{upload_id}/reject",
+    response_model=MaterialUploadRejectOut,
+)
+async def reject_material_upload(
+    upload_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Professor rejection for every chunk created by one material upload."""
+    pending = list_upload_entries(db, upload_id)
+    if not pending:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Upload not found",
+        )
+    course_ids = {entry.course_id for entry in pending}
+    if len(course_ids) != 1 or None in course_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Upload is not tied to a single course",
+        )
+    course_id = next(iter(course_ids))
+    require_course_role(db, user, course_id, roles={"professor"})
+    updated = reject_upload(db, upload_id)
+    for entry in updated:
+        await hub.broadcast(
+            "knowledge.updated",
+            {
+                "id": entry.id,
+                "status": entry.status,
+                "course_id": entry.course_id,
+                "upload_id": entry.upload_id,
+            },
+        )
+    return MaterialUploadRejectOut(
+        upload_id=upload_id,
+        course_id=course_id,
+        rejected_count=len(updated),
     )
 
 

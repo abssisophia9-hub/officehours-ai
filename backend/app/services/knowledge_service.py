@@ -316,20 +316,78 @@ def list_upload_entries(db: Session, upload_id: str) -> list[KnowledgeEntry]:
     )
 
 
-def approve_upload(db: Session, upload_id: str) -> list[KnowledgeEntry]:
-    """Mark every chunk from one ingest call as approved."""
+def _stamp_upload(db: Session, upload_id: str, status: str) -> list[KnowledgeEntry]:
     entries = list_upload_entries(db, upload_id)
     if not entries:
         return []
     now = datetime.now(timezone.utc)
     for entry in entries:
-        entry.status = "approved"
+        entry.status = status
         entry.reviewed_at = now
         db.add(entry)
     db.commit()
     for entry in entries:
         db.refresh(entry)
     return entries
+
+
+def approve_upload(db: Session, upload_id: str) -> list[KnowledgeEntry]:
+    """Mark every chunk from one ingest call as approved."""
+    return _stamp_upload(db, upload_id, "approved")
+
+
+def reject_upload(db: Session, upload_id: str) -> list[KnowledgeEntry]:
+    """Mark every chunk from one ingest call as rejected."""
+    return _stamp_upload(db, upload_id, "rejected")
+
+
+def list_course_uploads(db: Session, course_id: int) -> list[dict]:
+    """One row per material upload in a course, newest first."""
+    rows = (
+        db.query(KnowledgeEntry)
+        .filter(KnowledgeEntry.course_id == course_id)
+        .filter(KnowledgeEntry.upload_id.isnot(None))
+        .order_by(KnowledgeEntry.created_at.asc(), KnowledgeEntry.id.asc())
+        .all()
+    )
+    grouped: dict[str, list[KnowledgeEntry]] = {}
+    for entry in rows:
+        grouped.setdefault(entry.upload_id, []).append(entry)
+    uploads: list[dict] = []
+    for upload_id, entries in grouped.items():
+        pending = sum(1 for entry in entries if entry.status == "pending_review")
+        approved = sum(1 for entry in entries if entry.status == "approved")
+        rejected = sum(1 for entry in entries if entry.status == "rejected")
+        total = len(entries)
+        if approved == total:
+            badge = "approved"
+        elif rejected == total:
+            badge = "rejected"
+        elif pending == total:
+            badge = "pending"
+        else:
+            badge = "partly_approved"
+        filename = next(
+            (entry.source_filename for entry in entries if entry.source_filename),
+            "Uploaded file",
+        )
+        uploads.append(
+            {
+                "upload_id": upload_id,
+                "filename": filename,
+                "uploaded_at": min(entry.created_at for entry in entries),
+                "chunk_count": total,
+                "pending_count": pending,
+                "approved_count": approved,
+                "rejected_count": rejected,
+                "status": badge,
+                "_order": max(entry.id for entry in entries),
+            }
+        )
+    uploads.sort(key=lambda item: (item["uploaded_at"], item["_order"]), reverse=True)
+    for item in uploads:
+        item.pop("_order", None)
+    return uploads
 
 
 def search_approved_entries(
