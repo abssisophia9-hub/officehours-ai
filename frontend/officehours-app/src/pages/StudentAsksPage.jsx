@@ -20,17 +20,22 @@ function workStageLabels(workStatus, statusPayload) {
     statusPayload?.claimed_by ||
     statusPayload?.assigned_ta ||
     null;
+  const professor = statusPayload?.assignee_role === "professor";
+  const assignedLine = statusPayload?.assigned_ta
+    ? `Assigned to ${statusPayload.assigned_ta}${professor ? " (professor)" : ""}`
+    : null;
 
   return [
     {
       label: "Queued",
       done: true,
-      detail:
-        statusPayload?.estimated_wait_minutes != null
-          ? `In TA desk · wait ~${statusPayload.estimated_wait_minutes} min`
-          : statusPayload?.headline === "Waiting in queue"
-            ? "Waiting for a free TA"
-            : "Ask Triage routed your ask",
+      detail: assignedLine
+        ? statusPayload?.estimated_wait_minutes != null
+          ? `${assignedLine} · wait ~${statusPayload.estimated_wait_minutes} min`
+          : assignedLine
+        : statusPayload?.headline === "Waiting in queue"
+          ? "Waiting for a free TA"
+          : "Ask Triage routed your ask",
     },
     {
       label: "Claimed",
@@ -253,6 +258,12 @@ export default function StudentAsksPage() {
                 <div className="mt-3 rounded-lg border border-aui-forest/20 bg-white px-3 py-2 text-xs">
                   <p className="font-semibold text-aui-ink">{status.headline}</p>
                   <p className="mt-1 text-aui-deep/80">{status.message}</p>
+                  {status.assigned_ta ? (
+                    <p className="mt-1 font-semibold text-aui-ink">
+                      Assigned to: {status.assigned_ta}
+                      {status.assignee_role === "professor" ? " (professor)" : ""}
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
 

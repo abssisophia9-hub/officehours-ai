@@ -51,6 +51,43 @@ def _send_email(*, to_addr: str, subject: str, body: str) -> bool:
         return False
 
 
+async def notify_user(
+    db: Session,
+    user: User,
+    *,
+    kind: str,
+    title: str,
+    body: str,
+    request_id: int | None = None,
+    course_id: int | None = None,
+) -> Notification:
+    row = Notification(
+        user_id=user.id,
+        kind=kind,
+        title=title,
+        body=body,
+        request_id=request_id,
+        course_id=course_id,
+    )
+    if user.email:
+        row.email_sent = _send_email(to_addr=user.email, subject=title, body=body)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    await hub.broadcast(
+        "notification.created",
+        {
+            "id": row.id,
+            "user_id": user.id,
+            "kind": kind,
+            "request_id": request_id,
+            "course_id": course_id,
+            "title": title,
+        },
+    )
+    return row
+
+
 async def notify_request_owner(
     db: Session,
     request: Request,
@@ -65,31 +102,15 @@ async def notify_request_owner(
     owner = db.get(User, owner_id)
     if owner is None:
         return None
-    row = Notification(
-        user_id=owner.id,
+    return await notify_user(
+        db,
+        owner,
         kind=kind,
         title=title,
         body=body,
         request_id=request.id,
         course_id=request.course_id,
     )
-    if owner.email:
-        row.email_sent = _send_email(to_addr=owner.email, subject=title, body=body)
-    db.add(row)
-    db.commit()
-    db.refresh(row)
-    await hub.broadcast(
-        "notification.created",
-        {
-            "id": row.id,
-            "user_id": owner.id,
-            "kind": kind,
-            "request_id": request.id,
-            "course_id": request.course_id,
-            "title": title,
-        },
-    )
-    return row
 
 
 def list_for_user(

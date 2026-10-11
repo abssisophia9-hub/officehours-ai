@@ -56,6 +56,8 @@ def ensure_schema(engine: Engine) -> None:
             ("triage_tags", "TEXT"),
             ("assigned_ta", "VARCHAR"),
             ("alternative_ta", "VARCHAR"),
+            ("assignee_role", "VARCHAR"),
+            ("assignee_user_id", "INTEGER"),
             ("estimated_wait_minutes", "INTEGER"),
             ("student_hint", "TEXT"),
             ("triage_trace_json", "TEXT"),

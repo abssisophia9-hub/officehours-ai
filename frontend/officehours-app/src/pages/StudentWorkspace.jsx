@@ -17,6 +17,7 @@ export default function StudentWorkspace() {
   const [busy, setBusy] = useState(false);
   const [buddyStatus, setBuddyStatus] = useState(null);
   const [buddyBusy, setBuddyBusy] = useState(false);
+  const [routingLine, setRoutingLine] = useState("");
 
   useEffect(() => {
     const question = location.state?.question;
@@ -30,6 +31,21 @@ export default function StudentWorkspace() {
       box?.setSelectionRange(box.value.length, box.value.length);
     }, 40);
   }, [location.key, location.state]);
+
+  useEffect(() => {
+    if (!activeCourse || !token) return;
+    let cancelled = false;
+    api(`/requests/routing?course_id=${activeCourse.id}`, { token })
+      .then((data) => {
+        if (!cancelled) setRoutingLine(data?.line || "");
+      })
+      .catch(() => {
+        if (!cancelled) setRoutingLine("");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeCourse, token]);
 
   if (!activeCourse) return <Navigate to="/" replace />;
   if (activeCourse.role !== "student") {
@@ -120,6 +136,7 @@ export default function StudentWorkspace() {
             <p className="sd-ask-copy">
               Send this question to a TA or your professor. You can hide your name.
             </p>
+            {routingLine ? <p className="sd-ask-copy">{routingLine}</p> : null}
           </div>
         </div>
 
