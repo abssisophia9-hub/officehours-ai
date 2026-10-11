@@ -6499,32 +6499,43 @@ html:has(.oh-open) {
   color: var(--theme-text-muted);
 }
 
+/* Student shell: the course page fills the screen. The thread scrolls;
+   the course name and question box stay put and do not cover the answer. */
+.bh-frame-student {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.bh-frame-student .bh-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
+
 /* Student home: Study Agent fills the course page. */
 .sa-page {
   display: flex;
   flex-direction: column;
   width: 100%;
-  min-height: calc(100vh - 4.6rem);
+  flex: 1;
+  min-height: 0;
+  height: 100%;
   gap: 0.85rem;
+  overflow: hidden;
 }
 
 .sa-course {
-  position: sticky;
-  top: 0;
-  z-index: 2;
+  flex-shrink: 0;
   margin: 0;
-  padding: 0.15rem 0 0.55rem;
+  padding: 0.15rem 0 0.35rem;
   font-family: "Fraunces", serif;
   font-size: clamp(1.7rem, 3.4vw, 2.55rem);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.15;
   color: var(--theme-title);
-  background: linear-gradient(
-    180deg,
-    var(--theme-page) 72%,
-    transparent
-  );
 }
 
 .sa-thread {
@@ -6533,6 +6544,9 @@ html:has(.oh-open) {
   gap: 0.75rem;
   flex: 1;
   width: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 0.4rem;
 }
 
 .sa-empty {
@@ -6638,18 +6652,13 @@ html:has(.oh-open) {
 }
 
 .sa-composer {
-  position: sticky;
-  bottom: 0;
+  flex-shrink: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.55rem 0.7rem;
   align-items: end;
-  padding: 0.7rem 0 0.2rem;
-  background: linear-gradient(
-    180deg,
-    transparent,
-    var(--theme-page) 28%
-  );
+  padding: 0.35rem 0 0.15rem;
+  background: var(--theme-page);
 }
 
 .sa-trust {
@@ -6712,7 +6721,8 @@ html:has(.oh-open) {
     height: auto;
     max-height: none;
     position: relative;
-    padding: 0.7rem 0.7rem 0.45rem;
+    flex-shrink: 0;
+    padding: 0.55rem 0.55rem 0.35rem;
   }
 
   .bh-frame-student .bh-logo {
@@ -6747,22 +6757,46 @@ html:has(.oh-open) {
 
   .bh-frame-student .bh-sidebar-footer {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     gap: 0.35rem;
+    overflow-x: auto;
   }
 
   .bh-frame-student .bh-course-select {
-    flex: 1 1 10rem;
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 7.5rem;
+    margin-top: 0;
+  }
+
+  .bh-frame-student .theme-toggle-sidebar {
+    width: auto;
+    margin-top: 0;
+    flex-shrink: 0;
+  }
+
+  .bh-frame-student .bh-account {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    flex: 0 1 auto;
     min-width: 0;
   }
 
+  .bh-frame-student .bh-account-trigger {
+    width: auto;
+    max-width: 11rem;
+  }
+
   .bh-frame-student .bh-main {
-    padding: 0.85rem 0.8rem 1.4rem;
+    flex: 1;
+    min-height: 0;
+    padding: 0.75rem 0.75rem 0.6rem;
   }
 
   .sa-page {
-    min-height: calc(100vh - 8rem);
+    min-height: 0;
   }
 
   .sa-composer {

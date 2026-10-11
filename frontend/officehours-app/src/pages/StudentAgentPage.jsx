@@ -6,6 +6,9 @@ import { useAuth } from "../auth/AuthContext.jsx";
 const NOT_FOUND =
   "No professor-approved material answers this.";
 
+// In-memory for this browser tab. Survives sidebar navigation; clears on refresh.
+const sessionThreads = new Map();
+
 function sourceLabel(entry) {
   const file = String(entry?.source_filename || "").trim();
   const page = entry?.page_number;
@@ -48,17 +51,40 @@ function SourceChip({ hit }) {
 export default function StudentAgentPage() {
   const { token, activeCourse } = useAuth();
   const navigate = useNavigate();
+  const courseId = activeCourse?.id;
   const [draft, setDraft] = useState("");
-  const [messages, setMessages] = useState([]);
+  const [boundCourseId, setBoundCourseId] = useState(courseId);
+  const [messages, setMessages] = useState(() => sessionThreads.get(courseId) || []);
   const [busy, setBusy] = useState(false);
   const boxRef = useRef(null);
   const endRef = useRef(null);
+  const messagesRef = useRef(messages);
+  const courseIdRef = useRef(courseId);
+  messagesRef.current = messages;
+  courseIdRef.current = courseId;
+
+  if (courseId !== boundCourseId) {
+    if (boundCourseId) sessionThreads.set(boundCourseId, messages);
+    setBoundCourseId(courseId);
+    setMessages(sessionThreads.get(courseId) || []);
+    setDraft("");
+  }
+
+  function remember(next) {
+    if (courseId) sessionThreads.set(courseId, next);
+    return next;
+  }
 
   useEffect(() => {
-    setMessages([]);
-    setDraft("");
+    return () => {
+      const id = courseIdRef.current;
+      if (id) sessionThreads.set(id, messagesRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
     if (boxRef.current) boxRef.current.style.height = "auto";
-  }, [activeCourse?.id]);
+  }, [courseId]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "nearest" });
@@ -86,10 +112,12 @@ export default function StudentAgentPage() {
     if (!question || busy) return;
     setDraft("");
     if (boxRef.current) boxRef.current.style.height = "auto";
-    setMessages((prev) => [
-      ...prev,
-      { id: `q-${Date.now()}`, role: "student", text: question },
-    ]);
+    setMessages((prev) =>
+      remember([
+        ...prev,
+        { id: `q-${Date.now()}`, role: "student", text: question },
+      ]),
+    );
     setBusy(true);
     try {
       const answer = await api("/agent/ask", {
@@ -100,29 +128,33 @@ export default function StudentAgentPage() {
       const notFound = Boolean(
         answer.should_seek_help || answer.matched_count === 0,
       );
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `a-${Date.now()}`,
-          role: "agent",
-          text: notFound ? NOT_FOUND : answer.answer || "",
-          sources: notFound ? [] : answer.sources || [],
-          notFound,
-          question,
-        },
-      ]);
+      setMessages((prev) =>
+        remember([
+          ...prev,
+          {
+            id: `a-${Date.now()}`,
+            role: "agent",
+            text: notFound ? NOT_FOUND : answer.answer || "",
+            sources: notFound ? [] : answer.sources || [],
+            notFound,
+            question,
+          },
+        ]),
+      );
     } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `e-${Date.now()}`,
-          role: "agent",
-          error: true,
-          text:
-            err?.message ||
-            "The study agent didn't respond. Check your connection and try again.",
-        },
-      ]);
+      setMessages((prev) =>
+        remember([
+          ...prev,
+          {
+            id: `e-${Date.now()}`,
+            role: "agent",
+            error: true,
+            text:
+              err?.message ||
+              "The study agent didn't respond. Check your connection and try again.",
+          },
+        ]),
+      );
     } finally {
       setBusy(false);
       boxRef.current?.focus();
