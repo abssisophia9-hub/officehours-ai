@@ -307,9 +307,13 @@ async def upload_course_materials(
         entry_ids=[entry.id for entry in entries],
         upload_id=entries[0].upload_id,
         message=(
-            f"Ingested {len(entries)} material chunk(s) into {course.code} KB "
-            f"({'approved' if payload.auto_approve else 'pending_review'}). "
-            "Students asking in this course can now match against this content."
+            f"Saved {len(entries)} {'part' if len(entries) == 1 else 'parts'} of "
+            f"“{payload.title.strip()}” as course material for {course.code}. "
+            + (
+                "Students can see it now."
+                if payload.auto_approve
+                else "Students can't see it until you approve it."
+            )
         ),
     )
 

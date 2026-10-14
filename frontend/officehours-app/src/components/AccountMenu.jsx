@@ -58,19 +58,24 @@ const TOURS = {
   ],
   professor: [
     {
-      title: "Repeated Topics",
-      body: "See clustered student struggle themes for this course and decide what to turn into FAQs or agenda items.",
-      sectionId: "clusters",
+      title: "Material",
+      body: "Upload a file, then approve it. Students can't see a file until you approve it.",
+      to: "/professor",
     },
     {
-      title: "Knowledge Review",
-      body: "Approve or edit drafts so the study agent only answers from materials you trust.",
-      sectionId: "knowledge",
+      title: "Asks",
+      body: "Questions assigned to you come first. Suggested answers stay here, and the study agent does not use them.",
+      to: "/professor/asks",
     },
     {
-      title: "Canvas Materials",
-      body: "Sync or upload course materials into the course knowledge base for student study.",
-      sectionId: "materials",
+      title: "Insights",
+      body: "See repeated topics and chapter notes for this course.",
+      to: "/professor/insights",
+    },
+    {
+      title: "Team",
+      body: "See teaching assistant workload. If this course has no TA, asks come to you.",
+      to: "/professor/team",
     },
   ],
 };
@@ -142,8 +147,12 @@ export default function AccountMenu({ onScrollToSection }) {
     setOpen(false);
     setTourStep(0);
     setTourOpen(true);
-    const first = tourSteps[0];
-    if (first?.sectionId) onScrollToSection?.(first.sectionId);
+    showTourStep(tourSteps[0]);
+  }
+
+  function showTourStep(step) {
+    if (step?.to) navigate(step.to);
+    else if (step?.sectionId) onScrollToSection?.(step.sectionId);
   }
 
   function nextTour() {
@@ -153,8 +162,7 @@ export default function AccountMenu({ onScrollToSection }) {
       return;
     }
     setTourStep(next);
-    const step = tourSteps[next];
-    if (step?.sectionId) onScrollToSection?.(step.sectionId);
+    showTourStep(tourSteps[next]);
   }
 
   async function submitBug(event) {

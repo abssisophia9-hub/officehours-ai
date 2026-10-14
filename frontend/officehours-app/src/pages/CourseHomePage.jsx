@@ -10,7 +10,7 @@ const ROLE_PATH = {
 const ROLE_COPY = {
   student: "Ask quietly, check status, use Stuck Room with classmates, and the approved study agent.",
   ta: "Work the live queue and prepare teaching drafts for curation.",
-  professor: "Triage repeats, see chapter review insights, draft FAQs, and approve knowledge.",
+  professor: "Approve course material, then see asks, insights, and your team.",
 };
 
 const ROLE_PILL = {

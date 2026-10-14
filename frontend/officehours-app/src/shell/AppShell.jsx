@@ -3,6 +3,7 @@ import AccountMenu from "../components/AccountMenu.jsx";
 import NotificationBell from "../components/NotificationBell.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 import { useAuth } from "../auth/AuthContext.jsx";
+import { ProfessorProvider, useProfessorData } from "../pages/professor/ProfessorData.jsx";
 
 const ICONS = {
   dashboard: (
@@ -281,6 +282,14 @@ export default function AppShell() {
     );
   }
 
+  if (role === "professor") {
+    return (
+      <ProfessorProvider>
+        <ProfessorFrame />
+      </ProfessorProvider>
+    );
+  }
+
   return (
     <div className={`bh-frame${role === "student" ? " bh-frame-student" : ""}`}>
       <aside className="bh-sidebar">
@@ -356,6 +365,85 @@ export default function AppShell() {
         </div>
       </aside>
 
+      <main className="bh-main">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
+
+const PROFESSOR_NAV = [
+  { id: "material", label: "Material", to: "/professor", end: true, icon: "knowledge", badgeKey: "waitingFiles" },
+  { id: "asks", label: "Asks", to: "/professor/asks", icon: "requests", badgeKey: "assignedAsks" },
+  { id: "insights", label: "Insights", to: "/professor/insights", icon: "insights" },
+  { id: "team", label: "Team", to: "/professor/team", icon: "queue" },
+];
+
+function ProfessorFrame() {
+  const { user, activeCourse, setActiveCourse } = useAuth();
+  const { waitingFiles, assignedAsks } = useProfessorData();
+  const navigate = useNavigate();
+  const counts = { waitingFiles, assignedAsks };
+
+  return (
+    <div className="bh-frame bh-frame-professor">
+      <aside className="bh-sidebar">
+        <div className="bh-logo">
+          OfficeHours AI
+          <small>Al Akhawayn University</small>
+        </div>
+        <nav className="bh-nav" aria-label="Professor">
+          {PROFESSOR_NAV.map((item) => {
+            const count = item.badgeKey ? counts[item.badgeKey] : 0;
+            return (
+              <NavLink
+                key={item.id}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+              >
+                {ICONS[item.icon]}
+                <span>{item.label}</span>
+                {count > 0 ? (
+                  <span className="bh-nav-badge">{count}</span>
+                ) : null}
+              </NavLink>
+            );
+          })}
+        </nav>
+        <div className="bh-sidebar-footer">
+          <p className="bh-nav-label">Course</p>
+          <select
+            className="bh-course-select"
+            aria-label="Course"
+            value={activeCourse?.id || ""}
+            onChange={(event) => {
+              const next = user.courses.find(
+                (course) => String(course.id) === event.target.value,
+              );
+              setActiveCourse(next || null);
+              if (next) {
+                navigate(
+                  next.role === "professor"
+                    ? "/professor"
+                    : next.role === "ta"
+                      ? "/ta"
+                      : "/student",
+                );
+              }
+            }}
+          >
+            {user.courses.map((course) => (
+              <option key={course.id} value={course.id}>
+                {course.code} ({course.role})
+              </option>
+            ))}
+          </select>
+          <NotificationBell plain />
+          <ThemeToggle className="theme-toggle-sidebar" />
+          <AccountMenu />
+        </div>
+      </aside>
       <main className="bh-main">
         <Outlet />
       </main>
