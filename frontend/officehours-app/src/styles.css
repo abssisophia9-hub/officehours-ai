@@ -7012,6 +7012,21 @@ html:has(.oh-open) {
   border-bottom: 1px solid var(--theme-table-rule);
 }
 
+.pf-file-head-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.pf-show-all {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.35rem;
+}
+
 .pf-file-block + .pf-file-block {
   border-top: 1px solid var(--theme-table-rule);
 }
@@ -7053,7 +7068,14 @@ html:has(.oh-open) {
 .pf-btn,
 .pf-quiet,
 .pf-menu-item {
+  min-width: 40px;
   min-height: 40px;
+}
+
+.pf-btn,
+.pf-menu-item {
+  padding-left: 0.65rem;
+  padding-right: 0.65rem;
 }
 
 .pf-approve {
@@ -7292,6 +7314,57 @@ html:has(.oh-open) {
   }
 }
 
+.bh-frame-professor .pf-inbox-note {
+  margin-top: 0.25rem;
+  color: var(--theme-text);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.bh-frame-professor .pf-inbox-read {
+  display: inline-flex;
+  align-items: center;
+  min-width: 40px;
+  min-height: 40px;
+  margin-top: 0.15rem;
+  padding: 0 0.35rem;
+  border: none;
+  background: transparent;
+  color: var(--theme-deep);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+[data-theme="dark"] .bh-frame-professor .bh-avatar {
+  background: #255a40;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .bh-frame-professor .bh-account-menu {
+  background: var(--theme-surface);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="dark"] .bh-frame-professor .bh-account-item,
+[data-theme="dark"] .bh-frame-professor .bh-account-item-icon {
+  color: var(--theme-text);
+}
+
+[data-theme="dark"] .bh-frame-professor .bh-account-item:hover {
+  background: var(--theme-row-hover);
+}
+
+[data-theme="dark"] .bh-frame-professor .bh-account-item-danger,
+[data-theme="dark"] .bh-frame-professor .bh-account-item-danger .bh-account-item-icon {
+  color: var(--theme-red-fg);
+}
+
+[data-theme="dark"] .bh-frame-professor .bh-account-item-danger:hover {
+  background: var(--theme-row-hover);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bh-frame-professor *,
   .bh-frame-professor *::before,
@@ -7299,6 +7372,15 @@ html:has(.oh-open) {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+
+  .bh-frame-professor .btn-primary:hover,
+  .bh-frame-professor .btn-primary:active,
+  .bh-frame-professor .btn-ghost:hover,
+  .bh-frame-professor .btn-ghost:active,
+  .bh-frame-professor .pf-approve:hover,
+  .bh-frame-professor .pf-approve:active {
+    transform: none !important;
   }
 }
 
