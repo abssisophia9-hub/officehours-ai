@@ -37,7 +37,12 @@ def test_materials_default_to_pending_review():
         },
     )
     assert response.status_code == 201
-    entry_id = response.json()["entry_ids"][0]
+    body = response.json()
+    assert "Students can't see it until you approve it." in body["message"]
+    assert "can now match" not in body["message"]
+    assert "KB" not in body["message"]
+    assert "pending_review" not in body["message"]
+    entry_id = body["entry_ids"][0]
     entry = client.get(f"/knowledge/{entry_id}", headers=headers).json()
     assert entry["status"] == "pending_review"
 

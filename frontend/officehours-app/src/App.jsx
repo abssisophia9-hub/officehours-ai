@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useLocation } from "react-router";
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router";
 import { useAuth } from "./auth/AuthContext.jsx";
 import { usePublicConfig } from "./config/PublicConfig.jsx";
 import AppShell from "./shell/AppShell.jsx";
@@ -13,7 +13,10 @@ import StudentRevisionPage from "./pages/StudentRevisionPage.jsx";
 import StudentNotesPage from "./pages/StudentNotesPage.jsx";
 import StuckRoomPage from "./pages/StuckRoomPage.jsx";
 import TaWorkspace from "./pages/TaWorkspace.jsx";
-import ProfessorWorkspace from "./pages/ProfessorWorkspace.jsx";
+import MaterialPage from "./pages/professor/MaterialPage.jsx";
+import AsksPage from "./pages/professor/AsksPage.jsx";
+import InsightsPage from "./pages/professor/InsightsPage.jsx";
+import TeamPage from "./pages/professor/TeamPage.jsx";
 import CanvasSimulatorPage from "./pages/CanvasSimulatorPage.jsx";
 import CanvasLaunchPage from "./pages/CanvasLaunchPage.jsx";
 import VisionDemoHub from "./pages/VisionDemoHub.jsx";
@@ -28,6 +31,15 @@ function LoadingScreen() {
       <div className="glass-panel px-8 py-6 text-aui-deep">Loading OfficeHours AI…</div>
     </div>
   );
+}
+
+function ProfessorGate() {
+  const { activeCourse } = useAuth();
+  if (!activeCourse) return <Navigate to="/" replace />;
+  if (activeCourse.role !== "professor") {
+    return <Navigate to={activeCourse.role === "ta" ? "/ta" : "/student"} replace />;
+  }
+  return <Outlet />;
 }
 
 function GuestHomeOrApp({ children }) {
@@ -77,7 +89,12 @@ export default function App() {
         <Route path="student/notes" element={<StudentNotesPage />} />
         <Route path="student/room" element={<StuckRoomPage />} />
         <Route path="ta" element={<TaWorkspace />} />
-        <Route path="professor" element={<ProfessorWorkspace />} />
+        <Route path="professor" element={<ProfessorGate />}>
+          <Route index element={<MaterialPage />} />
+          <Route path="asks" element={<AsksPage />} />
+          <Route path="insights" element={<InsightsPage />} />
+          <Route path="team" element={<TeamPage />} />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -6845,3 +6845,469 @@ html:has(.oh-open) {
   outline: 2px solid var(--theme-forest);
   outline-offset: 4px;
 }
+
+/* ---------- Professor pages ---------- */
+
+.bh-frame-professor .bh-nav {
+  overflow: visible;
+  flex: 0 0 auto;
+}
+
+.bh-frame-professor .bh-sidebar {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.bh-frame-professor .bh-nav-item.active {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-weight: 650;
+  box-shadow: inset 3px 0 0 rgba(255, 255, 255, 0.7);
+}
+
+.bh-frame-professor .bh-nav-badge {
+  margin-left: auto;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: #f7e8b8;
+  color: #5c4310;
+  font-size: 0.75rem;
+  font-weight: 750;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bh-frame-professor .bh-nav-item,
+.bh-frame-professor .bh-course-select,
+.bh-frame-professor .theme-toggle,
+.bh-frame-professor .bh-account-trigger {
+  min-height: 40px;
+}
+
+.bh-frame-professor button:focus-visible,
+.bh-frame-professor a:focus-visible,
+.bh-frame-professor select:focus-visible,
+.bh-frame-professor input:focus-visible,
+.bh-frame-professor textarea:focus-visible {
+  outline: 2px solid #143026;
+  outline-offset: 2px;
+}
+
+.bh-frame-professor .bh-sidebar :focus-visible {
+  outline-color: #f4f1e8;
+}
+
+.pf-page {
+  max-width: 960px;
+  min-width: 0;
+}
+
+.pf-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pf-head h1,
+.pf-block h2,
+.pf-topic {
+  font-family: "Fraunces", serif;
+  color: var(--theme-title);
+  letter-spacing: -0.02em;
+}
+
+.pf-head h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 3vw, 2.2rem);
+  font-weight: 700;
+}
+
+.pf-block {
+  margin-top: 1.5rem;
+}
+
+.pf-block h2 {
+  margin: 0 0 0.45rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.pf-topic {
+  margin: 0.2rem 0 0;
+  font-size: 1.15rem;
+  font-weight: 650;
+}
+
+.pf-status,
+.pf-line,
+.pf-meta,
+.pf-chunk-text,
+.pf-note,
+.pf-warn,
+.pf-error {
+  margin: 0.55rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--theme-text);
+}
+
+.pf-meta,
+.pf-chunk-page {
+  color: var(--theme-text-muted);
+  font-size: 0.85rem;
+}
+
+.pf-status-wait,
+.pf-warn {
+  border: 1px solid var(--theme-amber-border);
+  background: var(--theme-amber-bg);
+  color: var(--theme-amber-fg);
+  border-radius: 0.7rem;
+  padding: 0.65rem 0.8rem;
+}
+
+.pf-error {
+  color: var(--theme-red-fg);
+  font-weight: 650;
+}
+
+.pf-note {
+  color: var(--theme-emerald-fg);
+  animation: pf-note-in 120ms ease;
+}
+
+.pf-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.pf-files {
+  margin-top: 0.8rem;
+}
+
+.pf-file {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(8rem, 0.7fr) minmax(7rem, 0.6fr) auto;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  padding: 0.55rem 0;
+}
+
+.pf-file-head {
+  color: var(--theme-table-head);
+  font-size: 0.78rem;
+  font-weight: 650;
+  border-bottom: 1px solid var(--theme-table-rule);
+}
+
+.pf-file-block + .pf-file-block {
+  border-top: 1px solid var(--theme-table-rule);
+}
+
+.pf-filename,
+.pf-cell {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--theme-text);
+}
+
+.pf-cell-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.pf-state-wait {
+  background: var(--theme-amber-bg);
+  color: var(--theme-amber-fg);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-weight: 700;
+}
+
+.pf-actions {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.pf-primary,
+.pf-approve,
+.pf-btn,
+.pf-quiet,
+.pf-menu-item {
+  min-height: 40px;
+}
+
+.pf-approve {
+  border: none;
+  border-radius: var(--radius-control);
+  background: #14663c;
+  color: #fff;
+  font-weight: 700;
+  padding: 0 0.9rem;
+  cursor: pointer;
+}
+
+.pf-approve:disabled,
+.pf-btn:disabled,
+.pf-primary:disabled {
+  cursor: not-allowed;
+}
+
+.pf-quiet {
+  border: none;
+  background: transparent;
+  color: var(--theme-deep);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 0 0.2rem;
+  cursor: pointer;
+}
+
+.pf-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 0.8rem;
+}
+
+.pf-panel {
+  margin-top: 0.7rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--theme-border);
+  border-radius: 0.8rem;
+  background: var(--theme-surface);
+}
+
+.pf-label {
+  display: block;
+  margin-top: 0.65rem;
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: var(--theme-text);
+}
+
+.pf-label .field-glass,
+.pf-panel .field-glass {
+  display: block;
+  width: 100%;
+  margin-top: 0.3rem;
+  min-height: 40px;
+}
+
+.pf-menu {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  min-width: 11rem;
+  padding: 0.3rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--theme-border-strong);
+  background: var(--theme-surface);
+  box-shadow: 0 10px 24px var(--theme-shadow);
+}
+
+.pf-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--theme-text);
+  font-weight: 650;
+  border-radius: 0.45rem;
+  padding: 0 0.7rem;
+  cursor: pointer;
+}
+
+.pf-menu-item:hover,
+.pf-menu-item:focus-visible {
+  background: var(--theme-row-hover);
+}
+
+.pf-confirm,
+.pf-chunks {
+  margin: 0.35rem 0 0.6rem;
+}
+
+.pf-chunks {
+  list-style: none;
+  padding: 0;
+}
+
+.pf-chunks li {
+  padding: 0.55rem 0;
+  border-top: 1px solid var(--theme-table-rule);
+}
+
+.pf-chunk-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.pf-ask-list,
+.pf-plain-list {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+}
+
+.pf-ask-list > li {
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--theme-table-rule);
+}
+
+.pf-ask-title {
+  margin: 0;
+  font-weight: 650;
+  color: var(--theme-text);
+  overflow-wrap: anywhere;
+}
+
+.pf-plain-list li {
+  margin-top: 0.3rem;
+  color: var(--theme-text);
+  overflow-wrap: anywhere;
+}
+
+.pf-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.pf-filter-on {
+  border-color: var(--theme-forest);
+  font-weight: 750;
+}
+
+@keyframes pf-note-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 800px) {
+  .bh-frame-professor {
+    flex-direction: column;
+  }
+
+  .bh-frame-professor .bh-sidebar {
+    width: 100%;
+    height: auto;
+    max-height: none;
+    position: relative;
+  }
+
+  .bh-frame-professor .bh-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .bh-frame-professor .bh-nav-item {
+    width: auto;
+  }
+
+  .bh-frame-professor .bh-main {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .pf-head {
+    flex-wrap: wrap;
+  }
+
+  .pf-head .pf-primary {
+    width: 100%;
+  }
+
+  .pf-file,
+  .pf-file-head {
+    grid-template-columns: 1fr;
+  }
+
+  .pf-file-head {
+    display: none;
+  }
+
+  .pf-cell-label {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    display: block;
+    font-size: 0.75rem;
+    color: var(--theme-table-head);
+  }
+
+  .pf-stack-table,
+  .pf-stack-table thead,
+  .pf-stack-table tbody,
+  .pf-stack-table tr,
+  .pf-stack-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .pf-stack-table thead {
+    display: none;
+  }
+
+  .pf-stack-table td {
+    padding-bottom: 0.2rem;
+  }
+
+  .pf-stack-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.75rem;
+    color: var(--theme-table-head);
+  }
+
+  .pf-stack-table tr {
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--theme-table-rule);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bh-frame-professor *,
+  .bh-frame-professor *::before,
+  .bh-frame-professor *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-theme="dark"] .pf-approve {
+  background: #0f4a30;
+  color: #f4f1e8;
+}
+
+[data-theme="dark"] .bh-frame-professor .bh-nav-badge {
+  background: #f7e8b8;
+  color: #5c4310;
+}
