@@ -121,6 +121,18 @@ DEMO_USERS = [
         ],
     },
     {
+        # COM 1301 is not Canvas-mirrored, so this is a separate demo professor
+        # rather than another course on Prof. Benali (his login requires a Canvas id).
+        # Also covers MTH 1304, which otherwise has no TA and no professor.
+        "email": "n.elfassi@aui.ma",
+        "display_name": "Prof. Nadia El Fassi (demo)",
+        "student_id": None,
+        "memberships": [
+            _membership("COM 1301", "professor"),
+            _membership("MTH 1304", "professor"),
+        ],
+    },
+    {
         # Alice is staff on CSC 2302 (a course she already took).
         # Other memberships are leftover demo enrollments, not "TA of 2302 = student of 2302".
         "email": "a.chen@aui.ma",

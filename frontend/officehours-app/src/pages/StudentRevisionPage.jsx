@@ -193,9 +193,12 @@ export default function StudentRevisionPage() {
     );
   }
 
+  const courseLine = [activeCourse.code, activeCourse.title].filter(Boolean).join(" · ");
+
   return (
     <div className="fade-up">
-      <h1 className="bh-page-title">Revision Strategist</h1>
+      <h1 className="sa-course">{courseLine}</h1>
+      <h2 className="bh-page-title">Revision Strategist</h2>
       <p className="bh-page-subtitle">
         Local grade plan for {activeCourse.code} until Canvas grades land in the
         API. Firm priorities — you can correct a wrong score.
