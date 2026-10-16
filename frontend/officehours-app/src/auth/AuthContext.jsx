@@ -1,9 +1,17 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client.js";
+import {
+  clearLegacyCourseKey,
+  coursePath,
+  forgetCourse,
+  landingCourse,
+  rememberCourse,
+} from "./courseLanding.js";
 
 const AuthContext = createContext(null);
 const TOKEN_KEY = "officehours_auth_token";
-const COURSE_KEY = "officehours_active_course";
+
+export { coursePath, landingCourse };
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) || "");
@@ -23,12 +31,10 @@ export function AuthProvider({ children }) {
         const me = await api("/auth/me", { token });
         if (cancelled) return;
         setUser(me);
-        const saved = localStorage.getItem(COURSE_KEY);
-        const restored =
-          me.courses.find((course) => String(course.id) === saved) ||
-          me.courses[0] ||
-          null;
+        clearLegacyCourseKey();
+        const restored = landingCourse(me);
         setActiveCourseState(restored);
+        if (restored) rememberCourse(me.id, restored);
       } catch {
         localStorage.removeItem(TOKEN_KEY);
         setToken("");
@@ -49,15 +55,14 @@ export function AuthProvider({ children }) {
       method: "POST",
       body: { email, password },
     });
-    // Clear previous role/course before applying the new membership.
-    localStorage.removeItem(COURSE_KEY);
+    clearLegacyCourseKey();
     setActiveCourseState(null);
     localStorage.setItem(TOKEN_KEY, result.token);
     setToken(result.token);
     setUser(result.user);
-    const first = result.user.courses[0] || null;
-    setActiveCourseState(first);
-    if (first) localStorage.setItem(COURSE_KEY, String(first.id));
+    const next = landingCourse(result.user, { preferStaff: true });
+    setActiveCourseState(next);
+    if (next) rememberCourse(result.user.id, next);
     return result.user;
   }
 
@@ -67,8 +72,8 @@ export function AuthProvider({ children }) {
     } catch {
       // ignore network logout failures
     }
+    forgetCourse(user?.id);
     localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(COURSE_KEY);
     setToken("");
     setUser(null);
     setActiveCourseState(null);
@@ -76,26 +81,24 @@ export function AuthProvider({ children }) {
 
   function setActiveCourse(course) {
     setActiveCourseState(course);
-    if (course) localStorage.setItem(COURSE_KEY, String(course.id));
+    if (course && user?.id) rememberCourse(user.id, course);
   }
 
   // Adopt a session minted by a Canvas launch (no password login).
   async function adoptSession(newToken, activeCourseId) {
+    clearLegacyCourseKey();
     localStorage.setItem(TOKEN_KEY, newToken);
-    if (activeCourseId) {
-      localStorage.setItem(COURSE_KEY, String(activeCourseId));
-    } else {
-      localStorage.removeItem(COURSE_KEY);
-    }
     const me = await api("/auth/me", { token: newToken });
     setToken(newToken);
     setUser(me);
-    const active =
-      me.courses.find((course) => course.id === activeCourseId) ||
-      me.courses[0] ||
-      null;
+    const explicit = activeCourseId
+      ? me.courses.find(
+          (course) => String(course.id) === String(activeCourseId),
+        )
+      : null;
+    const active = explicit || landingCourse(me, { preferStaff: true });
     setActiveCourseState(active);
-    if (active) localStorage.setItem(COURSE_KEY, String(active.id));
+    if (active) rememberCourse(me.id, active);
     return { user: me, activeCourse: active };
   }
 

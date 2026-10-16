@@ -1,9 +1,14 @@
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import AccountMenu from "../components/AccountMenu.jsx";
 import NotificationBell from "../components/NotificationBell.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 import { useAuth } from "../auth/AuthContext.jsx";
+import { api } from "../api/client.js";
+import { pageItems } from "../api/page.js";
+import { useUnstaffedCourses } from "../hooks/useUnstaffedCourses.js";
 import { ProfessorProvider, useProfessorData } from "../pages/professor/ProfessorData.jsx";
+import { askHasReply, seenReplyIds, subscribeReplySeen } from "../student/replySeen.js";
 
 const ICONS = {
   dashboard: (
@@ -217,10 +222,54 @@ function NavItemContent({ section }) {
   );
 }
 
+function courseOptionLabel(course, unstaffed) {
+  const tag = unstaffed?.has(course.id) ? " · No staff" : "";
+  return `${course.code} (${course.role})${tag}`;
+}
+
+function useStudentReplyCount(token, userId, course, pathname) {
+  const [count, setCount] = useState(0);
+  const courseId = course?.role === "student" ? course.id : null;
+
+  useEffect(() => {
+    if (!token || !userId || !courseId) {
+      setCount(0);
+      return undefined;
+    }
+    let cancelled = false;
+    function load() {
+      api(`/requests/?course_id=${courseId}&limit=50`, { token })
+        .then((data) => {
+          if (cancelled) return;
+          const seen = seenReplyIds(userId);
+          const next = pageItems(data).filter(
+            (item) => askHasReply(item) && !seen.has(String(item.id)),
+          ).length;
+          setCount(next);
+        })
+        .catch(() => {
+          if (!cancelled) setCount(0);
+        });
+    }
+    load();
+    const unsubscribe = subscribeReplySeen(() => {
+      if (!cancelled) load();
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, [token, userId, courseId, pathname]);
+
+  return count;
+}
+
 export default function AppShell() {
-  const { user, activeCourse, setActiveCourse } = useAuth();
+  const { user, token, activeCourse, setActiveCourse } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const unstaffed = useUnstaffedCourses(user?.courses, token);
+  const replyCount = useStudentReplyCount(token, user?.id, activeCourse, location.pathname);
 
   const role = activeCourse?.role;
   const roleHome =
@@ -298,44 +347,77 @@ export default function AppShell() {
           <small>Al Akhawayn University</small>
         </div>
 
-        <nav className="bh-nav">
-          <NavLink
-            to={roleHome}
-            end
-            className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
-          >
-            {role === "student" ? ICONS.agent : ICONS.dashboard}
-            <span className="bh-nav-item-stack">
-              <strong>{role === "student" ? "Study Agent" : "Dashboard"}</strong>
-              {role === "student" ? (
-                <span className="bh-nav-hint">Ask this course</span>
-              ) : null}
-            </span>
-          </NavLink>
-          {grouped
-            ? sections.map((group) => (
-                <div key={group.group} className="bh-nav-group">
-                  <p className="bh-nav-label">{group.group}</p>
-                  {group.items.map((section) => renderNavItem(section))}
-                </div>
-              ))
-            : flatSections.map((section) => renderNavItem(section))}
-          <div className="bh-nav-group">
-            <NavLink
-              to="/"
-              end
-              className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
-            >
-              {ICONS.courses}
-              My Courses
-            </NavLink>
-          </div>
+        <nav className="bh-nav" aria-label={role === "student" ? "Student" : "Workspace"}>
+          {role === "student" ? (
+            <>
+              <NavLink
+                to="/student"
+                end
+                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+              >
+                {ICONS.agent}
+                <span>Study Agent</span>
+              </NavLink>
+              <NavLink
+                to="/student/ask"
+                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+              >
+                {ICONS.ask}
+                <span>Ask for help</span>
+              </NavLink>
+              <NavLink
+                to="/student/asks"
+                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+              >
+                {ICONS.requests}
+                <span>My asks</span>
+                {replyCount > 0 ? (
+                  <span className="bh-nav-badge">{replyCount}</span>
+                ) : null}
+              </NavLink>
+            </>
+          ) : (
+            <>
+              <NavLink
+                to={roleHome}
+                end
+                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+              >
+                {ICONS.dashboard}
+                <span>Dashboard</span>
+              </NavLink>
+              {grouped
+                ? sections.map((group) => (
+                    <div key={group.group} className="bh-nav-group">
+                      <p className="bh-nav-label">{group.group}</p>
+                      {group.items.map((section) => renderNavItem(section))}
+                    </div>
+                  ))
+                : flatSections.map((section) => renderNavItem(section))}
+              <div className="bh-nav-group">
+                <NavLink
+                  to="/"
+                  end
+                  className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+                >
+                  {ICONS.courses}
+                  My Courses
+                </NavLink>
+              </div>
+            </>
+          )}
         </nav>
 
         <div className="bh-sidebar-footer">
           <p className="bh-nav-label">Course</p>
+          {role === "student" ? (
+            <NavLink to="/" end className="bh-course-all">
+              All courses
+            </NavLink>
+          ) : null}
           <select
             className="bh-course-select"
+            aria-label="Course"
             value={activeCourse?.id || ""}
             onChange={(event) => {
               const next = user.courses.find(
@@ -355,7 +437,7 @@ export default function AppShell() {
           >
             {user.courses.map((course) => (
               <option key={course.id} value={course.id}>
-                {course.code} ({course.role})
+                {courseOptionLabel(course, unstaffed)}
               </option>
             ))}
           </select>
@@ -380,7 +462,8 @@ const PROFESSOR_NAV = [
 ];
 
 function ProfessorFrame() {
-  const { user, activeCourse, setActiveCourse } = useAuth();
+  const { user, token, activeCourse, setActiveCourse } = useAuth();
+  const unstaffed = useUnstaffedCourses(user?.courses, token);
   const { waitingFiles, assignedAsks } = useProfessorData();
   const navigate = useNavigate();
   const counts = { waitingFiles, assignedAsks };
@@ -435,7 +518,7 @@ function ProfessorFrame() {
           >
             {user.courses.map((course) => (
               <option key={course.id} value={course.id}>
-                {course.code} ({course.role})
+                {courseOptionLabel(course, unstaffed)}
               </option>
             ))}
           </select>

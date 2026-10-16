@@ -340,12 +340,15 @@ export default function StuckRoomPage() {
   const chapters = community?.chapters || [];
   const resolutionPct = Math.round((community?.resolution_rate || 0) * 100);
 
+  const courseLine = [activeCourse.code, activeCourse.title].filter(Boolean).join(" · ");
+
   return (
     <div className="rf-page">
+      <h1 className="sa-course">{courseLine}</h1>
       <header className="rf-top">
         <div>
           <p className="rf-kicker">AUI Rooms · {activeCourse.code} classmates only</p>
-          <h1>{name}</h1>
+          <h2>{name}</h2>
         </div>
         <button type="button" className="btn-primary px-5 py-2.5 text-sm" onClick={() => go({ view: "create" })}>
           Initialize Room

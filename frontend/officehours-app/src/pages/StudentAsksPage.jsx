@@ -3,6 +3,7 @@ import { Link, Navigate, useSearchParams } from "react-router";
 import { api } from "../api/client.js";
 import { pageItems } from "../api/page.js";
 import { useAuth } from "../auth/AuthContext.jsx";
+import { askHasReply, markReplySeen } from "../student/replySeen.js";
 
 function workStageLabels(workStatus, statusPayload) {
   const work = String(workStatus || statusPayload?.work_status || "open").toLowerCase();
@@ -66,7 +67,7 @@ function workStageLabels(workStatus, statusPayload) {
 }
 
 export default function StudentAsksPage() {
-  const { token, activeCourse } = useAuth();
+  const { token, user, activeCourse } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const focusParam = searchParams.get("focus");
 
@@ -155,6 +156,11 @@ export default function StudentAsksPage() {
     [selected, status],
   );
 
+  useEffect(() => {
+    if (!user?.id || !selected || !askHasReply(selected)) return;
+    markReplySeen(user.id, selected.id);
+  }, [user?.id, selected]);
+
   if (!activeCourse) return <Navigate to="/" replace />;
   if (activeCourse.role !== "student") {
     return (
@@ -170,12 +176,14 @@ export default function StudentAsksPage() {
     setSearchParams({ focus: String(id) });
   }
 
+  const courseLine = [activeCourse.code, activeCourse.title].filter(Boolean).join(" · ");
+
   return (
     <div className="fade-up">
-      <h1 className="bh-page-title">My asks</h1>
+      <h1 className="sa-course">{courseLine}</h1>
+      <h2 className="bh-page-title">My asks</h2>
       <p className="bh-page-subtitle">
-        Status and replies live here — no receipt-code hunting. ·{" "}
-        {activeCourse.code}
+        Status and replies live here — no receipt-code hunting.
       </p>
 
       {error ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}

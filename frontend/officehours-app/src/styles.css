@@ -1779,6 +1779,7 @@ li .glass-panel,
 }
 
 .rf-top h1,
+.rf-top h2,
 .rf-card h2 {
   margin: 0.15rem 0 0;
   font-family: "Fraunces", serif;
@@ -5784,10 +5785,13 @@ html:has(.oh-open) {
 }
 
 .sd-ask .field-glass {
-  min-height: 8.5rem;
   font-size: 0.98rem;
   border-width: 1.5px;
   background: var(--theme-surface);
+}
+
+.sd-ask #ask-box {
+  min-height: 8.5rem;
 }
 
 .sd-form-hint {
@@ -6711,6 +6715,167 @@ html:has(.oh-open) {
   margin-top: 0.4rem;
 }
 
+.bh-frame-student .bh-nav {
+  overflow: visible;
+  flex: 0 0 auto;
+}
+
+.bh-frame-student .bh-sidebar {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.bh-frame-student .bh-nav-item,
+.bh-frame-student .bh-course-all {
+  min-height: 40px;
+}
+
+.bh-course-all {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 0.35rem;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.15rem;
+}
+
+.bh-frame-student .bh-nav-badge {
+  margin-left: auto;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: #f7e8b8;
+  color: #5c4310;
+  font-size: 0.75rem;
+  font-weight: 750;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.course-card-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.course-nostaff {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: #f7e8b8;
+  color: #5c4310;
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.sd-route {
+  margin: 0.15rem 0 0.85rem;
+  font-size: 0.98rem;
+  font-weight: 650;
+  color: var(--theme-text);
+}
+
+.sd-check {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 40px;
+  font-weight: 750;
+  color: var(--theme-title);
+  cursor: pointer;
+}
+
+.sd-check input {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--theme-forest, #1f4d38);
+}
+
+.sd-check-note {
+  margin: 0.1rem 0 0;
+  color: var(--theme-text);
+  font-size: 0.92rem;
+}
+
+.sd-segment {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.9rem;
+}
+
+.sd-segment button {
+  min-height: 40px;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--theme-border);
+  background: var(--theme-surface);
+  color: var(--theme-title);
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.sd-segment button.is-on {
+  background: var(--theme-forest, #1f4d38);
+  border-color: transparent;
+  color: #fff;
+}
+
+.sd-details {
+  margin-top: 0.85rem;
+}
+
+.sd-details summary {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  cursor: pointer;
+  font-weight: 750;
+  color: var(--theme-title);
+}
+
+.sd-details label {
+  display: block;
+  margin-top: 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--theme-text);
+}
+
+.sd-details .field-glass,
+.sd-details select.field-glass,
+.sd-details input.field-glass {
+  min-height: 40px;
+}
+
+.sd-nostaff {
+  margin-top: 0.35rem;
+  padding: 1rem 1.1rem;
+  border-radius: 1rem;
+  border: 1.5px solid var(--theme-amber-border, #e2c56a);
+  background: var(--theme-amber-bg, #fff8e6);
+  color: var(--theme-amber-fg, #5c4310);
+}
+
+.sd-nostaff p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.45;
+  color: inherit;
+}
+
+.sd-nostaff .sd-cta {
+  margin-top: 0.85rem;
+  text-decoration: none;
+}
+
 @media (max-width: 800px) {
   .bh-frame-student {
     flex-direction: column;
@@ -6722,6 +6887,7 @@ html:has(.oh-open) {
     max-height: none;
     position: relative;
     flex-shrink: 0;
+    overflow: visible;
     padding: 0.55rem 0.55rem 0.35rem;
   }
 
@@ -6732,8 +6898,8 @@ html:has(.oh-open) {
   .bh-frame-student .bh-nav {
     margin-top: 0.45rem;
     flex-direction: row;
-    flex-wrap: nowrap;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    overflow: visible;
     gap: 0.25rem;
     padding-bottom: 0.2rem;
   }
@@ -6757,10 +6923,16 @@ html:has(.oh-open) {
 
   .bh-frame-student .bh-sidebar-footer {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 0.35rem;
-    overflow-x: auto;
+    gap: 0.45rem;
+    overflow: visible;
+    width: 100%;
+  }
+
+  .bh-frame-student .bh-course-all {
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 
   .bh-frame-student .bh-course-select {
