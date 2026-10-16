@@ -6,7 +6,6 @@ import ThemeToggle from "../components/ThemeToggle.jsx";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { api } from "../api/client.js";
 import { pageItems } from "../api/page.js";
-import { useUnstaffedCourses } from "../hooks/useUnstaffedCourses.js";
 import { ProfessorProvider, useProfessorData } from "../pages/professor/ProfessorData.jsx";
 import { askHasReply, seenReplyIds, subscribeReplySeen } from "../student/replySeen.js";
 
@@ -222,11 +221,6 @@ function NavItemContent({ section }) {
   );
 }
 
-function courseOptionLabel(course, unstaffed) {
-  const tag = unstaffed?.has(course.id) ? " · No staff" : "";
-  return `${course.code} (${course.role})${tag}`;
-}
-
 function useStudentReplyCount(token, userId, course, pathname) {
   const [count, setCount] = useState(0);
   const courseId = course?.role === "student" ? course.id : null;
@@ -268,7 +262,6 @@ export default function AppShell() {
   const { user, token, activeCourse, setActiveCourse } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const unstaffed = useUnstaffedCourses(user?.courses, token);
   const replyCount = useStudentReplyCount(token, user?.id, activeCourse, location.pathname);
 
   const role = activeCourse?.role;
@@ -437,7 +430,7 @@ export default function AppShell() {
           >
             {user.courses.map((course) => (
               <option key={course.id} value={course.id}>
-                {courseOptionLabel(course, unstaffed)}
+                {course.code} ({course.role})
               </option>
             ))}
           </select>
@@ -462,8 +455,7 @@ const PROFESSOR_NAV = [
 ];
 
 function ProfessorFrame() {
-  const { user, token, activeCourse, setActiveCourse } = useAuth();
-  const unstaffed = useUnstaffedCourses(user?.courses, token);
+  const { user, activeCourse, setActiveCourse } = useAuth();
   const { waitingFiles, assignedAsks } = useProfessorData();
   const navigate = useNavigate();
   const counts = { waitingFiles, assignedAsks };
@@ -518,7 +510,7 @@ function ProfessorFrame() {
           >
             {user.courses.map((course) => (
               <option key={course.id} value={course.id}>
-                {courseOptionLabel(course, unstaffed)}
+                {course.code} ({course.role})
               </option>
             ))}
           </select>

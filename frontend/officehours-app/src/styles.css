@@ -5834,6 +5834,14 @@ html:has(.oh-open) {
   cursor: not-allowed;
 }
 
+.sd-cta.sd-cta-blocked,
+.sd-cta.sd-cta-blocked:disabled {
+  background: #e4e7e3;
+  color: #5c675f;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
 .sd-rail {
   display: grid;
   gap: 0.95rem;
@@ -6756,25 +6764,6 @@ html:has(.oh-open) {
   justify-content: center;
 }
 
-.course-card-tags {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-}
-
-.course-nostaff {
-  display: inline-flex;
-  align-items: center;
-  min-height: 1.5rem;
-  padding: 0.12rem 0.5rem;
-  border-radius: 999px;
-  background: #f7e8b8;
-  color: #5c4310;
-  font-size: 0.72rem;
-  font-weight: 750;
-}
-
 .sd-route {
   margin: 0.15rem 0 0.85rem;
   font-size: 0.98rem;
@@ -6855,25 +6844,18 @@ html:has(.oh-open) {
   min-height: 40px;
 }
 
-.sd-nostaff {
-  margin-top: 0.35rem;
-  padding: 1rem 1.1rem;
-  border-radius: 1rem;
-  border: 1.5px solid var(--theme-amber-border, #e2c56a);
-  background: var(--theme-amber-bg, #fff8e6);
-  color: var(--theme-amber-fg, #5c4310);
-}
-
-.sd-nostaff p {
-  margin: 0;
-  font-size: 1rem;
+.sd-setup-note {
+  margin: 0.15rem 0 0.85rem;
+  font-size: 0.98rem;
   line-height: 1.45;
-  color: inherit;
+  color: var(--theme-text);
 }
 
-.sd-nostaff .sd-cta {
-  margin-top: 0.85rem;
-  text-decoration: none;
+.sd-setup-note a {
+  color: var(--theme-title);
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 0.15rem;
 }
 
 @media (max-width: 800px) {

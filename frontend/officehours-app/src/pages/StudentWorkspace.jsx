@@ -170,25 +170,19 @@ export default function StudentWorkspace() {
       <h1 className="sa-course">{courseLine}</h1>
       <section id="ask" className="sd-ask sa-help">
         {noStaff ? (
-          <div className="sd-nostaff" role="status">
-            <p>
-              This course has no TA or professor assigned, so asks can&apos;t be sent.
-              Try the Study Agent.
-            </p>
-            <Link to="/student" className="sd-cta">
-              Study Agent
-            </Link>
-          </div>
-        ) : !canSend ? (
-          <p className="sd-form-hint">
-            {routing?.destination === "unknown"
-              ? "Couldn't check who receives asks. Refresh and try again."
-              : "Checking who receives asks…"}
+          <p className="sd-setup-note" role="status">
+            This course isn&apos;t set up for ASK yet, because no professor has joined
+            OfficeHours. Try the <Link to="/student">Study Agent</Link>.
           </p>
-        ) : (
-          <>
-            {routing?.line ? <p className="sd-route">{routing.line}</p> : null}
-            <form onSubmit={submitQuestion}>
+        ) : routing?.line ? (
+          <p className="sd-route">{routing.line}</p>
+        ) : null}
+        {routing?.destination === "unknown" ? (
+          <p className="sd-form-hint">
+            Couldn&apos;t check who receives asks. Refresh and try again.
+          </p>
+        ) : null}
+        <form onSubmit={submitQuestion}>
               <label className="sd-check">
                 <input
                   type="checkbox"
@@ -221,7 +215,6 @@ export default function StudentWorkspace() {
                 value={text}
                 onChange={(event) => setText(event.target.value)}
                 required={canSend}
-                disabled={!canSend}
               />
 
               <details className="sd-details">
@@ -271,14 +264,12 @@ export default function StudentWorkspace() {
               ) : null}
               <button
                 type="submit"
-                disabled={busy || !text.trim()}
-                className="sd-cta mt-4"
+                disabled={busy || !text.trim() || !canSend}
+                className={`sd-cta mt-4${canSend ? "" : " sd-cta-blocked"}`}
               >
                 {busy ? "Sending…" : anonymous ? "Send anonymously" : "Send"}
               </button>
             </form>
-          </>
-        )}
 
         {result ? (
           <div className="soft-stat mt-5 ml-2 text-sm">

@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router";
 import { useAuth } from "../auth/AuthContext.jsx";
-import { useUnstaffedCourses } from "../hooks/useUnstaffedCourses.js";
 
 const ROLE_PATH = {
   student: "/student",
@@ -21,8 +20,7 @@ const ROLE_PILL = {
 };
 
 export default function CourseHomePage() {
-  const { user, token, setActiveCourse } = useAuth();
-  const unstaffed = useUnstaffedCourses(user.courses, token);
+  const { user, setActiveCourse } = useAuth();
   const navigate = useNavigate();
 
   return (
@@ -44,13 +42,8 @@ export default function CourseHomePage() {
               navigate(ROLE_PATH[course.role] || "/");
             }}
           >
-            <p className="course-card-tags">
-              <span className={`role-pill ${ROLE_PILL[course.role] || "role-pill-student"}`}>
-                {course.role}
-              </span>
-              {unstaffed.has(course.id) ? (
-                <span className="course-nostaff">No staff</span>
-              ) : null}
+            <p className={`role-pill ${ROLE_PILL[course.role] || "role-pill-student"}`}>
+              {course.role}
             </p>
             <h2 className="font-display mt-4 text-3xl font-semibold">
               {course.code}
