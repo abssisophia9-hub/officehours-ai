@@ -16,8 +16,10 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 import urllib.error
 import urllib.request
+from dataclasses import dataclass
 from typing import Any
 
 from app.ai.claude_drafter_legacy import STYLE_TEACHING_GUIDANCE, draft_with_claude
@@ -361,17 +363,37 @@ def _use_mock() -> bool:
     return True
 
 
-def _call_claude(system: str, user: str) -> str:
+@dataclass
+class ClaudeCompletion:
+    text: str
+    model: str
+    input_tokens: int
+    output_tokens: int
+    latency_ms: float
+
+
+def _complete_claude(
+    system: str,
+    user: str,
+    *,
+    max_tokens: int = 800,
+    temperature: float | None = None,
+    timeout: float = 20,
+) -> ClaudeCompletion:
+    """One Messages API call. The API key is read from the environment only."""
     api_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
     if not api_key:
         raise RuntimeError("ANTHROPIC_API_KEY missing")
 
-    payload = {
-        "model": os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-latest"),
-        "max_tokens": 800,
+    model = os.getenv("ANTHROPIC_MODEL", "claude-haiku-5-5").strip() or "claude-haiku-5-5"
+    payload: dict[str, Any] = {
+        "model": model,
+        "max_tokens": max_tokens,
         "system": system,
         "messages": [{"role": "user", "content": user}],
     }
+    if temperature is not None:
+        payload["temperature"] = temperature
     request = urllib.request.Request(
         "https://api.anthropic.com/v1/messages",
         data=json.dumps(payload).encode("utf-8"),
@@ -382,11 +404,25 @@ def _call_claude(system: str, user: str) -> str:
         },
         method="POST",
     )
-    with urllib.request.urlopen(request, timeout=20) as response:
+    started = time.perf_counter()
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         body = json.loads(response.read().decode("utf-8"))
+    latency_ms = (time.perf_counter() - started) * 1000
     parts = body.get("content") or []
     texts = [part.get("text", "") for part in parts if part.get("type") == "text"]
-    return "\n".join(texts).strip()
+    usage = body.get("usage") or {}
+    return ClaudeCompletion(
+        text="\n".join(texts).strip(),
+        model=str(body.get("model") or model),
+        input_tokens=int(usage.get("input_tokens") or 0),
+        output_tokens=int(usage.get("output_tokens") or 0),
+        latency_ms=latency_ms,
+    )
+
+
+def _call_claude(system: str, user: str) -> str:
+    """Analyzer / matcher / synthesizer wrapper. Defaults stay 800 tokens and 20s."""
+    return _complete_claude(system, user).text
 
 
 def _parse_json(raw: str) -> dict[str, Any]:
