@@ -1,30 +1,45 @@
 import { useEffect, useState } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router";
+import { Link, Navigate, useLocation, useNavigate } from "react-router";
 import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
+
+const HELP_TYPES = [
+  { value: "message", label: "Message" },
+  { value: "face_to_face", label: "Face-to-face" },
+  { value: "online_meeting", label: "Online" },
+];
+
+function composeAskText({ question, topic, code, tried }) {
+  const blocks = [question.trim()];
+  if (topic.trim()) blocks.push(`Which topic or week?\n${topic.trim()}`);
+  if (code.trim()) blocks.push(`Paste code or an error\n${code.trim()}`);
+  if (tried.trim()) blocks.push(`What have you tried?\n${tried.trim()}`);
+  return blocks.join("\n\n");
+}
 
 export default function StudentWorkspace() {
   const { token, user, activeCourse } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [text, setText] = useState("");
+  const [topic, setTopic] = useState("");
   const [codeSnippet, setCodeSnippet] = useState("");
+  const [tried, setTried] = useState("");
+  const [chapters, setChapters] = useState([]);
   const [anonymous, setAnonymous] = useState(true);
   const [helpMode, setHelpMode] = useState("message");
-  const [showHelpModes, setShowHelpModes] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [buddyStatus, setBuddyStatus] = useState(null);
   const [buddyBusy, setBuddyBusy] = useState(false);
-  const [routingLine, setRoutingLine] = useState("");
+  const [routing, setRouting] = useState(null);
 
   useEffect(() => {
     const question = location.state?.question;
     if (typeof question !== "string" || !question.trim()) return;
     setText(question);
     setAnonymous(true);
-    setShowHelpModes(true);
     window.setTimeout(() => {
       const box = document.getElementById("ask-box");
       box?.focus();
@@ -33,14 +48,28 @@ export default function StudentWorkspace() {
   }, [location.key, location.state]);
 
   useEffect(() => {
-    if (!activeCourse || !token) return;
+    if (!activeCourse || !token) return undefined;
     let cancelled = false;
+    setRouting(null);
+    setChapters([]);
+    setTopic("");
     api(`/requests/routing?course_id=${activeCourse.id}`, { token })
       .then((data) => {
-        if (!cancelled) setRoutingLine(data?.line || "");
+        if (!cancelled) setRouting(data || null);
       })
       .catch(() => {
-        if (!cancelled) setRoutingLine("");
+        if (!cancelled) setRouting({ destination: "unknown", line: "" });
+      });
+    api(`/help-room/community/?course_id=${activeCourse.id}`, { token })
+      .then((data) => {
+        if (cancelled) return;
+        const labels = (data?.chapters || [])
+          .map((item) => String(item?.label || "").trim())
+          .filter(Boolean);
+        setChapters(labels);
+      })
+      .catch(() => {
+        if (!cancelled) setChapters([]);
       });
     return () => {
       cancelled = true;
@@ -57,9 +86,18 @@ export default function StudentWorkspace() {
     );
   }
 
+  const noStaff = routing?.destination === "none";
+  const canSend = routing?.destination === "ta" || routing?.destination === "professor";
+  const visibleName = user.display_name || "your name";
+  const identityLine = anonymous
+    ? "Staff see your question, not your name or ID."
+    : user.student_id
+      ? `Staff will see: ${visibleName} (ID ${user.student_id})`
+      : `Staff will see: ${visibleName}`;
+
   async function submitQuestion(event) {
     event.preventDefault();
-    if (!text.trim()) return;
+    if (!text.trim() || !canSend) return;
     setBusy(true);
     setError("");
     try {
@@ -72,21 +110,22 @@ export default function StudentWorkspace() {
         method: "POST",
         token,
         body: {
-          text,
+          text: composeAskText({ question: text, topic, code: codeSnippet, tried }),
           anonymous,
           student_id: anonymous ? null : user.student_id,
           student_name: anonymous ? null : user.display_name,
           course: activeCourse.code,
           course_id: activeCourse.id,
-          code_snippet: codeSnippet || null,
+          code_snippet: codeSnippet.trim() || null,
           help_mode: helpMode,
         },
       });
       setResult(created);
       setBuddyStatus(null);
       setText("");
+      setTopic("");
       setCodeSnippet("");
-      setShowHelpModes(false);
+      setTried("");
       if (created?.id) {
         try {
           const status = await api(`/requests/${created.id}/study-buddy`, { token });
@@ -130,148 +169,120 @@ export default function StudentWorkspace() {
     <div className="sd fade-up">
       <h1 className="sa-course">{courseLine}</h1>
       <section id="ask" className="sd-ask sa-help">
-        <div className="sd-ask-head">
-          <div>
-            <h2>Ask for help</h2>
-            <p className="sd-ask-copy">
-              Send this question to a TA or your professor. You can hide your name.
-            </p>
-            {routingLine ? <p className="sd-ask-copy">{routingLine}</p> : null}
-          </div>
-        </div>
+        {noStaff ? (
+          <p className="sd-setup-note" role="status">
+            This course isn&apos;t set up for ASK yet, because no professor has joined
+            OfficeHours. Try the <Link to="/student">Study Agent</Link>.
+          </p>
+        ) : routing?.line ? (
+          <p className="sd-route">{routing.line}</p>
+        ) : null}
+        {routing?.destination === "unknown" ? (
+          <p className="sd-form-hint">
+            Couldn&apos;t check who receives asks. Refresh and try again.
+          </p>
+        ) : null}
+        <form onSubmit={submitQuestion}>
+              <label className="sd-check">
+                <input
+                  type="checkbox"
+                  checked={anonymous}
+                  onChange={(event) => setAnonymous(event.target.checked)}
+                />
+                Hide my name
+              </label>
+              <p className="sd-check-note">{identityLine}</p>
 
-        <div className="sd-identity">
-          <p className="sd-identity-label">Who should staff see?</p>
-          <div className="sd-identity-grid">
-            <label
-              className={`sd-choice sd-choice-quiet ${anonymous ? "sd-choice-on" : ""}`}
-            >
-              <input
-                type="radio"
-                name="identity"
-                className="mt-1 h-4 w-4 accent-[var(--theme-forest)]"
-                checked={anonymous}
-                onChange={() => setAnonymous(true)}
-              />
-              <span>
-                <strong>Hide my name</strong>
-                <span>Staff see the question, not your name or ID.</span>
-              </span>
-            </label>
-            <label className={`sd-choice ${!anonymous ? "sd-choice-on" : ""}`}>
-              <input
-                type="radio"
-                name="identity"
-                className="mt-1 h-4 w-4 accent-[var(--theme-forest)]"
-                checked={!anonymous}
-                onChange={() => setAnonymous(false)}
-              />
-              <span>
-                <strong>Use my name</strong>
-                <span>
-                  Share <strong>{user.display_name || "your name"}</strong>
-                  {user.student_id ? (
-                    <>
-                      {" "}
-                      · ID <strong>{user.student_id}</strong>
-                    </>
-                  ) : null}
-                  .
-                </span>
-              </span>
-            </label>
-          </div>
-        </div>
-
-        <form onSubmit={submitQuestion} className="mt-4">
-          <textarea
-            id="ask-box"
-            className="field-glass mt-1 w-full px-4 py-3"
-            placeholder="Describe what you're stuck on."
-            value={text}
-            onChange={(event) => {
-              setText(event.target.value);
-              if (event.target.value.trim()) setShowHelpModes(true);
-            }}
-            required
-          />
-
-          {showHelpModes ? (
-            <>
-              <fieldset className="mt-3 space-y-2">
-                <legend className="sd-identity-label">How do you want help?</legend>
-                {[
-                  {
-                    value: "message",
-                    title: "Message",
-                    note: "A written reply. No meeting.",
-                  },
-                  {
-                    value: "face_to_face",
-                    title: "Face-to-face meeting",
-                    note: "In person on campus.",
-                  },
-                  {
-                    value: "online_meeting",
-                    title: "Online meeting",
-                    note: "A video call.",
-                  },
-                ].map((option) => (
-                  <label
+              <div className="sd-segment" role="radiogroup" aria-label="Help type">
+                {HELP_TYPES.map((option) => (
+                  <button
                     key={option.value}
-                    className={`sd-choice ${helpMode === option.value ? "sd-choice-on" : ""}`}
+                    type="button"
+                    role="radio"
+                    aria-checked={helpMode === option.value}
+                    className={helpMode === option.value ? "is-on" : ""}
+                    onClick={() => setHelpMode(option.value)}
                   >
-                    <input
-                      type="radio"
-                      name="help_mode"
-                      className="mt-1 h-4 w-4 accent-[var(--theme-forest)]"
-                      checked={helpMode === option.value}
-                      onChange={() => setHelpMode(option.value)}
-                    />
-                    <span>
-                      <strong>{option.title}</strong>
-                      <span>{option.note}</span>
-                    </span>
-                  </label>
+                    {option.label}
+                  </button>
                 ))}
-              </fieldset>
-              <textarea
-                className="field-glass mt-3 min-h-20 w-full px-4 py-3 font-mono text-xs"
-                placeholder="Optional code snippet"
-                value={codeSnippet}
-                onChange={(event) => setCodeSnippet(event.target.value)}
-              />
-            </>
-          ) : (
-            <p className="sd-form-hint">
-              Start typing to choose message, face-to-face, or online.
-            </p>
-          )}
+              </div>
 
-          {error ? (
-            <p className="mt-3 text-sm text-[var(--theme-red-fg)]">{error}</p>
-          ) : null}
-          <button
-            type="submit"
-            disabled={busy || !text.trim()}
-            className="sd-cta mt-4"
-          >
-            {busy ? "Sending…" : anonymous ? "Send without my name" : "Send with my name"}
-          </button>
-        </form>
+              <textarea
+                id="ask-box"
+                className="field-glass mt-3 w-full px-4 py-3"
+                placeholder="Describe what you're stuck on."
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                required={canSend}
+              />
+
+              <details className="sd-details">
+                <summary>Add details (optional)</summary>
+                <label htmlFor="ask-topic">Which topic or week?</label>
+                {chapters.length ? (
+                  <select
+                    id="ask-topic"
+                    className="field-glass mt-1 w-full px-3"
+                    value={topic}
+                    onChange={(event) => setTopic(event.target.value)}
+                  >
+                    <option value="">Select a topic or week</option>
+                    {chapters.map((label) => (
+                      <option key={label} value={label}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    id="ask-topic"
+                    className="field-glass mt-1 w-full px-3"
+                    value={topic}
+                    onChange={(event) => setTopic(event.target.value)}
+                    placeholder="For example, week 4 or hashing"
+                  />
+                )}
+                <label htmlFor="ask-code">Paste code or an error</label>
+                <textarea
+                  id="ask-code"
+                  className="field-glass mt-1 min-h-20 w-full px-4 py-3 font-mono text-xs"
+                  value={codeSnippet}
+                  onChange={(event) => setCodeSnippet(event.target.value)}
+                />
+                <label htmlFor="ask-tried">What have you tried?</label>
+                <textarea
+                  id="ask-tried"
+                  className="field-glass mt-1 min-h-16 w-full px-4 py-3"
+                  value={tried}
+                  onChange={(event) => setTried(event.target.value)}
+                />
+              </details>
+
+              {error ? (
+                <p className="mt-3 text-sm text-[var(--theme-red-fg)]">{error}</p>
+              ) : null}
+              <button
+                type="submit"
+                disabled={busy || !text.trim() || !canSend}
+                className={`sd-cta mt-4${canSend ? "" : " sd-cta-blocked"}`}
+              >
+                {busy ? "Sending…" : anonymous ? "Send anonymously" : "Send"}
+              </button>
+            </form>
 
         {result ? (
           <div className="soft-stat mt-5 ml-2 text-sm">
             <p className="font-semibold text-[var(--theme-title)]">
-              {result.anonymous ? "Sent without your name" : "Sent with your name"} ·
-              request <span className="bh-pill bh-pill-green">#{result.id}</span>
+              {result.anonymous ? "Sent anonymously" : "Sent"} · request{" "}
+              <span className="bh-pill bh-pill-green">#{result.id}</span>
             </p>
             <p className="mt-1 text-xs text-[var(--theme-text-muted)]">
               Help mode:{" "}
               {result.help_mode === "face_to_face"
-                ? "face-to-face meeting"
+                ? "face-to-face"
                 : result.help_mode === "online_meeting"
-                  ? "online meeting"
+                  ? "online"
                   : "message"}
             </p>
             {result.assigned_ta ? (
