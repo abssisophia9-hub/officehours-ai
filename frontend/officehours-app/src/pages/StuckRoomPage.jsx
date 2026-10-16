@@ -1,62 +1,112 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router";
-import { api, apiUpload } from "../api/client.js";
+import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
-import { MarkdownBody, avatarHue, initials, timeAgo } from "../lib/rooms.jsx";
+import { MarkdownBody, avatarHue, initials } from "../lib/rooms.jsx";
 
-const ROOM_TYPES = [
-  {
-    id: "problem",
-    label: "Problem",
-    hint: "An issue or failure that needs a resolution — the missing check, not the write-up.",
-  },
-  {
-    id: "discussion",
-    label: "Discussion",
-    hint: "Architecture, design review, or a general course topic.",
-  },
-  {
-    id: "article",
-    label: "Article",
-    hint: "A tutorial or technical guideline you want classmates to reuse.",
-  },
-];
+const STOP_WORDS = new Set([
+  "the", "and", "for", "you", "your", "what", "how", "why", "can", "not",
+  "with", "this", "that", "from", "have", "are", "was", "were", "but",
+  "just", "when", "does", "did", "into", "about", "than", "then", "them",
+  "they", "its", "out", "off", "too", "very", "any", "all", "who", "our",
+]);
 
-function chapterSourceNote(source) {
-  switch (source) {
-    case "canvas":
-      return "These chapters are this course’s Canvas modules. You pick one — you don’t type the list.";
-    case "demo-syllabus+canvas":
-      return "Demo only: sample syllabus plus the local Canvas mirror. On deploy, this list is the real course’s Canvas modules.";
-    case "demo-syllabus":
-      return "Demo only: sample syllabus for this seeded course. On deploy, chapters come from Canvas modules.";
-    case "posted":
-      return "No Canvas modules yet. These labels are from rooms classmates already opened. Ask your professor to sync Canvas.";
-    case "empty":
-      return "No chapters yet. They appear when this course’s Canvas modules are linked. Ask your professor to sync Canvas.";
-    default:
-      return "Chapters come from this course’s Canvas modules once the LMS course is linked.";
-  }
+function itemsOf(feed) {
+  if (Array.isArray(feed)) return feed;
+  return feed?.items || [];
 }
 
-function tagsFromChapters(chapterList) {
-  return (chapterList || [])
-    .map((item) => String(item.label || "").replace(/[^A-Za-z0-9]+/g, ""))
-    .filter(Boolean)
-    .slice(0, 8);
+function askedAgo(iso) {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (!Number.isFinite(ms)) return "";
+  const mins = Math.round(ms / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return mins === 1 ? "1 minute ago" : `${mins} minutes ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return hours === 1 ? "1 hour ago" : `${hours} hours ago`;
+  const days = Math.round(hours / 24);
+  if (days < 30) return days === 1 ? "1 day ago" : `${days} days ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+function snippetOf(body) {
+  const line = String(body || "")
+    .replace(/[*_`#>[\]()]/g, "")
+    .split("\n")
+    .map((row) => row.trim())
+    .find(Boolean) || "";
+  if (line.length <= 140) return line;
+  return `${line.slice(0, 137).trim()}…`;
+}
+
+function answerLabel(count) {
+  const n = Number(count) || 0;
+  if (n === 0) return "No answers";
+  if (n === 1) return "1 answer";
+  return `${n} answers`;
+}
+
+function questionState(post) {
+  if (post?.status === "solved") return "solved";
+  if ((post?.reply_count || 0) > 0) return "answered";
+  return "unanswered";
+}
+
+function stateLabel(state) {
+  if (state === "solved") return "Solved";
+  if (state === "answered") return "Answered";
+  return "Unanswered";
+}
+
+function typeLabel(roomType) {
+  if (roomType === "discussion") return "Discussion";
+  if (roomType === "article") return "Article";
+  return "";
+}
+
+function similarQuestions(query, posts) {
+  const words = (String(query || "").toLowerCase().match(/[a-z0-9]{3,}/g) || [])
+    .filter((word) => !STOP_WORDS.has(word));
+  if (!words.length) return [];
+  return posts
+    .map((post) => {
+      const hay = `${post.title} ${post.body}`.toLowerCase();
+      const hits = words.filter((word) => hay.includes(word)).length;
+      return { post, hits };
+    })
+    .filter((row) => row.hits > 0)
+    .sort((a, b) => b.hits - a.hits || b.post.id - a.post.id)
+    .slice(0, 3)
+    .map((row) => row.post);
+}
+
+function findAccepted(replies) {
+  for (const reply of replies || []) {
+    if (reply.accepted) return reply;
+    const nested = findAccepted(reply.children);
+    if (nested) return nested;
+  }
+  return null;
+}
+
+function withoutReply(replies, id) {
+  return (replies || [])
+    .filter((reply) => reply.id !== id)
+    .map((reply) => ({ ...reply, children: withoutReply(reply.children, id) }));
 }
 
 function Avatar({ name, seed, size = 36 }) {
   const hue = avatarHue(seed || name);
   return (
     <span
-      className="rf-avatar"
+      className="rooms-avatar"
       style={{
         width: size,
         height: size,
-        fontSize: size * 0.36,
-        background: `hsl(${hue} 42% 32%)`,
+        fontSize: Math.max(12, size * 0.36),
+        background: `hsl(${hue} 28% 28%)`,
       }}
+      aria-hidden="true"
     >
       {initials(name)}
     </span>
@@ -65,64 +115,68 @@ function Avatar({ name, seed, size = 36 }) {
 
 function Stars({ count }) {
   return (
-    <span className="rf-stars" aria-label={`${count} stars`}>
+    <span className="rooms-stars" aria-label={`${count} of 5`}>
       {"★".repeat(count)}
       {"☆".repeat(Math.max(0, 5 - count))}
     </span>
   );
 }
 
-function VoteColumn({ score, mine, disabled, onVote }) {
+function StatusIcon({ state }) {
+  if (state === "solved") {
+    return (
+      <svg className="rooms-icon" viewBox="0 0 20 20" aria-hidden="true">
+        <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="1.6" />
+        <path d="M6.2 10.2 8.7 12.7 13.8 7.4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  if (state === "answered") {
+    return (
+      <svg className="rooms-icon" viewBox="0 0 20 20" aria-hidden="true">
+        <path d="M4 5.5h12v7.2H8.2L4.8 16v-3.3H4z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      </svg>
+    );
+  }
   return (
-    <div className="rf-vote">
-      <button
-        type="button"
-        className={`rf-vote-btn${mine === 1 ? " is-up" : ""}`}
-        disabled={disabled}
-        aria-label="Upvote"
-        onClick={() => onVote(1)}
-      >
-        ▲
-      </button>
-      <span className={`rf-vote-n${mine ? " is-on" : ""}`}>{score}</span>
-      <button
-        type="button"
-        className={`rf-vote-btn${mine === -1 ? " is-down" : ""}`}
-        disabled={disabled}
-        aria-label="Downvote"
-        onClick={() => onVote(-1)}
-      >
-        ▼
-      </button>
-    </div>
+    <svg className="rooms-icon" viewBox="0 0 20 20" aria-hidden="true">
+      <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  );
+}
+
+function StatusMark({ post }) {
+  const state = questionState(post);
+  return (
+    <span className={`rooms-status rooms-status-${state}`}>
+      <StatusIcon state={state} />
+      {stateLabel(state)}
+    </span>
   );
 }
 
 export default function StuckRoomPage() {
-  const { token, activeCourse } = useAuth();
+  const { token, activeCourse, user } = useAuth();
   const [params, setParams] = useSearchParams();
-  const view = params.get("view") || "rooms";
+  const view = params.get("view") || "questions";
   const threadId = params.get("post");
   const profileId = params.get("user");
 
   const [community, setCommunity] = useState(null);
-  const [posts, setPosts] = useState([]);
+  const [library, setLibrary] = useState([]);
+  const [solvedPosts, setSolvedPosts] = useState([]);
   const [thread, setThread] = useState(null);
   const [ranks, setRanks] = useState([]);
   const [profile, setProfile] = useState(null);
   const [error, setError] = useState("");
+  const [loaded, setLoaded] = useState(false);
+  const [tab, setTab] = useState("newest");
   const [chapterFilter, setChapterFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
-  const [sort, setSort] = useState("hot");
 
-  const [step, setStep] = useState(1);
   const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [roomType, setRoomType] = useState("problem");
+  const [details, setDetails] = useState("");
+  const [tried, setTried] = useState("");
   const [chapter, setChapter] = useState("");
-  const [tagDraft, setTagDraft] = useState("");
-  const [tags, setTags] = useState([]);
-  const [files, setFiles] = useState([]);
   const [busy, setBusy] = useState(false);
   const [replyDrafts, setReplyDrafts] = useState({});
   const [replyBusy, setReplyBusy] = useState(null);
@@ -131,27 +185,35 @@ export default function StuckRoomPage() {
 
   const loadFeed = useCallback(async () => {
     if (!courseId || !token) return;
-    const qs = new URLSearchParams({
+    const newest = new URLSearchParams({
       course_id: String(courseId),
-      sort,
-      limit: "40",
+      sort: "new",
+      limit: "80",
     });
-    if (chapterFilter) qs.set("chapter", chapterFilter);
-    if (typeFilter) qs.set("room_type", typeFilter);
+    const solved = new URLSearchParams({
+      course_id: String(courseId),
+      sort: "new",
+      status: "solved",
+      limit: "80",
+    });
     try {
-      const [meta, feed, board] = await Promise.all([
+      const [meta, feed, solvedFeed, board] = await Promise.all([
         api(`/help-room/community/?course_id=${courseId}`, { token }),
-        api(`/help-room/?${qs}`, { token }),
+        api(`/help-room/?${newest}`, { token }),
+        api(`/help-room/?${solved}`, { token }),
         api(`/help-room/ranks/?course_id=${courseId}`, { token }),
       ]);
       setCommunity(meta);
-      setPosts(Array.isArray(feed) ? feed : feed?.items || []);
-      setRanks(board);
+      setLibrary(itemsOf(feed));
+      setSolvedPosts(itemsOf(solvedFeed));
+      setRanks(Array.isArray(board) ? board : []);
       setError("");
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoaded(true);
     }
-  }, [courseId, token, sort, chapterFilter, typeFilter]);
+  }, [courseId, token]);
 
   const loadThread = useCallback(async () => {
     if (!threadId || !token) {
@@ -189,24 +251,34 @@ export default function StuckRoomPage() {
     loadProfile();
   }, [loadProfile]);
 
+  const chapters = community?.chapters || [];
+  const visiblePosts = useMemo(() => {
+    const source = tab === "solved" ? solvedPosts : library;
+    return source.filter((post) => {
+      if (chapterFilter && post.chapter !== chapterFilter) return false;
+      if (tab === "unanswered") {
+        return (post.reply_count || 0) === 0 && post.status !== "solved";
+      }
+      return true;
+    });
+  }, [tab, solvedPosts, library, chapterFilter]);
+
+  const matches = useMemo(
+    () => similarQuestions(title, library),
+    [title, library],
+  );
+
   if (!activeCourse) return <Navigate to="/" replace />;
   if (activeCourse.role !== "student") {
     return <Navigate to={`/${activeCourse.role === "professor" ? "professor" : "ta"}`} replace />;
   }
 
-  const name = community?.community_name || `r/${String(activeCourse.code || "").replace(/\s+/g, "")}`;
+  const courseLabel = [activeCourse.code, activeCourse.title].filter(Boolean).join(" · ");
+  const showingList = !profileId && view !== "create" && view !== "leaderboard" && !threadId;
+  const showingThread = Boolean(threadId) && !profileId && view !== "create" && view !== "leaderboard";
 
   function go(next) {
     setParams(next);
-  }
-
-  function addTag(raw) {
-    const tokenTag = String(raw || "")
-      .replace(/[^A-Za-z0-9_]/g, "")
-      .slice(0, 40);
-    if (!tokenTag || tags.includes(tokenTag)) return;
-    setTags((prev) => [...prev, tokenTag].slice(0, 8));
-    setTagDraft("");
   }
 
   async function vote(postId, value, isMine) {
@@ -218,7 +290,7 @@ export default function StuckRoomPage() {
         body: { value },
       });
       const patch = (item) =>
-        item.id === postId
+        item && item.id === postId
           ? {
               ...item,
               score: result.score,
@@ -229,8 +301,9 @@ export default function StuckRoomPage() {
               same_here_by_me: result.my_vote === 1,
             }
           : item;
-      setPosts((prev) => prev.map(patch));
-      setThread((prev) => (prev ? patch(prev) : prev));
+      setLibrary((prev) => prev.map(patch));
+      setSolvedPosts((prev) => prev.map(patch));
+      setThread((prev) => (prev && prev.id === postId ? patch(prev) : prev));
     } catch (err) {
       setError(err.message);
     }
@@ -241,7 +314,7 @@ export default function StuckRoomPage() {
       await api(`/help-room/${postId}/interest`, {
         method: "POST",
         token,
-        body: { note: "I can help with this room — happy to compare notes." },
+        body: { note: "I can help with this question." },
       });
       await loadFeed();
       await loadThread();
@@ -250,12 +323,18 @@ export default function StuckRoomPage() {
     }
   }
 
-  async function publishRoom(event) {
+  async function publishQuestion(event) {
     event.preventDefault();
-    if (!title.trim() || !body.trim() || !chapter) {
-      setError("Title, description, and a chapter are required to publish.");
+    const cleanTitle = title.trim();
+    const cleanDetails = details.trim();
+    if (!cleanTitle || !cleanDetails) {
+      setError("Add a title and the details before posting.");
       return;
     }
+    const cleanTried = tried.trim();
+    const body = cleanTried
+      ? `${cleanDetails}\n\n**What I tried**\n\n${cleanTried}`
+      : cleanDetails;
     setBusy(true);
     setError("");
     try {
@@ -264,24 +343,16 @@ export default function StuckRoomPage() {
         token,
         body: {
           course_id: courseId,
-          title: title.trim(),
-          body: body.trim(),
-          chapter,
-          room_type: roomType,
-          tags,
+          title: cleanTitle,
+          body,
+          chapter: chapter || null,
+          room_type: "problem",
         },
       });
-      for (const file of files) {
-        const form = new FormData();
-        form.append("file", file);
-        await apiUpload(`/help-room/${created.id}/files`, { token, formData: form });
-      }
       setTitle("");
-      setBody("");
+      setDetails("");
+      setTried("");
       setChapter("");
-      setTags([]);
-      setFiles([]);
-      setStep(1);
       await loadFeed();
       go({ post: String(created.id) });
     } catch (err) {
@@ -337,301 +408,259 @@ export default function StuckRoomPage() {
     }
   }
 
-  const chapters = community?.chapters || [];
-  const resolutionPct = Math.round((community?.resolution_rate || 0) * 100);
+  const nothingYet = loaded && library.length === 0 && solvedPosts.length === 0 && !chapterFilter && tab === "newest";
 
   return (
-    <div className="rf-page">
-      <header className="rf-top">
-        <div>
-          <p className="rf-kicker">AUI Rooms · {activeCourse.code} classmates only</p>
-          <h1>{name}</h1>
-        </div>
-        <button type="button" className="btn-primary px-5 py-2.5 text-sm" onClick={() => go({ view: "create" })}>
-          Initialize Room
-        </button>
-      </header>
-
-      {error ? <p className="rf-error">{error}</p> : null}
-
-      <div className="rf-layout">
-        <aside className="rf-left">
-          <nav className="rf-side-nav">
-            <button type="button" className={view === "rooms" && !threadId && !profileId ? "is-on" : ""} onClick={() => go({})}>
-              Rooms
-            </button>
-            <button type="button" className={view === "fields" ? "is-on" : ""} onClick={() => go({ view: "fields" })}>
-              Chapters
-            </button>
-            <button
-              type="button"
-              className={view === "leaderboard" ? "is-on" : ""}
-              onClick={() => go({ view: "leaderboard" })}
-            >
-              Leaderboard
-            </button>
-          </nav>
-          <div className="rf-card">
-            <h3>Chapters</h3>
-            <p className="bh-card-note">{chapterSourceNote(community?.chapter_source)}</p>
-            <ul className="rf-chapter-list">
-              <li>
-                <button type="button" className={!chapterFilter ? "is-on" : ""} onClick={() => setChapterFilter("")}>
-                  All chapters <span>{community?.post_count || 0}</span>
-                </button>
-              </li>
-              {chapters.map((item) => (
-                <li key={item.label}>
-                  <button
-                    type="button"
-                    className={chapterFilter === item.label ? "is-on" : ""}
-                    onClick={() => {
-                      setChapterFilter(item.label);
-                      go({});
-                    }}
-                  >
-                    {item.label} <span>{item.post_count}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </aside>
-
-        <div className="rf-main">
-          {profileId && profile ? (
-            <ProfilePanel
-              profile={profile}
-              onFollow={async () => {
-                const next = await api(
-                  `/help-room/profile/${profile.user_id}/follow?course_id=${courseId}`,
-                  { method: "POST", token },
-                );
-                setProfile(next);
-              }}
-              onBack={() => go({})}
-            />
-          ) : view === "create" ? (
-            <CreateWizard
-              step={step}
-              setStep={setStep}
-              title={title}
-              setTitle={setTitle}
-              body={body}
-              setBody={setBody}
-              roomType={roomType}
-              setRoomType={setRoomType}
-              chapter={chapter}
-              setChapter={setChapter}
-              chapters={chapters}
-              chapterSource={community?.chapter_source}
-              tags={tags}
-              tagDraft={tagDraft}
-              setTagDraft={setTagDraft}
-              addTag={addTag}
-              setTags={setTags}
-              files={files}
-              setFiles={setFiles}
-              busy={busy}
-              onCancel={() => go({})}
-              onPublish={publishRoom}
-            />
-          ) : view === "leaderboard" ? (
-            <LeaderboardPanel ranks={ranks} onOpen={(id) => go({ user: String(id) })} />
-          ) : view === "fields" ? (
-            <FieldsGrid
-              chapters={chapters}
-              chapterSource={community?.chapter_source}
-              onPick={(label) => {
-                setChapterFilter(label);
-                go({});
-              }}
-            />
-          ) : threadId && thread ? (
-            <ThreadView
-              thread={thread}
-              name={name}
-              onBack={() => go({})}
-              onVote={vote}
-              onInterest={expressInterest}
-              onProfile={(id) => go({ user: String(id) })}
-              replyDrafts={replyDrafts}
-              setReplyDrafts={setReplyDrafts}
-              replyBusy={replyBusy}
-              onReply={submitReply}
-              onHelpful={markHelpful}
-              onAccept={acceptSolution}
-            />
-          ) : (
-            <Feed
-              posts={posts}
-              sort={sort}
-              setSort={setSort}
-              typeFilter={typeFilter}
-              setTypeFilter={setTypeFilter}
-              onOpen={(id) => go({ post: String(id) })}
-              onVote={vote}
-              onInterest={expressInterest}
-              onProfile={(id) => go({ user: String(id) })}
-              onCreate={() => go({ view: "create" })}
-              courseCode={activeCourse.code}
-            />
-          )}
-        </div>
-
-        <aside className="rf-right">
-          <div className="rf-card rf-pulse">
-            <h3>Community Pulse</h3>
-            <dl>
-              <div>
-                <dt>{community?.classmate_count ?? "—"}</dt>
-                <dd>Classmates</dd>
-              </div>
-              <div>
-                <dt>{community?.open_count ?? community?.post_count ?? 0}</dt>
-                <dd>Active rooms</dd>
-              </div>
-              <div>
-                <dt>{resolutionPct}%</dt>
-                <dd>Resolution</dd>
-              </div>
-            </dl>
-            <button type="button" className="btn-primary mt-4 w-full px-4 py-2.5 text-sm" onClick={() => go({ view: "create" })}>
-              Initialize Room
-            </button>
-          </div>
-          <div className="rf-card">
-            <h3>Room rules</h3>
-            <ol className="rf-rules">
-              <li>Share the stuck point, not the homework write-up.</li>
-              <li>Rooms are named — helpers show on the leaderboard.</li>
-              <li>Accept a solution only when it truly unlocked it.</li>
-              <li>Grades, integrity, and crises go to Quiet ask.</li>
-              <li>Staff are not in this room.</li>
-            </ol>
-            <p className="rf-quiet">
-              Need staff? <Link to="/student/ask">Ask staff</Link>
+    <div className="rooms-page">
+      <header className="rooms-header">
+        <p className="rooms-course">{courseLabel}</p>
+        <div className="rooms-header-row">
+          <div>
+            <h1>Ask your classmates</h1>
+            <p className="rooms-lede">
+              Classmates in this course can answer. Professors and TAs do not answer here.
             </p>
           </div>
-        </aside>
-      </div>
+          {showingList ? (
+            <button type="button" className="rooms-primary" onClick={() => go({ view: "create" })}>
+              Ask a question
+            </button>
+          ) : null}
+        </div>
+      </header>
+
+      {error ? <p className="rooms-error" role="alert">{error}</p> : null}
+
+      {profileId && profile ? (
+        <ProfilePanel
+          profile={profile}
+          onFollow={async () => {
+            const next = await api(
+              `/help-room/profile/${profile.user_id}/follow?course_id=${courseId}`,
+              { method: "POST", token },
+            );
+            setProfile(next);
+          }}
+          onBack={() => go({})}
+        />
+      ) : view === "create" ? (
+        <AskForm
+          title={title}
+          setTitle={setTitle}
+          details={details}
+          setDetails={setDetails}
+          tried={tried}
+          setTried={setTried}
+          chapter={chapter}
+          setChapter={setChapter}
+          chapters={chapters}
+          matches={matches}
+          askerName={user?.display_name || "you"}
+          busy={busy}
+          onOpenMatch={(id) => go({ post: String(id) })}
+          onCancel={() => go({})}
+          onPublish={publishQuestion}
+        />
+      ) : view === "leaderboard" ? (
+        <LeaderboardPanel ranks={ranks} onOpen={(id) => go({ user: String(id) })} onBack={() => go({})} />
+      ) : showingThread ? (
+        thread ? (
+          <ThreadView
+            thread={thread}
+            onBack={() => go({})}
+            onVote={vote}
+            onInterest={expressInterest}
+            onProfile={(id) => go({ user: String(id) })}
+            replyDrafts={replyDrafts}
+            setReplyDrafts={setReplyDrafts}
+            replyBusy={replyBusy}
+            onReply={submitReply}
+            onHelpful={markHelpful}
+            onAccept={acceptSolution}
+          />
+        ) : (
+          <p className="rooms-lede">Loading this question…</p>
+        )
+      ) : (
+        <div className="rooms-layout">
+          <div className="rooms-main">
+            <div className="rooms-filters">
+              <div className="rooms-tabs" role="tablist" aria-label="Question list">
+                {[
+                  ["newest", "Newest"],
+                  ["unanswered", "Unanswered"],
+                  ["solved", "Solved"],
+                ].map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === id}
+                    className={tab === id ? "rooms-tab is-on" : "rooms-tab"}
+                    onClick={() => setTab(id)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <label className="rooms-chapter">
+                <span className="rooms-sr">Chapter</span>
+                <select
+                  value={chapterFilter}
+                  onChange={(event) => setChapterFilter(event.target.value)}
+                >
+                  <option value="">All chapters</option>
+                  {chapters.map((item) => (
+                    <option key={item.label} value={item.label}>
+                      {item.post_count > 0 ? `${item.label} (${item.post_count})` : item.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {!loaded ? (
+              <p className="rooms-empty">Loading questions…</p>
+            ) : nothingYet ? (
+              <p className="rooms-empty">
+                No questions yet. Ask the first one. Someone in {activeCourse.code} may be stuck on the same thing.
+              </p>
+            ) : visiblePosts.length === 0 ? (
+              <p className="rooms-empty">No questions in this view.</p>
+            ) : (
+              <ul className="rooms-list">
+                {visiblePosts.map((post) => (
+                  <li key={post.id}>
+                    <button type="button" className="rooms-row" onClick={() => go({ post: String(post.id) })}>
+                      <StatusMark post={post} />
+                      <span className="rooms-row-copy">
+                        <span className="rooms-title">{post.title}</span>
+                        {snippetOf(post.body) ? (
+                          <span className="rooms-snippet">{snippetOf(post.body)}</span>
+                        ) : null}
+                      </span>
+                      <span className="rooms-meta">
+                        {post.chapter ? <span className="rooms-tag">{post.chapter}</span> : null}
+                        {typeLabel(post.room_type) ? (
+                          <span className="rooms-tag">{typeLabel(post.room_type)}</span>
+                        ) : null}
+                        <span>{askedAgo(post.created_at)}</span>
+                        <span>{answerLabel(post.reply_count)}</span>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <aside className="rooms-side">
+            <section className="rooms-rules">
+              <h2>Before you post</h2>
+              <ul>
+                <li>Say where you got stuck, not the finished homework.</li>
+                <li>Your name shows, so helpful classmates can be recognized.</li>
+                <li>Mark an answer as solved only when it actually unlocked the problem.</li>
+              </ul>
+              <button type="button" className="rooms-textlink" onClick={() => go({ view: "leaderboard" })}>
+                Top helpers
+              </button>
+            </section>
+          </aside>
+        </div>
+      )}
     </div>
   );
 }
 
-function Feed({
-  posts,
-  sort,
-  setSort,
-  typeFilter,
-  setTypeFilter,
-  onOpen,
-  onVote,
-  onInterest,
-  onProfile,
-  onCreate,
-  courseCode,
+function AskForm({
+  title,
+  setTitle,
+  details,
+  setDetails,
+  tried,
+  setTried,
+  chapter,
+  setChapter,
+  chapters,
+  matches,
+  askerName,
+  busy,
+  onOpenMatch,
+  onCancel,
+  onPublish,
 }) {
   return (
-    <>
-      <div className="rf-toolbar">
-        {["hot", "new", "top"].map((key) => (
-          <button key={key} type="button" className={sort === key ? "is-on" : ""} onClick={() => setSort(key)}>
-            {key[0].toUpperCase() + key.slice(1)}
-          </button>
-        ))}
-        <span className="rf-toolbar-gap" />
-        <button type="button" className={!typeFilter ? "is-on" : ""} onClick={() => setTypeFilter("")}>
-          All
-        </button>
-        {ROOM_TYPES.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className={typeFilter === item.id ? "is-on" : ""}
-            onClick={() => setTypeFilter(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
-      {posts.length === 0 ? (
-        <div className="rf-card">
-          <h2>No rooms yet in {courseCode}</h2>
-          <p className="bh-card-note">Initialize a Problem, Discussion, or Article so classmates can offer help.</p>
-          <button type="button" className="btn-primary mt-4 px-5 py-2.5 text-sm" onClick={onCreate}>
-            Initialize Room
-          </button>
-        </div>
-      ) : (
-        <div className="rf-feed">
-          {posts.map((post) => (
-            <RoomCard
-              key={post.id}
-              post={post}
-              onOpen={() => onOpen(post.id)}
-              onVote={(value) => onVote(post.id, value, post.is_mine)}
-              onInterest={() => onInterest(post.id)}
-              onProfile={() => post.author_user_id && onProfile(post.author_user_id)}
-            />
-          ))}
-        </div>
-      )}
-    </>
-  );
-}
-
-function RoomCard({ post, onOpen, onVote, onInterest, onProfile }) {
-  return (
-    <article className="rf-card rf-room-card">
-      <VoteColumn score={post.score} mine={post.my_vote} disabled={post.is_mine} onVote={onVote} />
-      <div className="rf-room-body">
-        <div className="rf-badges">
-          <span className={`rf-type rf-type-${post.room_type}`}>{post.room_type}</span>
-          <span className={`rf-status rf-status-${post.status}`}>{post.status}</span>
-          {post.chapter ? <span className="rf-field">{post.chapter}</span> : null}
-        </div>
-        <button type="button" className="rf-title-btn" onClick={onOpen}>
-          <h2>{post.title}</h2>
-        </button>
-        <p className="rf-snippet">{post.body}</p>
-        {post.tags?.length ? (
-          <p className="rf-tags">
-            {post.tags.map((tag) => (
-              <span key={tag}>#{tag}</span>
+    <form className="rooms-form" onSubmit={onPublish}>
+      <button type="button" className="rooms-textlink" onClick={onCancel}>
+        Back to questions
+      </button>
+      <h2>Ask a question</h2>
+      <label className="rooms-field">
+        <span>Title</span>
+        <input
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          maxLength={200}
+          required
+          autoComplete="off"
+        />
+        <span className="rooms-hint">Be specific: what are you trying to do and what went wrong?</span>
+      </label>
+      {matches.length ? (
+        <div className="rooms-similar">
+          <p>Similar questions</p>
+          <ul>
+            {matches.map((post) => (
+              <li key={post.id}>
+                <button type="button" onClick={() => onOpenMatch(post.id)}>
+                  {post.title}
+                </button>
+              </li>
             ))}
-          </p>
-        ) : null}
-        <div className="rf-meta-row">
-          <button type="button" className="rf-author" onClick={onProfile} disabled={!post.author_user_id}>
-            <Avatar name={post.author_display} seed={post.author_handle || post.author_display} size={28} />
-            <span>{post.author_display}</span>
-            {post.author_handle ? <em>@{post.author_handle}</em> : null}
-          </button>
-          <span>{timeAgo(post.created_at)}</span>
-          <span>
-            {post.reply_count} solution{post.reply_count === 1 ? "" : "s"}
-          </span>
-          {!post.is_mine ? (
-            <button
-              type="button"
-              className={`rf-interest${post.interested_by_me ? " is-on" : ""}`}
-              onClick={onInterest}
-            >
-              {post.interested_by_me ? "Interest sent" : "Express Interest"}
-            </button>
-          ) : (
-            <span className="rf-interest-count">{post.interest_count} interested</span>
-          )}
+          </ul>
         </div>
-      </div>
-    </article>
+      ) : null}
+      <p className="rooms-quiet">
+        Not sure? <Link to="/student">Try the Study Agent first</Link>
+      </p>
+      <label className="rooms-field">
+        <span>Details</span>
+        <textarea
+          value={details}
+          onChange={(event) => setDetails(event.target.value)}
+          required
+          rows={6}
+        />
+      </label>
+      <label className="rooms-field">
+        <span>What I tried</span>
+        <textarea
+          value={tried}
+          onChange={(event) => setTried(event.target.value)}
+          rows={4}
+        />
+      </label>
+      <label className="rooms-field">
+        <span>Chapter</span>
+        <select value={chapter} onChange={(event) => setChapter(event.target.value)}>
+          <option value="">Optional</option>
+          {chapters.map((item) => (
+            <option key={item.label} value={item.label}>
+              {item.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="rooms-identity">Classmates will see this question from {askerName}.</p>
+      <button type="submit" className="rooms-primary" disabled={busy || !title.trim() || !details.trim()}>
+        {busy ? "Posting…" : "Post"}
+      </button>
+    </form>
   );
 }
 
 function ThreadView({
   thread,
-  name,
   onBack,
   onVote,
   onInterest,
@@ -643,77 +672,75 @@ function ThreadView({
   onHelpful,
   onAccept,
 }) {
+  const accepted = findAccepted(thread.replies);
+  const others = accepted ? withoutReply(thread.replies, accepted.id) : thread.replies || [];
+  const draftKey = `p-${thread.id}`;
   return (
-    <article className="rf-card">
-      <button type="button" className="rf-back" onClick={onBack}>
-        ← Back to {name}
+    <article className="rooms-thread">
+      <button type="button" className="rooms-textlink" onClick={onBack}>
+        Back to questions
       </button>
-      <div className="rf-room-card rf-thread-head">
-        <VoteColumn
-          score={thread.score}
-          mine={thread.my_vote}
-          disabled={thread.is_mine}
-          onVote={(value) => onVote(thread.id, value, thread.is_mine)}
-        />
-        <div className="rf-room-body">
-          <div className="rf-badges">
-            <span className={`rf-type rf-type-${thread.room_type}`}>{thread.room_type}</span>
-            <span className={`rf-status rf-status-${thread.status}`}>{thread.status}</span>
-            {thread.chapter ? <span className="rf-field">{thread.chapter}</span> : null}
-          </div>
-          <h2>{thread.title}</h2>
-          <MarkdownBody text={thread.body} />
-          {thread.tags?.length ? (
-            <p className="rf-tags">
-              {thread.tags.map((tag) => (
-                <span key={tag}>#{tag}</span>
-              ))}
-            </p>
-          ) : null}
-          {thread.files?.length ? (
-            <ul className="rf-files">
-              {thread.files.map((file) => (
-                <li key={file.id}>{file.original_filename}</li>
-              ))}
-            </ul>
-          ) : null}
-          <div className="rf-meta-row">
-            <button type="button" className="rf-author" onClick={() => thread.author_user_id && onProfile(thread.author_user_id)}>
-              <Avatar name={thread.author_display} seed={thread.author_handle} size={28} />
-              {thread.author_display}
+      <header className="rooms-question">
+        <StatusMark post={thread} />
+        <h2>{thread.title}</h2>
+        <p className="rooms-byline">
+          <button
+            type="button"
+            className="rooms-person"
+            onClick={() => thread.author_user_id && onProfile(thread.author_user_id)}
+            disabled={!thread.author_user_id}
+          >
+            <Avatar name={thread.author_display} seed={thread.author_handle} size={28} />
+            {thread.author_display}
+          </button>
+          <span>{askedAgo(thread.created_at)}</span>
+          {thread.chapter ? <span className="rooms-tag">{thread.chapter}</span> : null}
+          {typeLabel(thread.room_type) ? <span className="rooms-tag">{typeLabel(thread.room_type)}</span> : null}
+        </p>
+        <MarkdownBody text={thread.body} />
+        {thread.files?.length ? (
+          <ul className="rooms-files">
+            {thread.files.map((file) => (
+              <li key={file.id}>{file.original_filename}</li>
+            ))}
+          </ul>
+        ) : null}
+        <div className="rooms-actions">
+          <button
+            type="button"
+            className={thread.my_vote === 1 ? "is-on" : ""}
+            disabled={thread.is_mine}
+            onClick={() => onVote(thread.id, 1, thread.is_mine)}
+          >
+            Upvote
+            <span>{thread.up_count || 0}</span>
+          </button>
+          <button
+            type="button"
+            className={thread.my_vote === -1 ? "is-on" : ""}
+            disabled={thread.is_mine}
+            onClick={() => onVote(thread.id, -1, thread.is_mine)}
+          >
+            Downvote
+            <span>{thread.down_count || 0}</span>
+          </button>
+          {!thread.is_mine ? (
+            <button type="button" onClick={() => onInterest(thread.id)}>
+              {thread.interested_by_me ? "You offered to help" : "I can help"}
             </button>
-            <span>{timeAgo(thread.created_at)}</span>
-            {!thread.is_mine ? (
-              <button type="button" className="rf-interest" onClick={() => onInterest(thread.id)}>
-                {thread.interested_by_me ? "Interest sent" : "Express Interest"}
-              </button>
-            ) : null}
-          </div>
+          ) : null}
         </div>
-      </div>
+      </header>
 
-      <form className="rf-composer" onSubmit={(event) => onReply(event, null)}>
-        <textarea
-          className="field-glass min-h-20 w-full px-3 py-2 text-sm"
-          placeholder="Offer a solution or perspective — not the finished write-up."
-          value={replyDrafts[`p-${thread.id}`] || ""}
-          onChange={(event) =>
-            setReplyDrafts((prev) => ({ ...prev, [`p-${thread.id}`]: event.target.value }))
-          }
-          required
-        />
-        <button type="submit" className="btn-primary px-4 py-2 text-sm" disabled={replyBusy === `p-${thread.id}`}>
-          {replyBusy === `p-${thread.id}` ? "Posting…" : "Post solution"}
-        </button>
-      </form>
-
-      <div className="rf-comments">
-        {(thread.replies || []).map((reply) => (
-          <Comment
-            key={reply.id}
-            reply={reply}
-            depth={0}
-            canAccept={thread.is_mine && thread.room_type === "problem"}
+      {accepted ? (
+        <section className="rooms-solved" aria-label="Solved answer">
+          <p className="rooms-status rooms-status-solved">
+            <StatusIcon state="solved" />
+            Solved
+          </p>
+          <Answer
+            reply={accepted}
+            canAccept={false}
             replyDrafts={replyDrafts}
             setReplyDrafts={setReplyDrafts}
             replyBusy={replyBusy}
@@ -722,15 +749,53 @@ function ThreadView({
             onAccept={onAccept}
             onProfile={onProfile}
           />
-        ))}
-      </div>
+        </section>
+      ) : null}
+
+      {others.length ? (
+        <div className="rooms-answers">
+          <h3>Other answers</h3>
+          {others.map((reply) => (
+            <Answer
+              key={reply.id}
+              reply={reply}
+              canAccept={thread.is_mine && thread.room_type === "problem"}
+              replyDrafts={replyDrafts}
+              setReplyDrafts={setReplyDrafts}
+              replyBusy={replyBusy}
+              onReply={onReply}
+              onHelpful={onHelpful}
+              onAccept={onAccept}
+              onProfile={onProfile}
+            />
+          ))}
+        </div>
+      ) : accepted ? null : (
+        <p className="rooms-empty">No answers yet.</p>
+      )}
+
+      <form className="rooms-composer" onSubmit={(event) => onReply(event, null)}>
+        <label className="rooms-field">
+          <span>Your answer</span>
+          <textarea
+            value={replyDrafts[draftKey] || ""}
+            onChange={(event) =>
+              setReplyDrafts((prev) => ({ ...prev, [draftKey]: event.target.value }))
+            }
+            required
+            rows={5}
+          />
+        </label>
+        <button type="submit" className="rooms-primary" disabled={replyBusy === draftKey}>
+          {replyBusy === draftKey ? "Posting…" : "Post answer"}
+        </button>
+      </form>
     </article>
   );
 }
 
-function Comment({
+function Answer({
   reply,
-  depth,
   canAccept,
   replyDrafts,
   setReplyDrafts,
@@ -739,46 +804,60 @@ function Comment({
   onHelpful,
   onAccept,
   onProfile,
+  depth = 0,
 }) {
   const [open, setOpen] = useState(false);
+  const key = `c-${reply.id}`;
   return (
-    <div className="rf-comment" style={{ marginLeft: Math.min(depth, 5) * 16 }}>
-      <button type="button" className="rf-author" onClick={() => reply.author_user_id && onProfile(reply.author_user_id)}>
-        <Avatar name={reply.author_display} seed={reply.author_display} size={26} />
-        <strong>{reply.author_display}</strong>
-      </button>
-      {reply.accepted ? <span className="rf-accepted">Accepted</span> : null}
-      <p>{reply.body}</p>
-      <div className="rf-comment-actions">
-        <button type="button" disabled={reply.is_mine} onClick={() => onHelpful(reply.id)}>
-          {reply.marked_helpful_by_me ? "Helpful" : "Helpful vote"} · {reply.helpful_count}
+    <div className="rooms-answer" style={{ marginLeft: Math.min(depth, 4) * 12 }}>
+      <p className="rooms-byline">
+        <button
+          type="button"
+          className="rooms-person"
+          onClick={() => reply.author_user_id && onProfile(reply.author_user_id)}
+        >
+          <Avatar name={reply.author_display} seed={reply.author_display} size={28} />
+          {reply.author_display}
         </button>
-        <button type="button" onClick={() => setOpen((value) => !value)}>
+        <span>{askedAgo(reply.created_at)}</span>
+      </p>
+      <div className="rooms-answer-body">
+        <MarkdownBody text={reply.body} />
+      </div>
+      <div className="rooms-actions">
+        <button type="button" disabled={reply.is_mine} onClick={() => onHelpful(reply.id)}>
+          {reply.marked_helpful_by_me ? "Marked as helpful" : "This helped me"}
+          <span>{reply.helpful_count}</span>
+        </button>
+        <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open}>
           Reply
         </button>
-        {canAccept && !reply.is_mine ? (
+        {canAccept && !reply.is_mine && !reply.accepted ? (
           <button type="button" onClick={() => onAccept(reply.id)}>
-            Accept solution
+            This solved it
           </button>
         ) : null}
       </div>
       {open ? (
-        <form onSubmit={(event) => onReply(event, reply.id)}>
-          <textarea
-            className="field-glass mt-2 min-h-16 w-full px-3 py-2 text-sm"
-            value={replyDrafts[`c-${reply.id}`] || ""}
-            onChange={(event) =>
-              setReplyDrafts((prev) => ({ ...prev, [`c-${reply.id}`]: event.target.value }))
-            }
-            required
-          />
-          <button type="submit" className="btn-ghost mt-2 px-3 py-1.5 text-xs" disabled={replyBusy === `c-${reply.id}`}>
-            Comment
+        <form className="rooms-reply" onSubmit={(event) => onReply(event, reply.id)}>
+          <label className="rooms-field">
+            <span className="rooms-sr">Reply</span>
+            <textarea
+              value={replyDrafts[key] || ""}
+              onChange={(event) =>
+                setReplyDrafts((prev) => ({ ...prev, [key]: event.target.value }))
+              }
+              required
+              rows={3}
+            />
+          </label>
+          <button type="submit" className="rooms-secondary" disabled={replyBusy === key}>
+            {replyBusy === key ? "Posting…" : "Post reply"}
           </button>
         </form>
       ) : null}
       {(reply.children || []).map((child) => (
-        <Comment
+        <Answer
           key={child.id}
           reply={child}
           depth={depth + 1}
@@ -796,322 +875,94 @@ function Comment({
   );
 }
 
-function CreateWizard({
-  step,
-  setStep,
-  title,
-  setTitle,
-  body,
-  setBody,
-  roomType,
-  setRoomType,
-  chapter,
-  setChapter,
-  chapters,
-  chapterSource,
-  tags,
-  tagDraft,
-  setTagDraft,
-  addTag,
-  setTags,
-  files,
-  setFiles,
-  busy,
-  onCancel,
-  onPublish,
-}) {
+function LeaderboardPanel({ ranks, onOpen, onBack }) {
   return (
-    <form className="rf-wizard" onSubmit={onPublish}>
-      <div className="rf-wizard-main">
-        <button type="button" className="rf-back" onClick={onCancel}>
-          ← Cancel
-        </button>
-        <p className="rf-kicker">Create a Room · Step {step} of 3</p>
-        {step === 1 ? (
-          <>
-            <h2>General information</h2>
-            <input
-              className="field-glass w-full px-4 py-2.5 text-sm"
-              placeholder="Title"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              required
-            />
-            <textarea
-              className="field-glass min-h-48 w-full px-4 py-2.5 text-sm"
-              placeholder="Description (Markdown supported: **bold**, `code`, lists)"
-              value={body}
-              onChange={(event) => setBody(event.target.value)}
-              required
-            />
-            <p className="bh-card-note">
-              Rooms are named. Helping here puts you on the course leaderboard.
-              Need to ask staff privately? <Link to="/student/ask">Ask staff</Link>.
-            </p>
-          </>
-        ) : null}
-        {step === 2 ? (
-          <>
-            <h2>Classification type</h2>
-            <div className="rf-type-grid">
-              {ROOM_TYPES.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`rf-type-pick${roomType === item.id ? " is-on" : ""}`}
-                  onClick={() => setRoomType(item.id)}
-                >
-                  <strong>{item.label}</strong>
-                  <span>{item.hint}</span>
-                </button>
-              ))}
-            </div>
-          </>
-        ) : null}
-        {step === 3 ? (
-          <>
-            <h2>Select course chapter</h2>
-            <p className="bh-card-note">{chapterSourceNote(chapterSource)}</p>
-            {chapters.length === 0 ? (
-              <p className="rf-error">Ask your professor to sync Canvas modules before publishing.</p>
-            ) : (
-            <div className="rf-chapter-grid">
-              {chapters.map((item) => (
-                <button
-                  key={item.label}
-                  type="button"
-                  className={chapter === item.label ? "is-on" : ""}
-                  onClick={() => setChapter(item.label)}
-                >
-                  {item.label}
-                  {item.source === "canvas" || item.source === "both" ? (
-                    <small className="rf-src">Canvas</small>
-                  ) : null}
-                </button>
-              ))}
-            </div>
-            )}
-          </>
-        ) : null}
-        <div className="rf-wizard-nav">
-          {step > 1 ? (
-            <button type="button" className="btn-ghost px-4 py-2 text-sm" onClick={() => setStep(step - 1)}>
-              Back
-            </button>
-          ) : null}
-          {step < 3 ? (
-            <button
-              type="button"
-              className="btn-primary px-5 py-2 text-sm"
-              onClick={() => {
-                if (step === 1 && (!title.trim() || !body.trim())) return;
-                setStep(step + 1);
-              }}
-            >
-              Continue
-            </button>
-          ) : (
-            <button type="submit" className="btn-primary px-5 py-2 text-sm" disabled={busy || !chapter}>
-              {busy ? "Publishing…" : "Publish Room"}
-            </button>
-          )}
-        </div>
-      </div>
-      <aside className="rf-wizard-side">
-        <div className="rf-card">
-          <h3>Room tags</h3>
-          <p className="bh-card-note">Hashtags for discoverability inside this course.</p>
-          <div className="rf-tag-row">
-            <input
-              className="field-glass px-3 py-2 text-sm"
-              placeholder="#tag"
-              value={tagDraft}
-              onChange={(event) => setTagDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  addTag(tagDraft);
-                }
-              }}
-            />
-            <button type="button" className="btn-ghost px-3 py-2 text-xs" onClick={() => addTag(tagDraft)}>
-              Add
-            </button>
-          </div>
-          <div className="rf-tags">
-            {tags.map((tag) => (
-              <button key={tag} type="button" onClick={() => setTags(tags.filter((item) => item !== tag))}>
-                #{tag} ×
-              </button>
-            ))}
-          </div>
-          <div className="rf-suggest">
-            {tagsFromChapters(chapters).map((tag) => (
-              <button key={tag} type="button" onClick={() => addTag(tag)}>
-                #{tag}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="rf-card">
-          <h3>Attachments</h3>
-          <p className="bh-card-note">CSV, PDF, MATLAB, STEP, PNG, ZIP · 10 MB max</p>
-          <label className="rf-drop">
-            Drop files or browse
-            <input
-              type="file"
-              multiple
-              hidden
-              onChange={(event) => setFiles([...files, ...Array.from(event.target.files || [])])}
-            />
-          </label>
-          <ul className="rf-files">
-            {files.map((file) => (
-              <li key={file.name}>
-                {file.name} · {Math.round(file.size / 1024)} KB
-              </li>
-            ))}
-          </ul>
-        </div>
-      </aside>
-    </form>
-  );
-}
-
-function FieldsGrid({ chapters, chapterSource, onPick }) {
-  return (
-    <div className="rf-card">
-      <h2>Course chapters</h2>
-      <p className="bh-card-note">{chapterSourceNote(chapterSource)}</p>
-      <div className="rf-chapter-grid mt-4">
-        {chapters.map((item) => (
-          <button key={item.label} type="button" onClick={() => onPick(item.label)}>
-            <strong>{item.label}</strong>
-            <span>
-              {item.post_count} rooms
-              {item.source === "canvas" || item.source === "both" ? " · Canvas" : ""}
-            </span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function LeaderboardPanel({ ranks, onOpen }) {
-  const top = ranks.slice(0, 3);
-  const rest = ranks.slice(3);
-  return (
-    <div className="rf-card">
-      <h2>Leaderboard</h2>
-      <p className="bh-card-note">
-        Ranked by Hilbert Weight ŵ (quality over volume). Score(W) is ŵ; Base is Node Points.
-      </p>
-      <div className="rf-podium">
-        {top.map((row, index) => (
-          <button key={row.user_id} type="button" className={`rf-podium-slot place-${index + 1}`} onClick={() => onOpen(row.user_id)}>
-            <Avatar name={row.display_name} seed={row.handle} size={index === 0 ? 72 : 56} />
-            <strong>{row.display_name}</strong>
-            <span className="rf-tier">{row.tier}</span>
-            <Stars count={row.stars} />
-            <em>{row.rooms_score.toFixed(3)}</em>
-          </button>
-        ))}
-      </div>
-      <table className="rf-table">
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Classmate</th>
-            <th>Level</th>
-            <th>Points</th>
-            <th>Score(W)</th>
-          </tr>
-        </thead>
-        <tbody>
+    <section className="rooms-board">
+      <button type="button" className="rooms-textlink" onClick={onBack}>
+        Back to questions
+      </button>
+      <h2>Top helpers</h2>
+      <p className="rooms-lede">Classmates whose answers other people marked as helpful.</p>
+      {ranks.length === 0 ? (
+        <p className="rooms-empty">No one has an answer marked helpful yet.</p>
+      ) : (
+        <ul className="rooms-ranklist">
           {ranks.map((row) => (
-            <tr key={row.user_id}>
-              <td>{row.rank}</td>
-              <td>
-                <button type="button" className="rf-author" onClick={() => onOpen(row.user_id)}>
-                  <Avatar name={row.display_name} seed={row.handle} size={28} />
-                  {row.display_name}
-                </button>
-              </td>
-              <td>{row.tier}</td>
-              <td>
-                ⚡ {row.node_points}
-              </td>
-              <td>
-                {row.hilbert_weight.toFixed(3)}
-                <small>Base {row.node_points}</small>
-              </td>
-            </tr>
+            <li key={row.user_id}>
+              <button type="button" onClick={() => onOpen(row.user_id)}>
+                <span className="rooms-rank">{row.rank}</span>
+                <Avatar name={row.display_name} seed={row.handle} size={36} />
+                <span className="rooms-rank-copy">
+                  <strong>{row.display_name}</strong>
+                  <span>
+                    {row.tier}
+                    {" · "}
+                    {row.node_points} points
+                    {" · "}
+                    score {row.rooms_score.toFixed(3)}
+                  </span>
+                </span>
+                <Stars count={row.stars} />
+              </button>
+            </li>
           ))}
-        </tbody>
-      </table>
-      {rest.length === 0 ? <p className="bh-card-note mt-3">View All Rankings — everyone in this course is already listed.</p> : null}
-    </div>
+        </ul>
+      )}
+    </section>
   );
 }
 
 function ProfilePanel({ profile, onFollow, onBack }) {
   const tiles = [
-    ["Rooms", profile.rooms],
-    ["Solutions", profile.solutions],
+    ["Questions", profile.rooms],
+    ["Answers", profile.solutions],
     ["Accepted", profile.accepted],
     ["Helpful votes", profile.helpful_votes],
     ["Followers", profile.followers],
     ["Following", profile.following],
     ["Profile views", profile.profile_views],
-    ["Legacy score", profile.node_points],
+    ["Points", profile.node_points],
   ];
   return (
-    <div className="rf-card">
-      <button type="button" className="rf-back" onClick={onBack}>
-        ← Back to rooms
+    <section className="rooms-profile">
+      <button type="button" className="rooms-textlink" onClick={onBack}>
+        Back to questions
       </button>
-      <div className="rf-profile-head">
-        <Avatar name={profile.display_name} seed={profile.handle} size={84} />
+      <div className="rooms-profile-head">
+        <Avatar name={profile.display_name} seed={profile.handle} size={72} />
         <div>
           <h2>{profile.display_name}</h2>
           <p>
             @{profile.handle} · {profile.role_label}
           </p>
-          {profile.bio ? <p className="rf-bio">{profile.bio}</p> : null}
+          {profile.bio ? <p>{profile.bio}</p> : null}
+          <p className="rooms-byline">
+            <span>{profile.tier}</span>
+            <Stars count={profile.stars} />
+            <span>Score {profile.rooms_score.toFixed(3)}</span>
+          </p>
           {!profile.is_me ? (
-            <button type="button" className="btn-primary mt-3 px-4 py-2 text-sm" onClick={onFollow}>
+            <button type="button" className="rooms-secondary" onClick={onFollow}>
               {profile.followed_by_me ? "Following" : "Follow"}
             </button>
           ) : null}
         </div>
-        <div className="rf-scorebox">
-          <p className="rf-kicker">ROOMS score</p>
-          <strong>{profile.rooms_score.toFixed(3)}</strong>
-          <span className="rf-tier">{profile.tier}</span>
-          <Stars count={profile.stars} />
-          <p>
-            Hilbert Weight ŵ {profile.hilbert_weight.toFixed(3)}
-            <br />
-            Node Points {profile.node_points}
-          </p>
-        </div>
       </div>
-      <div className="rf-tiles">
+      <dl className="rooms-tiles">
         {tiles.map(([label, value]) => (
           <div key={label}>
             <dt>{value}</dt>
             <dd>{label}</dd>
           </div>
         ))}
-      </div>
+      </dl>
       {profile.skills?.length ? (
-        <p className="rf-tags mt-4">
+        <p className="rooms-meta">
           {profile.skills.map((skill) => (
-            <span key={skill}>{skill}</span>
+            <span key={skill} className="rooms-tag">{skill}</span>
           ))}
         </p>
       ) : null}
-    </div>
+    </section>
   );
 }
