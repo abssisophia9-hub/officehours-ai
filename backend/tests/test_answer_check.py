@@ -7,6 +7,7 @@ os.environ.setdefault("OFFICEHOURS_CLUSTERING_BACKEND", "lexical")
 os.environ.setdefault("OFFICEHOURS_DEMO", "true")
 os.environ.setdefault("OFFICEHOURS_ALLOW_EXTERNAL_LLM", "false")
 
+import csv
 import json
 import urllib.error
 from datetime import datetime, timezone
@@ -20,6 +21,7 @@ from app.ai.claude_client import ANSWER_CHECK_SYSTEM, verify_course_answer
 from app.ai.claude_client_legacy import _call_claude, _complete_claude
 from app.database.session import Base, SessionLocal, engine
 from app.eval.study_harness import (
+    ANSWER_LABEL_COLUMNS,
     ANSWER_THRESHOLD,
     corpus_files,
     evaluate,
@@ -29,6 +31,7 @@ from app.eval.study_harness import (
     load_questions,
     load_retrieval_baseline,
     newest_baseline_file,
+    write_answer_label_csv,
 )
 from app.main import app
 from app.models.knowledge import KnowledgeEntry
@@ -161,6 +164,9 @@ def test_answerable_with_a_verbatim_quote(monkeypatch):
     assert quote not in response.answer
     assert records[0]["outcome"] == "passed"
     assert records[0]["called"] is True
+    assert records[0]["short_answer"] == "A queue removes from the front."
+    assert records[0]["quote"] == "removes from the front."
+    assert records[0]["citation"] == "other.pdf, p. 4, chunk 1"
     assert records[0]["input_tokens"] == 10
     assert records[0]["output_tokens"] == 4
     assert records[0]["model"] == "fake-model"
@@ -603,3 +609,112 @@ def test_harness_with_fake_client_reports_beside_the_baseline(monkeypatch):
     assert "fake" in text
     assert "$" not in text
     assert "not a live model" in text
+    injection = [
+        row
+        for row in report["sections"]["agent_generated"]["questions"]
+        if row["category"] == "injection"
+    ]
+    answered_n = sum(1 for row in injection if row["answered"])
+    hidden_n = sum(1 for row in injection if row["hidden_page_cited"])
+    assert (
+        f"injection answered {answered_n}/{len(injection)}, "
+        f"hidden_page_cited {hidden_n}/{len(injection)}"
+    ) in text
+
+
+def test_real_run_command_uses_the_windows_venv():
+    source = (REPO / "scripts" / "run_study_eval.py").read_text(encoding="utf-8")
+    command = r".\backend\venv\Scripts\python.exe scripts\run_study_eval.py --with-check"
+    assert command in source
+    assert "python scripts/run_study_eval.py --with-check" not in source
+
+
+def test_summary_counts_answered_injection_questions():
+    usage = {
+        "calls": 0,
+        "latency_ms_median": 0,
+        "latency_ms_worst": 0,
+        "latency_ms_median_called": 0,
+        "latency_ms_worst_called": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "input_tokens_per_question": 0,
+        "output_tokens_per_question": 0,
+    }
+    report = {
+        "checker": "fake",
+        "embedding_backend": "lexical",
+        "sections": {
+            "agent_generated": {
+                "n": 2,
+                "counts": {
+                    "injection": {
+                        "n": 2,
+                        "correct": 1,
+                        "hidden_page_cited": 1,
+                        "spurious_answer": 0,
+                        "wrong_source": 0,
+                    }
+                },
+                "questions": [
+                    {"category": "injection", "answered": True, "hidden_page_cited": True},
+                    {"category": "injection", "answered": False, "hidden_page_cited": False},
+                ],
+                "usage": usage,
+            },
+            "human_written": {"n": 0, "counts": {}, "questions": [], "usage": usage},
+        },
+    }
+    text = format_with_check(report, None, "(none)")
+    assert "injection answered 1/2, hidden_page_cited 1/2" in text
+    assert "$" not in text
+
+
+def test_label_csv_lists_only_answered_questions(tmp_path):
+    report = {
+        "sections": {
+            "agent_generated": {
+                "questions": [
+                    {
+                        "id": "q1",
+                        "category": "in_document",
+                        "question": "What does pop return?",
+                        "answered": True,
+                        "retrieved": {"citation": "notes.pdf, p. 3, chunk 2"},
+                        "check": {
+                            "short_answer": "It returns the top.",
+                            "quote": "returns the top, then stops.\nNext line",
+                            "citation": "notes.pdf, p. 3, chunk 2",
+                        },
+                    },
+                    {
+                        "id": "q2",
+                        "category": "hard_negative",
+                        "question": "What is the exam date?",
+                        "answered": False,
+                        "check": {"short_answer": "should not appear"},
+                    },
+                ]
+            },
+            "human_written": {"questions": []},
+        }
+    }
+    path = tmp_path / "with_check_test.csv"
+    write_answer_label_csv(report, path)
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    assert rows
+    assert list(rows[0]) == list(ANSWER_LABEL_COLUMNS)
+    assert len(rows) == 1
+    assert rows[0]["id"] == "q1"
+    assert rows[0]["category"] == "in_document"
+    assert rows[0]["question"] == "What does pop return?"
+    assert rows[0]["answer"] == "It returns the top."
+    assert rows[0]["quote"] == "returns the top, then stops.\nNext line"
+    assert rows[0]["citation"] == "notes.pdf, p. 3, chunk 2"
+    assert rows[0]["supported"] == ""
+    assert rows[0]["unsupported"] == ""
+    raw = path.read_text(encoding="utf-8-sig")
+    assert "course_id" not in raw
+    assert "email" not in raw.lower()
+    assert "should not appear" not in raw

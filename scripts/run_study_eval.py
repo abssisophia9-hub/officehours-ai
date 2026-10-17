@@ -4,16 +4,18 @@
 Default: four filter modes, MiniLM and lexical. The production answer cutoff
 stays 0.42. Writes docs/eval_results/baseline_retrieval_only_<timestamp>.json.
 
-Answer check (demo data only, your own key, MiniLM, both filters on):
+Answer check (demo data only, your own key, MiniLM, both filters on).
+From the repo root in Windows PowerShell:
 
     $env:OFFICEHOURS_DEMO = "true"
     $env:OFFICEHOURS_ALLOW_EXTERNAL_LLM = "true"
     $env:ANTHROPIC_API_KEY = "<your key>"
     $env:ANTHROPIC_MODEL = "claude-haiku-5-5"
     $env:OFFICEHOURS_CLUSTERING_BACKEND = "sentence-transformers"
-    python scripts/run_study_eval.py --with-check
+    .\\backend\\venv\\Scripts\\python.exe scripts\\run_study_eval.py --with-check
 
 The key is read from the environment and is not printed or written.
+A real run writes the JSON results and a CSV of answered questions beside it.
 ``--fake-check`` uses an echo client, prints the harness, and does not write
 a results file. Those numbers are not a live model result.
 """
@@ -57,6 +59,7 @@ from app.eval.study_harness import (  # noqa: E402
     load_questions,
     load_retrieval_baseline,
     newest_baseline_file,
+    write_answer_label_csv,
 )
 from app.main import app  # noqa: E402
 
@@ -155,7 +158,10 @@ def run_with_check(client) -> int:
     RESULTS.mkdir(parents=True, exist_ok=True)
     out = RESULTS / f"with_check_{stamp}.json"
     out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    labels = out.with_suffix(".csv")
+    write_answer_label_csv(report, labels)
     print(f"Wrote {out}")
+    print(f"Wrote {labels}")
     return 0
 
 
@@ -208,8 +214,23 @@ def _run_baseline() -> int:
     return 0
 
 
+POWERSHELL_WITH_CHECK = r""".\backend\venv\Scripts\python.exe scripts\run_study_eval.py --with-check"""
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Study-agent retrieval baseline or answer check.")
+    parser = argparse.ArgumentParser(
+        description="Study-agent retrieval baseline or answer check.",
+        epilog=(
+            "Windows PowerShell, from the repo root, with your own key:\n"
+            '  $env:OFFICEHOURS_DEMO = "true"\n'
+            '  $env:OFFICEHOURS_ALLOW_EXTERNAL_LLM = "true"\n'
+            '  $env:ANTHROPIC_API_KEY = "<your key>"\n'
+            '  $env:ANTHROPIC_MODEL = "claude-haiku-5-5"\n'
+            '  $env:OFFICEHOURS_CLUSTERING_BACKEND = "sentence-transformers"\n'
+            f"  {POWERSHELL_WITH_CHECK}\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument(
         "--with-check",
         action="store_true",

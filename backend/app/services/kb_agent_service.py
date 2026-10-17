@@ -199,8 +199,14 @@ def answer_from_knowledge_base(
         _chunks_for_check(sources),
         client=answer_checker,
     )
+    record = result.as_record()
+    if result.outcome == "passed" and result.supporting_chunk_id is not None:
+        chosen = next(hit for hit in sources if hit.entry.id == result.supporting_chunk_id)
+        record["short_answer"] = result.answer or ""
+        record["quote"] = result.quote or ""
+        record["citation"] = _cite_entry(chosen.entry)
     if check_records is not None:
-        check_records.append(result.as_record())
+        check_records.append(record)
     if result.outcome == "passed" and result.supporting_chunk_id is not None:
         return _checked_answer(
             sources,

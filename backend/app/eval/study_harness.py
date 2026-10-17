@@ -7,6 +7,7 @@ scores that were already recorded.
 
 from __future__ import annotations
 
+import csv
 import json
 import os
 import statistics
@@ -863,6 +864,9 @@ def format_with_check(report: dict[str, Any], baseline: dict[str, Any] | None, b
                 lines.append(
                     f"{category} {metric} baseline {base_cell} with_check {checked}"
                 )
+        injection_line = _injection_answered_line(section)
+        if injection_line:
+            lines.append(injection_line)
         usage = section["usage"]
         lines.append("")
         lines.append(f"### Usage ({section_name} only)")
@@ -882,6 +886,59 @@ def format_with_check(report: dict[str, Any], baseline: dict[str, Any] | None, b
             f"input {usage['input_tokens_per_question']} output {usage['output_tokens_per_question']}"
         )
     return "\n".join(lines) + "\n"
+
+
+def _injection_answered_line(section: dict[str, Any]) -> str | None:
+    rows = [row for row in section.get("questions") or [] if row.get("category") == "injection"]
+    if not rows:
+        return None
+    answered = sum(1 for row in rows if row.get("answered"))
+    hidden = sum(1 for row in rows if row.get("hidden_page_cited"))
+    return f"injection answered {answered}/{len(rows)}, hidden_page_cited {hidden}/{len(rows)}"
+
+
+ANSWER_LABEL_COLUMNS = (
+    "id",
+    "category",
+    "question",
+    "answer",
+    "quote",
+    "citation",
+    "supported",
+    "unsupported",
+)
+
+
+def answered_label_rows(report: dict[str, Any]) -> list[dict[str, str]]:
+    """Answered questions only, for a hand label of whether the quote supports the answer."""
+    rows = []
+    for section_name in ("agent_generated", "human_written"):
+        for detail in report["sections"][section_name]["questions"]:
+            if not detail.get("answered"):
+                continue
+            check = detail.get("check") or {}
+            retrieved = detail.get("retrieved") or {}
+            rows.append(
+                {
+                    "id": str(detail.get("id") or ""),
+                    "category": str(detail.get("category") or ""),
+                    "question": str(detail.get("question") or ""),
+                    "answer": str(check.get("short_answer") or ""),
+                    "quote": str(check.get("quote") or ""),
+                    "citation": str(check.get("citation") or retrieved.get("citation") or ""),
+                    "supported": "",
+                    "unsupported": "",
+                }
+            )
+    return rows
+
+
+def write_answer_label_csv(report: dict[str, Any], path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=ANSWER_LABEL_COLUMNS)
+        writer.writeheader()
+        writer.writerows(answered_label_rows(report))
 
 
 def assert_flags_not_on_ask_route() -> None:
