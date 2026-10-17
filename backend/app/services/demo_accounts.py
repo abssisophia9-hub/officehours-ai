@@ -316,8 +316,10 @@ def ensure_demo_accounts(db: Session) -> None:
 
     db.commit()
     from app.services.gold_label_seed import seed_alice_gold_pass
+    from app.services.ml_demo_seed import seed_ml_demo
 
     seed_alice_gold_pass(db)
+    seed_ml_demo(db)
 
 
 def _migrate_legacy_emails(db: Session) -> None:
