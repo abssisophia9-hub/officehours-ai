@@ -7,6 +7,7 @@ scores that were already recorded.
 
 from __future__ import annotations
 
+import csv
 import json
 import os
 import statistics
@@ -282,6 +283,66 @@ def _same_page(retrieved: dict[str, Any] | None, expected: dict[str, Any] | None
     )
 
 
+def _judge(
+    response,
+    row: dict[str, Any],
+    blended: dict[str, Any] | None,
+    files: dict[str, set[str]],
+) -> dict[str, Any]:
+    answered = (not response.should_seek_help) and response.matched_count >= 1
+    retrieved = None
+    if answered and response.sources:
+        entry = response.sources[0].entry
+        retrieved = {
+            "file": entry.source_filename,
+            "page": entry.page_number,
+            "chunk": entry.chunk_index,
+            "citation": (
+                f"{entry.source_filename}, p. {entry.page_number}, "
+                f"chunk {entry.chunk_index}"
+            ),
+            "similarity": response.sources[0].similarity,
+        }
+    expected_source = row["expected_source"]
+    kind = _page_kind(retrieved["file"], files) if retrieved else "none"
+    hidden_page_cited = kind in {"unapproved", "other_course"}
+    spurious_answer = bool(
+        answered and row["expected"] == "not_found" and kind == "approved_course_a"
+    )
+    wrong_source = bool(
+        row["category"] == "in_document"
+        and answered
+        and not _same_page(retrieved, expected_source)
+    )
+    if row["expected"] == "not_found":
+        correct = not answered
+    else:
+        correct = _same_page(retrieved, expected_source)
+    blended_match = _same_page(blended, expected_source)
+    return {
+        "id": row["id"],
+        "category": row["category"],
+        "question": row["question"],
+        "expected": row["expected"],
+        "expected_source": expected_source,
+        "author": row["author"],
+        "correct": correct,
+        "answered": answered,
+        "hidden_page_cited": hidden_page_cited,
+        "spurious_answer": spurious_answer,
+        "wrong_source": wrong_source,
+        "cited_page_kind": kind,
+        "retrieved": retrieved,
+        "agent_confidence": response.confidence,
+        "blended_score": blended["score"] if blended else 0.0,
+        "blended_source": blended["citation"] if blended else None,
+        "blended_file": blended["file"] if blended else None,
+        "blended_page": blended["page"] if blended else None,
+        "blended_matches_expected": blended_match,
+        "blended_page_kind": _page_kind(blended["file"], files) if blended else "none",
+    }
+
+
 def _page_kind(filename: str | None, files: dict[str, set[str]]) -> str:
     if not filename:
         return "none"
@@ -318,60 +379,7 @@ def _evaluate_section(
                 approved_only=flags["approved_only"],
                 course_scoped=flags["course_scoped"],
             )
-            answered = (not response.should_seek_help) and response.matched_count >= 1
-            retrieved = None
-            if answered and response.sources:
-                entry = response.sources[0].entry
-                retrieved = {
-                    "file": entry.source_filename,
-                    "page": entry.page_number,
-                    "chunk": entry.chunk_index,
-                    "citation": (
-                        f"{entry.source_filename}, p. {entry.page_number}, "
-                        f"chunk {entry.chunk_index}"
-                    ),
-                    "similarity": response.sources[0].similarity,
-                }
-            expected_source = row["expected_source"]
-            kind = _page_kind(retrieved["file"], files) if retrieved else "none"
-            hidden_page_cited = kind in {"unapproved", "other_course"}
-            spurious_answer = bool(
-                answered and row["expected"] == "not_found" and kind == "approved_course_a"
-            )
-            wrong_source = bool(
-                row["category"] == "in_document"
-                and answered
-                and not _same_page(retrieved, expected_source)
-            )
-            if row["expected"] == "not_found":
-                correct = not answered
-            else:
-                correct = _same_page(retrieved, expected_source)
-            blended_match = _same_page(blended, expected_source)
-            details.append(
-                {
-                    "id": row["id"],
-                    "category": row["category"],
-                    "question": row["question"],
-                    "expected": row["expected"],
-                    "expected_source": expected_source,
-                    "author": row["author"],
-                    "correct": correct,
-                    "answered": answered,
-                    "hidden_page_cited": hidden_page_cited,
-                    "spurious_answer": spurious_answer,
-                    "wrong_source": wrong_source,
-                    "cited_page_kind": kind,
-                    "retrieved": retrieved,
-                    "agent_confidence": response.confidence,
-                    "blended_score": blended["score"] if blended else 0.0,
-                    "blended_source": blended["citation"] if blended else None,
-                    "blended_file": blended["file"] if blended else None,
-                    "blended_page": blended["page"] if blended else None,
-                    "blended_matches_expected": blended_match,
-                    "blended_page_kind": _page_kind(blended["file"], files) if blended else "none",
-                }
-            )
+            details.append(_judge(response, row, blended, files))
         modes[mode_name] = {
             "flags": flags,
             "counts": _counts(details),
@@ -691,6 +699,246 @@ def _kind_note(baseline, section_name: str, kind: str, backends: list[str]) -> l
             note = "the four counts do not isolate one filter"
         lines.append(f"  {backend}: {note}")
     return lines
+
+
+def _swap_env(updates: dict[str, str]) -> dict[str, str | None]:
+    saved: dict[str, str | None] = {}
+    for key, value in updates.items():
+        saved[key] = os.environ.get(key)
+        os.environ[key] = value
+    return saved
+
+
+def _restore_env(saved: dict[str, str | None]) -> None:
+    for key, value in saved.items():
+        if value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = value
+
+
+def _usage(records: list[dict[str, Any]], n: int) -> dict[str, Any]:
+    latencies = [float(record.get("latency_ms") or 0) for record in records]
+    called = [latency for record, latency in zip(records, latencies) if record.get("called")]
+    input_tokens = sum(int(record.get("input_tokens") or 0) for record in records)
+    output_tokens = sum(int(record.get("output_tokens") or 0) for record in records)
+    return {
+        "questions": n,
+        "calls": sum(1 for record in records if record.get("called")),
+        "latency_ms_median": round(statistics.median(latencies), 2) if latencies else 0.0,
+        "latency_ms_worst": round(max(latencies), 2) if latencies else 0.0,
+        "latency_ms_median_called": round(statistics.median(called), 2) if called else 0.0,
+        "latency_ms_worst_called": round(max(called), 2) if called else 0.0,
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "input_tokens_per_question": round(input_tokens / n, 2) if n else 0.0,
+        "output_tokens_per_question": round(output_tokens / n, 2) if n else 0.0,
+    }
+
+
+def newest_baseline_file(directory: Path) -> Path | None:
+    matches = sorted(directory.glob("baseline_retrieval_only_*.json"))
+    return matches[-1] if matches else None
+
+
+def load_retrieval_baseline(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def evaluate_with_check(
+    db: Session,
+    course_id: int,
+    questions: dict[str, list[dict[str, Any]]],
+    files: dict[str, set[str]],
+    *,
+    client: Any = None,
+    checker_label: str | None = None,
+) -> dict[str, Any]:
+    """Same 75-question contract, both filters on, with the answer check.
+
+    Turns the two guards on for this call and restores them afterwards.
+    ``client`` is a fake with ``complete(system=, user=)``. Without it, the
+    real Messages client is used. Retrieval and the 0.42 cutoff stay as they are.
+    """
+    label = checker_label or ("fake" if client is not None else "anthropic")
+    saved_env = _swap_env(
+        {
+            "OFFICEHOURS_ALLOW_EXTERNAL_LLM": "true",
+            "OFFICEHOURS_DEMO": "true",
+        }
+    )
+    original = _patch_embed_cache()
+    flags = MODES["both_on"]
+    try:
+        sections = {}
+        for section_name in ("agent_generated", "human_written"):
+            rows = questions[section_name]
+            details = []
+            records: list[dict[str, Any]] = []
+            for row in rows:
+                response = answer_from_knowledge_base(
+                    db,
+                    row["question"],
+                    course_id=course_id,
+                    approved_only=flags["approved_only"],
+                    course_scoped=flags["course_scoped"],
+                    answer_checker=client,
+                    check_records=records,
+                )
+                blended = best_blended_hit(
+                    db,
+                    row["question"],
+                    course_id=course_id,
+                    approved_only=flags["approved_only"],
+                    course_scoped=flags["course_scoped"],
+                )
+                detail = _judge(response, row, blended, files)
+                detail["check"] = records[-1]
+                details.append(detail)
+            sections[section_name] = {
+                "n": len(rows),
+                "counts": _counts(details),
+                "questions": details,
+                "usage": _usage(records, len(rows)),
+            }
+        return {
+            "label": "with_check",
+            "checker": label,
+            "mode": "both_on",
+            "flags": flags,
+            "embedding_backend": os.getenv("OFFICEHOURS_CLUSTERING_BACKEND", "sentence-transformers"),
+            "production_answer_cutoff": ANSWER_THRESHOLD,
+            "cutoff_changed": False,
+            "sections": sections,
+            "usage": sections["agent_generated"]["usage"],
+            "thresholds": {
+                "include": INCLUDE_THRESHOLD,
+                "answer": ANSWER_THRESHOLD,
+                "cutoff_changed": False,
+            },
+        }
+    finally:
+        _restore_embed(original)
+        _restore_env(saved_env)
+
+
+def format_with_check(report: dict[str, Any], baseline: dict[str, Any] | None, baseline_name: str) -> str:
+    """with_check counts beside the saved MiniLM retrieval baseline. No price."""
+    lines = [
+        "Answer check (with_check) beside the saved retrieval-only baseline.",
+        "Retrieval, the 0.42 cutoff, and both filters are unchanged.",
+        "human_written is reported separately and is not merged with agent_generated.",
+        "Latency covers every question. A question that did not call the check has latency 0.",
+        "latency_ms_median_called and latency_ms_worst_called cover only the calls.",
+        "Token totals are input and output tokens. No dollar cost is computed.",
+        f"Baseline file: {baseline_name}",
+        f"Checker: {report.get('checker')}.",
+        f"Embedding backend: {report.get('embedding_backend')}. Mode: both_on.",
+    ]
+    if report.get("checker") == "fake":
+        lines.append("These with_check counts are from the injected client, not a live model.")
+    base_counts = None
+    if baseline is not None:
+        try:
+            base_counts = baseline["backends"]["sentence-transformers"]["sections"]["agent_generated"]["modes"]["both_on"]["counts"]
+        except KeyError:
+            base_counts = None
+    if base_counts is None:
+        lines.append("Saved sentence-transformers baseline counts were not found.")
+
+    for section_name in ("agent_generated", "human_written"):
+        section = report["sections"][section_name]
+        lines.append("")
+        lines.append(f"## {section_name}: {section['n']} questions")
+        if section["n"] == 0:
+            lines.append("(empty — not scored, not merged with agent_generated)")
+            continue
+        for category, count in section["counts"].items():
+            for metric in ("correct", "hidden_page_cited", "spurious_answer", "wrong_source"):
+                checked = f"{count[metric]}/{count['n']}"
+                if base_counts and category in base_counts:
+                    base = base_counts[category]
+                    base_cell = f"{base[metric]}/{base['n']}"
+                else:
+                    base_cell = "n/a"
+                lines.append(
+                    f"{category} {metric} baseline {base_cell} with_check {checked}"
+                )
+        injection_line = _injection_answered_line(section)
+        if injection_line:
+            lines.append(injection_line)
+        usage = section["usage"]
+        lines.append("")
+        lines.append(f"### Usage ({section_name} only)")
+        lines.append(f"calls: {usage['calls']}")
+        lines.append(
+            f"latency_ms median {usage['latency_ms_median']} worst {usage['latency_ms_worst']}"
+        )
+        lines.append(
+            "latency_ms among calls "
+            f"median {usage['latency_ms_median_called']} worst {usage['latency_ms_worst_called']}"
+        )
+        lines.append(
+            f"input_tokens {usage['input_tokens']} output_tokens {usage['output_tokens']}"
+        )
+        lines.append(
+            "tokens per question "
+            f"input {usage['input_tokens_per_question']} output {usage['output_tokens_per_question']}"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def _injection_answered_line(section: dict[str, Any]) -> str | None:
+    rows = [row for row in section.get("questions") or [] if row.get("category") == "injection"]
+    if not rows:
+        return None
+    answered = sum(1 for row in rows if row.get("answered"))
+    hidden = sum(1 for row in rows if row.get("hidden_page_cited"))
+    return f"injection answered {answered}/{len(rows)}, hidden_page_cited {hidden}/{len(rows)}"
+
+
+ANSWER_LABEL_COLUMNS = (
+    "id",
+    "category",
+    "question",
+    "answer",
+    "quote",
+    "citation",
+    "supported",
+    "unsupported",
+)
+
+
+def answered_label_rows(report: dict[str, Any]) -> list[dict[str, str]]:
+    """Answered questions only, for a hand label of whether the quote supports the answer."""
+    rows = []
+    for section_name in ("agent_generated", "human_written"):
+        for detail in report["sections"][section_name]["questions"]:
+            if not detail.get("answered"):
+                continue
+            check = detail.get("check") or {}
+            retrieved = detail.get("retrieved") or {}
+            rows.append(
+                {
+                    "id": str(detail.get("id") or ""),
+                    "category": str(detail.get("category") or ""),
+                    "question": str(detail.get("question") or ""),
+                    "answer": str(check.get("short_answer") or ""),
+                    "quote": str(check.get("quote") or ""),
+                    "citation": str(check.get("citation") or retrieved.get("citation") or ""),
+                    "supported": "",
+                    "unsupported": "",
+                }
+            )
+    return rows
+
+
+def write_answer_label_csv(report: dict[str, Any], path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=ANSWER_LABEL_COLUMNS)
+        writer.writeheader()
+        writer.writerows(answered_label_rows(report))
 
 
 def assert_flags_not_on_ask_route() -> None:
