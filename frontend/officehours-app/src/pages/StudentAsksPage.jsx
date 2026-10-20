@@ -199,7 +199,7 @@ export default function StudentAsksPage() {
             <div className="mt-4 rounded-xl border border-dashed border-[#c5d0c8] bg-[#fafcfa] px-4 py-8 text-center">
               <p className="text-sm font-semibold text-aui-ink">No asks yet</p>
               <p className="mt-1 text-xs text-aui-deep/70">
-                Submit from the dashboard — Quiet or identified.
+                Ask for help — Quiet or identified.
               </p>
               <Link to="/student/ask" className="btn-primary mt-4 inline-flex px-5 py-2.5 text-sm">
                 Ask for help
