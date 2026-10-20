@@ -368,6 +368,23 @@ export default function AppShell() {
                   <span className="bh-nav-badge">{replyCount}</span>
                 ) : null}
               </NavLink>
+              <div className="bh-nav-group">
+                <p className="bh-nav-label">Classmates</p>
+                <NavLink
+                  to="/student/room"
+                  className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+                >
+                  {ICONS.stuck}
+                  <span>Rooms</span>
+                </NavLink>
+                <NavLink
+                  to="/student/notes"
+                  className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+                >
+                  {ICONS.notes}
+                  <span>Classmate notes</span>
+                </NavLink>
+              </div>
             </>
           ) : (
             <>
