@@ -215,6 +215,6 @@ def answer_from_knowledge_base(
             quote=result.quote or "",
             chunk_id=result.supporting_chunk_id,
         )
-    if result.outcome in {"flag_off", "demo_off"}:
+    if result.outcome in {"flag_off", "demo_off", "provider_off", "ack_off"}:
         return _retrieval_answer(sources, approved_only)
     return _check_miss(sources, approved_only)

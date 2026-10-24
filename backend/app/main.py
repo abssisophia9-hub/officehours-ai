@@ -45,6 +45,7 @@ from app.routes.requests import router as requests_router
 from app.routes.ta import router as ta_router
 from app.routes.notifications import router as notifications_router
 from app.database.session import SessionLocal
+from app.ai.gemini_client import warn_gemini_free_tier
 from app.services.demo_accounts import ensure_demo_accounts
 from app.services.demo_mode import demo_mode
 from app.services.rate_limit import enforce_rate_limit
@@ -56,6 +57,7 @@ ensure_schema(engine)
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    warn_gemini_free_tier()
     set_main_loop(asyncio.get_running_loop())
     db = SessionLocal()
     try:
