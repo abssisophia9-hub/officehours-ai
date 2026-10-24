@@ -760,7 +760,7 @@ def evaluate_with_check(
     ``client`` is a fake with ``complete(system=, user=)``. Without it, the
     real Messages client is used. Retrieval and the 0.42 cutoff stay as they are.
     """
-    label = checker_label or ("fake" if client is not None else "anthropic")
+    label = checker_label or ("fake" if client is not None else "gemini")
     saved_env = _swap_env(
         {
             "OFFICEHOURS_ALLOW_EXTERNAL_LLM": "true",
@@ -804,6 +804,7 @@ def evaluate_with_check(
         return {
             "label": "with_check",
             "checker": label,
+            "model": os.getenv("GEMINI_MODEL", "gemini-3.8-flash") if label == "gemini" else None,
             "mode": "both_on",
             "flags": flags,
             "embedding_backend": os.getenv("OFFICEHOURS_CLUSTERING_BACKEND", "sentence-transformers"),
@@ -826,6 +827,7 @@ def format_with_check(report: dict[str, Any], baseline: dict[str, Any] | None, b
     """with_check counts beside the saved MiniLM retrieval baseline. No price."""
     lines = [
         "Answer check (with_check) beside the saved retrieval-only baseline.",
+        "The baseline file is not rewritten. This printout is the comparison row.",
         "Retrieval, the 0.42 cutoff, and both filters are unchanged.",
         "human_written is reported separately and is not merged with agent_generated.",
         "Latency covers every question. A question that did not call the check has latency 0.",
@@ -833,6 +835,7 @@ def format_with_check(report: dict[str, Any], baseline: dict[str, Any] | None, b
         "Token totals are input and output tokens. No dollar cost is computed.",
         f"Baseline file: {baseline_name}",
         f"Checker: {report.get('checker')}.",
+        f"Model: {report.get('model') or '-'}.",
         f"Embedding backend: {report.get('embedding_backend')}. Mode: both_on.",
     ]
     if report.get("checker") == "fake":

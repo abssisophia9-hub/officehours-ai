@@ -9,8 +9,8 @@ From the repo root in Windows PowerShell:
 
     $env:OFFICEHOURS_DEMO = "true"
     $env:OFFICEHOURS_ALLOW_EXTERNAL_LLM = "true"
-    $env:ANTHROPIC_API_KEY = "<your key>"
-    $env:ANTHROPIC_MODEL = "claude-haiku-5-5"
+    $env:GEMINI_API_KEY = "<your key>"
+    $env:GEMINI_MODEL = "gemini-3.8-flash"
     $env:OFFICEHOURS_CLUSTERING_BACKEND = "sentence-transformers"
     .\\backend\\venv\\Scripts\\python.exe scripts\\run_study_eval.py --with-check
 
@@ -114,15 +114,17 @@ def _prepare() -> tuple[dict, dict, dict]:
 
 
 def run_with_check(client) -> int:
-    if client is None and not os.getenv("ANTHROPIC_API_KEY", "").strip():
+    if client is None and not (
+        os.getenv("GEMINI_API_KEY", "").strip() or os.getenv("GOOGLE_API_KEY", "").strip()
+    ):
         print(
-            "ANTHROPIC_API_KEY is not set. Refusing to call the model. "
+            "GEMINI_API_KEY is not set. Refusing to call the model. "
             "Set it in your shell and run again. The key is not printed or stored."
         )
         return 2
     if client is None:
         os.environ["OFFICEHOURS_CLUSTERING_BACKEND"] = "sentence-transformers"
-        print(f"Model: {os.getenv('ANTHROPIC_MODEL', 'claude-haiku-5-5')}")
+        print(f"Model: {os.getenv('GEMINI_MODEL', 'gemini-3.8-flash')}")
         print("API key is present. It is not printed or written.")
     else:
         os.environ.setdefault("OFFICEHOURS_CLUSTERING_BACKEND", "lexical")
@@ -136,7 +138,7 @@ def run_with_check(client) -> int:
             questions,
             ingested["files"],
             client=client,
-            checker_label="fake" if client is not None else "anthropic",
+            checker_label="fake" if client is not None else "gemini",
         )
     finally:
         db.close()
@@ -224,8 +226,8 @@ def main(argv: list[str] | None = None) -> int:
             "Windows PowerShell, from the repo root, with your own key:\n"
             '  $env:OFFICEHOURS_DEMO = "true"\n'
             '  $env:OFFICEHOURS_ALLOW_EXTERNAL_LLM = "true"\n'
-            '  $env:ANTHROPIC_API_KEY = "<your key>"\n'
-            '  $env:ANTHROPIC_MODEL = "claude-haiku-5-5"\n'
+            '  $env:GEMINI_API_KEY = "<your key>"\n'
+            '  $env:GEMINI_MODEL = "gemini-3.8-flash"\n'
             '  $env:OFFICEHOURS_CLUSTERING_BACKEND = "sentence-transformers"\n'
             f"  {POWERSHELL_WITH_CHECK}\n"
         ),
@@ -234,7 +236,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--with-check",
         action="store_true",
-        help="MiniLM, both filters, live answer check. Requires ANTHROPIC_API_KEY.",
+        help="MiniLM, both filters, live Gemini answer check. Requires GEMINI_API_KEY.",
     )
     parser.add_argument(
         "--fake-check",

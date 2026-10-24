@@ -4,9 +4,17 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 export OFFICEHOURS_CLUSTERING_BACKEND="${OFFICEHOURS_CLUSTERING_BACKEND:-lexical}"
-export OFFICEHOURS_ALLOW_EXTERNAL_LLM="${OFFICEHOURS_ALLOW_EXTERNAL_LLM:-false}"
 # Local FYP walkthroughs. Community deploy: OFFICEHOURS_DEMO=false and live Canvas.
 export OFFICEHOURS_DEMO="${OFFICEHOURS_DEMO:-true}"
+# Study Agent calls Gemini only for a demo, and only when a free-tier key is set.
+# Community deploy stays retrieval-only: demo off refuses the call even if the flag is on.
+if [[ -z "${OFFICEHOURS_ALLOW_EXTERNAL_LLM+x}" ]]; then
+  if [[ ( "${OFFICEHOURS_DEMO}" == "true" || "${OFFICEHOURS_DEMO}" == "1" ) && -n "${GEMINI_API_KEY:-}${GOOGLE_API_KEY:-}" ]]; then
+    export OFFICEHOURS_ALLOW_EXTERNAL_LLM=true
+  else
+    export OFFICEHOURS_ALLOW_EXTERNAL_LLM=false
+  fi
+fi
 
 cd "$ROOT/backend"
 if [[ ! -x venv/bin/uvicorn ]]; then
@@ -38,6 +46,11 @@ if [[ "${OFFICEHOURS_DEMO}" == "true" || "${OFFICEHOURS_DEMO}" == "1" ]]; then
   echo "  Demo password: aui-demo"
   echo "  Logins: s.elidrissi@aui.ma | a.chen@aui.ma | a.benali@aui.ma"
   echo "  (AUI emails: Initial.Last@aui.ma — role from course membership)"
+  if [[ "${OFFICEHOURS_ALLOW_EXTERNAL_LLM}" == "true" ]]; then
+    echo "  Study Agent: Gemini answer check on demo material (key is not printed)"
+  else
+    echo "  Study Agent: retrieval only. Set GEMINI_API_KEY to use the free-tier check."
+  fi
 else
   echo "  Community deploy: users/courses from Canvas; chapters from Canvas modules."
 fi

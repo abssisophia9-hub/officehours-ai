@@ -501,12 +501,68 @@ def test_complete_reads_model_from_the_environment_and_hides_the_key(monkeypatch
     assert legacy["timeout"] == 20
 
 
+def test_gemini_complete_reads_the_model_and_hides_the_key(monkeypatch, caplog):
+    from app.ai.gemini_client import complete_gemini
+
+    captured = {}
+
+    class _Body:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def read(self):
+            return json.dumps(
+                {
+                    "modelVersion": "gemini-test-model",
+                    "candidates": [
+                        {"content": {"parts": [{"text": "{\"ok\": true}"}, {"thought": True, "text": "hidden"}]}}
+                    ],
+                    "usageMetadata": {"promptTokenCount": 5, "candidatesTokenCount": 6},
+                }
+            ).encode()
+
+    def capture(request, timeout=0):
+        captured["timeout"] = timeout
+        captured["url"] = request.full_url
+        captured["body"] = json.loads(request.data.decode())
+        captured["key"] = request.get_header("X-goog-api-key")
+        return _Body()
+
+    monkeypatch.setattr("app.ai.gemini_client.urllib.request.urlopen", capture)
+    monkeypatch.setenv("GEMINI_API_KEY", SECRET)
+    monkeypatch.setenv("GEMINI_MODEL", "gemini-test-model")
+    with caplog.at_level("DEBUG"):
+        done = complete_gemini("system", "user", max_tokens=400, temperature=0, timeout=10)
+    assert captured["url"].endswith("/models/gemini-test-model:generateContent")
+    assert SECRET not in captured["url"]
+    assert captured["key"] == SECRET
+    assert captured["timeout"] == 10
+    assert captured["body"]["generationConfig"]["maxOutputTokens"] == 400
+    assert captured["body"]["generationConfig"]["temperature"] == 0
+    assert captured["body"]["generationConfig"]["responseMimeType"] == "application/json"
+    assert done.text == "{\"ok\": true}"
+    assert done.model == "gemini-test-model"
+    assert done.input_tokens == 5
+    assert done.output_tokens == 6
+    assert SECRET not in caplog.text
+
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    with pytest.raises(RuntimeError, match="GEMINI_API_KEY missing"):
+        complete_gemini("system", "user")
+
+
 def test_with_check_refuses_without_a_key():
     import subprocess
     import sys
 
     env = os.environ.copy()
     env["ANTHROPIC_API_KEY"] = ""
+    env["GEMINI_API_KEY"] = ""
+    env["GOOGLE_API_KEY"] = ""
     env["OFFICEHOURS_CLUSTERING_BACKEND"] = "lexical"
     result = subprocess.run(
         [sys.executable, str(REPO / "scripts" / "run_study_eval.py"), "--with-check"],
@@ -517,7 +573,7 @@ def test_with_check_refuses_without_a_key():
         check=False,
     )
     assert result.returncode == 2
-    assert "ANTHROPIC_API_KEY is not set" in result.stdout
+    assert "GEMINI_API_KEY is not set" in result.stdout
     assert SECRET not in result.stdout
     assert SECRET not in result.stderr
 
@@ -604,6 +660,7 @@ def test_harness_with_fake_client_reports_beside_the_baseline(monkeypatch):
     base_hard = baseline["backends"]["sentence-transformers"]["sections"]["agent_generated"]["modes"]["both_on"]["counts"]["hard_negative"]
     assert f"hard_negative spurious_answer baseline {base_hard['spurious_answer']}/{base_hard['n']}" in text
     assert "11/20" in text
+    assert "The baseline file is not rewritten" in text
     assert "human_written: 0 questions" in text
     assert "not merged with agent_generated" in text
     assert "fake" in text
@@ -627,6 +684,9 @@ def test_real_run_command_uses_the_windows_venv():
     command = r".\backend\venv\Scripts\python.exe scripts\run_study_eval.py --with-check"
     assert command in source
     assert "python scripts/run_study_eval.py --with-check" not in source
+    assert "GEMINI_API_KEY" in source
+    assert "ANTHROPIC_API_KEY" not in source
+    assert "with_check_" in source
 
 
 def test_summary_counts_answered_injection_questions():

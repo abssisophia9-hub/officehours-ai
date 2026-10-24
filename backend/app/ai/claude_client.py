@@ -4,8 +4,8 @@ Ask Triage agent entrypoints — custom-trained models only.
 Analyzer / Matcher / Synthesizer use trained local models. The study-agent
 answer check is the one prompted call, and it stays off unless
 ``OFFICEHOURS_ALLOW_EXTERNAL_LLM`` and ``OFFICEHOURS_DEMO`` are both true.
-That call reuses ``_complete_claude`` in ``claude_client_legacy``. There is
-no second HTTP client.
+That call uses Gemini's free-tier generateContent API. The legacy Analyzer
+Claude switch still uses ``_complete_claude`` and is not the study agent.
 """
 
 from __future__ import annotations
@@ -142,8 +142,23 @@ class AnswerCheckResult:
         }
 
 
+class GeminiAnswerCheckClient:
+    """Study-agent checker. Gemini free tier, same budget as the old check."""
+
+    def complete(self, *, system: str, user: str) -> Any:
+        from app.ai.gemini_client import complete_gemini
+
+        return complete_gemini(
+            system,
+            user,
+            max_tokens=ANSWER_CHECK_MAX_TOKENS,
+            temperature=0,
+            timeout=ANSWER_CHECK_TIMEOUT_SECONDS,
+        )
+
+
 class AnthropicAnswerCheckClient:
-    """Default client. Calls the single Messages helper with the check budget."""
+    """Legacy Messages client. Not used by the study agent."""
 
     def complete(self, *, system: str, user: str) -> Any:
         from app.ai.claude_client_legacy import _complete_claude
@@ -229,7 +244,7 @@ def verify_course_answer(
     material = _material_chunks(chunks)
     by_id = {chunk["chunk_id"]: chunk for chunk in material}
     user = json.dumps({"question": question, "chunks": material}, ensure_ascii=False)
-    active = client or AnthropicAnswerCheckClient()
+    active = client or GeminiAnswerCheckClient()
     model = None
     input_tokens = 0
     output_tokens = 0
