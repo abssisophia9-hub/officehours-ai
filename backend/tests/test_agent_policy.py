@@ -41,6 +41,8 @@ def _armed(monkeypatch):
     monkeypatch.setenv("OFFICEHOURS_LLM_ENABLED", "true")
     monkeypatch.setenv("OFFICEHOURS_ALLOW_EXTERNAL_LLM", "true")
     monkeypatch.setenv("OFFICEHOURS_DEMO", "true")
+    monkeypatch.setenv("OFFICEHOURS_LLM_PROVIDER", "gemini")
+    monkeypatch.setenv("OFFICEHOURS_GEMINI_FREE_TIER_ACK", "true")
     reset_policy_state()
 
 
@@ -609,19 +611,14 @@ def test_one_log_line_has_no_question_and_no_identity(monkeypatch, caplog):
 
 
 def test_miss_source_splits_refusals_from_errors():
-    assert miss_source_for({"answered": False, "check": {"outcome": "not_answerable"}}) == "model"
-    assert miss_source_for({"answered": False, "check": {"outcome": "api_error"}}) == "error"
-    assert miss_source_for({"answered": False, "check": {"outcome": "answer_too_long"}}) == "error"
-    assert miss_source_for({"answered": False, "check": {"outcome": "quota"}}) == "quota"
-    assert miss_source_for({"answered": False, "check": {"outcome": "busy"}}) == "quota"
-    assert miss_source_for({"answered": False, "check": {"outcome": "below_cutoff"}}) == "cutoff"
-    assert (
-        miss_source_for(
-            {"answered": False, "check": {"outcome": "cache_hit", "checker_outcome": "not_answerable"}}
-        )
-        == "model"
-    )
-    assert miss_source_for({"answered": True, "check": {"outcome": "passed"}}) is None
+    assert miss_source_for({"outcome": "not_answerable"}) == "model"
+    assert miss_source_for({"outcome": "api_error"}) == "error"
+    assert miss_source_for({"outcome": "answer_too_long"}) == "error"
+    assert miss_source_for({"outcome": "quota"}) == "quota"
+    assert miss_source_for({"outcome": "busy"}) == "quota"
+    assert miss_source_for({"outcome": "below_cutoff"}) == "cutoff"
+    assert miss_source_for({"outcome": "cache_hit", "checker_outcome": "not_answerable"}) == "model"
+    assert miss_source_for({"outcome": "passed"}) is None
 
 
 def test_harness_reruns_only_failed_closed_questions(monkeypatch):
@@ -712,7 +709,7 @@ def test_rerun_errors_flag_requires_with_check():
     env = os.environ.copy()
     env["OFFICEHOURS_CLUSTERING_BACKEND"] = "lexical"
     result = subprocess.run(
-        [sys.executable, str(repo / "scripts" / "run_study_eval.py"), "--rerun-errors"],
+        [sys.executable, str(repo / "scripts" / "run_study_eval.py"), "--rerun-errors", "missing.json"],
         cwd=repo,
         env=env,
         capture_output=True,
@@ -720,4 +717,4 @@ def test_rerun_errors_flag_requires_with_check():
         check=False,
     )
     assert result.returncode == 2
-    assert "--rerun-errors requires --with-check." in result.stdout
+    assert "--rerun-errors require --with-check." in result.stdout

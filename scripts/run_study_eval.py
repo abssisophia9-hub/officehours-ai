@@ -4,26 +4,26 @@
 Default: four filter modes, MiniLM and lexical. The production answer cutoff
 stays 0.42. Writes docs/eval_results/baseline_retrieval_only_<timestamp>.json.
 
-Answer check (demo data only, your own key, MiniLM, both filters on).
+Answer check (synthetic demo data only, your own key, MiniLM, both filters on).
 From the repo root in Windows PowerShell:
 
     $env:OFFICEHOURS_DEMO = "true"
     $env:OFFICEHOURS_ALLOW_EXTERNAL_LLM = "true"
     $env:OFFICEHOURS_LLM_ENABLED = "true"
+    $env:OFFICEHOURS_LLM_PROVIDER = "gemini"
+    $env:OFFICEHOURS_GEMINI_FREE_TIER_ACK = "true"
     $env:GEMINI_API_KEY = "<your key>"
-    $env:GEMINI_MODEL = "gemini-3.8-flash"
+    $env:GEMINI_MODEL = "gemini-3.5-flash-lite"
     $env:OFFICEHOURS_CLUSTERING_BACKEND = "sentence-transformers"
-    .\\backend\\venv\\Scripts\\python.exe scripts\\run_study_eval.py --with-check
+    .\\backend\\venv\\Scripts\\python.exe scripts\\run_study_eval.py --with-check --provider gemini
 
-``--with-check`` also turns ``OFFICEHOURS_LLM_ENABLED`` on for that process.
-The running app stays retrieval-only until the same variable is set there.
-The key is read from the environment and is not printed or written.
-A real run writes the JSON results and a CSV of answered questions beside it.
+Claude uses the same command with --provider claude, ANTHROPIC_API_KEY, and
+ANTHROPIC_MODEL. The key is read from the environment and is not printed.
+A real run writes JSON and a CSV of answered questions. The file name includes
+the provider and model. --resume keeps finished questions. --rerun-errors
+reruns only questions whose not-found came from an error.
 ``--fake-check`` uses an echo client, prints the harness, and does not write
 a results file. Those numbers are not a live model result.
-``--with-check --rerun-errors`` keeps finished questions from the newest
-with_check JSON and sends only failed-closed errors again. Model refusals
-stay as they are.
 """
 
 from __future__ import annotations
@@ -52,9 +52,13 @@ os.environ["DATABASE_URL"] = f"sqlite:///{_DB_DIR}/study_eval.db"
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app.database.session import SessionLocal  # noqa: E402
+from app.ai.claude_client import ANSWER_CHECK_PROMPT_VERSION  # noqa: E402
+from app.ai.gemini_client import warn_gemini_free_tier  # noqa: E402
 from app.eval.study_harness import (  # noqa: E402
     ANSWER_THRESHOLD,
     assert_flags_not_on_ask_route,
+    checked_result_filename,
+    configured_model,
     corpus_files,
     evaluate,
     evaluate_with_check,
@@ -65,7 +69,6 @@ from app.eval.study_harness import (  # noqa: E402
     load_questions,
     load_retrieval_baseline,
     newest_baseline_file,
-    newest_with_check_file,
     write_answer_label_csv,
 )
 from app.main import app  # noqa: E402
@@ -120,37 +123,117 @@ def _prepare() -> tuple[dict, dict, dict]:
     return questions, manifest, {**ingested, "files": files}
 
 
-def run_with_check(client, *, rerun: bool = False) -> int:
-    if client is None and not (
-        os.getenv("GEMINI_API_KEY", "").strip() or os.getenv("GOOGLE_API_KEY", "").strip()
-    ):
-        print(
-            "GEMINI_API_KEY is not set. Refusing to call the model. "
+def _truthy(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _refuse_live(provider: str) -> str | None:
+    """None when a real run may start. The message never includes a key."""
+    if provider not in {"gemini", "claude"}:
+        return (
+            "OFFICEHOURS_LLM_PROVIDER must be gemini or claude. "
+            "Pass --provider. Refusing to call a model."
+        )
+    if not _truthy("OFFICEHOURS_ALLOW_EXTERNAL_LLM"):
+        return "OFFICEHOURS_ALLOW_EXTERNAL_LLM must be true. Refusing to call a model."
+    if not _truthy("OFFICEHOURS_DEMO"):
+        return "OFFICEHOURS_DEMO must be true. Course material will not be sent."
+    if provider == "gemini":
+        if not _truthy("OFFICEHOURS_GEMINI_FREE_TIER_ACK"):
+            return (
+                "OFFICEHOURS_GEMINI_FREE_TIER_ACK is not true. "
+                "The free tier may use prompts to improve Google products. "
+                "Set it only when the run sends synthetic demo data."
+            )
+        if not os.getenv("GEMINI_API_KEY", "").strip():
+            return (
+                "GEMINI_API_KEY is not set. Refusing to call the model. "
+                "Set it in your shell and run again. The key is not printed or stored."
+            )
+        return None
+    if not os.getenv("ANTHROPIC_API_KEY", "").strip():
+        return (
+            "ANTHROPIC_API_KEY is not set. Refusing to call the model. "
             "Set it in your shell and run again. The key is not printed or stored."
         )
-        return 2
+    return None
+
+
+def _write_json(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    temporary.replace(path)
+
+
+def _load_prior(path: Path) -> dict:
+    if not path.is_file():
+        raise FileNotFoundError(path)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if "sections" not in payload:
+        raise ValueError(f"Results file has no sections: {path}")
+    return payload
+
+
+def run_with_check(client, *, provider=None, resume=None, rerun_errors=None) -> int:
+    prior = None
+    prior_path = None
     if client is None:
+        chosen = (provider or os.getenv("OFFICEHOURS_LLM_PROVIDER") or "").strip().lower()
+        refusal = _refuse_live(chosen)
+        if refusal:
+            print(refusal)
+            return 2
+        os.environ["OFFICEHOURS_LLM_PROVIDER"] = chosen
         os.environ["OFFICEHOURS_CLUSTERING_BACKEND"] = "sentence-transformers"
-        print(f"Model: {os.getenv('GEMINI_MODEL', 'gemini-3.8-flash')}")
+        model = configured_model(chosen)
+        print(f"Provider: {chosen}")
+        print(f"Model: {model}")
+        print(f"Prompt version: {ANSWER_CHECK_PROMPT_VERSION}")
         print("API key is present. It is not printed or written.")
+        if chosen == "gemini":
+            warn_gemini_free_tier()
+        provider = chosen
     else:
         os.environ.setdefault("OFFICEHOURS_CLUSTERING_BACKEND", "lexical")
         print("Fake client. Counts are not a live model result. No results file is written.")
-    prior = None
-    if rerun:
-        previous = newest_with_check_file(RESULTS)
-        if previous is None:
-            print(
-                "No with_check result to resume. Run --with-check first. "
-                "Finished questions are not invented."
-            )
+        provider = None
+
+    if resume or rerun_errors:
+        prior_path = Path(resume or rerun_errors)
+        try:
+            prior = _load_prior(prior_path)
+        except (FileNotFoundError, ValueError, json.JSONDecodeError) as exc:
+            print(str(exc) if str(exc) else f"Could not read {prior_path}")
             return 2
-        prior = json.loads(previous.read_text(encoding="utf-8"))
-        print(
-            f"Rerunning failed-closed errors from {previous.name}. "
-            "Finished questions, including model refusals, are kept."
-        )
+
     questions, manifest, ingested = _prepare()
+    baseline_path = newest_baseline_file(RESULTS)
+    baseline = load_retrieval_baseline(baseline_path) if baseline_path else None
+    baseline_name = baseline_path.name if baseline_path else "(none)"
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    out = None
+    if client is None:
+        model_for_name = configured_model(provider) or "unknown"
+        RESULTS.mkdir(parents=True, exist_ok=True)
+        out = RESULTS / checked_result_filename(provider or "unset", model_for_name, stamp)
+
+    def on_progress(report: dict) -> None:
+        if out is None:
+            return
+        _write_json(out, _payload(report))
+
+    def _payload(report: dict) -> dict:
+        return {
+            "created_at": stamp,
+            "baseline_file": baseline_name,
+            "course_a": manifest["course_a"],
+            "course_b": manifest["course_b"],
+            "uploads": ingested["uploads"],
+            "resumed_from": str(prior_path) if prior_path else None,
+            **report,
+        }
+
     db = SessionLocal()
     try:
         report = evaluate_with_check(
@@ -159,30 +242,25 @@ def run_with_check(client, *, rerun: bool = False) -> int:
             questions,
             ingested["files"],
             client=client,
-            checker_label="fake" if client is not None else "gemini",
+            checker_label="fake" if client is not None else provider,
+            provider=provider,
             prior=prior,
-            rerun_errors_only=rerun,
+            rerun_errors_only=rerun_errors is not None,
+            on_progress=on_progress if client is None else None,
         )
     finally:
         db.close()
-    baseline_path = newest_baseline_file(RESULTS)
-    baseline = load_retrieval_baseline(baseline_path) if baseline_path else None
-    baseline_name = baseline_path.name if baseline_path else "(none)"
     print(format_with_check(report, baseline, baseline_name))
+    if report.get("stopped"):
+        print(
+            f"Stopped on {report['stopped']}. Finished questions are in the results file. "
+            "Run the same command with --resume <file> after the quota window resets. "
+            "Use --rerun-errors <file> to rerun only error rows."
+        )
     if client is not None:
         return 0
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    payload = {
-        "created_at": stamp,
-        "baseline_file": baseline_name,
-        "course_a": manifest["course_a"],
-        "course_b": manifest["course_b"],
-        "uploads": ingested["uploads"],
-        **report,
-    }
-    RESULTS.mkdir(parents=True, exist_ok=True)
-    out = RESULTS / f"with_check_{stamp}.json"
-    out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    assert out is not None
+    _write_json(out, _payload(report))
     labels = out.with_suffix(".csv")
     write_answer_label_csv(report, labels)
     print(f"Wrote {out}")
@@ -239,10 +317,9 @@ def _run_baseline() -> int:
     return 0
 
 
-POWERSHELL_WITH_CHECK = r""".\backend\venv\Scripts\python.exe scripts\run_study_eval.py --with-check"""
-POWERSHELL_RERUN_ERRORS = (
-    r""".\backend\venv\Scripts\python.exe scripts\run_study_eval.py --with-check --rerun-errors"""
-)
+POWERSHELL_WITH_CHECK = r".\backend\venv\Scripts\python.exe scripts\run_study_eval.py --with-check --provider gemini"
+POWERSHELL_RESUME = r".\backend\venv\Scripts\python.exe scripts\run_study_eval.py --with-check --provider gemini --resume docs\eval_results\with_check_gemini_gemini-3.5-flash-lite_<stamp>.json"
+POWERSHELL_RERUN_ERRORS = r".\backend\venv\Scripts\python.exe scripts\run_study_eval.py --with-check --provider gemini --rerun-errors docs\eval_results\with_check_gemini_gemini-3.5-flash-lite_<stamp>.json"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -253,11 +330,13 @@ def main(argv: list[str] | None = None) -> int:
             '  $env:OFFICEHOURS_DEMO = "true"\n'
             '  $env:OFFICEHOURS_ALLOW_EXTERNAL_LLM = "true"\n'
             '  $env:OFFICEHOURS_LLM_ENABLED = "true"\n'
+            '  $env:OFFICEHOURS_LLM_PROVIDER = "gemini"\n'
+            '  $env:OFFICEHOURS_GEMINI_FREE_TIER_ACK = "true"\n'
             '  $env:GEMINI_API_KEY = "<your key>"\n'
-            '  $env:GEMINI_MODEL = "gemini-3.8-flash"\n'
+            '  $env:GEMINI_MODEL = "gemini-3.5-flash-lite"\n'
             '  $env:OFFICEHOURS_CLUSTERING_BACKEND = "sentence-transformers"\n'
             f"  {POWERSHELL_WITH_CHECK}\n"
-            "Rerun only failed-closed errors from the newest with_check file:\n"
+            f"  {POWERSHELL_RESUME}\n"
             f"  {POWERSHELL_RERUN_ERRORS}\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -265,27 +344,43 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--with-check",
         action="store_true",
-        help="MiniLM, both filters, live Gemini answer check. Requires GEMINI_API_KEY.",
+        help="MiniLM, both filters, live answer check. Requires --provider and that provider's API key.",
+    )
+    parser.add_argument(
+        "--provider",
+        choices=("gemini", "claude"),
+        help="Answer-check provider. Overrides OFFICEHOURS_LLM_PROVIDER for this run.",
+    )
+    parser.add_argument(
+        "--resume",
+        help="Results JSON to continue. Keeps finished questions and reruns errors and questions that never ran.",
+    )
+    parser.add_argument(
+        "--rerun-errors",
+        help="Results JSON. Reruns only questions whose not-found came from an error (429, timeout, invalid JSON).",
     )
     parser.add_argument(
         "--fake-check",
         action="store_true",
         help="Echo client. Prints only and does not write a results file.",
     )
-    parser.add_argument(
-        "--rerun-errors",
-        action="store_true",
-        help="With --with-check, send again only questions that failed closed.",
-    )
     args = parser.parse_args(argv)
-    if args.rerun_errors and not args.with_check:
-        print("--rerun-errors requires --with-check.")
-        return 2
     if args.with_check and args.fake_check:
         print("Use either --with-check or --fake-check.")
         return 2
+    if args.resume and args.rerun_errors:
+        print("Use either --resume or --rerun-errors.")
+        return 2
+    if (args.resume or args.rerun_errors) and not args.with_check:
+        print("--resume and --rerun-errors require --with-check.")
+        return 2
     if args.with_check:
-        return run_with_check(None, rerun=args.rerun_errors)
+        return run_with_check(
+            None,
+            provider=args.provider,
+            resume=args.resume,
+            rerun_errors=args.rerun_errors,
+        )
     if args.fake_check:
         return run_with_check(_EchoClient())
     return run_baseline()

@@ -167,6 +167,8 @@ def _log(outcome: str, result: AnswerCheckResult | None, *, limit: str | None) -
         "disabled",
         "flag_off",
         "demo_off",
+        "provider_off",
+        "ack_off",
     }:
         outcome = "failed_closed_error"
     model = "-"
@@ -247,17 +249,34 @@ def _note_spend(input_tokens: int, output_tokens: int) -> None:
     _BUDGET["tokens"] += max(0, input_tokens) + max(0, output_tokens)
 
 
+_GUARD_OUTCOMES = {"flag_off", "demo_off", "provider_off", "ack_off"}
+
+
+def _truthy(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 def _model_calls_allowed() -> bool:
-    """Same guards the checker already enforces. Checked here so a blocked flag spends nothing."""
+    """External flag and demo mode. A blocked flag spends nothing."""
     from app.services.demo_mode import demo_mode
 
-    allowed = os.getenv("OFFICEHOURS_ALLOW_EXTERNAL_LLM", "false").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
-    return allowed and demo_mode()
+    return _truthy("OFFICEHOURS_ALLOW_EXTERNAL_LLM") and demo_mode()
+
+
+def _provider_ready(answer_checker: AnswerCheckClient | None) -> bool:
+    """An injected client skips provider selection. A live call needs a provider.
+
+    Gemini also needs the free-tier acknowledgement. Checked before the budget
+    so a missing provider does not spend a slot or open the breaker.
+    """
+    if answer_checker is not None:
+        return True
+    provider = os.getenv("OFFICEHOURS_LLM_PROVIDER", "").strip().lower()
+    if provider not in {"gemini", "claude"}:
+        return False
+    if provider == "gemini":
+        return _truthy("OFFICEHOURS_GEMINI_FREE_TIER_ACK")
+    return True
 
 
 def breaker_open() -> bool:
@@ -314,6 +333,9 @@ def _cache_key(
 
 
 def _configured_model() -> str:
+    provider = os.getenv("OFFICEHOURS_LLM_PROVIDER", "").strip().lower()
+    if provider == "claude":
+        return os.getenv("ANTHROPIC_MODEL", "claude-haiku-5-5").strip() or "claude-haiku-5-5"
     from app.ai.gemini_client import gemini_model
 
     return gemini_model()
@@ -352,7 +374,7 @@ def _policy_outcome(result: AnswerCheckResult) -> str:
 
 
 def _is_failure(result: AnswerCheckResult) -> bool:
-    return result.outcome not in {"passed", "not_answerable", "flag_off", "demo_off"}
+    return result.outcome not in {"passed", "not_answerable", *_GUARD_OUTCOMES}
 
 
 def run_study_agent(
@@ -422,7 +444,7 @@ def run_study_agent(
             }
         )
 
-    if not _model_calls_allowed():
+    if not _model_calls_allowed() or not _provider_ready(answer_checker):
         result = verify_course_answer(question, chunks, client=answer_checker, emit_log=False)
         record = result.as_record()
         record["prompt_version"] = PROMPT_VERSION
@@ -489,7 +511,7 @@ def run_study_agent(
     # One checker invocation. The checker may retry a single dropped connection.
     # This pipeline does not send a second prompt and does not loop.
     result = verify_course_answer(question, chunks, client=answer_checker, emit_log=False)
-    if result.outcome in {"flag_off", "demo_off"}:
+    if result.outcome in _GUARD_OUTCOMES:
         record = result.as_record()
         record["prompt_version"] = PROMPT_VERSION
         record["limit"] = result.outcome

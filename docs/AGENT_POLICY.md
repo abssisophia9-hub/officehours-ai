@@ -31,9 +31,9 @@ The student sees one of four replies:
 | Assistant busy | A limit fired or the circuit breaker is open | "The study assistant is busy right now…" plus the same staff hint |
 
 Busy and a failed check do not fall back to the unverified retrieval draft.
-The draft is returned only when the kill switch is off, or when the
-existing external-call flag or demo flag refuses the call. Those two guards
-are the behavior already shipped.
+The draft is returned only when the kill switch is off, or when a guard
+refuses the call before any model request: the external-call flag, demo
+mode, an unset provider, or a missing Gemini free-tier acknowledgement.
 
 ## Kill switch
 
@@ -43,11 +43,13 @@ While it is false, a question at or above 0.42 gets today's retrieval
 answer and the model is not called. The cache is not read and the budgets
 are not spent. Below 0.42 the staff form is unchanged.
 
-The running app does not turn this on by itself. `scripts/run_study_eval.py
---with-check` turns it on for that process only, together with
-`OFFICEHOURS_ALLOW_EXTERNAL_LLM` and `OFFICEHOURS_DEMO`. A real call still
-needs all three. Either of the older two guards, with the kill switch on,
-keeps the retrieval answer and does not spend a budget slot.
+`scripts/run_study_eval.py --with-check` turns the kill switch on for that
+process only. A real call still needs `OFFICEHOURS_ALLOW_EXTERNAL_LLM`,
+`OFFICEHOURS_DEMO`, `OFFICEHOURS_LLM_PROVIDER` (`gemini` or `claude`), and
+for Gemini `OFFICEHOURS_GEMINI_FREE_TIER_ACK`. Any of those guards, with the
+kill switch on, keeps the retrieval answer and does not spend a budget slot.
+`scripts/run_product.sh` sets the kill switch only when that provider call
+is already armed. A key by itself stays retrieval-only.
 
 ## Limits
 
@@ -149,7 +151,8 @@ on each question:
 | `miss_source` | Checker outcome | Rerun? |
 | --- | --- | --- |
 | `model` | `not_answerable` | No. The model refused. |
-| `error` | `invalid_json`, `api_error`, `unfaithful`, `unknown_chunk`, `answer_too_long` | Yes. |
+| `error` | `invalid_json`, `api_error`, `rate_limited`, `daily_quota`, `answer_too_long` | Yes. |
+| `rejected` | `unfaithful`, `unknown_chunk` | No. The quote check failed; sending it again will not fix the chunk. |
 | `quota` | `quota` or `busy` | No. |
 | `cutoff` | Below 0.42, no call | No. |
 
@@ -164,12 +167,14 @@ Windows PowerShell, from the repo root:
 $env:OFFICEHOURS_DEMO = "true"
 $env:OFFICEHOURS_ALLOW_EXTERNAL_LLM = "true"
 $env:OFFICEHOURS_LLM_ENABLED = "true"
+$env:OFFICEHOURS_LLM_PROVIDER = "gemini"
+$env:OFFICEHOURS_GEMINI_FREE_TIER_ACK = "true"
 $env:GEMINI_API_KEY = "<your key>"
-$env:GEMINI_MODEL = "gemini-3.8-flash"
+$env:GEMINI_MODEL = "gemini-3.5-flash-lite"
 $env:OFFICEHOURS_CLUSTERING_BACKEND = "sentence-transformers"
-.\backend\venv\Scripts\python.exe scripts\run_study_eval.py --with-check
-.\backend\venv\Scripts\python.exe scripts\run_study_eval.py --with-check --rerun-errors
+.\backend\venv\Scripts\python.exe scripts\run_study_eval.py --with-check --provider gemini
+.\backend\venv\Scripts\python.exe scripts\run_study_eval.py --with-check --provider gemini --rerun-errors docs\eval_results\with_check_gemini_gemini-3.5-flash-lite_<stamp>.json
 ```
 
 `--with-check` sets `OFFICEHOURS_LLM_ENABLED` for that process even if the
-shell forgot it. The product process does not.
+shell forgot it.
