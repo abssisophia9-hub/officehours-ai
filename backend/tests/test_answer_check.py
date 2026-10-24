@@ -22,7 +22,9 @@ from app.ai.claude_client_legacy import _call_claude, _complete_claude
 from app.database.session import Base, SessionLocal, engine
 from app.eval.study_harness import (
     ANSWER_LABEL_COLUMNS,
+    ANSWER_CHECK_PROMPT_VERSION,
     ANSWER_THRESHOLD,
+    checked_result_filename,
     corpus_files,
     evaluate,
     evaluate_with_check,
@@ -30,6 +32,7 @@ from app.eval.study_harness import (
     ingest_corpus,
     load_questions,
     load_retrieval_baseline,
+    miss_source_for,
     newest_baseline_file,
     write_answer_label_csv,
 )
@@ -56,6 +59,8 @@ def block_network(monkeypatch):
         raise AssertionError("network was called")
 
     monkeypatch.setattr("app.ai.claude_client_legacy.urllib.request.urlopen", explode)
+    monkeypatch.setattr("app.ai.gemini_client.urllib.request.urlopen", explode)
+    monkeypatch.setenv("OFFICEHOURS_LLM_RPM", "100000")
 
 
 def _entry(**overrides) -> KnowledgeEntry:
@@ -501,81 +506,58 @@ def test_complete_reads_model_from_the_environment_and_hides_the_key(monkeypatch
     assert legacy["timeout"] == 20
 
 
-def test_gemini_complete_reads_the_model_and_hides_the_key(monkeypatch, caplog):
-    from app.ai.gemini_client import complete_gemini
-
-    captured = {}
-
-    class _Body:
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *args):
-            return False
-
-        def read(self):
-            return json.dumps(
-                {
-                    "modelVersion": "gemini-test-model",
-                    "candidates": [
-                        {"content": {"parts": [{"text": "{\"ok\": true}"}, {"thought": True, "text": "hidden"}]}}
-                    ],
-                    "usageMetadata": {"promptTokenCount": 5, "candidatesTokenCount": 6},
-                }
-            ).encode()
-
-    def capture(request, timeout=0):
-        captured["timeout"] = timeout
-        captured["url"] = request.full_url
-        captured["body"] = json.loads(request.data.decode())
-        captured["key"] = request.get_header("X-goog-api-key")
-        return _Body()
-
-    monkeypatch.setattr("app.ai.gemini_client.urllib.request.urlopen", capture)
-    monkeypatch.setenv("GEMINI_API_KEY", SECRET)
-    monkeypatch.setenv("GEMINI_MODEL", "gemini-test-model")
-    with caplog.at_level("DEBUG"):
-        done = complete_gemini("system", "user", max_tokens=400, temperature=0, timeout=10)
-    assert captured["url"].endswith("/models/gemini-test-model:generateContent")
-    assert SECRET not in captured["url"]
-    assert captured["key"] == SECRET
-    assert captured["timeout"] == 10
-    assert captured["body"]["generationConfig"]["maxOutputTokens"] == 400
-    assert captured["body"]["generationConfig"]["temperature"] == 0
-    assert captured["body"]["generationConfig"]["responseMimeType"] == "application/json"
-    assert done.text == "{\"ok\": true}"
-    assert done.model == "gemini-test-model"
-    assert done.input_tokens == 5
-    assert done.output_tokens == 6
-    assert SECRET not in caplog.text
-
-    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
-    with pytest.raises(RuntimeError, match="GEMINI_API_KEY missing"):
-        complete_gemini("system", "user")
-
-
-def test_with_check_refuses_without_a_key():
+def _run_eval(args, extra_env):
     import subprocess
     import sys
 
     env = os.environ.copy()
     env["ANTHROPIC_API_KEY"] = ""
     env["GEMINI_API_KEY"] = ""
-    env["GOOGLE_API_KEY"] = ""
+    env["OFFICEHOURS_LLM_PROVIDER"] = ""
+    env["OFFICEHOURS_GEMINI_FREE_TIER_ACK"] = ""
+    env["OFFICEHOURS_ALLOW_EXTERNAL_LLM"] = "true"
+    env["OFFICEHOURS_DEMO"] = "true"
     env["OFFICEHOURS_CLUSTERING_BACKEND"] = "lexical"
-    result = subprocess.run(
-        [sys.executable, str(REPO / "scripts" / "run_study_eval.py"), "--with-check"],
+    env.update(extra_env)
+    return subprocess.run(
+        [sys.executable, str(REPO / "scripts" / "run_study_eval.py"), *args],
         cwd=REPO,
         env=env,
         capture_output=True,
         text=True,
         check=False,
     )
-    assert result.returncode == 2
-    assert "GEMINI_API_KEY is not set" in result.stdout
-    assert SECRET not in result.stdout
-    assert SECRET not in result.stderr
+
+
+def test_with_check_refuses_without_a_key():
+    missing_provider = _run_eval(["--with-check"], {"GEMINI_API_KEY": SECRET})
+    assert missing_provider.returncode == 2
+    assert "OFFICEHOURS_LLM_PROVIDER must be gemini or claude" in missing_provider.stdout
+    assert SECRET not in missing_provider.stdout
+    assert SECRET not in missing_provider.stderr
+
+    missing_gemini = _run_eval(
+        ["--with-check", "--provider", "gemini"],
+        {"OFFICEHOURS_GEMINI_FREE_TIER_ACK": "true", "GEMINI_API_KEY": ""},
+    )
+    assert missing_gemini.returncode == 2
+    assert "GEMINI_API_KEY is not set" in missing_gemini.stdout
+    assert SECRET not in missing_gemini.stdout
+
+    missing_ack = _run_eval(
+        ["--with-check", "--provider", "gemini"],
+        {"GEMINI_API_KEY": SECRET, "OFFICEHOURS_GEMINI_FREE_TIER_ACK": "false"},
+    )
+    assert missing_ack.returncode == 2
+    assert "OFFICEHOURS_GEMINI_FREE_TIER_ACK is not true" in missing_ack.stdout
+    assert SECRET not in missing_ack.stdout
+    assert SECRET not in missing_ack.stderr
+
+    missing_claude = _run_eval(["--with-check", "--provider", "claude"], {})
+    assert missing_claude.returncode == 2
+    assert "ANTHROPIC_API_KEY is not set" in missing_claude.stdout
+    assert SECRET not in missing_claude.stdout
+    assert SECRET not in missing_claude.stderr
 
 
 class _EchoClient:
@@ -660,7 +642,6 @@ def test_harness_with_fake_client_reports_beside_the_baseline(monkeypatch):
     base_hard = baseline["backends"]["sentence-transformers"]["sections"]["agent_generated"]["modes"]["both_on"]["counts"]["hard_negative"]
     assert f"hard_negative spurious_answer baseline {base_hard['spurious_answer']}/{base_hard['n']}" in text
     assert "11/20" in text
-    assert "The baseline file is not rewritten" in text
     assert "human_written: 0 questions" in text
     assert "not merged with agent_generated" in text
     assert "fake" in text
@@ -681,12 +662,11 @@ def test_harness_with_fake_client_reports_beside_the_baseline(monkeypatch):
 
 def test_real_run_command_uses_the_windows_venv():
     source = (REPO / "scripts" / "run_study_eval.py").read_text(encoding="utf-8")
-    command = r".\backend\venv\Scripts\python.exe scripts\run_study_eval.py --with-check"
+    command = r".\backend\venv\Scripts\python.exe scripts\run_study_eval.py --with-check --provider gemini"
     assert command in source
     assert "python scripts/run_study_eval.py --with-check" not in source
-    assert "GEMINI_API_KEY" in source
-    assert "ANTHROPIC_API_KEY" not in source
-    assert "with_check_" in source
+    assert "--resume" in source
+    assert "--rerun-errors" in source
 
 
 def test_summary_counts_answered_injection_questions():
@@ -778,3 +758,537 @@ def test_label_csv_lists_only_answered_questions(tmp_path):
     assert "course_id" not in raw
     assert "email" not in raw.lower()
     assert "should not appear" not in raw
+
+
+def _gemini_env(monkeypatch, *, ack="true", provider="gemini", allow="true", demo="true"):
+    from app.ai.gemini_client import reset_throttle
+
+    monkeypatch.setenv("OFFICEHOURS_ALLOW_EXTERNAL_LLM", allow)
+    monkeypatch.setenv("OFFICEHOURS_DEMO", demo)
+    if provider is None:
+        monkeypatch.delenv("OFFICEHOURS_LLM_PROVIDER", raising=False)
+    else:
+        monkeypatch.setenv("OFFICEHOURS_LLM_PROVIDER", provider)
+    monkeypatch.setenv("OFFICEHOURS_GEMINI_FREE_TIER_ACK", ack)
+    monkeypatch.setenv("GEMINI_API_KEY", SECRET)
+    monkeypatch.setenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+    monkeypatch.setenv("OFFICEHOURS_LLM_RPM", "100000")
+    reset_throttle()
+
+
+def _gemini_body(answerable=True, chunk_id=11, answer="It returns the top value.", quote="returns the top value."):
+    return {
+        "modelVersion": "gemini-3.5-flash-lite",
+        "candidates": [
+            {
+                "content": {
+                    "parts": [
+                        {
+                            "text": json.dumps(
+                                {
+                                    "answerable": answerable,
+                                    "supporting_chunk_id": chunk_id,
+                                    "answer": answer,
+                                    "quote": quote,
+                                }
+                            )
+                        }
+                    ]
+                }
+            }
+        ],
+        "usageMetadata": {"promptTokenCount": 20, "candidatesTokenCount": 12},
+    }
+
+
+class _GeminiResponse:
+    def __init__(self, payload):
+        self._raw = payload if isinstance(payload, bytes) else json.dumps(payload).encode()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+    def read(self):
+        return self._raw
+
+
+def _http_error(status, body):
+    import email.message
+    import io
+
+    encoded = body if isinstance(body, bytes) else body.encode()
+    return urllib.error.HTTPError(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
+        status,
+        "error",
+        email.message.Message(),
+        io.BytesIO(encoded),
+    )
+
+
+def _install_gemini_http(monkeypatch, steps, sleeps=None):
+    calls = []
+
+    def urlopen(request, timeout=0):
+        calls.append({"request": request, "timeout": timeout})
+        step = steps.pop(0)
+        if isinstance(step, BaseException):
+            raise step
+        return _GeminiResponse(step)
+
+    monkeypatch.setattr("app.ai.gemini_client.urllib.request.urlopen", urlopen)
+    if sleeps is not None:
+        monkeypatch.setattr("app.ai.gemini_client.time.sleep", lambda seconds: sleeps.append(seconds))
+    return calls
+
+
+def _assert_key_hidden(calls, caplog):
+    assert calls
+    request = calls[0]["request"]
+    assert request.get_header("X-goog-api-key") == SECRET
+    assert SECRET not in request.full_url
+    assert SECRET not in caplog.text
+    for call in calls:
+        assert SECRET not in call["request"].full_url
+
+
+def test_gemini_valid_reply_uses_json_schema_and_hides_the_key(monkeypatch, caplog):
+    _gemini_env(monkeypatch)
+    calls = _install_gemini_http(monkeypatch, [_gemini_body()])
+    with caplog.at_level("DEBUG"):
+        result = verify_course_answer(
+            "What does stack pop return?",
+            [{"chunk_id": 11, "file": "notes.pdf", "page": 3, "text": "The stack pop returns the top value."}],
+        )
+    assert result.outcome == "passed"
+    assert result.quote == "returns the top value."
+    assert result.model == "gemini-3.5-flash-lite"
+    assert result.input_tokens == 20
+    assert result.output_tokens == 12
+    request = calls[0]["request"]
+    body = json.loads(request.data.decode())
+    assert calls[0]["timeout"] == 10
+    assert body["generationConfig"]["temperature"] == 0
+    assert body["generationConfig"]["maxOutputTokens"] == 400
+    mime = body["generationConfig"]["responseFormat"]["text"]
+    assert mime["mimeType"] == "APPLICATION_JSON"
+    assert mime["schema"]["required"] == ["answerable", "supporting_chunk_id", "answer", "quote"]
+    sent = json.loads(body["contents"][0]["parts"][0]["text"])
+    assert set(sent) == {"question", "chunks"}
+    assert "4242" not in request.data.decode()
+    assert "GEMINI_API_KEY" not in request.full_url
+    _assert_key_hidden(calls, caplog)
+
+
+def test_gemini_invalid_json_fails_closed(monkeypatch, caplog):
+    _gemini_env(monkeypatch)
+    payload = _gemini_body()
+    payload["candidates"][0]["content"]["parts"][0]["text"] = "not json"
+    calls = _install_gemini_http(monkeypatch, [payload])
+    with caplog.at_level("DEBUG"):
+        response = _ask(monkeypatch, None, [_hit()])
+    assert len(calls) == 1
+    assert response.answer == CHECK_MISS_ANSWER
+    assert SECRET not in caplog.text
+
+
+def test_gemini_quote_not_in_the_chunk_fails_closed(monkeypatch, caplog):
+    _gemini_env(monkeypatch)
+    calls = _install_gemini_http(
+        monkeypatch,
+        [_gemini_body(quote="this sentence is not in the chunk")],
+    )
+    with caplog.at_level("DEBUG"):
+        records = []
+        response = _ask(monkeypatch, None, [_hit()], records)
+    assert len(calls) == 1
+    assert records[0]["outcome"] == "unfaithful"
+    assert response.answer == CHECK_MISS_ANSWER
+    assert SECRET not in caplog.text
+
+
+def test_gemini_429_then_success(monkeypatch):
+    _gemini_env(monkeypatch)
+    sleeps = []
+    calls = _install_gemini_http(
+        monkeypatch,
+        [_http_error(429, '{"error": {"code": 429, "message": "Too many requests"}}'), _gemini_body()],
+        sleeps,
+    )
+    result = verify_course_answer(
+        "What does stack pop return?",
+        [{"chunk_id": 11, "file": "notes.pdf", "page": 3, "text": "The stack pop returns the top value."}],
+    )
+    assert result.outcome == "passed"
+    assert len(calls) == 2
+    assert sleeps == [1.0]
+
+
+def test_gemini_503_then_success(monkeypatch):
+    _gemini_env(monkeypatch)
+    sleeps = []
+    calls = _install_gemini_http(
+        monkeypatch,
+        [_http_error(503, '{"error": {"code": 503, "message": "unavailable"}}'), _gemini_body()],
+        sleeps,
+    )
+    result = verify_course_answer(
+        "What does stack pop return?",
+        [{"chunk_id": 11, "file": "notes.pdf", "page": 3, "text": "The stack pop returns the top value."}],
+    )
+    assert result.outcome == "passed"
+    assert len(calls) == 2
+    assert sleeps == [1.0]
+
+
+def test_gemini_429_exhausted_fails_closed(monkeypatch, caplog):
+    _gemini_env(monkeypatch)
+    sleeps = []
+    body = json.dumps({"error": {"code": 429, "message": "Too many requests", "detail": SECRET}})
+    calls = _install_gemini_http(monkeypatch, [_http_error(429, body) for _ in range(3)], sleeps)
+    with caplog.at_level("WARNING", logger="officehours.answer_check"):
+        records = []
+        response = _ask(monkeypatch, None, [_hit()], records)
+    assert len(calls) == 3
+    assert sleeps == [1.0, 2.0]
+    assert records[0]["outcome"] == "rate_limited"
+    assert response.answer == CHECK_MISS_ANSWER
+    assert "answer_check rate_limit_exhausted provider=gemini attempts=3" in caplog.text
+    assert SECRET not in caplog.text
+
+
+def test_gemini_daily_quota_is_not_retried(monkeypatch, caplog):
+    _gemini_env(monkeypatch)
+    sleeps = []
+    body = json.dumps(
+        {
+            "error": {
+                "code": 429,
+                "message": "Quota exceeded",
+                "details": [{"quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier"}],
+            }
+        }
+    )
+    calls = _install_gemini_http(monkeypatch, [_http_error(429, body)], sleeps)
+    with caplog.at_level("WARNING", logger="officehours.answer_check"):
+        records = []
+        response = _ask(monkeypatch, None, [_hit()], records)
+    assert len(calls) == 1
+    assert sleeps == []
+    assert records[0]["outcome"] == "daily_quota"
+    assert response.answer == CHECK_MISS_ANSWER
+    assert "answer_check daily_quota provider=gemini" in caplog.text
+    assert SECRET not in caplog.text
+
+
+def test_provider_unset_keeps_the_retrieval_answer(monkeypatch):
+    _gemini_env(monkeypatch, provider=None)
+    records = []
+    response = _ask(monkeypatch, None, [_hit()], records)
+    assert records[0]["outcome"] == "provider_off"
+    assert records[0]["called"] is False
+    assert response.answer.startswith("Based on professor-approved course knowledge")
+
+
+def test_gemini_without_ack_keeps_the_retrieval_answer(monkeypatch, caplog):
+    from app.ai import claude_client
+
+    claude_client._ack_warned = False
+    _gemini_env(monkeypatch, ack="false")
+    with caplog.at_level("WARNING", logger="officehours.answer_check"):
+        records = []
+        response = _ask(monkeypatch, None, [_hit()], records)
+    assert records[0]["outcome"] == "ack_off"
+    assert records[0]["called"] is False
+    assert response.answer.startswith("Based on professor-approved course knowledge")
+    assert "OFFICEHOURS_GEMINI_FREE_TIER_ACK is not true" in caplog.text
+    assert "synthetic demo data" in caplog.text
+    assert SECRET not in caplog.text
+
+
+def test_allow_off_does_not_call_gemini(monkeypatch):
+    _gemini_env(monkeypatch, allow="false")
+    records = []
+    response = _ask(monkeypatch, None, [_hit()], records)
+    assert records[0]["outcome"] == "flag_off"
+    assert response.answer.startswith("Based on professor-approved course knowledge")
+
+
+def test_demo_off_does_not_call_gemini(monkeypatch):
+    _gemini_env(monkeypatch, demo="false")
+    records = []
+    response = _ask(monkeypatch, None, [_hit()], records)
+    assert records[0]["outcome"] == "demo_off"
+    assert response.answer.startswith("Based on professor-approved course knowledge")
+
+
+def test_claude_provider_still_checks_without_the_gemini_ack(monkeypatch):
+    _gemini_env(monkeypatch, provider="claude", ack="false")
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+
+    def fake_complete(*args, **kwargs):
+        return SimpleNamespace(
+            text=json.dumps(
+                {
+                    "answerable": True,
+                    "supporting_chunk_id": 11,
+                    "answer": "It returns the top value.",
+                    "quote": "returns the top value.",
+                }
+            ),
+            model="claude-haiku-5-5",
+            input_tokens=2,
+            output_tokens=2,
+            latency_ms=1.0,
+        )
+
+    monkeypatch.setattr("app.ai.claude_client_legacy._complete_claude", fake_complete)
+    records = []
+    response = _ask(monkeypatch, None, [_hit()], records)
+    assert records[0]["outcome"] == "passed"
+    assert records[0]["model"] == "claude-haiku-5-5"
+    assert "returns the top value." in response.answer
+
+
+def test_startup_warns_when_gemini_is_selected(monkeypatch, caplog):
+    import app.ai.gemini_client as gemini_client
+
+    gemini_client._free_tier_warned = False
+    monkeypatch.setenv("OFFICEHOURS_LLM_PROVIDER", "gemini")
+    monkeypatch.setenv("GEMINI_API_KEY", SECRET)
+    with caplog.at_level("WARNING", logger="officehours.answer_check"):
+        with TestClient(app):
+            pass
+    assert "Google may use prompts to improve its products" in caplog.text
+    assert "Only synthetic demo data may be sent" in caplog.text
+    assert SECRET not in caplog.text
+
+
+def test_throttle_waits_when_the_window_is_full(monkeypatch):
+    from app.ai.gemini_client import _throttle, reset_throttle
+
+    monkeypatch.setenv("OFFICEHOURS_LLM_RPM", "2")
+    reset_throttle()
+    clock = {"now": 1000.0}
+    sleeps = []
+
+    def monotonic():
+        return clock["now"]
+
+    def sleep(seconds):
+        sleeps.append(seconds)
+        clock["now"] += seconds
+
+    monkeypatch.setattr("app.ai.gemini_client.time.monotonic", monotonic)
+    monkeypatch.setattr("app.ai.gemini_client.time.sleep", sleep)
+    _throttle()
+    _throttle()
+    _throttle()
+    assert sleeps
+    assert sleeps[0] == pytest.approx(60.0)
+    reset_throttle()
+
+
+def test_result_filename_includes_provider_and_model():
+    assert (
+        checked_result_filename("gemini", "gemini-3.5-flash-lite", "20261024T160000Z")
+        == "with_check_gemini_gemini-3.5-flash-lite_20261024T160000Z.json"
+    )
+
+
+def test_miss_source_splits_model_refusal_from_errors():
+    assert miss_source_for({"outcome": "not_answerable"}) == "model"
+    assert miss_source_for({"outcome": "invalid_json"}) == "error"
+    assert miss_source_for({"outcome": "api_error"}) == "error"
+    assert miss_source_for({"outcome": "rate_limited"}) == "error"
+    assert miss_source_for({"outcome": "daily_quota"}) == "error"
+    assert miss_source_for({"outcome": "below_cutoff"}) == "cutoff"
+    assert miss_source_for({"outcome": "passed"}) is None
+    assert ANSWER_CHECK_PROMPT_VERSION == "study-answer-check-v1"
+
+
+def _mini_row(qid, question):
+    return {
+        "id": qid,
+        "category": "in_document",
+        "question": question,
+        "expected": "not_found",
+        "expected_source": None,
+        "author": "agent_generated",
+    }
+
+
+def _mini_questions(*rows):
+    return {"agent_generated": list(rows), "human_written": []}
+
+
+def _stored_detail(qid, outcome):
+    return {
+        "id": qid,
+        "category": "in_document",
+        "question": qid,
+        "expected": "not_found",
+        "expected_source": None,
+        "author": "agent_generated",
+        "correct": True,
+        "answered": outcome == "passed",
+        "hidden_page_cited": False,
+        "spurious_answer": False,
+        "wrong_source": False,
+        "cited_page_kind": "none",
+        "retrieved": None,
+        "agent_confidence": 0.5,
+        "blended_score": 0.0,
+        "blended_source": None,
+        "blended_file": None,
+        "blended_page": None,
+        "blended_matches_expected": False,
+        "blended_page_kind": "none",
+        "check": {
+            "called": outcome != "below_cutoff",
+            "outcome": outcome,
+            "model": "gemini-3.5-flash-lite",
+            "input_tokens": 1,
+            "output_tokens": 1,
+            "latency_ms": 1.0,
+            "error_type": None,
+        },
+    }
+
+
+def test_resume_keeps_finished_questions_and_reruns_errors(monkeypatch):
+    called = []
+    outcomes = ["invalid_json", "passed"]
+
+    def fake_answer(db, question, **kwargs):
+        called.append(question)
+        outcome = outcomes.pop(0)
+        kwargs["check_records"].append(
+            {
+                "called": True,
+                "outcome": outcome,
+                "model": "gemini-3.5-flash-lite",
+                "input_tokens": 4,
+                "output_tokens": 3,
+                "latency_ms": 2.0,
+                "error_type": "invalid_json" if outcome == "invalid_json" else None,
+            }
+        )
+        return SimpleNamespace(
+            should_seek_help=True,
+            matched_count=0,
+            sources=[],
+            confidence=0.2,
+        )
+
+    monkeypatch.setattr("app.eval.study_harness.answer_from_knowledge_base", fake_answer)
+    monkeypatch.setattr("app.eval.study_harness.best_blended_hit", lambda *args, **kwargs: None)
+    prior = {
+        "sections": {
+            "agent_generated": {
+                "questions": [
+                    _stored_detail("q1", "passed"),
+                    _stored_detail("q2", "invalid_json"),
+                    _stored_detail("q3", "not_answerable"),
+                ]
+            },
+            "human_written": {"questions": []},
+        }
+    }
+    questions = _mini_questions(
+        _mini_row("q1", "kept success"),
+        _mini_row("q2", "rerun error"),
+        _mini_row("q3", "kept refusal"),
+        _mini_row("q4", "never ran"),
+    )
+    files = {"pending_a": set(), "approved_b": set(), "approved_a": set()}
+    saved = os.environ.get("OFFICEHOURS_ALLOW_EXTERNAL_LLM")
+    report = evaluate_with_check(
+        None,
+        1,
+        questions,
+        files,
+        client=object(),
+        provider="gemini",
+        prior=prior,
+    )
+    assert called == ["rerun error", "never ran"]
+    assert [row["id"] for row in report["sections"]["agent_generated"]["questions"]] == [
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+    ]
+    by_id = {row["id"]: row for row in report["sections"]["agent_generated"]["questions"]}
+    assert by_id["q1"]["miss_source"] is None
+    assert by_id["q2"]["miss_source"] == "error"
+    assert by_id["q3"]["miss_source"] == "model"
+    assert by_id["q2"]["prompt_version"] == ANSWER_CHECK_PROMPT_VERSION
+    assert by_id["q3"]["model"] == "gemini-3.5-flash-lite"
+    assert os.environ.get("OFFICEHOURS_ALLOW_EXTERNAL_LLM") == saved
+
+    outcomes.append("passed")
+    called.clear()
+    rerun = evaluate_with_check(
+        None,
+        1,
+        questions,
+        files,
+        client=object(),
+        prior=prior,
+        rerun_errors_only=True,
+    )
+    assert called == ["rerun error"]
+    assert [row["id"] for row in rerun["sections"]["agent_generated"]["questions"]] == ["q1", "q2", "q3"]
+
+
+def test_quota_stop_keeps_finished_questions(monkeypatch):
+    called = []
+    outcomes = ["passed", "daily_quota", "passed"]
+
+    def fake_answer(db, question, **kwargs):
+        called.append(question)
+        outcome = outcomes.pop(0)
+        kwargs["check_records"].append(
+            {
+                "called": True,
+                "outcome": outcome,
+                "model": "gemini-3.5-flash-lite",
+                "input_tokens": 1,
+                "output_tokens": 1,
+                "latency_ms": 1.0,
+                "error_type": "daily_quota" if outcome == "daily_quota" else None,
+            }
+        )
+        return SimpleNamespace(should_seek_help=True, matched_count=0, sources=[], confidence=0.2)
+
+    monkeypatch.setattr("app.eval.study_harness.answer_from_knowledge_base", fake_answer)
+    monkeypatch.setattr("app.eval.study_harness.best_blended_hit", lambda *args, **kwargs: None)
+    snapshots = []
+    questions = _mini_questions(
+        _mini_row("q1", "first"),
+        _mini_row("q2", "quota"),
+        _mini_row("q3", "after"),
+    )
+    files = {"pending_a": set(), "approved_b": set(), "approved_a": set()}
+    report = evaluate_with_check(
+        None,
+        1,
+        questions,
+        files,
+        client=object(),
+        provider="gemini",
+        on_progress=snapshots.append,
+    )
+    assert called == ["first", "quota"]
+    assert report["stopped"] == "daily_quota"
+    assert [row["id"] for row in report["sections"]["agent_generated"]["questions"]] == ["q1", "q2"]
+    assert snapshots[-1]["stopped"] == "daily_quota"
+    assert report["prompt_version"] == ANSWER_CHECK_PROMPT_VERSION
+    text = format_with_check(report, None, "(none)")
+    assert "not_found model 0 error 1" in text
+    assert "Stopped on daily_quota" in text
+    assert "$" not in text

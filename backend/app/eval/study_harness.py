@@ -7,17 +7,21 @@ scores that were already recorded.
 
 from __future__ import annotations
 
+import copy
 import csv
 import json
 import os
+import re
 import statistics
 from collections import defaultdict
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from sqlalchemy.orm import Session
 
 from app.ai import clustering
+from app.ai.claude_client import ANSWER_CHECK_PROMPT_VERSION
+from app.ai.gemini_client import DEFAULT_GEMINI_MODEL
 from app.models.knowledge import AgentAskRequest, KnowledgeEntry
 from app.services import knowledge_service
 from app.services.kb_agent_service import WEAK_MATCH_CONFIDENCE, answer_from_knowledge_base
@@ -745,6 +749,130 @@ def load_retrieval_baseline(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+# A not-found from the model is a real refusal. These outcomes are transport
+# or parse failures and can be rerun. A quote the gate rejected is recorded
+# separately and is not an error rerun.
+ERROR_OUTCOMES = {"invalid_json", "api_error", "rate_limited", "daily_quota"}
+STOP_OUTCOMES = {"rate_limited", "daily_quota"}
+
+
+def miss_source_for(check: dict[str, Any] | None) -> str | None:
+    outcome = (check or {}).get("outcome")
+    if outcome == "below_cutoff":
+        return "cutoff"
+    if outcome == "not_answerable":
+        return "model"
+    if outcome in ERROR_OUTCOMES:
+        return "error"
+    if outcome in {"unfaithful", "unknown_chunk"}:
+        return "rejected"
+    return None
+
+
+def _annotate_detail(detail: dict[str, Any]) -> dict[str, Any]:
+    check = detail.get("check") or {}
+    detail["miss_source"] = miss_source_for(check)
+    detail["prompt_version"] = ANSWER_CHECK_PROMPT_VERSION
+    detail["model"] = check.get("model") or detail.get("model")
+    return detail
+
+
+def _prior_questions(prior: dict[str, Any] | None) -> list[dict[str, Any]]:
+    if not prior:
+        return []
+    rows = []
+    for section in (prior.get("sections") or {}).values():
+        rows.extend(section.get("questions") or [])
+    return rows
+
+
+def kept_details(prior: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
+    """Finished questions. Error rows are left out so a resume reruns them."""
+    kept = {}
+    for detail in _prior_questions(prior):
+        annotated = _annotate_detail(copy.deepcopy(detail))
+        if annotated.get("miss_source") == "error" or not annotated.get("id"):
+            continue
+        kept[annotated["id"]] = annotated
+    return kept
+
+
+def result_slug(value: str) -> str:
+    cleaned = re.sub(r"[^A-Za-z0-9._-]+", "-", (value or "").strip()).strip("-._")
+    return cleaned or "unknown"
+
+
+def checked_result_filename(provider: str, model: str, stamp: str) -> str:
+    return f"with_check_{result_slug(provider)}_{result_slug(model)}_{stamp}.json"
+
+
+def configured_model(provider: str | None) -> str | None:
+    if provider == "gemini":
+        return os.getenv("GEMINI_MODEL", DEFAULT_GEMINI_MODEL).strip() or DEFAULT_GEMINI_MODEL
+    if provider == "claude":
+        return os.getenv("ANTHROPIC_MODEL", "claude-haiku-5-5").strip() or "claude-haiku-5-5"
+    return None
+
+
+def _blank_check() -> dict[str, Any]:
+    return {
+        "called": False,
+        "latency_ms": 0.0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "model": None,
+        "outcome": None,
+        "error_type": None,
+    }
+
+
+def _section_payload(details: list[dict[str, Any]], records: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "n": len(details),
+        "counts": _counts(details),
+        "questions": details,
+        "usage": _usage(records, len(details)),
+    }
+
+
+def _empty_section() -> dict[str, Any]:
+    return _section_payload([], [])
+
+
+def _build_check_report(
+    *,
+    label: str,
+    provider: str | None,
+    flags: dict[str, Any],
+    sections: dict[str, Any],
+    stopped: str | None,
+    model_name: str | None,
+) -> dict[str, Any]:
+    full = {}
+    for section_name in ("agent_generated", "human_written"):
+        full[section_name] = copy.deepcopy(sections.get(section_name) or _empty_section())
+    return {
+        "label": "with_check",
+        "checker": label,
+        "provider": provider,
+        "model": model_name,
+        "prompt_version": ANSWER_CHECK_PROMPT_VERSION,
+        "stopped": stopped,
+        "mode": "both_on",
+        "flags": flags,
+        "embedding_backend": os.getenv("OFFICEHOURS_CLUSTERING_BACKEND", "sentence-transformers"),
+        "production_answer_cutoff": ANSWER_THRESHOLD,
+        "cutoff_changed": False,
+        "sections": full,
+        "usage": full["agent_generated"]["usage"],
+        "thresholds": {
+            "include": INCLUDE_THRESHOLD,
+            "answer": ANSWER_THRESHOLD,
+            "cutoff_changed": False,
+        },
+    }
+
+
 def evaluate_with_check(
     db: Session,
     course_id: int,
@@ -753,29 +881,72 @@ def evaluate_with_check(
     *,
     client: Any = None,
     checker_label: str | None = None,
+    provider: str | None = None,
+    prior: dict[str, Any] | None = None,
+    rerun_errors_only: bool = False,
+    on_progress: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
-    """Same 75-question contract, both filters on, with the answer check.
+    """Same question contract, both filters on, with the answer check.
 
     Turns the two guards on for this call and restores them afterwards.
     ``client`` is a fake with ``complete(system=, user=)``. Without it, the
-    real Messages client is used. Retrieval and the 0.42 cutoff stay as they are.
+    provider selected by ``OFFICEHOURS_LLM_PROVIDER`` is used. Retrieval and
+    the 0.42 cutoff stay as they are.
+
+    ``prior`` keeps finished questions. Errors and, unless
+    ``rerun_errors_only``, questions missing from ``prior`` are run again.
+    A daily quota or exhausted 429/503 stops the loop and keeps the rows
+    already finished, including the question that hit the quota.
     """
-    label = checker_label or ("fake" if client is not None else "gemini")
-    saved_env = _swap_env(
-        {
-            "OFFICEHOURS_ALLOW_EXTERNAL_LLM": "true",
-            "OFFICEHOURS_DEMO": "true",
-        }
-    )
+    active_provider = provider
+    if client is not None:
+        label = checker_label or "fake"
+        active_provider = provider or "fake"
+    else:
+        label = checker_label or provider or os.getenv("OFFICEHOURS_LLM_PROVIDER", "").strip().lower() or "unset"
+    updates = {
+        "OFFICEHOURS_ALLOW_EXTERNAL_LLM": "true",
+        "OFFICEHOURS_DEMO": "true",
+    }
+    if client is None and provider:
+        updates["OFFICEHOURS_LLM_PROVIDER"] = provider
+    saved_env = _swap_env(updates)
     original = _patch_embed_cache()
     flags = MODES["both_on"]
+    kept = kept_details(prior)
+    prior_ids = {detail.get("id") for detail in _prior_questions(prior)}
+    stopped = None
+    sections: dict[str, Any] = {}
+
+    def emit() -> None:
+        if on_progress is None:
+            return
+        on_progress(
+            _build_check_report(
+                label=label,
+                provider=active_provider,
+                flags=flags,
+                sections=sections,
+                stopped=stopped,
+                model_name=configured_model(provider) or _first_model_in(sections),
+            )
+        )
+
     try:
-        sections = {}
         for section_name in ("agent_generated", "human_written"):
             rows = questions[section_name]
             details = []
             records: list[dict[str, Any]] = []
             for row in rows:
+                previous = kept.get(row["id"])
+                if previous is not None:
+                    details.append(previous)
+                    records.append(dict(previous.get("check") or _blank_check()))
+                    sections[section_name] = _section_payload(details, records)
+                    emit()
+                    continue
+                if rerun_errors_only and row["id"] not in prior_ids:
+                    continue
                 response = answer_from_knowledge_base(
                     db,
                     row["question"],
@@ -794,40 +965,52 @@ def evaluate_with_check(
                 )
                 detail = _judge(response, row, blended, files)
                 detail["check"] = records[-1]
-                details.append(detail)
-            sections[section_name] = {
-                "n": len(rows),
-                "counts": _counts(details),
-                "questions": details,
-                "usage": _usage(records, len(rows)),
-            }
-        return {
-            "label": "with_check",
-            "checker": label,
-            "model": os.getenv("GEMINI_MODEL", "gemini-3.8-flash") if label == "gemini" else None,
-            "mode": "both_on",
-            "flags": flags,
-            "embedding_backend": os.getenv("OFFICEHOURS_CLUSTERING_BACKEND", "sentence-transformers"),
-            "production_answer_cutoff": ANSWER_THRESHOLD,
-            "cutoff_changed": False,
-            "sections": sections,
-            "usage": sections["agent_generated"]["usage"],
-            "thresholds": {
-                "include": INCLUDE_THRESHOLD,
-                "answer": ANSWER_THRESHOLD,
-                "cutoff_changed": False,
-            },
-        }
+                details.append(_annotate_detail(detail))
+                sections[section_name] = _section_payload(details, records)
+                outcome = (records[-1] or {}).get("outcome")
+                if outcome in STOP_OUTCOMES:
+                    stopped = outcome
+                    emit()
+                    break
+                emit()
+            if stopped:
+                break
+        model_name = configured_model(provider) or _first_model_in(sections)
+        return _build_check_report(
+            label=label,
+            provider=active_provider,
+            flags=flags,
+            sections=sections,
+            stopped=stopped,
+            model_name=model_name,
+        )
     finally:
         _restore_embed(original)
         _restore_env(saved_env)
+
+
+def _first_model_in(sections: dict[str, Any]) -> str | None:
+    for section in sections.values():
+        found = _first_model_from_section(section)
+        if found:
+            return found
+    return None
+
+
+def _first_model_from_section(section: dict[str, Any]) -> str | None:
+    for detail in section.get("questions") or []:
+        if detail.get("model"):
+            return detail["model"]
+        check = detail.get("check") or {}
+        if check.get("model"):
+            return check["model"]
+    return None
 
 
 def format_with_check(report: dict[str, Any], baseline: dict[str, Any] | None, baseline_name: str) -> str:
     """with_check counts beside the saved MiniLM retrieval baseline. No price."""
     lines = [
         "Answer check (with_check) beside the saved retrieval-only baseline.",
-        "The baseline file is not rewritten. This printout is the comparison row.",
         "Retrieval, the 0.42 cutoff, and both filters are unchanged.",
         "human_written is reported separately and is not merged with agent_generated.",
         "Latency covers every question. A question that did not call the check has latency 0.",
@@ -835,9 +1018,19 @@ def format_with_check(report: dict[str, Any], baseline: dict[str, Any] | None, b
         "Token totals are input and output tokens. No dollar cost is computed.",
         f"Baseline file: {baseline_name}",
         f"Checker: {report.get('checker')}.",
-        f"Model: {report.get('model') or '-'}.",
         f"Embedding backend: {report.get('embedding_backend')}. Mode: both_on.",
     ]
+    if report.get("provider"):
+        lines.append(f"Provider: {report.get('provider')}.")
+    if report.get("model"):
+        lines.append(f"Model: {report.get('model')}.")
+    if report.get("prompt_version"):
+        lines.append(f"Prompt version: {report.get('prompt_version')}.")
+    if report.get("stopped"):
+        lines.append(
+            f"Stopped on {report['stopped']}. Finished questions are kept. "
+            "Resume with --resume. Rerun only errors with --rerun-errors."
+        )
     if report.get("checker") == "fake":
         lines.append("These with_check counts are from the injected client, not a live model.")
     base_counts = None
@@ -870,6 +1063,8 @@ def format_with_check(report: dict[str, Any], baseline: dict[str, Any] | None, b
         injection_line = _injection_answered_line(section)
         if injection_line:
             lines.append(injection_line)
+        model_n, error_n = _not_found_split(section)
+        lines.append(f"not_found model {model_n} error {error_n}")
         usage = section["usage"]
         lines.append("")
         lines.append(f"### Usage ({section_name} only)")
@@ -889,6 +1084,18 @@ def format_with_check(report: dict[str, Any], baseline: dict[str, Any] | None, b
             f"input {usage['input_tokens_per_question']} output {usage['output_tokens_per_question']}"
         )
     return "\n".join(lines) + "\n"
+
+
+def _not_found_split(section: dict[str, Any]) -> tuple[int, int]:
+    model_n = 0
+    error_n = 0
+    for row in section.get("questions") or []:
+        source = row.get("miss_source")
+        if source == "model":
+            model_n += 1
+        elif source == "error":
+            error_n += 1
+    return model_n, error_n
 
 
 def _injection_answered_line(section: dict[str, Any]) -> str | None:

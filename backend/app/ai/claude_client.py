@@ -2,10 +2,12 @@
 Ask Triage agent entrypoints — custom-trained models only.
 
 Analyzer / Matcher / Synthesizer use trained local models. The study-agent
-answer check is the one prompted call, and it stays off unless
-``OFFICEHOURS_ALLOW_EXTERNAL_LLM`` and ``OFFICEHOURS_DEMO`` are both true.
-That call uses Gemini's free-tier generateContent API. The legacy Analyzer
-Claude switch still uses ``_complete_claude`` and is not the study agent.
+answer check is the one prompted call. It stays off unless
+``OFFICEHOURS_ALLOW_EXTERNAL_LLM`` and ``OFFICEHOURS_DEMO`` are both true
+and ``OFFICEHOURS_LLM_PROVIDER`` is ``gemini`` or ``claude``. Unset means
+the check stays off. Gemini also requires ``OFFICEHOURS_GEMINI_FREE_TIER_ACK``.
+Provider selection happens only in ``verify_course_answer``. Claude still
+uses ``_complete_claude``. Gemini uses the REST helper in ``gemini_client``.
 """
 
 from __future__ import annotations
@@ -19,6 +21,7 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 from app.ai.analyzer_agent import analyze_with_classifier
+from app.ai.gemini_client import DailyQuotaError, RateLimitExhausted
 from app.ai.matcher_model import match_with_model
 from app.ai.synthesizer_model import synthesize_with_model
 from app.services.demo_mode import demo_mode
@@ -28,6 +31,9 @@ logger = logging.getLogger("officehours.answer_check")
 ANSWER_CHECK_MAX_TOKENS = 400
 ANSWER_CHECK_TIMEOUT_SECONDS = 10
 ANSWER_CHECK_ATTEMPTS = 2
+ANSWER_CHECK_PROMPT_VERSION = "study-answer-check-v1"
+
+_ack_warned = False
 
 ANSWER_CHECK_SYSTEM = """You verify whether professor-approved course material answers a question.
 Use only the provided material. Never add facts the material does not state.
@@ -38,13 +44,29 @@ Reply with one JSON object and no other text:
 When answerable is false, set supporting_chunk_id, answer, and quote to null."""
 
 
-def _external_llm_allowed() -> bool:
-    return os.getenv("OFFICEHOURS_ALLOW_EXTERNAL_LLM", "false").strip().lower() in {
+def _env_flag(name: str) -> bool:
+    return os.getenv(name, "false").strip().lower() in {
         "1",
         "true",
         "yes",
         "on",
     }
+
+
+def _external_llm_allowed() -> bool:
+    return _env_flag("OFFICEHOURS_ALLOW_EXTERNAL_LLM")
+
+
+def _warn_missing_gemini_ack() -> None:
+    global _ack_warned
+    if _ack_warned:
+        return
+    _ack_warned = True
+    logger.warning(
+        "Refusing the Gemini answer check: OFFICEHOURS_GEMINI_FREE_TIER_ACK is not true. "
+        "The free tier may use prompts to improve Google products. "
+        "Only synthetic demo data may be sent."
+    )
 
 
 def analyze_question(
@@ -142,13 +164,13 @@ class AnswerCheckResult:
         }
 
 
-class GeminiAnswerCheckClient:
-    """Study-agent checker. Gemini free tier, same budget as the old check."""
+class AnthropicAnswerCheckClient:
+    """Claude path. Calls the Messages helper with the check budget."""
 
     def complete(self, *, system: str, user: str) -> Any:
-        from app.ai.gemini_client import complete_gemini
+        from app.ai.claude_client_legacy import _complete_claude
 
-        return complete_gemini(
+        return _complete_claude(
             system,
             user,
             max_tokens=ANSWER_CHECK_MAX_TOKENS,
@@ -157,13 +179,13 @@ class GeminiAnswerCheckClient:
         )
 
 
-class AnthropicAnswerCheckClient:
-    """Legacy Messages client. Not used by the study agent."""
+class GeminiAnswerCheckClient:
+    """Gemini path. Same budget, selected only from ``verify_course_answer``."""
 
     def complete(self, *, system: str, user: str) -> Any:
-        from app.ai.claude_client_legacy import _complete_claude
+        from app.ai.gemini_client import complete_gemini
 
-        return _complete_claude(
+        return complete_gemini(
             system,
             user,
             max_tokens=ANSWER_CHECK_MAX_TOKENS,
@@ -228,9 +250,12 @@ def verify_course_answer(
 ) -> AnswerCheckResult:
     """Ask whether one of the chunks answers the question.
 
-    The HTTP call happens only when external calls and demo mode are both on.
-    Invalid output, a quote that is not in the cited chunk, an unknown chunk
-    id, and transport errors all fail closed. Transport errors are retried once.
+    The HTTP call happens only when external calls and demo mode are both on
+    and a provider is selected. An injected ``client`` skips provider selection
+    so tests can exercise the shared quote check. Invalid output, a quote that
+    is not in the cited chunk, an unknown chunk id, and transport errors all
+    fail closed. Transport errors are retried once. Gemini 429/503 retries
+    happen inside that client and then fail closed.
     """
     if not _external_llm_allowed():
         return AnswerCheckResult(outcome="flag_off", called=False)
@@ -241,10 +266,20 @@ def verify_course_answer(
         )
         return AnswerCheckResult(outcome="demo_off", called=False)
 
+    if client is not None:
+        active = client
+    else:
+        provider = os.getenv("OFFICEHOURS_LLM_PROVIDER", "").strip().lower()
+        if provider not in {"gemini", "claude"}:
+            return AnswerCheckResult(outcome="provider_off", called=False)
+        if provider == "gemini" and not _env_flag("OFFICEHOURS_GEMINI_FREE_TIER_ACK"):
+            _warn_missing_gemini_ack()
+            return AnswerCheckResult(outcome="ack_off", called=False)
+        active = GeminiAnswerCheckClient() if provider == "gemini" else AnthropicAnswerCheckClient()
+
     material = _material_chunks(chunks)
     by_id = {chunk["chunk_id"]: chunk for chunk in material}
     user = json.dumps({"question": question, "chunks": material}, ensure_ascii=False)
-    active = client or GeminiAnswerCheckClient()
     model = None
     input_tokens = 0
     output_tokens = 0
@@ -273,6 +308,26 @@ def verify_course_answer(
                     latency_ms=latency_ms,
                 )
             continue
+        except DailyQuotaError:
+            latency_ms += (time.perf_counter() - started) * 1000
+            return _fail(
+                "daily_quota",
+                error_type="daily_quota",
+                model=model,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                latency_ms=latency_ms,
+            )
+        except RateLimitExhausted:
+            latency_ms += (time.perf_counter() - started) * 1000
+            return _fail(
+                "rate_limited",
+                error_type="rate_limited",
+                model=model,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                latency_ms=latency_ms,
+            )
         except Exception as exc:
             latency_ms += (time.perf_counter() - started) * 1000
             return _fail(
