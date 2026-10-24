@@ -9,6 +9,7 @@ From the repo root in Windows PowerShell:
 
     $env:OFFICEHOURS_DEMO = "true"
     $env:OFFICEHOURS_ALLOW_EXTERNAL_LLM = "true"
+    $env:OFFICEHOURS_LLM_ENABLED = "true"
     $env:OFFICEHOURS_LLM_PROVIDER = "gemini"
     $env:OFFICEHOURS_GEMINI_FREE_TIER_ACK = "true"
     $env:GEMINI_API_KEY = "<your key>"
@@ -328,6 +329,7 @@ def main(argv: list[str] | None = None) -> int:
             "Windows PowerShell, from the repo root, with your own key:\n"
             '  $env:OFFICEHOURS_DEMO = "true"\n'
             '  $env:OFFICEHOURS_ALLOW_EXTERNAL_LLM = "true"\n'
+            '  $env:OFFICEHOURS_LLM_ENABLED = "true"\n'
             '  $env:OFFICEHOURS_LLM_PROVIDER = "gemini"\n'
             '  $env:OFFICEHOURS_GEMINI_FREE_TIER_ACK = "true"\n'
             '  $env:GEMINI_API_KEY = "<your key>"\n'

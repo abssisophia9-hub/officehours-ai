@@ -60,7 +60,11 @@ def block_network(monkeypatch):
 
     monkeypatch.setattr("app.ai.claude_client_legacy.urllib.request.urlopen", explode)
     monkeypatch.setattr("app.ai.gemini_client.urllib.request.urlopen", explode)
+    monkeypatch.setenv("OFFICEHOURS_LLM_ENABLED", "true")
     monkeypatch.setenv("OFFICEHOURS_LLM_RPM", "100000")
+    from app.ai.agent_policy import reset_policy_state
+
+    reset_policy_state()
 
 
 def _entry(**overrides) -> KnowledgeEntry:

@@ -23,6 +23,14 @@ if [[ -z "${OFFICEHOURS_ALLOW_EXTERNAL_LLM+x}" ]]; then
     export OFFICEHOURS_ALLOW_EXTERNAL_LLM=false
   fi
 fi
+# The policy kill switch stays off until a provider call is actually armed.
+if [[ -z "${OFFICEHOURS_LLM_ENABLED+x}" ]]; then
+  if [[ "${OFFICEHOURS_ALLOW_EXTERNAL_LLM}" == "true" ]]; then
+    export OFFICEHOURS_LLM_ENABLED=true
+  else
+    export OFFICEHOURS_LLM_ENABLED=false
+  fi
+fi
 
 cd "$ROOT/backend"
 if [[ ! -x venv/bin/uvicorn ]]; then
@@ -54,12 +62,12 @@ if [[ "${OFFICEHOURS_DEMO}" == "true" || "${OFFICEHOURS_DEMO}" == "1" ]]; then
   echo "  Demo password: aui-demo"
   echo "  Logins: s.elidrissi@aui.ma | a.chen@aui.ma | a.benali@aui.ma"
   echo "  (AUI emails: Initial.Last@aui.ma — role from course membership)"
-  if [[ "${OFFICEHOURS_ALLOW_EXTERNAL_LLM}" == "true" && "${OFFICEHOURS_LLM_PROVIDER:-}" == "gemini" ]]; then
+  if [[ "${OFFICEHOURS_LLM_ENABLED:-}" == "true" && "${OFFICEHOURS_ALLOW_EXTERNAL_LLM}" == "true" && "${OFFICEHOURS_LLM_PROVIDER:-}" == "gemini" ]]; then
     echo "  Study Agent: Gemini answer check on synthetic demo material (key is not printed)"
-  elif [[ "${OFFICEHOURS_ALLOW_EXTERNAL_LLM}" == "true" && "${OFFICEHOURS_LLM_PROVIDER:-}" == "claude" ]]; then
+  elif [[ "${OFFICEHOURS_LLM_ENABLED:-}" == "true" && "${OFFICEHOURS_ALLOW_EXTERNAL_LLM}" == "true" && "${OFFICEHOURS_LLM_PROVIDER:-}" == "claude" ]]; then
     echo "  Study Agent: Claude answer check on synthetic demo material (key is not printed)"
   else
-    echo "  Study Agent: retrieval only. For Gemini set GEMINI_API_KEY, OFFICEHOURS_LLM_PROVIDER=gemini, and OFFICEHOURS_GEMINI_FREE_TIER_ACK=true."
+    echo "  Study Agent: retrieval only. For Gemini set GEMINI_API_KEY, OFFICEHOURS_LLM_PROVIDER=gemini, OFFICEHOURS_GEMINI_FREE_TIER_ACK=true, and OFFICEHOURS_LLM_ENABLED=true."
   fi
 else
   echo "  Community deploy: users/courses from Canvas; chapters from Canvas modules."

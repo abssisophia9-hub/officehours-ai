@@ -304,6 +304,10 @@ def update_entry(
     db.add(entry)
     db.commit()
     db.refresh(entry)
+    if payload.status is not None or payload.answer_draft is not None:
+        from app.ai.agent_policy import invalidate_chunks
+
+        invalidate_chunks([entry.id])
     return entry
 
 
@@ -328,6 +332,9 @@ def _stamp_upload(db: Session, upload_id: str, status: str) -> list[KnowledgeEnt
     db.commit()
     for entry in entries:
         db.refresh(entry)
+    from app.ai.agent_policy import invalidate_chunks
+
+    invalidate_chunks([entry.id for entry in entries])
     return entries
 
 

@@ -752,21 +752,38 @@ def load_retrieval_baseline(path: Path) -> dict[str, Any]:
 # A not-found from the model is a real refusal. These outcomes are transport
 # or parse failures and can be rerun. A quote the gate rejected is recorded
 # separately and is not an error rerun.
-ERROR_OUTCOMES = {"invalid_json", "api_error", "rate_limited", "daily_quota"}
+ERROR_OUTCOMES = {"invalid_json", "api_error", "rate_limited", "daily_quota", "answer_too_long"}
 STOP_OUTCOMES = {"rate_limited", "daily_quota"}
 
 
 def miss_source_for(check: dict[str, Any] | None) -> str | None:
     outcome = (check or {}).get("outcome")
+    if outcome == "cache_hit":
+        outcome = (check or {}).get("checker_outcome")
     if outcome == "below_cutoff":
         return "cutoff"
     if outcome == "not_answerable":
         return "model"
+    if outcome in {"quota", "busy"}:
+        return "quota"
     if outcome in ERROR_OUTCOMES:
         return "error"
     if outcome in {"unfaithful", "unknown_chunk"}:
         return "rejected"
     return None
+
+
+def refusal_totals(report: dict[str, Any]) -> tuple[int, int]:
+    refused = 0
+    failed = 0
+    for section in (report.get("sections") or {}).values():
+        for row in section.get("questions") or []:
+            source = row.get("miss_source")
+            if source == "model":
+                refused += 1
+            elif source == "error":
+                failed += 1
+    return refused, failed
 
 
 def _annotate_detail(detail: dict[str, Any]) -> dict[str, Any]:
@@ -851,7 +868,7 @@ def _build_check_report(
     full = {}
     for section_name in ("agent_generated", "human_written"):
         full[section_name] = copy.deepcopy(sections.get(section_name) or _empty_section())
-    return {
+    report = {
         "label": "with_check",
         "checker": label,
         "provider": provider,
@@ -871,6 +888,10 @@ def _build_check_report(
             "cutoff_changed": False,
         },
     }
+    refused, failed = refusal_totals(report)
+    report["refused_by_model"] = refused
+    report["failed_closed_error"] = failed
+    return report
 
 
 def evaluate_with_check(
@@ -888,7 +909,8 @@ def evaluate_with_check(
 ) -> dict[str, Any]:
     """Same question contract, both filters on, with the answer check.
 
-    Turns the two guards on for this call and restores them afterwards.
+    Turns the two guards and the study-agent kill switch on for this call and
+    restores them afterwards.
     ``client`` is a fake with ``complete(system=, user=)``. Without it, the
     provider selected by ``OFFICEHOURS_LLM_PROVIDER`` is used. Retrieval and
     the 0.42 cutoff stay as they are.
@@ -907,10 +929,14 @@ def evaluate_with_check(
     updates = {
         "OFFICEHOURS_ALLOW_EXTERNAL_LLM": "true",
         "OFFICEHOURS_DEMO": "true",
+        "OFFICEHOURS_LLM_ENABLED": "true",
     }
     if client is None and provider:
         updates["OFFICEHOURS_LLM_PROVIDER"] = provider
     saved_env = _swap_env(updates)
+    from app.ai.agent_policy import reset_policy_state
+
+    reset_policy_state()
     original = _patch_embed_cache()
     flags = MODES["both_on"]
     kept = kept_details(prior)
@@ -1031,6 +1057,9 @@ def format_with_check(report: dict[str, Any], baseline: dict[str, Any] | None, b
             f"Stopped on {report['stopped']}. Finished questions are kept. "
             "Resume with --resume. Rerun only errors with --rerun-errors."
         )
+    refused, failed = refusal_totals(report)
+    lines.append(f"refused_by_model {refused}")
+    lines.append(f"failed_closed_error {failed}")
     if report.get("checker") == "fake":
         lines.append("These with_check counts are from the injected client, not a live model.")
     base_counts = None

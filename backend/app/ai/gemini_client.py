@@ -27,6 +27,10 @@ from urllib.parse import quote
 logger = logging.getLogger("officehours.answer_check")
 
 DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite"
+
+
+def gemini_model() -> str:
+    return os.getenv("GEMINI_MODEL", DEFAULT_GEMINI_MODEL).strip() or DEFAULT_GEMINI_MODEL
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 RATE_LIMIT_ATTEMPTS = 3
 RATE_LIMIT_BACKOFF_SECONDS = (1.0, 2.0)
@@ -170,7 +174,7 @@ def complete_gemini(
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY missing")
 
-    model = os.getenv("GEMINI_MODEL", DEFAULT_GEMINI_MODEL).strip() or DEFAULT_GEMINI_MODEL
+    model = gemini_model()
     url = GEMINI_ENDPOINT.format(model=quote(model, safe=""))
     payload = {
         "systemInstruction": {"parts": [{"text": system}]},
