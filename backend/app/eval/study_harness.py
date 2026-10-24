@@ -741,6 +741,53 @@ def newest_baseline_file(directory: Path) -> Path | None:
     return matches[-1] if matches else None
 
 
+def newest_with_check_file(directory: Path) -> Path | None:
+    matches = sorted(directory.glob("with_check_*.json"))
+    return matches[-1] if matches else None
+
+
+_ERROR_OUTCOMES = frozenset(
+    {"invalid_json", "api_error", "unfaithful", "unknown_chunk", "answer_too_long"}
+)
+
+
+def miss_source_for(detail: dict[str, Any]) -> str | None:
+    """Why an unanswered question missed. Model refusals and errors stay apart.
+
+    ``error`` is the only value ``--rerun-errors`` sends again. A model refusal,
+    a cutoff miss, and a quota or busy stop are finished.
+    """
+    if detail.get("answered"):
+        return None
+    check = detail.get("check") or {}
+    outcome = check.get("outcome")
+    checker = check.get("checker_outcome") or outcome
+    if outcome == "cache_hit":
+        outcome = checker
+    if outcome == "not_answerable":
+        return "model"
+    if outcome in _ERROR_OUTCOMES:
+        return "error"
+    if outcome in {"quota", "busy"}:
+        return "quota"
+    if outcome == "below_cutoff":
+        return "cutoff"
+    return None
+
+
+def refusal_totals(report: dict[str, Any]) -> tuple[int, int]:
+    refused = 0
+    failed = 0
+    for section in (report.get("sections") or {}).values():
+        for row in section.get("questions") or []:
+            source = row.get("miss_source")
+            if source == "model":
+                refused += 1
+            elif source == "error":
+                failed += 1
+    return refused, failed
+
+
 def load_retrieval_baseline(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -753,29 +800,49 @@ def evaluate_with_check(
     *,
     client: Any = None,
     checker_label: str | None = None,
+    prior: dict[str, Any] | None = None,
+    rerun_errors_only: bool = False,
 ) -> dict[str, Any]:
     """Same 75-question contract, both filters on, with the answer check.
 
-    Turns the two guards on for this call and restores them afterwards.
-    ``client`` is a fake with ``complete(system=, user=)``. Without it, the
-    real Messages client is used. Retrieval and the 0.42 cutoff stay as they are.
+    Turns the guards and the study-agent kill switch on for this call and
+    restores them afterwards. ``client`` is a fake with ``complete(system=, user=)``.
+    Without it, the Gemini checker is used. Retrieval and the 0.42 cutoff stay
+    as they are.
+
+    ``rerun_errors_only`` keeps every finished question from ``prior`` and
+    sends again only the rows whose miss came from a failed-closed error.
     """
+    from app.ai.agent_policy import PROMPT_VERSION, reset_policy_state
+
     label = checker_label or ("fake" if client is not None else "gemini")
     saved_env = _swap_env(
         {
             "OFFICEHOURS_ALLOW_EXTERNAL_LLM": "true",
             "OFFICEHOURS_DEMO": "true",
+            "OFFICEHOURS_LLM_ENABLED": "true",
         }
     )
+    reset_policy_state()
     original = _patch_embed_cache()
     flags = MODES["both_on"]
+    model_name = os.getenv("GEMINI_MODEL", "gemini-3.8-flash") if label == "gemini" else None
     try:
         sections = {}
         for section_name in ("agent_generated", "human_written"):
             rows = questions[section_name]
+            prior_rows = {}
+            if rerun_errors_only and prior is not None:
+                previous = (prior.get("sections") or {}).get(section_name) or {}
+                prior_rows = {row.get("id"): row for row in previous.get("questions") or []}
             details = []
             records: list[dict[str, Any]] = []
             for row in rows:
+                kept = prior_rows.get(row["id"]) if rerun_errors_only else None
+                if kept is not None and kept.get("miss_source") not in {"error", None}:
+                    details.append(kept)
+                    records.append(kept.get("check") or {})
+                    continue
                 response = answer_from_knowledge_base(
                     db,
                     row["question"],
@@ -794,6 +861,9 @@ def evaluate_with_check(
                 )
                 detail = _judge(response, row, blended, files)
                 detail["check"] = records[-1]
+                detail["miss_source"] = miss_source_for(detail)
+                detail["prompt_version"] = (detail["check"] or {}).get("prompt_version") or PROMPT_VERSION
+                detail["model"] = (detail["check"] or {}).get("model") or model_name
                 details.append(detail)
             sections[section_name] = {
                 "n": len(rows),
@@ -801,10 +871,11 @@ def evaluate_with_check(
                 "questions": details,
                 "usage": _usage(records, len(rows)),
             }
-        return {
+        report = {
             "label": "with_check",
             "checker": label,
-            "model": os.getenv("GEMINI_MODEL", "gemini-3.8-flash") if label == "gemini" else None,
+            "model": model_name,
+            "prompt_version": PROMPT_VERSION,
             "mode": "both_on",
             "flags": flags,
             "embedding_backend": os.getenv("OFFICEHOURS_CLUSTERING_BACKEND", "sentence-transformers"),
@@ -818,6 +889,10 @@ def evaluate_with_check(
                 "cutoff_changed": False,
             },
         }
+        refused, failed = refusal_totals(report)
+        report["refused_by_model"] = refused
+        report["failed_closed_error"] = failed
+        return report
     finally:
         _restore_embed(original)
         _restore_env(saved_env)
@@ -836,8 +911,13 @@ def format_with_check(report: dict[str, Any], baseline: dict[str, Any] | None, b
         f"Baseline file: {baseline_name}",
         f"Checker: {report.get('checker')}.",
         f"Model: {report.get('model') or '-'}.",
+        f"Prompt version: {report.get('prompt_version') or '-'}.",
         f"Embedding backend: {report.get('embedding_backend')}. Mode: both_on.",
     ]
+    refused, failed = refusal_totals(report)
+    lines.append(f"refused_by_model {refused}")
+    lines.append(f"failed_closed_error {failed}")
+    lines.append("Model refusals are finished. --rerun-errors sends failed-closed errors again.")
     if report.get("checker") == "fake":
         lines.append("These with_check counts are from the injected client, not a live model.")
     base_counts = None

@@ -516,6 +516,7 @@ def ask_kb_agent(
         payload.question,
         top_k=payload.top_k,
         course_id=payload.course_id,
+        user_id=user.id,
     )
     record_kb_ask_event(
         db,

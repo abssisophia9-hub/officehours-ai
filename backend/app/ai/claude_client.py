@@ -143,17 +143,18 @@ class AnswerCheckResult:
 
 
 class GeminiAnswerCheckClient:
-    """Study-agent checker. Gemini free tier, same budget as the old check."""
+    """Study-agent checker. Gemini free tier, budget from the agent policy."""
 
     def complete(self, *, system: str, user: str) -> Any:
+        from app.ai.agent_policy import max_output_tokens, timeout_seconds
         from app.ai.gemini_client import complete_gemini
 
         return complete_gemini(
             system,
             user,
-            max_tokens=ANSWER_CHECK_MAX_TOKENS,
+            max_tokens=max_output_tokens(),
             temperature=0,
-            timeout=ANSWER_CHECK_TIMEOUT_SECONDS,
+            timeout=timeout_seconds(),
         )
 
 
@@ -161,14 +162,15 @@ class AnthropicAnswerCheckClient:
     """Legacy Messages client. Not used by the study agent."""
 
     def complete(self, *, system: str, user: str) -> Any:
+        from app.ai.agent_policy import max_output_tokens, timeout_seconds
         from app.ai.claude_client_legacy import _complete_claude
 
         return _complete_claude(
             system,
             user,
-            max_tokens=ANSWER_CHECK_MAX_TOKENS,
+            max_tokens=max_output_tokens(),
             temperature=0,
-            timeout=ANSWER_CHECK_TIMEOUT_SECONDS,
+            timeout=timeout_seconds(),
         )
 
 
@@ -207,6 +209,7 @@ def _fail(
     input_tokens: int,
     output_tokens: int,
     latency_ms: float,
+    log: bool = True,
 ) -> AnswerCheckResult:
     result = AnswerCheckResult(
         outcome=outcome,
@@ -217,7 +220,8 @@ def _fail(
         latency_ms=latency_ms,
         error_type=error_type,
     )
-    _log_check(result)
+    if log:
+        _log_check(result)
     return result
 
 
@@ -225,6 +229,8 @@ def verify_course_answer(
     question: str,
     chunks: list[dict[str, Any]],
     client: AnswerCheckClient | None = None,
+    *,
+    emit_log: bool = True,
 ) -> AnswerCheckResult:
     """Ask whether one of the chunks answers the question.
 
@@ -271,6 +277,7 @@ def verify_course_answer(
                     input_tokens=input_tokens,
                     output_tokens=output_tokens,
                     latency_ms=latency_ms,
+                    log=emit_log,
                 )
             continue
         except Exception as exc:
@@ -282,6 +289,7 @@ def verify_course_answer(
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
                 latency_ms=latency_ms,
+                log=emit_log,
             )
         model = getattr(completion, "model", None)
         input_tokens += int(getattr(completion, "input_tokens", 0) or 0)
@@ -302,6 +310,7 @@ def verify_course_answer(
             input_tokens=input_tokens,
             output_tokens=output_tokens,
             latency_ms=latency_ms,
+            log=emit_log,
         )
     if not isinstance(data, dict):
         return _fail(
@@ -311,6 +320,7 @@ def verify_course_answer(
             input_tokens=input_tokens,
             output_tokens=output_tokens,
             latency_ms=latency_ms,
+            log=emit_log,
         )
 
     answerable = data.get("answerable")
@@ -322,6 +332,7 @@ def verify_course_answer(
             input_tokens=input_tokens,
             output_tokens=output_tokens,
             latency_ms=latency_ms,
+            log=emit_log,
         )
     if not answerable:
         result = AnswerCheckResult(
@@ -332,7 +343,8 @@ def verify_course_answer(
             output_tokens=output_tokens,
             latency_ms=latency_ms,
         )
-        _log_check(result)
+        if emit_log:
+            _log_check(result)
         return result
 
     chunk_id = data.get("supporting_chunk_id")
@@ -344,6 +356,7 @@ def verify_course_answer(
             input_tokens=input_tokens,
             output_tokens=output_tokens,
             latency_ms=latency_ms,
+            log=emit_log,
         )
     quote = data.get("quote")
     answer = data.get("answer")
@@ -362,6 +375,7 @@ def verify_course_answer(
             input_tokens=input_tokens,
             output_tokens=output_tokens,
             latency_ms=latency_ms,
+            log=emit_log,
         )
 
     result = AnswerCheckResult(
@@ -375,5 +389,6 @@ def verify_course_answer(
         output_tokens=output_tokens,
         latency_ms=latency_ms,
     )
-    _log_check(result)
+    if emit_log:
+        _log_check(result)
     return result

@@ -15,9 +15,10 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from app.ai.claude_client import AnswerCheckClient, verify_course_answer
+from app.ai.claude_client import AnswerCheckClient
 from app.models.knowledge import AgentAskResponse, KnowledgeSearchHit
-from app.services.knowledge_service import search_approved_entries, to_out
+# Bound on this module so the policy and the tests patch the same search.
+from app.services.knowledge_service import search_approved_entries
 
 # Below this similarity we treat a hit as too weak to answer from.
 WEAK_MATCH_CONFIDENCE = 0.42
@@ -157,64 +158,24 @@ def answer_from_knowledge_base(
     course_scoped: bool = True,
     answer_checker: AnswerCheckClient | None = None,
     check_records: list[dict[str, Any]] | None = None,
+    user_id: int | None = None,
 ) -> AgentAskResponse:
-    """Study-agent answer. Flags stay off the HTTP route (service and tests only).
+    """Study-agent answer. The pipeline lives in ``agent_policy``.
 
-    Retrieval is limited to uploaded course-material chunks. Approved FAQ
-    drafts from student asks stay on the Ask Triage / Help Coach path.
-
-    The answer check runs only after a hit at or above 0.42, and only when
-    the checker itself allows an external demo call. ``answer_checker`` injects
-    a fake client in tests. ``check_records`` collects one log row per call.
+    Retrieval, the 0.42 cutoff, and the filters are unchanged. Flags stay off
+    the HTTP request model. ``answer_checker`` injects a fake client in tests.
+    ``user_id`` is only a rate-limit key. It is not logged and not cached.
     """
-    matches = search_approved_entries(
+    from app.ai.agent_policy import run_study_agent
+
+    return run_study_agent(
         db,
         question,
         top_k=top_k,
         course_id=course_id,
         approved_only=approved_only,
         course_scoped=course_scoped,
-        course_material_only=True,
+        answer_checker=answer_checker,
+        check_records=check_records,
+        user_id=user_id,
     )
-    sources = [
-        KnowledgeSearchHit(entry=to_out(entry), similarity=round(similarity, 4))
-        for entry, similarity in matches
-    ]
-
-    if not sources or sources[0].similarity < WEAK_MATCH_CONFIDENCE:
-        if check_records is not None:
-            check_records.append(_blank_record("below_cutoff"))
-        return AgentAskResponse(
-            answer=NO_MATCH_ANSWER,
-            student_hint=NO_MATCH_HINT,
-            confidence=round(sources[0].similarity, 4) if sources else 0.0,
-            matched_count=0,
-            sources=[],
-            used_approved_kb_only=approved_only,
-            should_seek_help=True,
-        )
-
-    result = verify_course_answer(
-        question,
-        _chunks_for_check(sources),
-        client=answer_checker,
-    )
-    record = result.as_record()
-    if result.outcome == "passed" and result.supporting_chunk_id is not None:
-        chosen = next(hit for hit in sources if hit.entry.id == result.supporting_chunk_id)
-        record["short_answer"] = result.answer or ""
-        record["quote"] = result.quote or ""
-        record["citation"] = _cite_entry(chosen.entry)
-    if check_records is not None:
-        check_records.append(record)
-    if result.outcome == "passed" and result.supporting_chunk_id is not None:
-        return _checked_answer(
-            sources,
-            approved_only=approved_only,
-            answer=result.answer or "",
-            quote=result.quote or "",
-            chunk_id=result.supporting_chunk_id,
-        )
-    if result.outcome in {"flag_off", "demo_off"}:
-        return _retrieval_answer(sources, approved_only)
-    return _check_miss(sources, approved_only)

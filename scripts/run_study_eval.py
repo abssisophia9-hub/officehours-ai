@@ -9,15 +9,21 @@ From the repo root in Windows PowerShell:
 
     $env:OFFICEHOURS_DEMO = "true"
     $env:OFFICEHOURS_ALLOW_EXTERNAL_LLM = "true"
+    $env:OFFICEHOURS_LLM_ENABLED = "true"
     $env:GEMINI_API_KEY = "<your key>"
     $env:GEMINI_MODEL = "gemini-3.8-flash"
     $env:OFFICEHOURS_CLUSTERING_BACKEND = "sentence-transformers"
     .\\backend\\venv\\Scripts\\python.exe scripts\\run_study_eval.py --with-check
 
+``--with-check`` also turns ``OFFICEHOURS_LLM_ENABLED`` on for that process.
+The running app stays retrieval-only until the same variable is set there.
 The key is read from the environment and is not printed or written.
 A real run writes the JSON results and a CSV of answered questions beside it.
 ``--fake-check`` uses an echo client, prints the harness, and does not write
 a results file. Those numbers are not a live model result.
+``--with-check --rerun-errors`` keeps finished questions from the newest
+with_check JSON and sends only failed-closed errors again. Model refusals
+stay as they are.
 """
 
 from __future__ import annotations
@@ -59,6 +65,7 @@ from app.eval.study_harness import (  # noqa: E402
     load_questions,
     load_retrieval_baseline,
     newest_baseline_file,
+    newest_with_check_file,
     write_answer_label_csv,
 )
 from app.main import app  # noqa: E402
@@ -113,7 +120,7 @@ def _prepare() -> tuple[dict, dict, dict]:
     return questions, manifest, {**ingested, "files": files}
 
 
-def run_with_check(client) -> int:
+def run_with_check(client, *, rerun: bool = False) -> int:
     if client is None and not (
         os.getenv("GEMINI_API_KEY", "").strip() or os.getenv("GOOGLE_API_KEY", "").strip()
     ):
@@ -129,6 +136,20 @@ def run_with_check(client) -> int:
     else:
         os.environ.setdefault("OFFICEHOURS_CLUSTERING_BACKEND", "lexical")
         print("Fake client. Counts are not a live model result. No results file is written.")
+    prior = None
+    if rerun:
+        previous = newest_with_check_file(RESULTS)
+        if previous is None:
+            print(
+                "No with_check result to resume. Run --with-check first. "
+                "Finished questions are not invented."
+            )
+            return 2
+        prior = json.loads(previous.read_text(encoding="utf-8"))
+        print(
+            f"Rerunning failed-closed errors from {previous.name}. "
+            "Finished questions, including model refusals, are kept."
+        )
     questions, manifest, ingested = _prepare()
     db = SessionLocal()
     try:
@@ -139,6 +160,8 @@ def run_with_check(client) -> int:
             ingested["files"],
             client=client,
             checker_label="fake" if client is not None else "gemini",
+            prior=prior,
+            rerun_errors_only=rerun,
         )
     finally:
         db.close()
@@ -217,6 +240,9 @@ def _run_baseline() -> int:
 
 
 POWERSHELL_WITH_CHECK = r""".\backend\venv\Scripts\python.exe scripts\run_study_eval.py --with-check"""
+POWERSHELL_RERUN_ERRORS = (
+    r""".\backend\venv\Scripts\python.exe scripts\run_study_eval.py --with-check --rerun-errors"""
+)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -226,10 +252,13 @@ def main(argv: list[str] | None = None) -> int:
             "Windows PowerShell, from the repo root, with your own key:\n"
             '  $env:OFFICEHOURS_DEMO = "true"\n'
             '  $env:OFFICEHOURS_ALLOW_EXTERNAL_LLM = "true"\n'
+            '  $env:OFFICEHOURS_LLM_ENABLED = "true"\n'
             '  $env:GEMINI_API_KEY = "<your key>"\n'
             '  $env:GEMINI_MODEL = "gemini-3.8-flash"\n'
             '  $env:OFFICEHOURS_CLUSTERING_BACKEND = "sentence-transformers"\n'
             f"  {POWERSHELL_WITH_CHECK}\n"
+            "Rerun only failed-closed errors from the newest with_check file:\n"
+            f"  {POWERSHELL_RERUN_ERRORS}\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -243,12 +272,20 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Echo client. Prints only and does not write a results file.",
     )
+    parser.add_argument(
+        "--rerun-errors",
+        action="store_true",
+        help="With --with-check, send again only questions that failed closed.",
+    )
     args = parser.parse_args(argv)
+    if args.rerun_errors and not args.with_check:
+        print("--rerun-errors requires --with-check.")
+        return 2
     if args.with_check and args.fake_check:
         print("Use either --with-check or --fake-check.")
         return 2
     if args.with_check:
-        return run_with_check(None)
+        return run_with_check(None, rerun=args.rerun_errors)
     if args.fake_check:
         return run_with_check(_EchoClient())
     return run_baseline()

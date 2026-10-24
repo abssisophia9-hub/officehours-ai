@@ -56,6 +56,11 @@ def block_network(monkeypatch):
         raise AssertionError("network was called")
 
     monkeypatch.setattr("app.ai.claude_client_legacy.urllib.request.urlopen", explode)
+    monkeypatch.setattr("app.ai.gemini_client.urllib.request.urlopen", explode)
+    monkeypatch.setenv("OFFICEHOURS_LLM_ENABLED", "true")
+    from app.ai.agent_policy import reset_policy_state
+
+    reset_policy_state()
 
 
 def _entry(**overrides) -> KnowledgeEntry:
