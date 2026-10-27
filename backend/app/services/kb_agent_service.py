@@ -114,6 +114,21 @@ def _checked_answer(
     )
 
 
+def _file_answer(answer: str, filename: str, approved_only: bool) -> AgentAskResponse:
+    """Explain the student's file. The line says they uploaded it, not the professor."""
+    safe = " ".join((filename or "your file").split())
+    text = f"{answer.strip()}\nbased on {safe} that you uploaded"
+    return AgentAskResponse(
+        answer=text,
+        student_hint=None,
+        confidence=0.7,
+        matched_count=1,
+        sources=[],
+        used_approved_kb_only=approved_only,
+        should_seek_help=False,
+    )
+
+
 def _check_miss(sources: list[KnowledgeSearchHit], approved_only: bool) -> AgentAskResponse:
     return AgentAskResponse(
         answer=CHECK_MISS_ANSWER,
@@ -164,6 +179,7 @@ def answer_from_knowledge_base(
     answer_checker: AnswerCheckClient | None = None,
     check_records: list[dict[str, Any]] | None = None,
     user_id: int | None = None,
+    student_file: dict[str, str] | None = None,
 ) -> AgentAskResponse:
     """Study-agent answer. The pipeline lives in ``agent_policy``.
 
@@ -183,4 +199,5 @@ def answer_from_knowledge_base(
         answer_checker=answer_checker,
         check_records=check_records,
         user_id=user_id,
+        student_file=student_file,
     )

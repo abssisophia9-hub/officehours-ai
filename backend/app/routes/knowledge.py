@@ -2,6 +2,9 @@
 Routes for knowledge-base curation and the student-facing KB agent.
 """
 
+import logging
+import os
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -65,7 +68,14 @@ from app.services.analytics_service import (
 )
 from app.services.canvas_service import canvas_status, sync_course_materials
 from app.services.kb_agent_service import answer_from_knowledge_base
+from app.services.study_attachment import (
+    log_student_file,
+    prepare_student_file,
+    transcribe_student_image,
+)
 from app.services.material_extract import extract_material_pages
+
+logger = logging.getLogger("officehours.knowledge")
 from app.services.demo_mode import demo_mode
 from app.services.knowledge_service import (
     approve_upload,
@@ -522,6 +532,72 @@ def ask_kb_agent(
         db,
         question=payload.question,
         course_id=payload.course_id,
+        response=response,
+    )
+    return response
+
+
+@router.post("/agent/ask-upload", response_model=AgentAskResponse)
+def ask_with_student_file(
+    question: str = Form(...),
+    course_id: int = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Explain a screenshot or a code file the student attached.
+
+    The file is not saved as course material and it is not executed.
+    """
+    require_course_role(db, user, course_id, roles={"student"})
+    cleaned = (question or "").strip()
+    if len(cleaned) < 3 or len(cleaned) > 4000:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Write a question between 3 and 4000 characters.",
+        )
+    from app.ai.agent_policy import answer_check_ready
+
+    if not answer_check_ready():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File questions need the answer check turned on.",
+        )
+    data = file.file.read(1_500_001)
+    prepared = prepare_student_file(file.filename or "", data)
+    if prepared.kind == "image":
+        provider = os.getenv("OFFICEHOURS_LLM_PROVIDER", "").strip().lower()
+        if provider != "gemini":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Screenshots are read when the Gemini answer check is on.",
+            )
+        try:
+            text = transcribe_student_image(prepared.data, prepared.mime or "image/png")
+        except Exception:
+            logger.warning("study_file transcribe_failed")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="That screenshot could not be read.",
+            ) from None
+        if not text or text == "(no text)":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="That screenshot has no readable text.",
+            )
+        prepared.text = text
+    log_student_file(prepared)
+    response = answer_from_knowledge_base(
+        db,
+        cleaned,
+        course_id=course_id,
+        user_id=user.id,
+        student_file={"filename": prepared.filename, "text": prepared.text},
+    )
+    record_kb_ask_event(
+        db,
+        question=cleaned,
+        course_id=course_id,
         response=response,
     )
     return response

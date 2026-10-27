@@ -25,6 +25,7 @@ from app.services.security_log import audit
 DEFAULT_LIMITS = {
     "/auth/login": (20, 60),
     "/requests/": (30, 60),
+    "/agent/ask-upload": (40, 60),
     "/agent/ask": (40, 60),
 }
 
@@ -112,7 +113,7 @@ def enforce_rate_limit(request: Request) -> None:
         if path == prefix or path.startswith(prefix.rstrip("/") + "/"):
             if prefix == "/requests/" and request.method != "POST":
                 return
-            if prefix == "/agent/ask" and request.method != "POST":
+            if prefix in {"/agent/ask", "/agent/ask-upload"} and request.method != "POST":
                 return
             if prefix == "/auth/login" and request.method != "POST":
                 return

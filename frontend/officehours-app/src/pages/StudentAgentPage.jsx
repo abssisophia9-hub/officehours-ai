@@ -1,10 +1,39 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router";
-import { api } from "../api/client.js";
+import { api, apiUpload } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 const NOT_FOUND = "No professor-approved material answers this.";
 const GROUPS = ["Today", "Last 7 days", "Older"];
+const IMAGE_ACCEPT = ".png,.jpg,.jpeg,.gif,.webp";
+const CODE_ACCEPT = [
+  ".py",
+  ".c",
+  ".h",
+  ".cpp",
+  ".java",
+  ".js",
+  ".jsx",
+  ".ts",
+  ".tsx",
+  ".md",
+  ".txt",
+  ".json",
+  ".css",
+  ".sql",
+  ".go",
+  ".rs",
+  ".rb",
+  ".php",
+  ".csv",
+  ".sh",
+].join(",");
+
+function baseName(name) {
+  const parts = String(name || "").split(/[/\\]/);
+  const last = parts[parts.length - 1] || "file";
+  return last.slice(0, 80);
+}
 
 function sourceLabel(entry) {
   const file = String(entry?.source_filename || "").trim();
@@ -65,7 +94,12 @@ export default function StudentAgentPage() {
   const [messages, setMessages] = useState([]);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [attachment, setAttachment] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const boxRef = useRef(null);
+  const imageRef = useRef(null);
+  const codeRef = useRef(null);
+  const menuRef = useRef(null);
   const endRef = useRef(null);
   const activeIdRef = useRef(activeId);
   activeIdRef.current = activeId;
@@ -75,6 +109,8 @@ export default function StudentAgentPage() {
     let cancelled = false;
     setLoading(true);
     setDraft("");
+    setAttachment(null);
+    setMenuOpen(false);
     (async () => {
       try {
         let list = await api(`/study-conversations?course_id=${courseId}`, { token });
@@ -137,6 +173,8 @@ export default function StudentAgentPage() {
     if (id === activeIdRef.current || busy) return;
     setActiveId(id);
     setMessages([]);
+    setAttachment(null);
+    setMenuOpen(false);
     setLoading(true);
     try {
       const detail = await api(`/study-conversations/${id}`, { token });
@@ -172,6 +210,8 @@ export default function StudentAgentPage() {
     setActiveId(created.id);
     setMessages([]);
     setDraft("");
+    setAttachment(null);
+    setMenuOpen(false);
     boxRef.current?.focus();
   }
 
@@ -198,17 +238,32 @@ export default function StudentAgentPage() {
     const question = draft.trim();
     if (!question || busy || !activeId) return;
     const conversationId = activeId;
+    const named = attachment ? baseName(attachment.name) : "";
+    const shown = named ? `${question}\nAttached: ${named}` : question;
     setDraft("");
+    setAttachment(null);
+    if (imageRef.current) imageRef.current.value = "";
+    if (codeRef.current) codeRef.current.value = "";
+    setMenuOpen(false);
     if (boxRef.current) boxRef.current.style.height = "auto";
-    setMessages((prev) => [...prev, { id: `q-${Date.now()}`, role: "student", text: question }]);
+    setMessages((prev) => [...prev, { id: `q-${Date.now()}`, role: "student", text: shown }]);
     setBusy(true);
     try {
-      await saveMessage(conversationId, { role: "student", text: question });
-      const answer = await api("/agent/ask", {
-        method: "POST",
-        token,
-        body: { question, course_id: activeCourse.id },
-      });
+      await saveMessage(conversationId, { role: "student", text: shown });
+      let answer;
+      if (attachment) {
+        const form = new FormData();
+        form.append("question", question);
+        form.append("course_id", String(activeCourse.id));
+        form.append("file", new File([attachment], named, { type: attachment.type || "" }));
+        answer = await apiUpload("/agent/ask-upload", { token, formData: form });
+      } else {
+        answer = await api("/agent/ask", {
+          method: "POST",
+          token,
+          body: { question, course_id: activeCourse.id },
+        });
+      }
       const notFound = Boolean(answer.should_seek_help || answer.matched_count === 0);
       const agentBody = {
         role: "agent",
@@ -241,6 +296,41 @@ export default function StudentAgentPage() {
     } finally {
       setBusy(false);
       boxRef.current?.focus();
+    }
+  }
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    function close(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) setMenuOpen(false);
+    }
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [menuOpen]);
+
+  function onPickFile(event) {
+    const next = event.target.files && event.target.files[0];
+    event.target.value = "";
+    if (next) setAttachment(next);
+    setMenuOpen(false);
+  }
+
+  function openPicker(kind) {
+    setMenuOpen(false);
+    const input = kind === "screenshot" ? imageRef.current : codeRef.current;
+    input?.click();
+  }
+
+  function onPaste(event) {
+    const items = event.clipboardData?.items || [];
+    for (const item of items) {
+      if (!item.type || !item.type.startsWith("image/") || item.type === "image/svg+xml") continue;
+      const blob = item.getAsFile();
+      if (!blob) return;
+      const ext = item.type === "image/jpeg" ? "jpg" : item.type.slice("image/".length) || "png";
+      setAttachment(new File([blob], `screenshot.${ext}`, { type: item.type }));
+      event.preventDefault();
+      return;
     }
   }
 
@@ -333,20 +423,69 @@ export default function StudentAgentPage() {
 
         <form className="sa-composer" onSubmit={send}>
           <p className="sa-trust">Answers only come from material your professor approved.</p>
-          <textarea
-            ref={boxRef}
-            className="sa-input"
-            rows={2}
-            value={draft}
-            placeholder="Ask about this course"
-            aria-label="Question for the study agent"
-            disabled={busy || loading}
-            onChange={(event) => {
-              setDraft(event.target.value);
-              grow(event.target);
-            }}
-            onKeyDown={onKeyDown}
-          />
+          <div className="sa-bar" ref={menuRef}>
+            {menuOpen ? (
+              <div className="sa-plus-menu" role="menu">
+                <button type="button" role="menuitem" onClick={() => openPicker("screenshot")}>
+                  Screenshot
+                </button>
+                <button type="button" role="menuitem" onClick={() => openPicker("code")}>
+                  Code or text file
+                </button>
+              </div>
+            ) : null}
+            {attachment ? (
+              <span className="sa-file-chip">
+                {baseName(attachment.name)}
+                <button type="button" onClick={() => setAttachment(null)} aria-label="Remove file">
+                  ×
+                </button>
+              </span>
+            ) : null}
+            <div className="sa-bar-row">
+              <button
+                type="button"
+                className="sa-plus"
+                aria-label="Add a file"
+                aria-expanded={menuOpen}
+                disabled={busy || loading}
+                onClick={() => setMenuOpen((open) => !open)}
+              >
+                +
+              </button>
+              <textarea
+                ref={boxRef}
+                className="sa-input"
+                rows={1}
+                value={draft}
+                placeholder="Ask about this course"
+                aria-label="Question for the study agent"
+                disabled={busy || loading}
+                onChange={(event) => {
+                  setDraft(event.target.value);
+                  grow(event.target);
+                }}
+                onPaste={onPaste}
+                onKeyDown={onKeyDown}
+              />
+            </div>
+            <input
+              ref={imageRef}
+              className="sa-file-input"
+              type="file"
+              accept={IMAGE_ACCEPT}
+              aria-label="Screenshot to ask about"
+              onChange={onPickFile}
+            />
+            <input
+              ref={codeRef}
+              className="sa-file-input"
+              type="file"
+              accept={CODE_ACCEPT}
+              aria-label="Code or text file to ask about"
+              onChange={onPickFile}
+            />
+          </div>
           <button type="submit" className="sa-send" disabled={busy || loading || !draft.trim()}>
             {busy ? "Looking…" : "Send"}
           </button>

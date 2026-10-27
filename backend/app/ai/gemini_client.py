@@ -14,6 +14,7 @@ The key is read only from ``GEMINI_API_KEY``. It is sent in the
 
 from __future__ import annotations
 
+import base64
 import json
 import logging
 import os
@@ -233,3 +234,56 @@ def complete_gemini(
         RATE_LIMIT_ATTEMPTS,
     )
     raise RateLimitExhausted("rate_limit_exhausted")
+
+
+def transcribe_image(data: bytes, mime: str, *, system: str) -> GeminiCompletion:
+    """One vision call that returns visible text. The key stays in the header.
+
+    The image is not written into the URL or the log. This call does not use
+    the answer-check JSON schema.
+    """
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY missing")
+    model = gemini_model()
+    url = GEMINI_ENDPOINT.format(model=quote(model, safe=""))
+    payload = {
+        "systemInstruction": {"parts": [{"text": system}]},
+        "contents": [
+            {
+                "role": "user",
+                "parts": [
+                    {"text": "Transcribe the visible text."},
+                    {
+                        "inline_data": {
+                            "mime_type": mime,
+                            "data": base64.b64encode(data).decode("ascii"),
+                        }
+                    },
+                ],
+            }
+        ],
+        "generationConfig": {"temperature": 0, "maxOutputTokens": 800},
+    }
+    body = json.dumps(payload).encode("utf-8")
+    if api_key.encode("utf-8") in body or "key=" in url:
+        raise RuntimeError("refusing to send the API key in the image request")
+    headers = {
+        "content-type": "application/json",
+        "x-goog-api-key": api_key,
+    }
+    request = urllib.request.Request(url, data=body, headers=headers, method="POST")
+    started = time.perf_counter()
+    try:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            raw = response.read()
+    except urllib.error.HTTPError as exc:
+        status = getattr(exc, "code", None)
+        error_body = _error_body(exc)
+        if status == 429 and _is_daily_quota(error_body):
+            logger.warning("study_file transcribe daily_quota provider=gemini")
+            raise DailyQuotaError("daily_quota") from None
+        logger.warning("study_file transcribe status=%s provider=gemini", status)
+        raise
+    latency_ms = (time.perf_counter() - started) * 1000
+    return _completion_from_body(raw, model, latency_ms)

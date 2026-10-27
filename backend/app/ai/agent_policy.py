@@ -15,7 +15,6 @@ Numbers and the reason for each default live in ``docs/AGENT_POLICY.md``.
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import os
 import time
@@ -23,10 +22,9 @@ from datetime import datetime, timezone
 from typing import Any
 
 from app.ai.claude_client import (
-    ANSWER_CHECK_SYSTEM,
     AnswerCheckClient,
     AnswerCheckResult,
-    _material_chunks,
+    answer_check_request,
     verify_course_answer,
 )
 from app.services.rate_limit import RateLimiter
@@ -263,6 +261,11 @@ def _model_calls_allowed() -> bool:
     return _truthy("OFFICEHOURS_ALLOW_EXTERNAL_LLM") and demo_mode()
 
 
+def answer_check_ready() -> bool:
+    """True when a file question is allowed to reach the checker."""
+    return llm_enabled() and _model_calls_allowed() and _provider_ready(None)
+
+
 def _provider_ready(answer_checker: AnswerCheckClient | None) -> bool:
     """An injected client skips provider selection. A live call needs a provider.
 
@@ -295,11 +298,14 @@ def _note_failure() -> None:
         _BREAKER["failures"] = 0
 
 
-def estimate_input_tokens(question: str, chunks: list[dict[str, Any]]) -> int:
+def estimate_input_tokens(
+    question: str,
+    chunks: list[dict[str, Any]],
+    student_file: dict[str, str] | None = None,
+) -> int:
     """Chars/4 of the system prompt plus the JSON the checker actually sends."""
-    material = _material_chunks(chunks)
-    payload = json.dumps({"question": question, "chunks": material}, ensure_ascii=False)
-    return (len(ANSWER_CHECK_SYSTEM) + len(payload)) // 4 + 1
+    system, payload = answer_check_request(question, chunks, student_file)
+    return (len(system) + len(payload)) // 4 + 1
 
 
 def _window_checks(user_id: int | None, course_id: int | None) -> list[tuple[str, str, int, int]]:
@@ -317,19 +323,24 @@ def _cache_key(
     question: str,
     chunks: list[dict[str, Any]],
     model: str,
+    student_file: dict[str, str] | None = None,
 ) -> str:
-    identity = "|".join(
-        [
-            str(course_id if course_id is not None else "-"),
-            normalize_question(question),
-            ",".join(
-                f"{chunk.get('chunk_id')}:{chunk.get('status') or 'approved'}" for chunk in chunks
-            ),
-            model,
-            PROMPT_VERSION,
-        ]
-    )
-    return hashlib.sha256(identity.encode("utf-8")).hexdigest()
+    identity = [
+        str(course_id if course_id is not None else "-"),
+        normalize_question(question),
+        ",".join(
+            f"{chunk.get('chunk_id')}:{chunk.get('status') or 'approved'}" for chunk in chunks
+        ),
+        model,
+        PROMPT_VERSION,
+    ]
+    if student_file:
+        digest = hashlib.sha256(
+            f"{student_file['filename']}\n{student_file['text']}".encode("utf-8")
+        ).hexdigest()
+        identity.append(digest)
+        identity.append("study-file-ask-v1")
+    return hashlib.sha256("|".join(identity).encode("utf-8")).hexdigest()
 
 
 def _configured_model() -> str:
@@ -366,7 +377,7 @@ def invalidate_chunks(chunk_ids: list[int] | tuple[int, ...]) -> None:
 
 
 def _policy_outcome(result: AnswerCheckResult) -> str:
-    if result.outcome == "passed":
+    if result.outcome in {"passed", "file_explained"}:
         return "answered"
     if result.outcome == "not_answerable":
         return "refused_by_model"
@@ -374,7 +385,17 @@ def _policy_outcome(result: AnswerCheckResult) -> str:
 
 
 def _is_failure(result: AnswerCheckResult) -> bool:
-    return result.outcome not in {"passed", "not_answerable", *_GUARD_OUTCOMES}
+    return result.outcome not in {"passed", "file_explained", "not_answerable", *_GUARD_OUTCOMES}
+
+
+def _file_note(student_file: dict[str, str] | None) -> dict[str, str] | None:
+    if not student_file:
+        return None
+    filename = str(student_file.get("filename") or "").strip()
+    text = str(student_file.get("text") or "")
+    if not filename or not text.strip():
+        return None
+    return {"filename": filename, "text": text}
 
 
 def run_study_agent(
@@ -388,19 +409,26 @@ def run_study_agent(
     answer_checker: AnswerCheckClient | None = None,
     check_records: list[dict[str, Any]] | None = None,
     user_id: int | None = None,
+    student_file: dict[str, str] | None = None,
 ):
-    """Fixed pipeline. Retrieval and the 0.42 cutoff stay in the knowledge service."""
+    """Fixed pipeline. Retrieval and the 0.42 cutoff stay in the knowledge service.
+
+    ``student_file`` is text the student attached to this question. It is not
+    stored as course material and it is not searched as if it were.
+    """
     from app.models.knowledge import KnowledgeSearchHit
     from app.services.kb_agent_service import (
         WEAK_MATCH_CONFIDENCE,
         _checked_answer,
         _check_miss,
+        _file_answer,
         _retrieval_answer,
         search_approved_entries,
     )
     from app.services.knowledge_service import to_out
 
     enabled = llm_enabled()
+    attached = _file_note(student_file)
     if enabled and len(question or "") > max_question_chars():
         record = _blank("quota", limit="question_length")
         _remember(check_records, record)
@@ -421,14 +449,20 @@ def run_study_agent(
         for entry, similarity in matches
     ]
 
-    if not sources or sources[0].similarity < WEAK_MATCH_CONFIDENCE:
-        _remember(check_records, _blank("below_cutoff"))
-        _log("staff", None, limit="-")
-        return _staff_response(sources, approved_only)
+    weak = not sources or sources[0].similarity < WEAK_MATCH_CONFIDENCE
+    if weak:
+        if not attached:
+            _remember(check_records, _blank("below_cutoff"))
+            _log("staff", None, limit="-")
+            return _staff_response(sources, approved_only)
+        # A weak course hit is not used to explain the student's own file.
+        sources = []
 
     if not enabled:
         _remember(check_records, _blank("disabled", limit="kill_switch"))
         _log("disabled", None, limit="kill_switch")
+        if attached:
+            return _check_miss([], approved_only)
         return _retrieval_answer(sources, approved_only)
 
     chunks = []
@@ -445,12 +479,20 @@ def run_study_agent(
         )
 
     if not _model_calls_allowed() or not _provider_ready(answer_checker):
-        result = verify_course_answer(question, chunks, client=answer_checker, emit_log=False)
+        result = verify_course_answer(
+            question,
+            chunks,
+            client=answer_checker,
+            emit_log=False,
+            student_file=attached,
+        )
         record = result.as_record()
         record["prompt_version"] = PROMPT_VERSION
         record["limit"] = result.outcome
         _remember(check_records, record)
         _log(result.outcome, result, limit=result.outcome)
+        if attached:
+            return _check_miss([], approved_only)
         return _retrieval_answer(sources, approved_only)
 
     if breaker_open():
@@ -461,7 +503,7 @@ def run_study_agent(
 
     window_checks = _window_checks(user_id, course_id)
     blocked = _budget_block() or _WINDOWS.blocking(window_checks)
-    if blocked is None and estimate_input_tokens(question, chunks) > max_input_tokens():
+    if blocked is None and estimate_input_tokens(question, chunks, attached) > max_input_tokens():
         blocked = "input_tokens"
     if blocked is not None:
         record = _blank("quota", limit=blocked)
@@ -470,7 +512,7 @@ def run_study_agent(
         return _busy_response(approved_only)
 
     model_name = _configured_model()
-    key = _cache_key(course_id, question, chunks, model_name)
+    key = _cache_key(course_id, question, chunks, model_name, attached)
     cached = _cache_get(key)
     if cached is not None:
         result = AnswerCheckResult(
@@ -499,6 +541,8 @@ def run_study_agent(
                 quote=result.quote or "",
                 chunk_id=result.supporting_chunk_id,
             )
+        if result.outcome == "file_explained" and attached:
+            return _file_answer(result.answer or "", attached["filename"], approved_only)
         return _check_miss(sources, approved_only)
 
     spent = _WINDOWS.allow_all(window_checks)
@@ -510,7 +554,13 @@ def run_study_agent(
 
     # One checker invocation. The checker may retry a single dropped connection.
     # This pipeline does not send a second prompt and does not loop.
-    result = verify_course_answer(question, chunks, client=answer_checker, emit_log=False)
+    result = verify_course_answer(
+        question,
+        chunks,
+        client=answer_checker,
+        emit_log=False,
+        student_file=attached,
+    )
     if result.outcome in _GUARD_OUTCOMES:
         record = result.as_record()
         record["prompt_version"] = PROMPT_VERSION
@@ -520,7 +570,7 @@ def run_study_agent(
         return _retrieval_answer(sources, approved_only)
 
     if (
-        result.outcome == "passed"
+        result.outcome in {"passed", "file_explained"}
         and isinstance(result.answer, str)
         and len(result.answer) > max_answer_chars()
     ):
@@ -560,6 +610,19 @@ def run_study_agent(
             "model": result.model,
             "chunk_ids": tuple(chunk["chunk_id"] for chunk in chunks),
         }
+    elif result.outcome == "file_explained" and attached:
+        record["short_answer"] = result.answer or ""
+        record["quote"] = result.quote or ""
+        record["citation"] = attached["filename"]
+        _CACHE[key] = {
+            "stored_at": time.monotonic(),
+            "outcome": "file_explained",
+            "answer": result.answer,
+            "quote": result.quote,
+            "supporting_chunk_id": None,
+            "model": result.model,
+            "chunk_ids": tuple(chunk["chunk_id"] for chunk in chunks),
+        }
     elif result.outcome == "not_answerable":
         _CACHE[key] = {
             "stored_at": time.monotonic(),
@@ -581,4 +644,6 @@ def run_study_agent(
             quote=result.quote or "",
             chunk_id=result.supporting_chunk_id,
         )
+    if result.outcome == "file_explained" and attached:
+        return _file_answer(result.answer or "", attached["filename"], approved_only)
     return _check_miss(sources, approved_only)
