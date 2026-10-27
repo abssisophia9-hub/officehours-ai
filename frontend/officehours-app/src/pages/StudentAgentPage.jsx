@@ -6,7 +6,7 @@ import { useAuth } from "../auth/AuthContext.jsx";
 const NOT_FOUND = "No professor-approved material answers this.";
 const GROUPS = ["Today", "Last 7 days", "Older"];
 const IMAGE_ACCEPT = ".png,.jpg,.jpeg,.gif,.webp";
-const CODE_ACCEPT = [
+const FILE_ACCEPT_CODE = [
   ".py",
   ".c",
   ".h",
@@ -28,6 +28,7 @@ const CODE_ACCEPT = [
   ".csv",
   ".sh",
 ].join(",");
+const FILE_ACCEPT = `${IMAGE_ACCEPT},${FILE_ACCEPT_CODE}`;
 
 function baseName(name) {
   const parts = String(name || "").split(/[/\\]/);
@@ -97,8 +98,7 @@ export default function StudentAgentPage() {
   const [attachment, setAttachment] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const boxRef = useRef(null);
-  const imageRef = useRef(null);
-  const codeRef = useRef(null);
+  const fileRef = useRef(null);
   const menuRef = useRef(null);
   const endRef = useRef(null);
   const activeIdRef = useRef(activeId);
@@ -242,8 +242,7 @@ export default function StudentAgentPage() {
     const shown = named ? `${question}\nAttached: ${named}` : question;
     setDraft("");
     setAttachment(null);
-    if (imageRef.current) imageRef.current.value = "";
-    if (codeRef.current) codeRef.current.value = "";
+    if (fileRef.current) fileRef.current.value = "";
     setMenuOpen(false);
     if (boxRef.current) boxRef.current.style.height = "auto";
     setMessages((prev) => [...prev, { id: `q-${Date.now()}`, role: "student", text: shown }]);
@@ -315,10 +314,9 @@ export default function StudentAgentPage() {
     setMenuOpen(false);
   }
 
-  function openPicker(kind) {
+  function openFiles() {
     setMenuOpen(false);
-    const input = kind === "screenshot" ? imageRef.current : codeRef.current;
-    input?.click();
+    fileRef.current?.click();
   }
 
   function onPaste(event) {
@@ -426,11 +424,18 @@ export default function StudentAgentPage() {
           <div className="sa-bar" ref={menuRef}>
             {menuOpen ? (
               <div className="sa-plus-menu" role="menu">
-                <button type="button" role="menuitem" onClick={() => openPicker("screenshot")}>
-                  Screenshot
-                </button>
-                <button type="button" role="menuitem" onClick={() => openPicker("code")}>
-                  Code or text file
+                <button type="button" role="menuitem" onClick={openFiles}>
+                  <svg className="sa-files-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  Files
                 </button>
               </div>
             ) : null}
@@ -470,19 +475,11 @@ export default function StudentAgentPage() {
               />
             </div>
             <input
-              ref={imageRef}
+              ref={fileRef}
               className="sa-file-input"
               type="file"
-              accept={IMAGE_ACCEPT}
-              aria-label="Screenshot to ask about"
-              onChange={onPickFile}
-            />
-            <input
-              ref={codeRef}
-              className="sa-file-input"
-              type="file"
-              accept={CODE_ACCEPT}
-              aria-label="Code or text file to ask about"
+              accept={FILE_ACCEPT}
+              aria-label="Files"
               onChange={onPickFile}
             />
           </div>
