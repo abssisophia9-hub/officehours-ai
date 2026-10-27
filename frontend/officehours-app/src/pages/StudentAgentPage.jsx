@@ -5,12 +5,8 @@ import { useAuth } from "../auth/AuthContext.jsx";
 
 const NOT_FOUND = "No professor-approved material answers this.";
 const GROUPS = ["Today", "Last 7 days", "Older"];
-const FILE_ACCEPT = [
-  ".png",
-  ".jpg",
-  ".jpeg",
-  ".gif",
-  ".webp",
+const IMAGE_ACCEPT = ".png,.jpg,.jpeg,.gif,.webp";
+const CODE_ACCEPT = [
   ".py",
   ".c",
   ".h",
@@ -99,8 +95,11 @@ export default function StudentAgentPage() {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [attachment, setAttachment] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const boxRef = useRef(null);
-  const fileRef = useRef(null);
+  const imageRef = useRef(null);
+  const codeRef = useRef(null);
+  const menuRef = useRef(null);
   const endRef = useRef(null);
   const activeIdRef = useRef(activeId);
   activeIdRef.current = activeId;
@@ -111,6 +110,7 @@ export default function StudentAgentPage() {
     setLoading(true);
     setDraft("");
     setAttachment(null);
+    setMenuOpen(false);
     (async () => {
       try {
         let list = await api(`/study-conversations?course_id=${courseId}`, { token });
@@ -174,6 +174,7 @@ export default function StudentAgentPage() {
     setActiveId(id);
     setMessages([]);
     setAttachment(null);
+    setMenuOpen(false);
     setLoading(true);
     try {
       const detail = await api(`/study-conversations/${id}`, { token });
@@ -210,6 +211,7 @@ export default function StudentAgentPage() {
     setMessages([]);
     setDraft("");
     setAttachment(null);
+    setMenuOpen(false);
     boxRef.current?.focus();
   }
 
@@ -240,7 +242,9 @@ export default function StudentAgentPage() {
     const shown = named ? `${question}\nAttached: ${named}` : question;
     setDraft("");
     setAttachment(null);
-    if (fileRef.current) fileRef.current.value = "";
+    if (imageRef.current) imageRef.current.value = "";
+    if (codeRef.current) codeRef.current.value = "";
+    setMenuOpen(false);
     if (boxRef.current) boxRef.current.style.height = "auto";
     setMessages((prev) => [...prev, { id: `q-${Date.now()}`, role: "student", text: shown }]);
     setBusy(true);
@@ -295,9 +299,26 @@ export default function StudentAgentPage() {
     }
   }
 
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    function close(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) setMenuOpen(false);
+    }
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [menuOpen]);
+
   function onPickFile(event) {
     const next = event.target.files && event.target.files[0];
+    event.target.value = "";
     if (next) setAttachment(next);
+    setMenuOpen(false);
+  }
+
+  function openPicker(kind) {
+    setMenuOpen(false);
+    const input = kind === "screenshot" ? imageRef.current : codeRef.current;
+    input?.click();
   }
 
   function onPaste(event) {
@@ -356,7 +377,7 @@ export default function StudentAgentPage() {
             <p className="sa-empty">Loading this conversation.</p>
           ) : null}
           {!loading && messages.length === 0 && !busy ? (
-            <p className="sa-empty">Ask a question about this course, or add a screenshot or a code file.</p>
+            <p className="sa-empty">Ask a question about this course.</p>
           ) : null}
           {messages.map((message, index) =>
             message.role === "student" ? (
@@ -401,52 +422,70 @@ export default function StudentAgentPage() {
         </div>
 
         <form className="sa-composer" onSubmit={send}>
-          <p className="sa-trust">
-            Course answers use only material your professor approved. A file you add is explained for this question and is not added to the course.
-          </p>
-          <div className="sa-file-row">
-            <button
-              type="button"
-              className="sa-add-file"
-              disabled={busy || loading}
-              onClick={() => fileRef.current?.click()}
-            >
-              Add a file
-            </button>
-            <input
-              ref={fileRef}
-              className="sa-file-input"
-              type="file"
-              accept={FILE_ACCEPT}
-              aria-label="File to ask about"
-              onChange={onPickFile}
-            />
+          <p className="sa-trust">Answers only come from material your professor approved.</p>
+          <div className="sa-bar" ref={menuRef}>
+            {menuOpen ? (
+              <div className="sa-plus-menu" role="menu">
+                <button type="button" role="menuitem" onClick={() => openPicker("screenshot")}>
+                  Screenshot
+                </button>
+                <button type="button" role="menuitem" onClick={() => openPicker("code")}>
+                  Code or text file
+                </button>
+              </div>
+            ) : null}
             {attachment ? (
               <span className="sa-file-chip">
                 {baseName(attachment.name)}
                 <button type="button" onClick={() => setAttachment(null)} aria-label="Remove file">
-                  Remove
+                  ×
                 </button>
               </span>
-            ) : (
-              <span className="sa-file-hint">Paste a screenshot, or choose a code or text file.</span>
-            )}
+            ) : null}
+            <div className="sa-bar-row">
+              <button
+                type="button"
+                className="sa-plus"
+                aria-label="Add a file"
+                aria-expanded={menuOpen}
+                disabled={busy || loading}
+                onClick={() => setMenuOpen((open) => !open)}
+              >
+                +
+              </button>
+              <textarea
+                ref={boxRef}
+                className="sa-input"
+                rows={1}
+                value={draft}
+                placeholder="Ask about this course"
+                aria-label="Question for the study agent"
+                disabled={busy || loading}
+                onChange={(event) => {
+                  setDraft(event.target.value);
+                  grow(event.target);
+                }}
+                onPaste={onPaste}
+                onKeyDown={onKeyDown}
+              />
+            </div>
+            <input
+              ref={imageRef}
+              className="sa-file-input"
+              type="file"
+              accept={IMAGE_ACCEPT}
+              aria-label="Screenshot to ask about"
+              onChange={onPickFile}
+            />
+            <input
+              ref={codeRef}
+              className="sa-file-input"
+              type="file"
+              accept={CODE_ACCEPT}
+              aria-label="Code or text file to ask about"
+              onChange={onPickFile}
+            />
           </div>
-          <textarea
-            ref={boxRef}
-            className="sa-input"
-            rows={2}
-            value={draft}
-            placeholder="Ask about this course"
-            aria-label="Question for the study agent"
-            disabled={busy || loading}
-            onChange={(event) => {
-              setDraft(event.target.value);
-              grow(event.target);
-            }}
-            onPaste={onPaste}
-            onKeyDown={onKeyDown}
-          />
           <button type="submit" className="sa-send" disabled={busy || loading || !draft.trim()}>
             {busy ? "Looking…" : "Send"}
           </button>

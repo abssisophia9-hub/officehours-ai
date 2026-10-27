@@ -6755,30 +6755,82 @@ html:has(.oh-open) {
   color: var(--theme-text-muted);
 }
 
-.sa-file-row {
-  grid-column: 1 / -1;
+.sa-bar {
+  position: relative;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.45rem 0.7rem;
-}
-
-.sa-add-file,
-.sa-file-chip button {
+  flex-direction: column;
+  justify-content: center;
+  min-height: 3.1rem;
+  border-radius: 0.9rem;
   border: 1px solid var(--theme-border-strong);
   background: var(--theme-surface);
+  padding: 0.15rem 0.35rem 0.15rem 0.2rem;
+}
+
+.sa-bar:focus-within {
+  outline: 2px solid color-mix(in srgb, var(--theme-forest) 55%, transparent);
+  outline-offset: 1px;
+}
+
+.sa-bar-row {
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
+}
+
+.sa-plus {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  margin-bottom: 0.28rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
   color: var(--theme-title);
-  border-radius: 999px;
-  padding: 0.28rem 0.75rem;
+  font-size: 1.45rem;
+  line-height: 1;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sa-plus[aria-expanded="true"] {
+  background: var(--theme-sand, var(--theme-surface-muted));
+}
+
+.sa-plus:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.sa-plus-menu {
+  position: absolute;
+  left: 0.2rem;
+  bottom: calc(100% + 2.15rem);
+  width: 11.5rem;
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-border-strong);
+  border-radius: 0.7rem;
+  padding: 0.25rem;
+  z-index: 3;
+}
+
+.sa-plus-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--theme-text);
+  border-radius: 0.45rem;
+  padding: 0.45rem 0.6rem;
   font: inherit;
-  font-size: 0.82rem;
-  font-weight: 650;
+  font-size: 0.9rem;
   cursor: pointer;
 }
 
-.sa-add-file:disabled {
-  opacity: 0.55;
-  cursor: default;
+.sa-plus-menu button:hover {
+  background: var(--theme-sand, var(--theme-surface-muted));
 }
 
 .sa-file-input {
@@ -6788,18 +6840,37 @@ html:has(.oh-open) {
 .sa-file-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  max-width: 100%;
-  padding: 0.15rem 0.2rem 0.15rem 0.7rem;
+  gap: 0.35rem;
+  align-self: flex-start;
+  max-width: calc(100% - 2rem);
+  margin: 0.2rem 0 0.05rem 2rem;
+  padding: 0.12rem 0.15rem 0.12rem 0.65rem;
   border-radius: 999px;
   background: var(--theme-sand, var(--theme-surface-muted));
   color: var(--theme-title);
   font-size: 0.82rem;
 }
 
-.sa-file-hint {
+.sa-file-chip button {
+  border: none;
+  background: transparent;
   color: var(--theme-text-muted);
-  font-size: 0.82rem;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.35rem;
+}
+
+.sa-bar .sa-input {
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  min-height: 2.4rem;
+  padding: 0.45rem 0.35rem 0.4rem 0.15rem;
+}
+
+.sa-bar .sa-input:focus {
+  outline: none;
 }
 
 .sa-input {
