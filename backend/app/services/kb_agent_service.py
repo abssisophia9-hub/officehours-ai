@@ -82,6 +82,14 @@ def _retrieval_answer(sources: list[KnowledgeSearchHit], approved_only: bool) ->
     )
 
 
+def _approved_source_line(entry) -> str:
+    filename = (getattr(entry, "source_filename", None) or "").strip()
+    page = getattr(entry, "page_number", None)
+    if filename and page is not None:
+        return f"based on {filename}, p.{page} approved by the professor"
+    return f"based on {_cite_entry(entry)} approved by the professor"
+
+
 def _checked_answer(
     sources: list[KnowledgeSearchHit],
     *,
@@ -90,14 +98,11 @@ def _checked_answer(
     quote: str,
     chunk_id: int,
 ) -> AgentAskResponse:
+    # The quote was matched to the chunk before this reply is built. The student
+    # sees the answer and the approved page, not the copied passage.
+    del quote
     chosen = next(hit for hit in sources if hit.entry.id == chunk_id)
-    text = "\n\n".join(
-        [
-            answer,
-            f"Quote: {quote}",
-            f"Source: {_cite_entry(chosen.entry)}",
-        ]
-    )
+    text = f"{answer.strip()}\n{_approved_source_line(chosen.entry)}"
     return AgentAskResponse(
         answer=text,
         student_hint=chosen.entry.student_hint,

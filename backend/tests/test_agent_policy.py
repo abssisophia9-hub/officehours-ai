@@ -240,7 +240,8 @@ def test_output_token_cap_and_timeout_reach_the_provider(monkeypatch):
     payload = json.loads(seen["user"])
     assert payload["question"] == SECRET_QUESTION
     assert SECRET_QUESTION not in seen["system"]
-    assert "Quote:" in response.answer
+    assert "Quote:" not in response.answer
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
     assert response.should_seek_help is False
 
 
@@ -344,7 +345,8 @@ def test_breaker_opens_skips_cache_and_closes_again(monkeypatch):
     client = ScriptedClient([_pass(), "not json", "still not json", _pass()])
     records = []
     answered = _ask(monkeypatch, client, [_hit()], records=records)
-    assert "Quote:" in answered.answer
+    assert "Quote:" not in answered.answer
+    assert "based on notes.pdf, p.3 approved by the professor" in answered.answer
     _ask(monkeypatch, client, [_hit()], question="other question", records=records)
     _ask(monkeypatch, client, [_hit()], question="other question", records=records)
     busy = _ask(monkeypatch, client, [_hit()], records=records)
@@ -517,7 +519,8 @@ def test_errors_are_not_cached_and_the_pipeline_calls_the_checker_once(monkeypat
     second = []
     response = _ask(monkeypatch, client, [_hit()], records=second)
     assert second[0]["outcome"] == "passed"
-    assert "Quote:" in response.answer
+    assert "Quote:" not in response.answer
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
     assert invocations["n"] == 2
     assert len(client.calls) == 2
 
@@ -571,7 +574,7 @@ def test_closed_outcome_set(monkeypatch):
             seen = "staff"
         elif response.answer == CHECK_MISS_ANSWER:
             seen = "refuse"
-        elif "Quote:" in response.answer and "Source:" in response.answer:
+        elif "approved by the professor" in response.answer and "Quote:" not in response.answer:
             seen = "answer"
         else:
             seen = "other"
@@ -581,7 +584,8 @@ def test_closed_outcome_set(monkeypatch):
     assert staff.should_seek_help is True
     assert busy.should_seek_help is True
     assert answered.should_seek_help is False
-    assert "notes.pdf, p. 3, chunk 2" in answered.answer
+    assert "based on notes.pdf, p.3 approved by the professor" in answered.answer
+    assert "chunk" not in answered.answer
 
 
 def test_one_log_line_has_no_question_and_no_identity(monkeypatch, caplog):
