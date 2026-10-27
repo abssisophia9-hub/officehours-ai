@@ -30,6 +30,8 @@ The student sees one of four replies:
 | Staff form | Retrieval is below 0.42, before any model call | Today's "I don't have professor-approved course material…" plus Quiet ask |
 | Assistant busy | A limit fired or the circuit breaker is open | "The study assistant is busy right now…" plus the same staff hint |
 
+A student can also attach one screenshot or one text or code file to a question (`POST /agent/ask-upload`). The file is the student's data for that question. It is not saved as course material, it is not executed, and it does not widen retrieval: unapproved rows and other courses stay out of the prompt. A file-only explanation is shown only when the checker copies a quote that appears verbatim in the file, and the reply ends with `based on <file> that you uploaded`. A quote from an approved chunk still uses the professor citation. Screenshots are transcribed only when the Gemini check is on. If the check is off, the upload is refused instead of being ignored. The log records the file name and size, not the body.
+
 Busy and a failed check do not fall back to the unverified retrieval draft.
 The draft is returned only when the kill switch is off, or when a guard
 refuses the call before any model request: the external-call flag, demo

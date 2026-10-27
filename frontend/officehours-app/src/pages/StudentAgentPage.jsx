@@ -1,10 +1,43 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router";
-import { api } from "../api/client.js";
+import { api, apiUpload } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 const NOT_FOUND = "No professor-approved material answers this.";
 const GROUPS = ["Today", "Last 7 days", "Older"];
+const FILE_ACCEPT = [
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".webp",
+  ".py",
+  ".c",
+  ".h",
+  ".cpp",
+  ".java",
+  ".js",
+  ".jsx",
+  ".ts",
+  ".tsx",
+  ".md",
+  ".txt",
+  ".json",
+  ".css",
+  ".sql",
+  ".go",
+  ".rs",
+  ".rb",
+  ".php",
+  ".csv",
+  ".sh",
+].join(",");
+
+function baseName(name) {
+  const parts = String(name || "").split(/[/\\]/);
+  const last = parts[parts.length - 1] || "file";
+  return last.slice(0, 80);
+}
 
 function sourceLabel(entry) {
   const file = String(entry?.source_filename || "").trim();
@@ -65,7 +98,9 @@ export default function StudentAgentPage() {
   const [messages, setMessages] = useState([]);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [attachment, setAttachment] = useState(null);
   const boxRef = useRef(null);
+  const fileRef = useRef(null);
   const endRef = useRef(null);
   const activeIdRef = useRef(activeId);
   activeIdRef.current = activeId;
@@ -75,6 +110,7 @@ export default function StudentAgentPage() {
     let cancelled = false;
     setLoading(true);
     setDraft("");
+    setAttachment(null);
     (async () => {
       try {
         let list = await api(`/study-conversations?course_id=${courseId}`, { token });
@@ -137,6 +173,7 @@ export default function StudentAgentPage() {
     if (id === activeIdRef.current || busy) return;
     setActiveId(id);
     setMessages([]);
+    setAttachment(null);
     setLoading(true);
     try {
       const detail = await api(`/study-conversations/${id}`, { token });
@@ -172,6 +209,7 @@ export default function StudentAgentPage() {
     setActiveId(created.id);
     setMessages([]);
     setDraft("");
+    setAttachment(null);
     boxRef.current?.focus();
   }
 
@@ -198,17 +236,30 @@ export default function StudentAgentPage() {
     const question = draft.trim();
     if (!question || busy || !activeId) return;
     const conversationId = activeId;
+    const named = attachment ? baseName(attachment.name) : "";
+    const shown = named ? `${question}\nAttached: ${named}` : question;
     setDraft("");
+    setAttachment(null);
+    if (fileRef.current) fileRef.current.value = "";
     if (boxRef.current) boxRef.current.style.height = "auto";
-    setMessages((prev) => [...prev, { id: `q-${Date.now()}`, role: "student", text: question }]);
+    setMessages((prev) => [...prev, { id: `q-${Date.now()}`, role: "student", text: shown }]);
     setBusy(true);
     try {
-      await saveMessage(conversationId, { role: "student", text: question });
-      const answer = await api("/agent/ask", {
-        method: "POST",
-        token,
-        body: { question, course_id: activeCourse.id },
-      });
+      await saveMessage(conversationId, { role: "student", text: shown });
+      let answer;
+      if (attachment) {
+        const form = new FormData();
+        form.append("question", question);
+        form.append("course_id", String(activeCourse.id));
+        form.append("file", new File([attachment], named, { type: attachment.type || "" }));
+        answer = await apiUpload("/agent/ask-upload", { token, formData: form });
+      } else {
+        answer = await api("/agent/ask", {
+          method: "POST",
+          token,
+          body: { question, course_id: activeCourse.id },
+        });
+      }
       const notFound = Boolean(answer.should_seek_help || answer.matched_count === 0);
       const agentBody = {
         role: "agent",
@@ -241,6 +292,24 @@ export default function StudentAgentPage() {
     } finally {
       setBusy(false);
       boxRef.current?.focus();
+    }
+  }
+
+  function onPickFile(event) {
+    const next = event.target.files && event.target.files[0];
+    if (next) setAttachment(next);
+  }
+
+  function onPaste(event) {
+    const items = event.clipboardData?.items || [];
+    for (const item of items) {
+      if (!item.type || !item.type.startsWith("image/") || item.type === "image/svg+xml") continue;
+      const blob = item.getAsFile();
+      if (!blob) return;
+      const ext = item.type === "image/jpeg" ? "jpg" : item.type.slice("image/".length) || "png";
+      setAttachment(new File([blob], `screenshot.${ext}`, { type: item.type }));
+      event.preventDefault();
+      return;
     }
   }
 
@@ -287,7 +356,7 @@ export default function StudentAgentPage() {
             <p className="sa-empty">Loading this conversation.</p>
           ) : null}
           {!loading && messages.length === 0 && !busy ? (
-            <p className="sa-empty">Ask a question about this course.</p>
+            <p className="sa-empty">Ask a question about this course, or add a screenshot or a code file.</p>
           ) : null}
           {messages.map((message, index) =>
             message.role === "student" ? (
@@ -332,7 +401,37 @@ export default function StudentAgentPage() {
         </div>
 
         <form className="sa-composer" onSubmit={send}>
-          <p className="sa-trust">Answers only come from material your professor approved.</p>
+          <p className="sa-trust">
+            Course answers use only material your professor approved. A file you add is explained for this question and is not added to the course.
+          </p>
+          <div className="sa-file-row">
+            <button
+              type="button"
+              className="sa-add-file"
+              disabled={busy || loading}
+              onClick={() => fileRef.current?.click()}
+            >
+              Add a file
+            </button>
+            <input
+              ref={fileRef}
+              className="sa-file-input"
+              type="file"
+              accept={FILE_ACCEPT}
+              aria-label="File to ask about"
+              onChange={onPickFile}
+            />
+            {attachment ? (
+              <span className="sa-file-chip">
+                {baseName(attachment.name)}
+                <button type="button" onClick={() => setAttachment(null)} aria-label="Remove file">
+                  Remove
+                </button>
+              </span>
+            ) : (
+              <span className="sa-file-hint">Paste a screenshot, or choose a code or text file.</span>
+            )}
+          </div>
           <textarea
             ref={boxRef}
             className="sa-input"
@@ -345,6 +444,7 @@ export default function StudentAgentPage() {
               setDraft(event.target.value);
               grow(event.target);
             }}
+            onPaste={onPaste}
             onKeyDown={onKeyDown}
           />
           <button type="submit" className="sa-send" disabled={busy || loading || !draft.trim()}>

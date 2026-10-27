@@ -65,6 +65,23 @@ def test_student_keeps_a_conversation_and_a_second_student_cannot_read_it():
     assert [row["role"] for row in detail.json()["messages"]] == ["student", "agent"]
     assert detail.json()["messages"][1]["sources"][0]["entry"]["page_number"] == 2
 
+    fresh = client.post(
+        "/study-conversations",
+        headers=sara,
+        json={"course_id": course_id},
+    )
+    attached = client.post(
+        f"/study-conversations/{fresh.json()['id']}/messages",
+        headers=sara,
+        json={
+            "role": "student",
+            "text": "What does the sample print?\nAttached: greet.py",
+        },
+    )
+    assert attached.status_code == 201
+    assert attached.json()["title"] == "What does the sample print?"
+    assert "Attached:" in attached.json()["message"]["text"]
+
     youssef, _youssef = login(client, "y.amrani@aui.ma")
     hidden = client.get(f"/study-conversations/{conversation_id}", headers=youssef)
     assert hidden.status_code == 404

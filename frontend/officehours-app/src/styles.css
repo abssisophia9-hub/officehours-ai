@@ -6755,6 +6755,53 @@ html:has(.oh-open) {
   color: var(--theme-text-muted);
 }
 
+.sa-file-row {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.7rem;
+}
+
+.sa-add-file,
+.sa-file-chip button {
+  border: 1px solid var(--theme-border-strong);
+  background: var(--theme-surface);
+  color: var(--theme-title);
+  border-radius: 999px;
+  padding: 0.28rem 0.75rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.sa-add-file:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.sa-file-input {
+  display: none;
+}
+
+.sa-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 100%;
+  padding: 0.15rem 0.2rem 0.15rem 0.7rem;
+  border-radius: 999px;
+  background: var(--theme-sand, var(--theme-surface-muted));
+  color: var(--theme-title);
+  font-size: 0.82rem;
+}
+
+.sa-file-hint {
+  color: var(--theme-text-muted);
+  font-size: 0.82rem;
+}
+
 .sa-input {
   width: 100%;
   min-height: 3.1rem;

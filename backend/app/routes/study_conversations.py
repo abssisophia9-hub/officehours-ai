@@ -167,7 +167,9 @@ def append_message(
     if not text:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Message is empty.")
     if payload.role == "student" and row.title == NEW_CHAT:
-        row.title = text if len(text) <= TITLE_LIMIT else f"{text[: TITLE_LIMIT - 1]}…"
+        # The first line is the question. A later "Attached:" line stays in the message.
+        first_line = next((line.strip() for line in text.splitlines() if line.strip()), text)
+        row.title = first_line if len(first_line) <= TITLE_LIMIT else f"{first_line[: TITLE_LIMIT - 1]}…"
     sources_json = None
     if payload.sources:
         sources_json = json.dumps(payload.sources)
