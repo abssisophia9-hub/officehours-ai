@@ -30,6 +30,7 @@ from app.models import peer_notes as _peer_notes_model  # noqa: F401
 from app.models import help_room as _help_room_model  # noqa: F401
 from app.models import feedback as _feedback_model  # noqa: F401
 from app.models import notification as _notification_model  # noqa: F401
+from app.models import study_conversation as _study_conversation_model  # noqa: F401
 from app.realtime.hub import set_main_loop
 from app.routes.actions import router as actions_router
 from app.routes.auth import courses_router, router as auth_router
@@ -44,6 +45,7 @@ from app.routes.realtime import router as realtime_router
 from app.routes.requests import router as requests_router
 from app.routes.ta import router as ta_router
 from app.routes.notifications import router as notifications_router
+from app.routes.study_conversations import router as study_conversations_router
 from app.database.session import SessionLocal
 from app.ai.gemini_client import warn_gemini_free_tier
 from app.services.demo_accounts import ensure_demo_accounts
@@ -219,4 +221,5 @@ app.include_router(peer_notes_router)
 app.include_router(help_room_router)
 app.include_router(feedback_router)
 app.include_router(notifications_router)
+app.include_router(study_conversations_router)
 app.include_router(realtime_router)
