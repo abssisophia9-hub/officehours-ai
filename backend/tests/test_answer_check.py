@@ -169,7 +169,7 @@ def test_answerable_with_a_verbatim_quote(monkeypatch):
     assert response.sources[0].entry.id == 12
     assert response.sources[0].entry.source_filename == "other.pdf"
     assert "removes from the front." in response.answer
-    assert "other.pdf, p. 4, chunk 1" in response.answer
+    assert "based on other.pdf, p.4 approved by the professor" in response.answer
     assert quote not in response.answer
     assert records[0]["outcome"] == "passed"
     assert records[0]["called"] is True
@@ -327,7 +327,7 @@ def test_timeout_then_valid_json_passes_on_the_retry(monkeypatch):
     assert len(client.calls) == 2
     assert response.should_seek_help is False
     assert "returns the top value." in response.answer
-    assert "notes.pdf, p. 3, chunk 2" in response.answer
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
 
 
 def test_not_answerable_is_not_found(monkeypatch):

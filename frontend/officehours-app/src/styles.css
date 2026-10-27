@@ -6609,6 +6609,7 @@ html:has(.oh-open) {
 
 .sa-answer {
   margin: 0;
+  white-space: pre-line;
 }
 
 .sa-sources {

@@ -25,7 +25,7 @@ The student sees one of four replies:
 
 | Outcome | When | Reply |
 | --- | --- | --- |
-| Answer with citation | The checker returns a quote that appears verbatim in the cited chunk, and the answer is within the length cap | Short answer, `Quote:`, `Source:` |
+| Answer with citation | The checker returns a quote that appears verbatim in the cited chunk, and the answer is within the length cap | Short answer, then `based on <file>, p.<page> approved by the professor`. The quote stays in the check and is not shown. |
 | Refuse | The checker says the material does not answer, or the reply fails validation | `I couldn't confirm an answer in the approved course material.` |
 | Staff form | Retrieval is below 0.42, before any model call | Today's "I don't have professor-approved course material…" plus Quiet ask |
 | Assistant busy | A limit fired or the circuit breaker is open | "The study assistant is busy right now…" plus the same staff hint |
