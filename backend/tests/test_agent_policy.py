@@ -185,6 +185,25 @@ def test_retrieval_reply_quotes_only_the_matching_sentence(monkeypatch):
     assert len(response.sources) == 1
 
 
+def test_retrieval_reply_keeps_the_sentence_that_names_the_question_word(monkeypatch):
+    monkeypatch.setenv("OFFICEHOURS_ALLOW_EXTERNAL_LLM", "false")
+    page = (
+        "Hash tables map keys to buckets using a hash function.\n\n"
+        "Collisions are handled with chaining or open addressing.\n\n"
+        "Chaining stores a linked list in each bucket.\n\n"
+        "Open addressing probes for the next empty slot."
+    )
+    response = _ask(
+        monkeypatch,
+        ScriptedClient([]),
+        [_hit(answer_draft=page, source_filename="week4.pdf", page_number=1, chunk_index=1)],
+        question="How do hash tables handle collisions?",
+    )
+    assert "Collisions are handled with chaining or open addressing." in response.answer
+    assert "probes for the next empty slot" not in response.answer
+    assert response.answer.endswith("based on week4.pdf, p.1 approved by the professor")
+
+
 def test_kill_switch_off_keeps_retrieval_for_a_long_question(monkeypatch):
     monkeypatch.setenv("OFFICEHOURS_LLM_ENABLED", "false")
     monkeypatch.setenv("OFFICEHOURS_LLM_MAX_QUESTION_CHARS", "20")

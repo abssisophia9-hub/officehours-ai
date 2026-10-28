@@ -77,15 +77,24 @@ def _spoken_answer(question: str, text: str) -> str:
     if not pieces:
         return (text or "").strip()
     question_tokens = _tokenize(question) - _ANSWER_STOPWORDS
-    scored = []
-    for piece in pieces:
-        overlap = len(question_tokens & _tokenize(piece)) if question_tokens else 0
-        scored.append((overlap, piece))
-    best = max(score for score, _ in scored)
-    if best <= 0:
+    if not question_tokens:
         return pieces[0]
-    chosen = [piece for score, piece in scored if score == best]
-    return " ".join(chosen[:2])
+    overlaps = [(_tokenize(piece) & question_tokens, piece) for piece in pieces]
+    ranked = sorted(overlaps, key=lambda item: len(item[0]), reverse=True)
+    if not ranked[0][0]:
+        return pieces[0]
+    # The busiest sentence can be a topic line ("hash tables map keys").
+    # Keep one more sentence when it covers a question word the first one missed,
+    # so "collisions" is not dropped for sharing fewer words.
+    picked = [ranked[0][1]]
+    covered = set(ranked[0][0])
+    for overlap, piece in ranked[1:]:
+        if overlap - covered and len(picked) < 2:
+            picked.append(piece)
+            covered |= overlap
+    order = {piece: index for index, piece in enumerate(pieces)}
+    picked.sort(key=lambda piece: order[piece])
+    return " ".join(picked)
 
 
 def _retrieval_answer(
