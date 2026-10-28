@@ -240,7 +240,9 @@ def transcribe_image(data: bytes, mime: str, *, system: str) -> GeminiCompletion
     """One vision call that returns visible text. The key stays in the header.
 
     The image is not written into the URL or the log. This call does not use
-    the answer-check JSON schema.
+    the answer-check JSON schema. A screenshot is slower than a text check, so
+    the limit is 30 seconds and a dropped connection or a short rate limit is
+    retried. Thinking stays minimal so the visible text is not spent on a trace.
     """
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
     if not api_key:
@@ -263,7 +265,11 @@ def transcribe_image(data: bytes, mime: str, *, system: str) -> GeminiCompletion
                 ],
             }
         ],
-        "generationConfig": {"temperature": 0, "maxOutputTokens": 800},
+        "generationConfig": {
+            "temperature": 0,
+            "maxOutputTokens": 800,
+            "thinkingConfig": {"thinkingLevel": "MINIMAL"},
+        },
     }
     body = json.dumps(payload).encode("utf-8")
     if api_key.encode("utf-8") in body or "key=" in url:
@@ -272,18 +278,39 @@ def transcribe_image(data: bytes, mime: str, *, system: str) -> GeminiCompletion
         "content-type": "application/json",
         "x-goog-api-key": api_key,
     }
-    request = urllib.request.Request(url, data=body, headers=headers, method="POST")
-    started = time.perf_counter()
-    try:
-        with urllib.request.urlopen(request, timeout=10) as response:
-            raw = response.read()
-    except urllib.error.HTTPError as exc:
-        status = getattr(exc, "code", None)
-        error_body = _error_body(exc)
-        if status == 429 and _is_daily_quota(error_body):
-            logger.warning("study_file transcribe daily_quota provider=gemini")
-            raise DailyQuotaError("daily_quota") from None
-        logger.warning("study_file transcribe status=%s provider=gemini", status)
-        raise
-    latency_ms = (time.perf_counter() - started) * 1000
-    return _completion_from_body(raw, model, latency_ms)
+
+    for attempt in range(1, RATE_LIMIT_ATTEMPTS + 1):
+        _throttle()
+        request = urllib.request.Request(url, data=body, headers=headers, method="POST")
+        started = time.perf_counter()
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                raw = response.read()
+        except urllib.error.HTTPError as exc:
+            status = getattr(exc, "code", None)
+            error_body = _error_body(exc)
+            if status == 429 and _is_daily_quota(error_body):
+                logger.warning("study_file transcribe daily_quota provider=gemini")
+                raise DailyQuotaError("daily_quota") from None
+            if status in {429, 503} and attempt < RATE_LIMIT_ATTEMPTS:
+                logger.warning(
+                    "study_file transcribe retry status=%s attempt=%s provider=gemini",
+                    status,
+                    attempt,
+                )
+                time.sleep(RATE_LIMIT_BACKOFF_SECONDS[attempt - 1])
+                continue
+            logger.warning("study_file transcribe status=%s provider=gemini", status)
+            raise
+        except (TimeoutError, urllib.error.URLError):
+            logger.warning(
+                "study_file transcribe timeout attempt=%s provider=gemini",
+                attempt,
+            )
+            if attempt < 2:
+                continue
+            raise
+        latency_ms = (time.perf_counter() - started) * 1000
+        return _completion_from_body(raw, model, latency_ms)
+
+    raise RateLimitExhausted("rate_limit_exhausted")

@@ -6,6 +6,7 @@ executed, and it cannot pull in unapproved notes or another course.
 
 import json
 import os
+import urllib.error
 from types import SimpleNamespace
 
 import pytest
@@ -290,9 +291,11 @@ def test_image_request_keeps_the_key_in_the_header(monkeypatch):
         return _Response()
 
     monkeypatch.setenv("GEMINI_API_KEY", "test-not-a-real-key")
+    monkeypatch.setenv("OFFICEHOURS_LLM_RPM", "1000")
     monkeypatch.setattr("app.ai.gemini_client.urllib.request.urlopen", _open)
-    from app.ai.gemini_client import transcribe_image
+    from app.ai.gemini_client import reset_throttle, transcribe_image
 
+    reset_throttle()
     result = transcribe_image(PNG, "image/png", system="transcribe only")
     assert result.text == "visible line"
     assert "test-not-a-real-key" not in captured["url"]
@@ -300,6 +303,42 @@ def test_image_request_keeps_the_key_in_the_header(monkeypatch):
     assert captured["headers"]["x-goog-api-key"] == "test-not-a-real-key"
     assert b"responseFormat" not in captured["body"]
     assert "transcribe only" in captured["body"].decode()
+    sent = json.loads(captured["body"])
+    assert sent["generationConfig"]["thinkingConfig"]["thinkingLevel"] == "MINIMAL"
+
+
+def test_image_read_retries_once_after_a_timeout(monkeypatch):
+    calls = {"n": 0}
+
+    class _Response:
+        def read(self):
+            return json.dumps(
+                {"candidates": [{"content": {"parts": [{"text": "capacity is 8"}]}}]}
+            ).encode()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+    def _open(_request, timeout=10):
+        calls["n"] += 1
+        calls["timeout"] = timeout
+        if calls["n"] == 1:
+            raise urllib.error.URLError("timed out")
+        return _Response()
+
+    monkeypatch.setenv("GEMINI_API_KEY", "test-not-a-real-key")
+    monkeypatch.setenv("OFFICEHOURS_LLM_RPM", "1000")
+    monkeypatch.setattr("app.ai.gemini_client.urllib.request.urlopen", _open)
+    from app.ai.gemini_client import reset_throttle, transcribe_image
+
+    reset_throttle()
+    result = transcribe_image(PNG, "image/png", system="transcribe only")
+    assert result.text == "capacity is 8"
+    assert calls["n"] == 2
+    assert calls["timeout"] == 30
 
 
 def test_upload_requires_a_student_and_the_answer_check(monkeypatch):
