@@ -152,7 +152,7 @@ Non-functional, as implemented:
 
 - The kill switch defaults to off. A key by itself does not call the model.
 - Gemini also needs demo mode, the external-call flag, and `OFFICEHOURS_GEMINI_FREE_TIER_ACK`. The module warning says the free tier may use prompts to improve Google products and that only synthetic demo data may be sent.
-- Budgets are the defaults printed in `docs/ORCHESTRATION.md`: 4 per user per minute, 30 per user per day, 150 per course per day, 200 calls and 200000 tokens per UTC day, and a breaker of 3 failures for 5 minutes.
+- Budgets are the defaults printed in `docs/ORCHESTRATION.md`: 4 per user per minute, 30 per user per day, 150 per course per day, 200 calls and 200000 tokens per UTC day, and a breaker of 3 failures for 5 minutes. The Gemini client also waits so it sends at most 5 requests per minute (`OFFICEHOURS_LLM_RPM`). That wait is not a busy response.
 - Those counters are in one process. They are not a campus quota.
 - The model does not choose tools and does not loop. One checker invocation may retry a dropped connection once, and the Gemini client may retry HTTP 429 or 503 inside that same invocation.
 

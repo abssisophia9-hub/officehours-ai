@@ -123,6 +123,13 @@ flag. The HTTP limiter is separate: `DEFAULT_LIMITS` in
 per 60 seconds, and `rate_limit_enabled` skips that HTTP limiter when the
 flag is false.
 
+`complete_gemini` also sleeps so that Gemini sees at most
+`OFFICEHOURS_LLM_RPM` requests in 60 seconds. The default in `_rpm` is 5.
+A missing, blank, non-numeric, or non-positive value falls back to 5. This
+is not a busy outcome. The call waits, inside the Gemini client only. Claude
+does not read this variable. The input estimate in `estimate_input_tokens`
+is `(len(system prompt) + len(JSON payload)) // 4 + 1`, not a bare division.
+
 The global counters use the UTC date in `_roll_budget`. They live in the
 process. A restart clears them. The sliding windows are also in that process.
 
