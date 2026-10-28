@@ -248,6 +248,14 @@ def _note_spend(input_tokens: int, output_tokens: int) -> None:
 
 
 _GUARD_OUTCOMES = {"flag_off", "demo_off", "provider_off", "ack_off"}
+# The checker did not judge the page. Show the professor's stamped text.
+_STAMPED_PAGE_FALLBACK = {
+    "api_error",
+    "invalid_json",
+    "rate_limited",
+    "daily_quota",
+    "answer_too_long",
+}
 
 
 def _truthy(name: str) -> bool:
@@ -646,4 +654,7 @@ def run_study_agent(
         )
     if result.outcome == "file_explained" and attached:
         return _file_answer(result.answer or "", attached["filename"], approved_only)
+    # A dropped call is not a missing page. The stamped chunk is already approved.
+    if result.outcome in _STAMPED_PAGE_FALLBACK and sources and not attached:
+        return _retrieval_answer(sources, approved_only)
     return _check_miss(sources, approved_only)

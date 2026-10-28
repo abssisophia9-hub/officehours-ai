@@ -245,32 +245,13 @@ def _image_request_bodies(system: str, data: bytes, mime: str) -> list[bytes]:
     """
     encoded = base64.b64encode(data).decode("ascii")
     instruction = f"{system.strip()}\n\nTranscribe the visible text."
+
+    def image_then_text(image_part: dict[str, object]) -> dict[str, object]:
+        return {"contents": [{"parts": [image_part, {"text": instruction}]}]}
+
     shapes = (
-        {
-            "contents": [
-                {
-                    "parts": [
-                        {"inline_data": {"mime_type": mime, "data": encoded}},
-                        {"text": instruction},
-                    ]
-                }
-            ],
-            "generationConfig": {
-                "maxOutputTokens": 800,
-                "thinkingConfig": {"thinkingLevel": "minimal"},
-            },
-        },
-        {
-            "contents": [
-                {
-                    "parts": [
-                        {"inlineData": {"mimeType": mime, "data": encoded}},
-                        {"text": instruction},
-                    ]
-                }
-            ],
-            "generationConfig": {"maxOutputTokens": 800},
-        },
+        image_then_text({"inline_data": {"mime_type": mime, "data": encoded}}),
+        image_then_text({"inlineData": {"mimeType": mime, "data": encoded}}),
     )
     return [json.dumps(shape).encode("utf-8") for shape in shapes]
 

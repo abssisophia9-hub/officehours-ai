@@ -309,7 +309,7 @@ def test_image_request_keeps_the_key_in_the_header(monkeypatch):
     assert parts[0]["inline_data"]["mime_type"] == "image/png"
     assert "text" in parts[1]
     assert "systemInstruction" not in sent
-    assert sent["generationConfig"]["thinkingConfig"]["thinkingLevel"] == "minimal"
+    assert "generationConfig" not in sent
 
 
 def test_image_read_tries_the_other_shape_after_a_rejection(monkeypatch):

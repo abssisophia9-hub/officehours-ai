@@ -231,8 +231,8 @@ def test_invalid_json_fails_closed_without_a_retry(monkeypatch):
     response = _ask(monkeypatch, client, [_hit()], records)
     assert len(client.calls) == 1
     assert records[0]["outcome"] == "invalid_json"
-    assert response.answer == CHECK_MISS_ANSWER
-    assert response.should_seek_help is True
+    assert response.answer.startswith("Based on professor-approved course knowledge")
+    assert response.should_seek_help is False
 
 
 def test_string_true_is_invalid(monkeypatch):
@@ -252,7 +252,8 @@ def test_string_true_is_invalid(monkeypatch):
     response = _ask(monkeypatch, client, [_hit()], records)
     assert len(client.calls) == 1
     assert records[0]["outcome"] == "invalid_json"
-    assert response.matched_count == 0
+    assert response.matched_count == 1
+    assert "The stack pop returns the top value." in response.answer
 
 
 def test_unknown_chunk_id_is_rejected(monkeypatch):
@@ -291,9 +292,9 @@ def test_api_error_fails_closed_after_one_retry(monkeypatch, caplog):
     assert len(client.calls) == 2
     assert records[0]["outcome"] == "api_error"
     assert records[0]["error_type"] == "URLError"
-    assert response.answer == CHECK_MISS_ANSWER
-    assert response.should_seek_help is True
-    assert response.matched_count == 0
+    assert response.answer.startswith("Based on professor-approved course knowledge")
+    assert response.should_seek_help is False
+    assert response.matched_count == 1
     assert SECRET not in caplog.text
 
 
@@ -306,7 +307,7 @@ def test_non_transport_error_is_not_retried(monkeypatch):
     assert len(client.calls) == 1
     assert records[0]["outcome"] == "api_error"
     assert records[0]["error_type"] == "RuntimeError"
-    assert response.answer == CHECK_MISS_ANSWER
+    assert response.answer.startswith("Based on professor-approved course knowledge")
 
 
 def test_timeout_then_valid_json_passes_on_the_retry(monkeypatch):
@@ -895,7 +896,7 @@ def test_gemini_invalid_json_fails_closed(monkeypatch, caplog):
     with caplog.at_level("DEBUG"):
         response = _ask(monkeypatch, None, [_hit()])
     assert len(calls) == 1
-    assert response.answer == CHECK_MISS_ANSWER
+    assert response.answer.startswith("Based on professor-approved course knowledge")
     assert SECRET not in caplog.text
 
 
@@ -959,7 +960,7 @@ def test_gemini_429_exhausted_fails_closed(monkeypatch, caplog):
     assert len(calls) == 3
     assert sleeps == [1.0, 2.0]
     assert records[0]["outcome"] == "rate_limited"
-    assert response.answer == CHECK_MISS_ANSWER
+    assert response.answer.startswith("Based on professor-approved course knowledge")
     assert "answer_check rate_limit_exhausted provider=gemini attempts=3" in caplog.text
     assert SECRET not in caplog.text
 
@@ -983,7 +984,7 @@ def test_gemini_daily_quota_is_not_retried(monkeypatch, caplog):
     assert len(calls) == 1
     assert sleeps == []
     assert records[0]["outcome"] == "daily_quota"
-    assert response.answer == CHECK_MISS_ANSWER
+    assert response.answer.startswith("Based on professor-approved course knowledge")
     assert "answer_check daily_quota provider=gemini" in caplog.text
     assert SECRET not in caplog.text
 
