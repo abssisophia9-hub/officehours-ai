@@ -236,54 +236,100 @@ def complete_gemini(
     raise RateLimitExhausted("rate_limit_exhausted")
 
 
+def _image_request_bodies(system: str, data: bytes, mime: str) -> list[bytes]:
+    """Two documented image shapes. The second is used only after a 400.
+
+    The picture comes first. The instruction sits in the text part, because a
+    system instruction beside an image is what this read was sending when
+    Gemini rejected the screenshot.
+    """
+    encoded = base64.b64encode(data).decode("ascii")
+    instruction = f"{system.strip()}\n\nTranscribe the visible text."
+
+    def image_then_text(image_part: dict[str, object]) -> dict[str, object]:
+        return {"contents": [{"parts": [image_part, {"text": instruction}]}]}
+
+    shapes = (
+        image_then_text({"inline_data": {"mime_type": mime, "data": encoded}}),
+        image_then_text({"inlineData": {"mimeType": mime, "data": encoded}}),
+    )
+    return [json.dumps(shape).encode("utf-8") for shape in shapes]
+
+
+def _post_image_body(
+    url: str,
+    body: bytes,
+    headers: dict[str, str],
+    model: str,
+) -> GeminiCompletion:
+    """Post one image body. A short rate limit is retried. A timeout is retried once."""
+    for attempt in range(1, RATE_LIMIT_ATTEMPTS + 1):
+        _throttle()
+        request = urllib.request.Request(url, data=body, headers=headers, method="POST")
+        started = time.perf_counter()
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                raw = response.read()
+        except urllib.error.HTTPError as exc:
+            status = getattr(exc, "code", None)
+            error_body = _error_body(exc)
+            if status == 429 and _is_daily_quota(error_body):
+                logger.warning("study_file transcribe daily_quota provider=gemini")
+                raise DailyQuotaError("daily_quota") from None
+            if status in {429, 503} and attempt < RATE_LIMIT_ATTEMPTS:
+                logger.warning(
+                    "study_file transcribe retry status=%s attempt=%s provider=gemini",
+                    status,
+                    attempt,
+                )
+                time.sleep(RATE_LIMIT_BACKOFF_SECONDS[attempt - 1])
+                continue
+            reason = " ".join(error_body.split())[:160]
+            logger.warning(
+                "study_file transcribe status=%s provider=gemini reason=%s",
+                status,
+                reason,
+            )
+            raise
+        except (TimeoutError, urllib.error.URLError):
+            logger.warning(
+                "study_file transcribe timeout attempt=%s provider=gemini",
+                attempt,
+            )
+            if attempt < 2:
+                continue
+            raise
+        latency_ms = (time.perf_counter() - started) * 1000
+        return _completion_from_body(raw, model, latency_ms)
+    raise RateLimitExhausted("rate_limit_exhausted")
+
+
 def transcribe_image(data: bytes, mime: str, *, system: str) -> GeminiCompletion:
     """One vision call that returns visible text. The key stays in the header.
 
     The image is not written into the URL or the log. This call does not use
-    the answer-check JSON schema.
+    the answer-check JSON schema. A screenshot is slower than a text check, so
+    the limit is 30 seconds and a dropped connection or a short rate limit is
+    retried. A 400 tries the other documented image field names once.
     """
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY missing")
     model = gemini_model()
     url = GEMINI_ENDPOINT.format(model=quote(model, safe=""))
-    payload = {
-        "systemInstruction": {"parts": [{"text": system}]},
-        "contents": [
-            {
-                "role": "user",
-                "parts": [
-                    {"text": "Transcribe the visible text."},
-                    {
-                        "inline_data": {
-                            "mime_type": mime,
-                            "data": base64.b64encode(data).decode("ascii"),
-                        }
-                    },
-                ],
-            }
-        ],
-        "generationConfig": {"temperature": 0, "maxOutputTokens": 800},
-    }
-    body = json.dumps(payload).encode("utf-8")
-    if api_key.encode("utf-8") in body or "key=" in url:
-        raise RuntimeError("refusing to send the API key in the image request")
     headers = {
         "content-type": "application/json",
         "x-goog-api-key": api_key,
     }
-    request = urllib.request.Request(url, data=body, headers=headers, method="POST")
-    started = time.perf_counter()
-    try:
-        with urllib.request.urlopen(request, timeout=10) as response:
-            raw = response.read()
-    except urllib.error.HTTPError as exc:
-        status = getattr(exc, "code", None)
-        error_body = _error_body(exc)
-        if status == 429 and _is_daily_quota(error_body):
-            logger.warning("study_file transcribe daily_quota provider=gemini")
-            raise DailyQuotaError("daily_quota") from None
-        logger.warning("study_file transcribe status=%s provider=gemini", status)
-        raise
-    latency_ms = (time.perf_counter() - started) * 1000
-    return _completion_from_body(raw, model, latency_ms)
+    bodies = _image_request_bodies(system, data, mime)
+    for index, body in enumerate(bodies):
+        if api_key.encode("utf-8") in body or "key=" in url:
+            raise RuntimeError("refusing to send the API key in the image request")
+        try:
+            return _post_image_body(url, body, headers, model)
+        except urllib.error.HTTPError as exc:
+            if getattr(exc, "code", None) == 400 and index + 1 < len(bodies):
+                logger.warning("study_file transcribe retry_shape provider=gemini")
+                continue
+            raise
+    raise RuntimeError("screenshot read was not sent")

@@ -4,6 +4,7 @@ Routes for knowledge-base curation and the student-facing KB agent.
 
 import logging
 import os
+import urllib.error
 
 from fastapi import (
     APIRouter,
@@ -574,8 +575,31 @@ def ask_with_student_file(
             )
         try:
             text = transcribe_student_image(prepared.data, prepared.mime or "image/png")
-        except Exception:
-            logger.warning("study_file transcribe_failed")
+        except RuntimeError as exc:
+            missing_key = "GEMINI_API_KEY" in str(exc)
+            logger.warning(
+                "study_file transcribe_failed error_type=%s",
+                "missing_key" if missing_key else "runtime",
+            )
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Screenshot reading is not turned on."
+                    if missing_key
+                    else "That screenshot could not be read."
+                ),
+            ) from None
+        except (TimeoutError, urllib.error.URLError):
+            logger.warning("study_file transcribe_failed error_type=timeout")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="That screenshot took too long to read. Send it again.",
+            ) from None
+        except Exception as exc:
+            logger.warning(
+                "study_file transcribe_failed error_type=%s",
+                type(exc).__name__,
+            )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="That screenshot could not be read.",

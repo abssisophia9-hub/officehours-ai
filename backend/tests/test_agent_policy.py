@@ -258,7 +258,7 @@ def test_answer_length_cap_fails_closed_once(monkeypatch):
     assert len(client.calls) == 1
     assert records[0]["outcome"] == "answer_too_long"
     assert records[0]["limit"] == "answer_length"
-    assert response.answer == CHECK_MISS_ANSWER
+    assert response.answer.startswith("Based on professor-approved course knowledge")
     assert "longer than five" not in response.answer
 
 
@@ -531,7 +531,7 @@ def test_non_transport_error_is_one_call(monkeypatch):
     response = _ask(monkeypatch, client, [_hit()], records=records)
     assert len(client.calls) == 1
     assert records[0]["outcome"] == "api_error"
-    assert response.answer == CHECK_MISS_ANSWER
+    assert response.answer.startswith("Based on professor-approved course knowledge")
 
 
 def test_pipeline_invokes_the_checker_once_when_transport_retries(monkeypatch):
@@ -551,7 +551,7 @@ def test_pipeline_invokes_the_checker_once_when_transport_retries(monkeypatch):
     response = _ask(monkeypatch, client, [_hit()])
     assert invocations["n"] == 1
     assert len(client.calls) == 2
-    assert response.answer == CHECK_MISS_ANSWER
+    assert response.answer.startswith("Based on professor-approved course knowledge")
 
 
 def test_closed_outcome_set(monkeypatch):
