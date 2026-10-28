@@ -11,6 +11,7 @@ materials wastes time.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -56,27 +57,51 @@ def _cite_entry(entry) -> str:
     return title or source or "Approved FAQ"
 
 
-def _retrieval_answer(sources: list[KnowledgeSearchHit], approved_only: bool) -> AgentAskResponse:
-    best = sources[0]
-    supporting = sources[1:]
-    answer_parts = [
-        f"Based on professor-approved course knowledge — {_cite_entry(best.entry)}:",
-        best.entry.answer_draft.strip(),
-    ]
-    if supporting:
-        related = "; ".join(
-            f"{_cite_entry(hit.entry)} ({hit.similarity:.0%} match)"
-            for hit in supporting
-        )
-        answer_parts.append(f"Related approved material: {related}.")
+_ANSWER_STOPWORDS = {
+    "a", "an", "and", "are", "can", "do", "does", "for", "how", "i", "in",
+    "is", "it", "my", "of", "on", "or", "the", "to", "what", "when", "where",
+    "which", "why", "with", "you",
+}
 
-    confidence = min(0.98, max(hit.similarity for hit in sources))
+
+def _spoken_answer(question: str, text: str) -> str:
+    """The sentence that shares the question's words, not the rest of the page."""
+    from app.ai.clustering import _tokenize
+
+    pieces: list[str] = []
+    for raw in (text or "").splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        pieces.extend(part.strip() for part in re.split(r"(?<=[.!?])\s+", line) if part.strip())
+    if not pieces:
+        return (text or "").strip()
+    question_tokens = _tokenize(question) - _ANSWER_STOPWORDS
+    scored = []
+    for piece in pieces:
+        overlap = len(question_tokens & _tokenize(piece)) if question_tokens else 0
+        scored.append((overlap, piece))
+    best = max(score for score, _ in scored)
+    if best <= 0:
+        return pieces[0]
+    chosen = [piece for score, piece in scored if score == best]
+    return " ".join(chosen[:2])
+
+
+def _retrieval_answer(
+    sources: list[KnowledgeSearchHit],
+    approved_only: bool,
+    question: str = "",
+) -> AgentAskResponse:
+    best = sources[0]
+    spoken = _spoken_answer(question, best.entry.answer_draft or "")
+    text = f"{spoken}\n{_approved_source_line(best.entry)}"
     return AgentAskResponse(
-        answer="\n\n".join(answer_parts),
+        answer=text,
         student_hint=best.entry.student_hint,
-        confidence=round(confidence, 4),
-        matched_count=len(sources),
-        sources=sources,
+        confidence=round(min(0.98, best.similarity), 4),
+        matched_count=1,
+        sources=[best],
         used_approved_kb_only=approved_only,
         should_seek_help=False,
     )

@@ -471,7 +471,7 @@ def run_study_agent(
         _log("disabled", None, limit="kill_switch")
         if attached:
             return _check_miss([], approved_only)
-        return _retrieval_answer(sources, approved_only)
+        return _retrieval_answer(sources, approved_only, question)
 
     chunks = []
     for hit in sources[: max_chunks()]:
@@ -501,7 +501,7 @@ def run_study_agent(
         _log(result.outcome, result, limit=result.outcome)
         if attached:
             return _check_miss([], approved_only)
-        return _retrieval_answer(sources, approved_only)
+        return _retrieval_answer(sources, approved_only, question)
 
     if breaker_open():
         record = _blank("busy", limit="circuit_breaker")
@@ -575,7 +575,7 @@ def run_study_agent(
         record["limit"] = result.outcome
         _remember(check_records, record)
         _log(result.outcome, result, limit=result.outcome)
-        return _retrieval_answer(sources, approved_only)
+        return _retrieval_answer(sources, approved_only, question)
 
     if (
         result.outcome in {"passed", "file_explained"}
@@ -656,5 +656,5 @@ def run_study_agent(
         return _file_answer(result.answer or "", attached["filename"], approved_only)
     # A dropped call is not a missing page. The stamped chunk is already approved.
     if result.outcome in _STAMPED_PAGE_FALLBACK and sources and not attached:
-        return _retrieval_answer(sources, approved_only)
+        return _retrieval_answer(sources, approved_only, question)
     return _check_miss(sources, approved_only)

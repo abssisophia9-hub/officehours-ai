@@ -231,7 +231,8 @@ def test_invalid_json_fails_closed_without_a_retry(monkeypatch):
     response = _ask(monkeypatch, client, [_hit()], records)
     assert len(client.calls) == 1
     assert records[0]["outcome"] == "invalid_json"
-    assert response.answer.startswith("Based on professor-approved course knowledge")
+    assert response.answer.startswith("The stack pop returns the top value.")
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
     assert response.should_seek_help is False
 
 
@@ -292,7 +293,8 @@ def test_api_error_fails_closed_after_one_retry(monkeypatch, caplog):
     assert len(client.calls) == 2
     assert records[0]["outcome"] == "api_error"
     assert records[0]["error_type"] == "URLError"
-    assert response.answer.startswith("Based on professor-approved course knowledge")
+    assert response.answer.startswith("The stack pop returns the top value.")
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
     assert response.should_seek_help is False
     assert response.matched_count == 1
     assert SECRET not in caplog.text
@@ -307,7 +309,8 @@ def test_non_transport_error_is_not_retried(monkeypatch):
     assert len(client.calls) == 1
     assert records[0]["outcome"] == "api_error"
     assert records[0]["error_type"] == "RuntimeError"
-    assert response.answer.startswith("Based on professor-approved course knowledge")
+    assert response.answer.startswith("The stack pop returns the top value.")
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
 
 
 def test_timeout_then_valid_json_passes_on_the_retry(monkeypatch):
@@ -362,10 +365,12 @@ def test_flag_off_matches_retrieval_and_does_not_call(monkeypatch):
     assert records[0]["outcome"] == "flag_off"
     assert records[0]["called"] is False
     assert response.should_seek_help is False
-    assert response.matched_count == 2
-    assert response.answer.startswith("Based on professor-approved course knowledge")
-    assert "The stack pop returns the top value." in response.answer
-    assert "notes.pdf, p. 3, chunk 2" in response.answer
+    assert response.matched_count == 1
+    assert response.sources[0].entry.id == 11
+    assert response.answer.startswith("The stack pop returns the top value.")
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
+    assert "A queue removes from the front." not in response.answer
+    assert "Related approved material:" not in response.answer
 
 
 def test_demo_off_with_external_on_does_not_call(monkeypatch, caplog):
@@ -377,7 +382,8 @@ def test_demo_off_with_external_on_does_not_call(monkeypatch, caplog):
         response = _ask(monkeypatch, client, [_hit()], records)
     assert client.calls == []
     assert records[0]["outcome"] == "demo_off"
-    assert response.answer.startswith("Based on professor-approved course knowledge")
+    assert response.answer.startswith("The stack pop returns the top value.")
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
     assert "The stack pop returns the top value." in response.answer
     assert caplog.text.count("OFFICEHOURS_DEMO is off") == 1
     assert SECRET not in caplog.text
@@ -896,7 +902,8 @@ def test_gemini_invalid_json_fails_closed(monkeypatch, caplog):
     with caplog.at_level("DEBUG"):
         response = _ask(monkeypatch, None, [_hit()])
     assert len(calls) == 1
-    assert response.answer.startswith("Based on professor-approved course knowledge")
+    assert response.answer.startswith("The stack pop returns the top value.")
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
     assert SECRET not in caplog.text
 
 
@@ -960,7 +967,8 @@ def test_gemini_429_exhausted_fails_closed(monkeypatch, caplog):
     assert len(calls) == 3
     assert sleeps == [1.0, 2.0]
     assert records[0]["outcome"] == "rate_limited"
-    assert response.answer.startswith("Based on professor-approved course knowledge")
+    assert response.answer.startswith("The stack pop returns the top value.")
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
     assert "answer_check rate_limit_exhausted provider=gemini attempts=3" in caplog.text
     assert SECRET not in caplog.text
 
@@ -984,7 +992,8 @@ def test_gemini_daily_quota_is_not_retried(monkeypatch, caplog):
     assert len(calls) == 1
     assert sleeps == []
     assert records[0]["outcome"] == "daily_quota"
-    assert response.answer.startswith("Based on professor-approved course knowledge")
+    assert response.answer.startswith("The stack pop returns the top value.")
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
     assert "answer_check daily_quota provider=gemini" in caplog.text
     assert SECRET not in caplog.text
 
@@ -995,7 +1004,8 @@ def test_provider_unset_keeps_the_retrieval_answer(monkeypatch):
     response = _ask(monkeypatch, None, [_hit()], records)
     assert records[0]["outcome"] == "provider_off"
     assert records[0]["called"] is False
-    assert response.answer.startswith("Based on professor-approved course knowledge")
+    assert response.answer.startswith("The stack pop returns the top value.")
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
 
 
 def test_gemini_without_ack_keeps_the_retrieval_answer(monkeypatch, caplog):
@@ -1008,7 +1018,8 @@ def test_gemini_without_ack_keeps_the_retrieval_answer(monkeypatch, caplog):
         response = _ask(monkeypatch, None, [_hit()], records)
     assert records[0]["outcome"] == "ack_off"
     assert records[0]["called"] is False
-    assert response.answer.startswith("Based on professor-approved course knowledge")
+    assert response.answer.startswith("The stack pop returns the top value.")
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
     assert "OFFICEHOURS_GEMINI_FREE_TIER_ACK is not true" in caplog.text
     assert "synthetic demo data" in caplog.text
     assert SECRET not in caplog.text
@@ -1019,7 +1030,8 @@ def test_allow_off_does_not_call_gemini(monkeypatch):
     records = []
     response = _ask(monkeypatch, None, [_hit()], records)
     assert records[0]["outcome"] == "flag_off"
-    assert response.answer.startswith("Based on professor-approved course knowledge")
+    assert response.answer.startswith("The stack pop returns the top value.")
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
 
 
 def test_demo_off_does_not_call_gemini(monkeypatch):
@@ -1027,7 +1039,8 @@ def test_demo_off_does_not_call_gemini(monkeypatch):
     records = []
     response = _ask(monkeypatch, None, [_hit()], records)
     assert records[0]["outcome"] == "demo_off"
-    assert response.answer.startswith("Based on professor-approved course knowledge")
+    assert response.answer.startswith("The stack pop returns the top value.")
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
 
 
 def test_claude_provider_still_checks_without_the_gemini_ack(monkeypatch):
