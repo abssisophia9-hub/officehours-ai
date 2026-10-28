@@ -237,23 +237,51 @@ def complete_gemini(
 
 
 def _image_request_bodies(system: str, data: bytes, mime: str) -> list[bytes]:
-    """Two documented image shapes. The second is used only after a 400.
+    """Documented image shapes. Later shapes are used only after a 400.
 
-    The picture comes first. The instruction sits in the text part, because a
-    system instruction beside an image is what this read was sending when
-    Gemini rejected the screenshot.
+    The picture comes first. Flash-Lite is asked to think as little as possible
+    so a screenshot read returns text instead of spending the whole wait on
+    reasoning. A system instruction beside an image is omitted: that pairing
+    is what this read was sending when Gemini rejected the screenshot.
     """
     encoded = base64.b64encode(data).decode("ascii")
     instruction = f"{system.strip()}\n\nTranscribe the visible text."
+    fast = {
+        "maxOutputTokens": 1024,
+        "thinkingConfig": {"thinkingLevel": "minimal"},
+    }
 
-    def image_then_text(image_part: dict[str, object]) -> dict[str, object]:
-        return {"contents": [{"parts": [image_part, {"text": instruction}]}]}
+    def image_then_text(image_part: dict[str, object], *, with_config: bool) -> dict[str, object]:
+        body: dict[str, object] = {"contents": [{"parts": [image_part, {"text": instruction}]}]}
+        if with_config:
+            body["generationConfig"] = fast
+        return body
 
     shapes = (
-        image_then_text({"inline_data": {"mime_type": mime, "data": encoded}}),
-        image_then_text({"inlineData": {"mimeType": mime, "data": encoded}}),
+        image_then_text({"inline_data": {"mime_type": mime, "data": encoded}}, with_config=True),
+        image_then_text({"inlineData": {"mimeType": mime, "data": encoded}}, with_config=True),
+        image_then_text({"inline_data": {"mime_type": mime, "data": encoded}}, with_config=False),
     )
     return [json.dumps(shape).encode("utf-8") for shape in shapes]
+
+
+def transport_timeout(exc: BaseException) -> bool:
+    """True only when the connection actually timed out.
+
+    ``HTTPError`` is a ``URLError``. A rejected screenshot is immediate, and
+    it must not be reported as a slow read.
+    """
+    if isinstance(exc, urllib.error.HTTPError):
+        return False
+    if isinstance(exc, TimeoutError):
+        return True
+    if isinstance(exc, urllib.error.URLError):
+        reason = getattr(exc, "reason", exc)
+        if isinstance(reason, TimeoutError):
+            return True
+        text = str(reason).lower()
+        return "timed out" in text or "timeout" in text
+    return False
 
 
 def _post_image_body(

@@ -4,6 +4,7 @@ A screenshot or a code file is data for one question. It is not saved, not
 executed, and it cannot pull in unapproved notes or another course.
 """
 
+import io
 import json
 import os
 import urllib.error
@@ -309,7 +310,8 @@ def test_image_request_keeps_the_key_in_the_header(monkeypatch):
     assert parts[0]["inline_data"]["mime_type"] == "image/png"
     assert "text" in parts[1]
     assert "systemInstruction" not in sent
-    assert "generationConfig" not in sent
+    assert sent["generationConfig"]["thinkingConfig"]["thinkingLevel"] == "minimal"
+    assert sent["generationConfig"]["maxOutputTokens"] == 1024
 
 
 def test_image_read_tries_the_other_shape_after_a_rejection(monkeypatch):
@@ -587,6 +589,29 @@ def test_screenshot_is_transcribed_and_not_sent_as_bytes(monkeypatch):
     assert failed.status_code == 400
     assert failed.json()["detail"] == "That screenshot could not be read."
     assert "secret image" not in failed.text
+
+    def reject_now(_data, _mime):
+        raise urllib.error.HTTPError(
+            "https://example.invalid",
+            400,
+            "bad",
+            email_headers(),
+            io.BytesIO(b'{"error":{"message":"invalid"}}'),
+        )
+
+    monkeypatch.setattr("app.routes.knowledge.transcribe_student_image", reject_now)
+    rejected = _post(sara, "board.png", PNG, question="What does this screenshot print?", course_id=course_id)
+    assert rejected.status_code == 400
+    assert rejected.json()["detail"] == "That screenshot could not be read."
+    assert "too long" not in rejected.json()["detail"]
+
+    def timed_out(_data, _mime):
+        raise urllib.error.URLError("timed out")
+
+    monkeypatch.setattr("app.routes.knowledge.transcribe_student_image", timed_out)
+    slow = _post(sara, "board.png", PNG, question="What does this screenshot print?", course_id=course_id)
+    assert slow.status_code == 400
+    assert slow.json()["detail"] == "That screenshot took too long to read. Send it again."
 
 
 def test_claude_explains_code_and_refuses_a_screenshot(monkeypatch):

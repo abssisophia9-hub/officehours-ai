@@ -253,7 +253,8 @@ def test_agent_cites_faq_title_not_entry_id():
     finally:
         db.close()
     assert body.should_seek_help is False
-    assert "week4-hashing.pdf, p. 4, chunk 1" in body.answer
-    assert "#" not in body.answer.split(":")[0]
-    assert "Related approved material:" in body.answer
-    assert "#1 (" not in body.answer
+    assert body.answer.startswith("Open addressing stores a colliding key in the next free slot.")
+    assert "based on week4-hashing.pdf, p.4 approved by the professor" in body.answer
+    assert "Related approved material:" not in body.answer
+    assert "Linear probing" not in body.answer
+    assert "#" not in body.answer

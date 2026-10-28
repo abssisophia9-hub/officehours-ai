@@ -32,17 +32,21 @@ The student sees one of four replies:
 
 A student can also attach one screenshot or one text or code file to a question (`POST /agent/ask-upload`). The file is the student's data for that question. It is not saved as course material, it is not executed, and it does not widen retrieval: unapproved rows and other courses stay out of the prompt. A file-only explanation is shown only when the checker copies a quote that appears verbatim in the file, and the reply ends with `based on <file> that you uploaded`. A quote from an approved chunk still uses the professor citation. Screenshots are transcribed only when the Gemini check is on. If the check is off, the upload is refused instead of being ignored. The log records the file name and size, not the body.
 
-Busy and a failed check do not fall back to the unverified retrieval draft.
-The draft is returned only when the kill switch is off, or when a guard
-refuses the call before any model request: the external-call flag, demo
-mode, an unset provider, or a missing Gemini free-tier acknowledgement.
+A model refusal stays a refusal. A check that does not finish (api error,
+invalid JSON, rate limit, daily quota, or an answer over the length cap)
+shows the same short reply as a skipped call. The kill switch, the
+external-call flag, demo mode, an unset provider, and a missing Gemini
+free-tier acknowledgement also skip the call. In every one of those cases
+the student sees the sentence from the best approved page that shares the
+question's words, then `based on <file>, p.<page> approved by the professor`.
+The rest of the page is not copied into the reply.
 
 ## Kill switch
 
 `OFFICEHOURS_LLM_ENABLED` defaults to **false**.
 
-While it is false, a question at or above 0.42 gets today's retrieval
-answer and the model is not called. The cache is not read and the budgets
+While it is false, a question at or above 0.42 gets that short approved-page
+reply and the model is not called. The cache is not read and the budgets
 are not spent. Below 0.42 the staff form is unchanged.
 
 `scripts/run_study_eval.py --with-check` turns the kill switch on for that

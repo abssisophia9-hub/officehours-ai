@@ -589,11 +589,30 @@ def ask_with_student_file(
                     else "That screenshot could not be read."
                 ),
             ) from None
-        except (TimeoutError, urllib.error.URLError):
-            logger.warning("study_file transcribe_failed error_type=timeout")
+        except urllib.error.HTTPError as exc:
+            logger.warning(
+                "study_file transcribe_failed error_type=http status=%s",
+                getattr(exc, "code", None),
+            )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="That screenshot took too long to read. Send it again.",
+                detail="That screenshot could not be read.",
+            ) from None
+        except (TimeoutError, urllib.error.URLError) as exc:
+            from app.ai.gemini_client import transport_timeout
+
+            timed_out = transport_timeout(exc)
+            logger.warning(
+                "study_file transcribe_failed error_type=%s",
+                "timeout" if timed_out else "transport",
+            )
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "That screenshot took too long to read. Send it again."
+                    if timed_out
+                    else "That screenshot could not be read."
+                ),
             ) from None
         except Exception as exc:
             logger.warning(

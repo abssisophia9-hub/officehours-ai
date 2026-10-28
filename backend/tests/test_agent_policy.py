@@ -154,6 +154,56 @@ def test_question_length_is_busy_and_does_not_search(monkeypatch):
     assert "Based on professor-approved" not in response.answer
 
 
+def test_retrieval_reply_quotes_only_the_matching_sentence(monkeypatch):
+    monkeypatch.setenv("OFFICEHOURS_ALLOW_EXTERNAL_LLM", "false")
+    page = (
+        "DEMO DATA. Not a real course.\n"
+        "Demo office hours are Tuesdays at 14:00 in room N-12.\n"
+        "The demo passphrase for the kettle closet is copper-kettles.\n"
+        "This page is synthetic material for the study-agent slice."
+    )
+    response = _ask(
+        monkeypatch,
+        ScriptedClient([]),
+        [
+            _hit(
+                answer_draft=page,
+                source_filename="demo_kettle_notes.pdf",
+                page_number=4,
+                chunk_index=4,
+            )
+        ],
+        question="office hours c'est quel jour et quelle heure?",
+    )
+    assert response.answer == (
+        "Demo office hours are Tuesdays at 14:00 in room N-12.\n"
+        "based on demo_kettle_notes.pdf, p.4 approved by the professor"
+    )
+    assert "copper-kettles" not in response.answer
+    assert "DEMO DATA" not in response.answer
+    assert "synthetic material" not in response.answer
+    assert len(response.sources) == 1
+
+
+def test_retrieval_reply_keeps_the_sentence_that_names_the_question_word(monkeypatch):
+    monkeypatch.setenv("OFFICEHOURS_ALLOW_EXTERNAL_LLM", "false")
+    page = (
+        "Hash tables map keys to buckets using a hash function.\n\n"
+        "Collisions are handled with chaining or open addressing.\n\n"
+        "Chaining stores a linked list in each bucket.\n\n"
+        "Open addressing probes for the next empty slot."
+    )
+    response = _ask(
+        monkeypatch,
+        ScriptedClient([]),
+        [_hit(answer_draft=page, source_filename="week4.pdf", page_number=1, chunk_index=1)],
+        question="How do hash tables handle collisions?",
+    )
+    assert "Collisions are handled with chaining or open addressing." in response.answer
+    assert "probes for the next empty slot" not in response.answer
+    assert response.answer.endswith("based on week4.pdf, p.1 approved by the professor")
+
+
 def test_kill_switch_off_keeps_retrieval_for_a_long_question(monkeypatch):
     monkeypatch.setenv("OFFICEHOURS_LLM_ENABLED", "false")
     monkeypatch.setenv("OFFICEHOURS_LLM_MAX_QUESTION_CHARS", "20")
@@ -169,7 +219,8 @@ def test_kill_switch_off_keeps_retrieval_for_a_long_question(monkeypatch):
     assert client.calls == []
     assert records[0]["outcome"] == "disabled"
     assert records[0]["limit"] == "kill_switch"
-    assert response.answer.startswith("Based on professor-approved course knowledge")
+    assert response.answer.startswith("The stack pop returns the top value.")
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
     assert response.should_seek_help is False
 
 
@@ -258,7 +309,8 @@ def test_answer_length_cap_fails_closed_once(monkeypatch):
     assert len(client.calls) == 1
     assert records[0]["outcome"] == "answer_too_long"
     assert records[0]["limit"] == "answer_length"
-    assert response.answer.startswith("Based on professor-approved course knowledge")
+    assert response.answer.startswith("The stack pop returns the top value.")
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
     assert "longer than five" not in response.answer
 
 
@@ -531,7 +583,8 @@ def test_non_transport_error_is_one_call(monkeypatch):
     response = _ask(monkeypatch, client, [_hit()], records=records)
     assert len(client.calls) == 1
     assert records[0]["outcome"] == "api_error"
-    assert response.answer.startswith("Based on professor-approved course knowledge")
+    assert response.answer.startswith("The stack pop returns the top value.")
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
 
 
 def test_pipeline_invokes_the_checker_once_when_transport_retries(monkeypatch):
@@ -551,7 +604,8 @@ def test_pipeline_invokes_the_checker_once_when_transport_retries(monkeypatch):
     response = _ask(monkeypatch, client, [_hit()])
     assert invocations["n"] == 1
     assert len(client.calls) == 2
-    assert response.answer.startswith("Based on professor-approved course knowledge")
+    assert response.answer.startswith("The stack pop returns the top value.")
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
 
 
 def test_closed_outcome_set(monkeypatch):

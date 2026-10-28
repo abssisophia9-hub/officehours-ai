@@ -255,7 +255,8 @@ def test_pdf_citation_uses_filename_page_and_chunk():
         },
     ).json()
     assert answer["matched_count"] >= 1
-    assert "lab-notes.pdf, p. 2, chunk 2" in answer["answer"]
+    assert answer["answer"].startswith("Lantern buffers store spare wicks for the night lab.")
+    assert "based on lab-notes.pdf, p.2 approved by the professor" in answer["answer"]
 
 
 def test_upload_scoped_to_course():

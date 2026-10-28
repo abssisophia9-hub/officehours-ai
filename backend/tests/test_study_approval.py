@@ -91,7 +91,8 @@ def test_one_call_approves_every_chunk_of_an_upload():
         },
     ).json()
     assert answer["matched_count"] >= 1
-    assert "lab-notes.pdf, p. 2, chunk 2" in answer["answer"]
+    assert answer["answer"].startswith("Lantern buffers store spare wicks for the night lab.")
+    assert "based on lab-notes.pdf, p.2 approved by the professor" in answer["answer"]
 
 
 def test_student_and_ta_cannot_approve_an_upload():
