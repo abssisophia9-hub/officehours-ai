@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="460" viewBox="0 0 880 460">
+<style>text{font-family:Georgia,serif;fill:#1c1917} .small{font-size:12px} .title{font-size:18px}</style>
+<rect width="100%" height="100%" fill="#faf7f2"/>
+<text class="title" x="24" y="32">Study-agent architecture</text>
+<text class="small" x="24" y="52">Read from backend/app/ai/agent_policy.py, kb_agent_service.py, and gemini_client.py. Not measured.</text>
+<g stroke="#44403c" stroke-width="1.2" fill="#fff">
+<rect x="40" y="80" width="250" height="70" rx="8"/>
+<rect x="40" y="180" width="250" height="70" rx="8"/>
+<rect x="340" y="80" width="250" height="70" rx="8"/>
+<rect x="340" y="180" width="250" height="90" rx="8"/>
+<rect x="640" y="80" width="200" height="70" rx="8"/>
+<rect x="640" y="180" width="200" height="90" rx="8"/>
+<rect x="340" y="320" width="250" height="80" rx="8"/>
+<rect x="640" y="320" width="200" height="80" rx="8"/>
+</g>
+<text x="54" y="108" font-size="15">Professor upload</text>
+<text class="small" x="54" y="130">Stamp approved or rejected</text>
+<text x="54" y="208" font-size="15">Approved course chunks</text>
+<text class="small" x="54" y="230">course_id, file, page, text</text>
+<text x="354" y="108" font-size="15">Student question</text>
+<text class="small" x="354" y="130">POST /agent/ask</text>
+<text x="354" y="208" font-size="15">run_study_agent</text>
+<text class="small" x="354" y="230">Local search, then one gate</text>
+<text x="654" y="108" font-size="15">Search</text>
+<text class="small" x="654" y="130">Include threshold 0.35</text>
+<text x="654" y="208" font-size="15">verify_course_answer</text>
+<text class="small" x="654" y="230">Gemini or Claude, at most once</text>
+<text x="354" y="348" font-size="15">API answer</text>
+<text class="small" x="354" y="370">Checked, miss, staff, busy, or draft</text>
+<text x="654" y="348" font-size="15">Study Agent page</text>
+<text class="small" x="654" y="370">Misses share one sentence</text>
+</svg>
