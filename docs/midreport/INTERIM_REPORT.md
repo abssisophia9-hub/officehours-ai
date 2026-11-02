@@ -18,7 +18,7 @@ this file. The student signs that page. This draft does not claim a signature.
 
 ## Title
 
-OfficeHours AI: A Professor-Approved, Course-Scoped Study Agent Integrated into a Unified Platform for Students, TAs, and Professors
+OfficeHours AI: A Professor-Stamped RAG and Multi-Channel Academic Support Network to Lower Student Help-Seeking Barriers and Streamline Repetitive Staff Work
 
 ## Capstone Report
 
@@ -102,9 +102,9 @@ Mots clés : recherche limitée au cours, approbation du professeur, vérificati
 
 ## 1 INTRODUCTION
 
-The approved title names one study agent: professor-approved, limited to the
-student's course, and placed in the same application that students, teaching
-assistants, and professors already use. On this commit the agent is
+The approved title names a professor-stamped RAG inside a multi-channel
+support network: the study path, named or anonymous staff asks, and peer
+collaboration. On this commit the agent is
 `POST /agent/ask`. The policy that decides whether a model is called is
 `run_study_agent` in `backend/app/ai/agent_policy.py`, added in pull request
 117, merged to `main` on 24 October 2026 at 23:12:41 (Africa/Casablanca).

@@ -78,8 +78,8 @@ on that one run. They are not the estimate.
 with-check file, and its log section omits `provider_off` and `ack_off`.
 Those are documentation bugs. This branch was not allowed to edit that file.
 
-The approved title, and the statement that a strategic planner and other role
-agents are future work, are not written in the repository docs. `README.md`
+The approved title is written in `docs/proposal.md`, `docs/midreport/INTERIM_REPORT.md`, and `docs/midreport/CONSISTENCY.md`. The statement that a strategic planner and other role
+agents are future work is not written in the repository docs. `README.md`
 still opens on the triage system. Cover-page identity (student name, ID,
 supervisor) was not found as a report fact in the repository.
 `docs/product_overview.md` uses `S.Abssi@aui.ma` only as an example of email
