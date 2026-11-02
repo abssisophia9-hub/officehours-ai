@@ -1,7 +1,7 @@
 # Project Proposal — OfficeHours AI
 
 ## Title
-OfficeHours AI: An AI-Assisted Triage System for Finals-Week Academic Support
+OfficeHours AI: A Professor-Stamped RAG and Multi-Channel Academic Support Network to Lower Student Help-Seeking Barriers and Streamline Repetitive Staff Work
 
 ## Problem Statement
 During final exam periods, faculty face a surge of repeated, overlapping, and urgent student requests across email, LMS messages, and office hours. Students, meanwhile, often hesitate to reach out directly due to social anxiety or difficulty articulating their confusion.

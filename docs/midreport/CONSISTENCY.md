@@ -2,12 +2,13 @@
 
 The approved project title for the mid-term report is:
 
-OfficeHours AI: A Professor-Approved, Course-Scoped Study Agent Integrated into a Unified Platform for Students, TAs, and Professors
+OfficeHours AI: A Professor-Stamped RAG and Multi-Channel Academic Support Network to Lower Student Help-Seeking Barriers and Streamline Repetitive Staff Work
 
 The strategic planner and the other role agents are future work. This file
 lists statements that conflict with each other or with the study-agent design
-on `main` (merge of pull request 121, commit `26c1095`). None of these files
-were edited.
+on `main` (merge of pull request 121, commit `26c1095`). The title in
+`docs/proposal.md` now matches the approved title. The other files in the
+tables were not edited.
 
 Line numbers are from that commit.
 
@@ -15,8 +16,7 @@ Line numbers are from that commit.
 
 | File and line | What it says | Conflict |
 | --- | --- | --- |
-| `README.md` line 1 and lines 3–8 | The heading is "OfficeHours AI". The next paragraph calls it a "Campus office-hours triage system" and says custom-trained Ask Triage agents (Analyzer, Matcher, Synthesizer) classify each ask. The approved title is not used. The study agent is not named in that opening. | Conflicts with the approved title, which centers a professor-approved, course-scoped study agent. Ask Triage and Help Coach do exist in the code. The conflict is the title and the opening emphasis, not a claim that those modules are absent. |
-| `docs/proposal.md` line 4 | "OfficeHours AI: An AI-Assisted Triage System for Finals-Week Academic Support" | A different title from the approved one. |
+| `README.md` line 1 and lines 3–8 | The heading is "OfficeHours AI". The next paragraph calls it a "Campus office-hours triage system" and says custom-trained Ask Triage agents (Analyzer, Matcher, Synthesizer) classify each ask. The approved title is not used. The study agent is not named in that opening. | Conflicts with the approved title, which names professor-stamped RAG and a multi-channel support network. Ask Triage and Help Coach do exist in the code. The conflict is the title and the opening emphasis, not a claim that those modules are absent. |
 | `docs/presentations/README.md` lines 19 | A one-sentence pitch that names Quiet ask, Rooms, Help Coach, and the professor stamp on the Study Agent. | Does not use the approved title. It does describe the study-agent gate. Listed because a report that copies this sentence would not match the approved title. |
 
 ## Names that no longer match the code
