@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="440" viewBox="0 0 820 440">
+<style>text{font-family:Georgia,serif;fill:#1c1917} .small{font-size:12px} .title{font-size:18px}</style>
+<rect width="100%" height="100%" fill="#faf7f2"/>
+<text class="title" x="24" y="32">Orchestration pipeline</text>
+<text class="small" x="24" y="52">Order in run_study_agent. Defaults printed with the policy env vars unset.</text>
+<text class="small" x="32" y="84">1. Question longer than 2000 and kill switch on: busy, no search</text>
+<text class="small" x="32" y="120">2. search_approved_entries (include threshold 0.35, course material only)</text>
+<text class="small" x="32" y="156">3. No hit or top score below 0.42: staff form, no call</text>
+<text class="small" x="32" y="192">4. Kill switch off: retrieval draft, no call</text>
+<text class="small" x="32" y="228">5. Flag, demo, provider, or Gemini ack missing: retrieval draft, no call</text>
+<text class="small" x="32" y="264">6. Breaker open: busy</text>
+<text class="small" x="32" y="300">7. Global calls, global tokens, a window, or the input estimate: busy</text>
+<text class="small" x="32" y="336">8. Cache hit: stored pass or stored refusal, no call</text>
+<text class="small" x="32" y="372">9. One verify_course_answer (a dropped connection is retried once inside it)</text>
+<text class="small" x="32" y="408">10. Pass within 600 characters: checked answer. Anything else: check miss</text>
+</svg>
