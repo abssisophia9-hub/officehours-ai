@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="480" viewBox="0 0 880 480">
+<style>text{font-family:Georgia,serif;fill:#1c1917} .small{font-size:12px} .title{font-size:18px}</style>
+<rect width="100%" height="100%" fill="#faf7f2"/>
+<text class="title" x="24" y="32">Threshold sweep, retrieval only</text>
+<text class="small" x="24" y="52">Built from baseline_retrieval_only_20261010T180847Z.json, backends.sentence-transformers.sections.agent_generated.modes.both_on.threshold_sweep. The production cutoff 0.42 is marked and was not changed.</text>
+<line x1="70" y1="390" x2="820" y2="390" stroke="#44403c"/>
+<line x1="70" y1="80" x2="70" y2="390" stroke="#44403c"/>
+<polyline fill="none" stroke="#1d4ed8" stroke-width="2" points="70.0,294.2 107.5,294.2 145.0,294.2 182.5,294.2 220.0,294.2 257.5,294.2 295.0,294.2 332.5,305.5 370.0,305.5 407.5,311.1 445.0,311.1 482.5,311.1 520.0,322.4 557.5,328.0 595.0,328.0 632.5,333.6 670.0,339.3 707.5,344.9 745.0,356.2 782.5,367.5 820.0,378.7"/>
+<polyline fill="none" stroke="#b45309" stroke-width="2" points="70.0,277.3 107.5,282.9 145.0,322.4 182.5,328.0 220.0,328.0 257.5,328.0 295.0,328.0 332.5,339.3 370.0,344.9 407.5,344.9 445.0,344.9 482.5,356.2 520.0,361.8 557.5,373.1 595.0,378.7 632.5,384.4 670.0,384.4 707.5,390.0 745.0,390.0 782.5,390.0 820.0,390.0"/>
+<polyline fill="none" stroke="#7f1d1d" stroke-width="2" points="70.0,130.7 107.5,153.3 145.0,192.7 182.5,215.3 220.0,232.2 257.5,243.5 295.0,266.0 332.5,277.3 370.0,294.2 407.5,299.8 445.0,311.1 482.5,339.3 520.0,350.5 557.5,361.8 595.0,373.1 632.5,378.7 670.0,378.7 707.5,384.4 745.0,390.0 782.5,390.0 820.0,390.0"/>
+<line x1="295.0" y1="80" x2="295.0" y2="390" stroke="#44403c" stroke-dasharray="4 4"/>
+<text class="small" x="301.0" y="94">0.42</text>
+<text class="small" x="70" y="430" fill="#1d4ed8">in-document correct citation</text>
+<text class="small" x="320" y="430" fill="#b45309">hard-negative answered</text>
+<text class="small" x="560" y="430" fill="#7f1d1d">spurious answers</text>
+</svg>
