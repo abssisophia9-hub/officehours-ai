@@ -48,6 +48,23 @@ ANSWER_JSON_SCHEMA = {
     "required": ["answerable", "supporting_chunk_id", "answer", "quote"],
 }
 
+ENTAILMENT_JSON_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "supports": {"type": "boolean"},
+    },
+    "required": ["supports"],
+}
+
+RECOVERY_JSON_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "action": {"type": "string"},
+        "query": {"type": "string", "nullable": True},
+    },
+    "required": ["action", "query"],
+}
+
 _FREE_TIER_WARNING = (
     "Gemini free tier is selected (OFFICEHOURS_LLM_PROVIDER=gemini). "
     "Google may use prompts to improve its products. "
@@ -163,6 +180,7 @@ def complete_gemini(
     max_tokens: int = 400,
     temperature: float = 0,
     timeout: float = 10,
+    schema: dict | None = None,
 ) -> GeminiCompletion:
     """One generateContent call. 429/503 are retried inside this function.
 
@@ -186,7 +204,7 @@ def complete_gemini(
             "responseFormat": {
                 "text": {
                     "mimeType": "APPLICATION_JSON",
-                    "schema": ANSWER_JSON_SCHEMA,
+                    "schema": schema or ANSWER_JSON_SCHEMA,
                 }
             },
         },

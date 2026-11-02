@@ -762,7 +762,7 @@ def miss_source_for(check: dict[str, Any] | None) -> str | None:
         outcome = (check or {}).get("checker_outcome")
     if outcome == "below_cutoff":
         return "cutoff"
-    if outcome == "not_answerable":
+    if outcome in {"not_answerable", "unsupported", "abstain"}:
         return "model"
     if outcome in {"quota", "busy"}:
         return "quota"
