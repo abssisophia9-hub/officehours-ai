@@ -130,15 +130,15 @@ def replace_architecture(doc: pymupdf.Document) -> None:
     cairosvg.svg2png(
         bytestring=ARCH_SVG.read_bytes(),
         write_to=str(ARCH_PNG),
-        output_width=2160,
-        output_height=1220,
+        output_width=2000,
+        output_height=1240,
     )
     figure = doc[12]
-    redact(figure, pymupdf.Rect(52, 38, 542, 545))
-    figure.insert_image(pymupdf.Rect(62, 48, 534, 315), filename=str(ARCH_PNG))
+    redact(figure, pymupdf.Rect(52, 38, 542, 580))
+    figure.insert_image(pymupdf.Rect(62, 44, 534, 337), filename=str(ARCH_PNG))
     text_box(
         figure,
-        pymupdf.Rect(58, 323, 536, 355),
+        pymupdf.Rect(58, 345, 536, 377),
         "Figure 1: OfficeHours AI as a modular monolith. Solid green: the system "
         "boundary. Dashed orange: external resources. Every arrow names the trigger "
         "or data exchanged and the communication mechanism.",
@@ -159,7 +159,7 @@ def replace_architecture(doc: pymupdf.Document) -> None:
         "sends a bounded HTTPS/JSON verification request to Gemini or Claude. The "
         "provider cannot access the database or publish directly to a student."
     )
-    text_box(figure, pymupdf.Rect(58, 368, 536, 548), prose, size=10.2, lineheight=1.12)
+    text_box(figure, pymupdf.Rect(58, 390, 536, 575), prose, size=10.2, lineheight=1.12)
 
 
 def correct_ai_disclosure(doc: pymupdf.Document) -> None:

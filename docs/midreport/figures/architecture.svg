@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="610" viewBox="0 0 1080 610">
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="620" viewBox="0 0 1000 620">
 <defs>
   <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
     <path d="M0,0 L0,6 L9,3 z" fill="#334155"/>
@@ -6,10 +6,11 @@
 </defs>
 <style>
   text{font-family:Arial,sans-serif;fill:#172033}
-  .title{font-size:22px;font-weight:700}
-  .subtitle{font-size:13px;fill:#475569}
-  .label{font-size:15px;font-weight:700}
-  .small{font-size:12px;fill:#334155}
+  .title{font-size:21px;font-weight:700}
+  .subtitle{font-size:14px;fill:#475569}
+  .label{font-size:16px;font-weight:700}
+  .small{font-size:14px;fill:#334155}
+  .arrowlabel{font-size:13px;fill:#334155}
   .module{fill:#f8fafc;stroke:#2563eb;stroke-width:1.6}
   .external{fill:#fff7ed;stroke:#c2410c;stroke-width:1.6;stroke-dasharray:7 5}
   .boundary{fill:#f8fafc;stroke:#0f766e;stroke-width:2}
@@ -18,69 +19,70 @@
   .event{stroke-dasharray:6 4}
 </style>
 <rect width="100%" height="100%" fill="#ffffff"/>
-<text class="title" x="28" y="34">OfficeHours AI — modular monolith with bounded modules</text>
-<text class="subtitle" x="28" y="56">One deployable backend and one database; module boundaries are enforced in code, not by network hops.</text>
+<text class="title" x="22" y="34">OfficeHours AI — modular monolith with bounded modules</text>
+<text class="subtitle" x="22" y="57">One backend deployable and one database; boundaries are enforced in code, not by network hops.</text>
 
-<rect class="external" x="24" y="96" width="185" height="94" rx="10"/>
-<text class="label" x="116" y="122" text-anchor="middle">Canvas LMS</text>
-<text class="small" x="116" y="145" text-anchor="middle">External resource</text>
-<text class="small" x="116" y="163" text-anchor="middle">LTI launch + course sync</text>
+<rect class="external" x="20" y="130" width="178" height="100" rx="10"/>
+<text class="label" x="109" y="158" text-anchor="middle">Canvas LMS</text>
+<text class="small" x="109" y="183" text-anchor="middle">External resource</text>
+<text class="small" x="109" y="207" text-anchor="middle">LTI + course APIs</text>
 
-<rect class="boundary" x="242" y="78" width="610" height="472" rx="16"/>
-<text class="label" x="262" y="106">OFFICEHOURS AI SYSTEM BOUNDARY</text>
+<rect class="boundary" x="270" y="80" width="540" height="480" rx="16"/>
+<text class="label" x="292" y="111">OFFICEHOURS AI SYSTEM BOUNDARY</text>
 
-<rect class="module" x="274" y="126" width="546" height="58" rx="9"/>
-<text class="label" x="547" y="150" text-anchor="middle">React multi-role application</text>
-<text class="small" x="547" y="169" text-anchor="middle">HTTPS/JSON requests; WebSocket notifications</text>
+<rect class="module" x="300" y="130" width="480" height="62" rx="9"/>
+<text class="label" x="540" y="155" text-anchor="middle">React multi-role application</text>
+<text class="small" x="540" y="179" text-anchor="middle">HTTPS/JSON requests; WebSocket notifications</text>
 
-<rect class="module" x="274" y="214" width="164" height="76" rx="9"/>
-<text class="label" x="356" y="238" text-anchor="middle">Identity + courses</text>
-<text class="small" x="356" y="260" text-anchor="middle">authenticate; authorize</text>
-<text class="small" x="356" y="277" text-anchor="middle">role per course</text>
+<rect class="module" x="300" y="230" width="145" height="86" rx="9"/>
+<text class="label" x="372" y="256" text-anchor="middle">Identity + courses</text>
+<text class="small" x="372" y="281" text-anchor="middle">authenticate; authorize</text>
+<text class="small" x="372" y="303" text-anchor="middle">role per course</text>
 
-<rect class="module" x="462" y="214" width="164" height="76" rx="9"/>
-<text class="label" x="544" y="238" text-anchor="middle">Academic support</text>
-<text class="small" x="544" y="260" text-anchor="middle">Ask Triage; Help Coach</text>
-<text class="small" x="544" y="277" text-anchor="middle">Rooms; Quiet ask</text>
+<rect class="module" x="467" y="230" width="145" height="86" rx="9"/>
+<text class="label" x="540" y="256" text-anchor="middle">Academic support</text>
+<text class="small" x="540" y="281" text-anchor="middle">Ask Triage; Help Coach</text>
+<text class="small" x="540" y="303" text-anchor="middle">Rooms; Quiet ask</text>
 
-<rect class="module" x="650" y="214" width="170" height="76" rx="9"/>
-<text class="label" x="735" y="238" text-anchor="middle">Knowledge</text>
-<text class="small" x="735" y="260" text-anchor="middle">upload; chunk; approve</text>
-<text class="small" x="735" y="277" text-anchor="middle">course-scoped retrieval</text>
+<rect class="module" x="634" y="230" width="146" height="86" rx="9"/>
+<text class="label" x="707" y="256" text-anchor="middle">Knowledge</text>
+<text class="small" x="707" y="281" text-anchor="middle">upload; chunk; approve</text>
+<text class="small" x="707" y="303" text-anchor="middle">course-scoped retrieval</text>
 
-<rect class="orchestration" x="334" y="324" width="426" height="112" rx="11"/>
-<text class="label" x="547" y="350" text-anchor="middle">Study Agent orchestration layer</text>
-<text class="small" x="547" y="374" text-anchor="middle">owns cutoff → guards → budgets → cache → breaker</text>
-<text class="small" x="547" y="394" text-anchor="middle">retrieves approved chunks; invokes bounded answer check</text>
-<text class="small" x="547" y="414" text-anchor="middle">returns answer, refusal, staff hand-off, or busy state</text>
+<rect class="orchestration" x="340" y="358" width="400" height="116" rx="11"/>
+<text class="label" x="540" y="386" text-anchor="middle">Study Agent orchestration layer</text>
+<text class="small" x="540" y="412" text-anchor="middle">owns cutoff → guards → budgets → cache → breaker</text>
+<text class="small" x="540" y="435" text-anchor="middle">retrieves approved chunks; invokes bounded answer check</text>
+<text class="small" x="540" y="458" text-anchor="middle">returns answer, refusal, staff hand-off, or busy state</text>
 
-<rect class="module" x="334" y="466" width="426" height="58" rx="9"/>
-<text class="label" x="547" y="490" text-anchor="middle">SQLAlchemy persistence</text>
-<text class="small" x="547" y="511" text-anchor="middle">one SQLite database by default; schema owned by modules</text>
+<rect class="module" x="340" y="508" width="400" height="60" rx="9"/>
+<text class="label" x="540" y="533" text-anchor="middle">SQLAlchemy persistence</text>
+<text class="small" x="540" y="557" text-anchor="middle">one SQLite database by default; schema owned by modules</text>
 
-<rect class="external" x="884" y="326" width="172" height="106" rx="10"/>
-<text class="label" x="970" y="352" text-anchor="middle">Model provider</text>
-<text class="small" x="970" y="375" text-anchor="middle">External resource</text>
-<text class="small" x="970" y="393" text-anchor="middle">Gemini or Claude</text>
-<text class="small" x="970" y="411" text-anchor="middle">HTTPS/JSON; guarded calls</text>
+<rect class="external" x="842" y="350" width="148" height="120" rx="10"/>
+<text class="label" x="916" y="380" text-anchor="middle">Model provider</text>
+<text class="small" x="916" y="405" text-anchor="middle">External resource</text>
+<text class="small" x="916" y="428" text-anchor="middle">Gemini or Claude</text>
+<text class="small" x="916" y="451" text-anchor="middle">guarded calls only</text>
 
-<path class="arrow" d="M209 143 H274"/>
-<text class="small" x="241" y="132" text-anchor="middle">launch/sync</text>
-<text class="small" x="241" y="176" text-anchor="middle">HTTPS</text>
+<path class="arrow" d="M198 156 H300"/>
+<text class="arrowlabel" x="249" y="143" text-anchor="middle">LTI launch</text>
+<path class="arrow" d="M300 203 H198"/>
+<text class="arrowlabel" x="249" y="224" text-anchor="middle">course sync</text>
 
-<path class="arrow" d="M547 184 V214"/>
-<text class="small" x="558" y="204">API dispatch</text>
+<path class="arrow" d="M540 192 V230"/>
+<text class="arrowlabel" x="552" y="216">API dispatch</text>
 
-<path class="arrow" d="M735 290 V324"/>
-<text class="small" x="748" y="310">approved chunks</text>
+<path class="arrow" d="M707 316 V358"/>
+<text class="arrowlabel" x="707" y="343" text-anchor="middle">approved chunks</text>
 
-<path class="arrow" d="M626 290 L600 324"/>
-<text class="small" x="572" y="310">student ask</text>
+<path class="arrow" d="M540 316 V358"/>
+<text class="arrowlabel" x="551" y="343">student ask</text>
 
-<path class="arrow" d="M547 436 V466"/>
-<text class="small" x="560" y="456">SQL read/write</text>
+<path class="arrow" d="M540 474 V508"/>
+<text class="arrowlabel" x="552" y="497">SQL read/write</text>
 
-<path class="arrow" d="M760 380 H884"/>
-<text class="small" x="822" y="366" text-anchor="middle">bounded verification</text>
-<text class="small" x="822" y="397" text-anchor="middle">HTTPS/JSON</text>
+<path class="arrow" d="M740 410 H842"/>
+<text class="arrowlabel" x="791" y="389" text-anchor="middle">bounded check</text>
+<text class="arrowlabel" x="791" y="431" text-anchor="middle">HTTPS/JSON</text>
 </svg>
