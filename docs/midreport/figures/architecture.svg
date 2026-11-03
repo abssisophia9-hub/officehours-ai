@@ -19,6 +19,7 @@
   .inner{fill:#dbeafe;stroke:#1d4ed8;stroke-width:1.7}
   .arrow{stroke:#334155;stroke-width:1.5;fill:none;marker-end:url(#arrow)}
   .sql{stroke:#0f766e;stroke-width:1.7;fill:none;marker-end:url(#arrow)}
+  .bridge{stroke:#fff;stroke-width:6;fill:none}
 </style>
 <rect width="100%" height="100%" fill="#fff"/>
 <text class="title" x="24" y="34">OfficeHours AI - modular monolith with explicit module interfaces</text>
@@ -51,23 +52,19 @@
 <text class="small" x="765" y="280" text-anchor="middle">upload + approve + retrieve</text>
 <text class="tiny" x="765" y="302" text-anchor="middle">/knowledge/*</text>
 
-<rect class="database" x="260" y="370" width="180" height="180" rx="10"/>
-<text class="label" x="350" y="399" text-anchor="middle">SQLAlchemy</text>
-<text class="small" x="350" y="423" text-anchor="middle">module-owned read/write</text>
-<text class="tiny" x="350" y="451" text-anchor="middle">Identity schema</text>
-<text class="tiny" x="350" y="473" text-anchor="middle">Academic Support schema</text>
-<text class="tiny" x="350" y="495" text-anchor="middle">Knowledge schema</text>
-<text class="tiny" x="350" y="527" text-anchor="middle">SQLite / Postgres</text>
+<rect class="database" x="260" y="535" width="590" height="65" rx="10"/>
+<text class="label" x="555" y="561" text-anchor="middle">SQLAlchemy persistence - direct module-owned read/write</text>
+<text class="tiny" x="555" y="585" text-anchor="middle">Identity schema | Academic Support schema | Knowledge schema | SQLite / Postgres</text>
 
-<rect class="outer" x="480" y="350" width="350" height="220" rx="11"/>
-<text class="label" x="655" y="378" text-anchor="middle">Orchestration Layer (outer wrapper)</text>
-<text class="small" x="655" y="402" text-anchor="middle">execution loop + max iterations + timeouts</text>
-<text class="small" x="655" y="423" text-anchor="middle">retries + state + session history + budget cuts</text>
+<rect class="outer" x="515" y="350" width="300" height="170" rx="11"/>
+<text class="label" x="665" y="378" text-anchor="middle">Orchestration Layer (outer wrapper)</text>
+<text class="small" x="665" y="402" text-anchor="middle">execution loop + max iterations + timeouts</text>
+<text class="small" x="665" y="423" text-anchor="middle">retries + state + session history + budget cuts</text>
 
-<rect class="inner" x="520" y="452" width="270" height="88" rx="9"/>
-<text class="label" x="655" y="479" text-anchor="middle">Agent Layer (inner module)</text>
-<text class="small" x="655" y="503" text-anchor="middle">one model reasoning step</text>
-<text class="small" x="655" y="524" text-anchor="middle">call tool | return answer | halt</text>
+<rect class="inner" x="540" y="440" width="250" height="70" rx="9"/>
+<text class="label" x="665" y="466" text-anchor="middle">Agent Layer (inner module)</text>
+<text class="small" x="665" y="487" text-anchor="middle">one model reasoning step</text>
+<text class="tiny" x="665" y="504" text-anchor="middle">call tool | return answer | halt</text>
 
 <rect class="external" x="920" y="435" width="160" height="120" rx="10"/>
 <text class="label" x="1000" y="465" text-anchor="middle">Model provider</text>
@@ -84,17 +81,18 @@
 <path class="arrow" d="M555 192 V230"/>
 <path class="arrow" d="M765 192 V230"/>
 
-<path class="sql" d="M345 318 V370"/>
-<path class="sql" d="M555 318 V330 H430 V405"/>
-<path class="sql" d="M765 318 V335 H865 V585 H440 V515"/>
-<text class="tiny" x="292" y="348">SQL read/write</text>
-<text class="tiny" x="440" y="347">SQL read/write</text>
-<text class="tiny" x="778" y="347">SQL read/write</text>
+<path class="sql" d="M345 318 V535"/>
+<path class="sql" d="M490 318 V535"/>
+<path class="sql" d="M830 318 V535"/>
+<text class="tiny" x="274" y="340">SQL read/write</text>
+<text class="tiny" x="414" y="340">SQL read/write</text>
+<text class="tiny" x="758" y="340">SQL read/write</text>
 
-<path class="arrow" d="M555 318 V350"/>
-<text class="tiny" x="566" y="338">chat turn</text>
-<path class="arrow" d="M830 495 H920"/>
-<text class="tiny" x="875" y="482" text-anchor="middle">one decision</text>
-<path class="arrow" d="M655 438 V452"/>
-<text class="tiny" x="667" y="447">invoke</text>
+<path class="arrow" d="M570 318 V350"/>
+<text class="tiny" x="580" y="340">chat turn</text>
+<path class="bridge" d="M815 475 H920"/>
+<path class="arrow" d="M815 475 H920"/>
+<text class="tiny" x="868" y="462" text-anchor="middle">one decision</text>
+<path class="arrow" d="M665 423 V440"/>
+<text class="tiny" x="677" y="437">invoke</text>
 </svg>
