@@ -120,6 +120,15 @@ def _passed():
     }
 
 
+def _supports():
+    return {"supports": True}
+
+
+def _verified():
+    """Quote check, then the entailment yes. A shown answer is two calls."""
+    return [_passed(), _supports()]
+
+
 def _refused():
     return {
         "answerable": False,
@@ -247,12 +256,17 @@ def _once(scenario, question, steps, hits, *, overrides=None, user_id=None, expe
     )
 
 
-def _spend_then_block(scenario, *, overrides, user_id, course_id, fired):
-    """One successful fake call spends the budget. The next call must not reach the model."""
+def _spend_then_block(scenario, *, overrides, user_id, course_id, fired, setup_steps=None, setup_calls=1):
+    """Spend a one-slot budget, then require the next question to stay off the model.
+
+    A window cap is charged once per question, so the setup question has to
+    finish: quote check plus entailment. A global cap of one is spent by the
+    quote check, and the entailment call is refused before it starts.
+    """
     _arm(overrides)
-    setup = FakeClient([_passed()])
+    setup = FakeClient(list(setup_steps) if setup_steps is not None else [_passed()])
     _ask("What does stack pop return?", setup, _strong(), user_id=user_id, course_id=course_id)
-    if setup.calls != 1:
+    if setup.calls != setup_calls:
         raise SystemExit(f"{scenario}: setup call count {setup.calls}")
     client = FakeClient([_passed()])
     response, records, search, elapsed = _ask(
@@ -290,7 +304,7 @@ def run_scenarios() -> list[dict]:
     urllib.request.urlopen = _blocked_urlopen
     try:
         _arm()
-        client = FakeClient([_passed()])
+        client = FakeClient(_verified())
         response, records, search, elapsed = _ask(
             "What does stack pop return?", client, _strong(), user_id=USER_ID
         )
@@ -304,7 +318,7 @@ def run_scenarios() -> list[dict]:
                 client,
                 search["n"],
                 elapsed,
-                expect_calls=1,
+                expect_calls=2,
                 kind="checked",
             )
         )
@@ -373,6 +387,8 @@ def run_scenarios() -> list[dict]:
                 user_id=USER_ID,
                 course_id=COURSE_ID,
                 fired="user_per_minute",
+                setup_steps=_verified(),
+                setup_calls=2,
             )
         )
         rows.append(
@@ -382,6 +398,8 @@ def run_scenarios() -> list[dict]:
                 user_id=USER_ID,
                 course_id=COURSE_ID,
                 fired="user_per_day",
+                setup_steps=_verified(),
+                setup_calls=2,
             )
         )
         rows.append(
@@ -391,6 +409,8 @@ def run_scenarios() -> list[dict]:
                 user_id=None,
                 course_id=COURSE_ID,
                 fired="course_per_day",
+                setup_steps=_verified(),
+                setup_calls=2,
             )
         )
         rows.append(

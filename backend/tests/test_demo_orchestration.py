@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "demo_orchestration.py"
 
 EXPECTED = [
-    ("answered_verified_quote", "passed", "1", "-"),
+    ("answered_verified_quote", "passed", "2", "-"),
     ("cache_hit", "cache_hit", "0", "-"),
     ("refused_by_model", "not_answerable", "1", "-"),
     ("below_0.42_cutoff", "below_cutoff", "0", "-"),
