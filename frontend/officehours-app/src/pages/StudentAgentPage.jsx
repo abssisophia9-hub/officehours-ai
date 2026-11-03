@@ -3,7 +3,6 @@ import { Navigate, useNavigate } from "react-router";
 import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
-const NOT_FOUND = "No professor-approved material answers this.";
 const GROUPS = ["Today", "Last 7 days", "Older"];
 
 function sourceLabel(entry) {
@@ -175,24 +174,6 @@ export default function StudentAgentPage() {
     boxRef.current?.focus();
   }
 
-  async function saveMessage(conversationId, body) {
-    const saved = await api(`/study-conversations/${conversationId}/messages`, {
-      method: "POST",
-      token,
-      body,
-    });
-    setThreads((prev) => {
-      const next = prev.map((thread) =>
-        thread.id === conversationId
-          ? { ...thread, title: saved.title, updated_at: saved.updated_at }
-          : thread,
-      );
-      next.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
-      return next;
-    });
-    return saved.message;
-  }
-
   async function send(event) {
     event?.preventDefault();
     const question = draft.trim();
@@ -203,23 +184,22 @@ export default function StudentAgentPage() {
     setMessages((prev) => [...prev, { id: `q-${Date.now()}`, role: "student", text: question }]);
     setBusy(true);
     try {
-      await saveMessage(conversationId, { role: "student", text: question });
-      const answer = await api("/agent/ask", {
+      const saved = await api(`/academic-support/conversations/${conversationId}/turns`, {
         method: "POST",
         token,
-        body: { question, course_id: activeCourse.id },
+        body: { question },
       });
-      const notFound = Boolean(answer.should_seek_help || answer.matched_count === 0);
-      const agentBody = {
-        role: "agent",
-        text: notFound ? NOT_FOUND : answer.answer || "",
-        sources: notFound ? [] : answer.sources || [],
-        not_found: notFound,
-        error: false,
-      };
-      const stored = await saveMessage(conversationId, agentBody);
+      setThreads((prev) => {
+        const next = prev.map((thread) =>
+          thread.id === conversationId
+            ? { ...thread, title: saved.title, updated_at: saved.updated_at }
+            : thread,
+        );
+        next.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+        return next;
+      });
       if (activeIdRef.current === conversationId) {
-        setMessages((prev) => [...prev, stored]);
+        setMessages((prev) => [...prev, saved.message]);
       }
     } catch (err) {
       const agentBody = {
@@ -228,15 +208,8 @@ export default function StudentAgentPage() {
         error: true,
         not_found: false,
       };
-      try {
-        const stored = await saveMessage(conversationId, agentBody);
-        if (activeIdRef.current === conversationId) {
-          setMessages((prev) => [...prev, stored]);
-        }
-      } catch {
-        if (activeIdRef.current === conversationId) {
-          setMessages((prev) => [...prev, { id: `e-${Date.now()}`, ...agentBody }]);
-        }
+      if (activeIdRef.current === conversationId) {
+        setMessages((prev) => [...prev, { id: `e-${Date.now()}`, ...agentBody }]);
       }
     } finally {
       setBusy(false);

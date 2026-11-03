@@ -981,7 +981,7 @@ def test_gemini_quote_not_in_the_chunk_fails_closed(monkeypatch, caplog):
     assert SECRET not in caplog.text
 
 
-def test_gemini_429_then_success(monkeypatch):
+def test_gemini_429_is_classified_for_the_orchestrator(monkeypatch):
     _gemini_env(monkeypatch)
     sleeps = []
     calls = _install_gemini_http(
@@ -993,12 +993,12 @@ def test_gemini_429_then_success(monkeypatch):
         "What does stack pop return?",
         [{"chunk_id": 11, "file": "notes.pdf", "page": 3, "text": "The stack pop returns the top value."}],
     )
-    assert result.outcome == "passed"
-    assert len(calls) == 2
-    assert sleeps == [1.0]
+    assert result.outcome == "rate_limited"
+    assert len(calls) == 1
+    assert sleeps == []
 
 
-def test_gemini_503_then_success(monkeypatch):
+def test_gemini_503_is_classified_for_the_orchestrator(monkeypatch):
     _gemini_env(monkeypatch)
     sleeps = []
     calls = _install_gemini_http(
@@ -1010,9 +1010,9 @@ def test_gemini_503_then_success(monkeypatch):
         "What does stack pop return?",
         [{"chunk_id": 11, "file": "notes.pdf", "page": 3, "text": "The stack pop returns the top value."}],
     )
-    assert result.outcome == "passed"
-    assert len(calls) == 2
-    assert sleeps == [1.0]
+    assert result.outcome == "rate_limited"
+    assert len(calls) == 1
+    assert sleeps == []
 
 
 def test_gemini_429_exhausted_fails_closed(monkeypatch, caplog):
@@ -1023,11 +1023,11 @@ def test_gemini_429_exhausted_fails_closed(monkeypatch, caplog):
     with caplog.at_level("WARNING", logger="officehours.answer_check"):
         records = []
         response = _ask(monkeypatch, None, [_hit()], records)
-    assert len(calls) == 3
-    assert sleeps == [1.0, 2.0]
+    assert len(calls) == 2
+    assert sleeps == []
     assert records[0]["outcome"] == "rate_limited"
     assert response.answer == CHECK_MISS_ANSWER
-    assert "answer_check rate_limit_exhausted provider=gemini attempts=3" in caplog.text
+    assert "study_orchestrator retry phase=answer" in caplog.text
     assert SECRET not in caplog.text
 
 

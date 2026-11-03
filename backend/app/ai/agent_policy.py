@@ -29,10 +29,8 @@ from app.ai.claude_client import (
     AnswerCheckClient,
     AnswerCheckResult,
     _material_chunks,
-    choose_recovery,
-    judge_entailment,
-    verify_course_answer,
 )
+from app.ai.study_agent_layer import AgentState, AgentStep, decide_next_action
 from app.services.rate_limit import RateLimiter
 
 logger = logging.getLogger("officehours.agent_policy")
@@ -141,6 +139,12 @@ def agent_max_attempts() -> int:
     """Hard cap of 2 or 3 quote-check attempts. Default is 3."""
     value = _positive_int("OFFICEHOURS_AGENT_MAX_ATTEMPTS", 3)
     return min(3, max(2, value))
+
+
+def orchestration_retry_attempts() -> int:
+    """Transport attempts owned by the outer orchestration wrapper."""
+    value = _positive_int("OFFICEHOURS_ORCHESTRATION_RETRY_ATTEMPTS", 2)
+    return min(3, value)
 
 
 def reset_policy_state() -> None:
@@ -441,6 +445,36 @@ def _spent(result: AnswerCheckResult, totals: dict[str, Any]) -> AnswerCheckResu
     )
 
 
+def _invoke_agent_step(
+    state: AgentState, checker: AnswerCheckClient | None
+) -> AgentStep:
+    """Invoke one agent decision; retry transient provider failures outside the agent."""
+    totals = {"input_tokens": 0, "output_tokens": 0, "latency_ms": 0.0}
+    transient_errors = {"TimeoutError", "URLError", "rate_limited"}
+    step: AgentStep | None = None
+    for attempt in range(1, orchestration_retry_attempts() + 1):
+        step = decide_next_action(state, checker)
+        _absorb(totals, step.result)
+        retryable = (
+            step.result.outcome in {"api_error", "rate_limited"}
+            and step.result.error_type in transient_errors
+        )
+        if not retryable or attempt >= orchestration_retry_attempts():
+            break
+        logger.warning(
+            "study_orchestrator retry phase=%s error_type=%s attempt=%s",
+            state.phase,
+            step.result.error_type,
+            attempt,
+        )
+    assert step is not None
+    return AgentStep(
+        action=step.action,
+        tool=step.tool,
+        result=_spent(step.result, totals),
+    )
+
+
 def _cache_row(result: AnswerCheckResult, chunks: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "stored_at": time.monotonic(),
@@ -532,8 +566,9 @@ def run_study_agent(
     answer_checker: AnswerCheckClient | None = None,
     check_records: list[dict[str, Any]] | None = None,
     user_id: int | None = None,
+    session_history: list[dict[str, Any]] | None = None,
 ):
-    """Fixed pipeline. Retrieval and the 0.42 cutoff stay in the knowledge service."""
+    """Outer orchestration wrapper for retrieval and bounded agent decisions."""
     from app.models.knowledge import KnowledgeSearchHit
     from app.services.kb_agent_service import (
         ABSTAIN_ANSWER,
@@ -545,6 +580,7 @@ def run_study_agent(
     )
     from app.services.knowledge_service import to_out
 
+    history = tuple(dict(item) for item in (session_history or [])[-20:])
     enabled = llm_enabled()
     if enabled and len(question or "") > max_question_chars():
         record = _blank("quota", limit="question_length")
@@ -579,7 +615,16 @@ def run_study_agent(
     chunks = _chunks_from_sources(sources, max_chunks())
 
     if not _model_calls_allowed() or not _provider_ready(answer_checker):
-        result = verify_course_answer(question, chunks, client=answer_checker, emit_log=False)
+        step = _invoke_agent_step(
+            AgentState(
+                phase="answer",
+                question=question,
+                chunks=tuple(chunks),
+                session_history=history,
+            ),
+            answer_checker,
+        )
+        result = step.result
         record = result.as_record()
         record["prompt_version"] = PROMPT_VERSION
         record["limit"] = result.outcome
@@ -680,7 +725,16 @@ def run_study_agent(
                 _log("quota", None, limit="input_tokens")
                 return _busy_response(approved_only)
 
-        result = verify_course_answer(search_question, chunks, client=checker, emit_log=False)
+        quote_step = _invoke_agent_step(
+            AgentState(
+                phase="answer",
+                question=search_question,
+                chunks=tuple(chunks),
+                session_history=history,
+            ),
+            checker,
+        )
+        result = quote_step.result
         if result.outcome in _GUARD_OUTCOMES:
             record = result.as_record()
             record["prompt_version"] = PROMPT_VERSION
@@ -706,7 +760,11 @@ def run_study_agent(
 
         _absorb(totals, result)
         _note_spend(result.input_tokens, result.output_tokens)
-        if result.outcome != "passed" or result.supporting_chunk_id is None:
+        if (
+            quote_step.action == "halt"
+            or result.outcome != "passed"
+            or result.supporting_chunk_id is None
+        ):
             if _is_failure(result):
                 _note_failure()
             else:
@@ -726,10 +784,21 @@ def run_study_agent(
             _log("busy", None, limit=record["limit"])
             return _busy_response(approved_only)
 
-        entailment = judge_entailment(result.answer or "", result.quote or "", checker)
+        entailment_step = _invoke_agent_step(
+            AgentState(
+                phase="entailment",
+                question=search_question,
+                chunks=tuple(chunks),
+                session_history=history,
+                answer=result.answer or "",
+                quote=result.quote or "",
+            ),
+            checker,
+        )
+        entailment = entailment_step.result
         _absorb(totals, entailment)
         _note_spend(entailment.input_tokens, entailment.output_tokens)
-        if entailment.outcome == "supported":
+        if entailment_step.action == "return_answer" and entailment.outcome == "supported":
             _note_success()
             return _finish_supported(
                 result,
@@ -743,7 +812,11 @@ def run_study_agent(
                 attempt,
                 recoveries,
             )
-        if entailment.outcome != "unsupported":
+        if (
+            entailment_step.action != "call_tool"
+            or entailment_step.tool != "choose_recovery"
+            or entailment.outcome != "unsupported"
+        ):
             _note_failure()
             record = _spent(entailment, totals).as_record()
             record["prompt_version"] = PROMPT_VERSION
@@ -772,15 +845,21 @@ def run_study_agent(
             _log("busy", None, limit=record["limit"])
             return _busy_response(approved_only)
 
-        recovery = choose_recovery(
+        recovery_step = _invoke_agent_step(
+            AgentState(
+                phase="recovery",
+                question=search_question,
+                chunks=tuple(chunks),
+                session_history=history,
+                answer=result.answer or "",
+                quote=result.quote or "",
+            ),
             checker,
-            question=search_question,
-            answer=result.answer or "",
-            quote=result.quote or "",
         )
+        recovery = recovery_step.result
         _absorb(totals, recovery)
         _note_spend(recovery.input_tokens, recovery.output_tokens)
-        if recovery.outcome == "abstain":
+        if recovery_step.action == "halt" and recovery.outcome == "abstain":
             _note_success()
             record = _spent(recovery, totals).as_record()
             record["prompt_version"] = PROMPT_VERSION
@@ -791,7 +870,11 @@ def run_study_agent(
             _remember(check_records, record)
             _log("refused_by_model", _spent(recovery, totals), limit=None)
             return _check_miss(sources, approved_only, answer=ABSTAIN_ANSWER)
-        if recovery.outcome not in {"reformulate", "widen", "narrow"}:
+        if (
+            recovery_step.action != "call_tool"
+            or recovery_step.tool != "search"
+            or recovery.outcome not in {"reformulate", "widen", "narrow"}
+        ):
             _note_failure()
             record = _spent(recovery, totals).as_record()
             record["prompt_version"] = PROMPT_VERSION

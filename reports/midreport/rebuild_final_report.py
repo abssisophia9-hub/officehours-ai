@@ -102,6 +102,22 @@ def add_jill_watson(doc: pymupdf.Document) -> None:
     text_box(page, pymupdf.Rect(58, 201, 534, 282), paragraph, size=10.2, lineheight=1.12)
 
 
+def replace_agent_terminology(doc: pymupdf.Document) -> None:
+    page = doc[4]
+    redact(page, pymupdf.Rect(56, 457, 538, 541))
+    paragraph = (
+        "\"Agent\" names the inner model-driven component. The surrounding Study "
+        "Agent remains a bounded workflow: an outer orchestration wrapper owns the "
+        "execution loop, maximum iterations, timeouts, retries, state, session "
+        "history and budgets. On each iteration the inner Agent Layer receives an "
+        "immutable state snapshot and chooses only among call_tool, return_answer "
+        "and halt. It cannot access the database, publish directly, manage retries "
+        "or extend its own loop. This is limited agency inside deterministic "
+        "controls, not an autonomous general-purpose agent."
+    )
+    text_box(page, pymupdf.Rect(58, 460, 534, 540), paragraph, size=10.0, lineheight=1.1)
+
+
 def replace_architecture(doc: pymupdf.Document) -> None:
     page = doc[11]
     redact(page, pymupdf.Rect(55, 555, 540, 750))
@@ -115,11 +131,10 @@ def replace_architecture(doc: pymupdf.Document) -> None:
     prose = (
         "Architectural style. OfficeHours AI is a modular monolith, not a set of "
         "microservices. One FastAPI deployable contains cohesive route and service "
-        "modules for identity and courses, academic support, knowledge, and Study "
-        "Agent orchestration; one role-based React application is its client, and "
-        "one SQLAlchemy database is the transactional store. Modules communicate "
-        "through Python service interfaces and shared transactions rather than "
-        "network calls.\n\n"
+        "modules for Identity, Academic Support, Knowledge, and Study Agent "
+        "orchestration. The React app dispatches directly to each module's routes, "
+        "and every module receives its own SQLAlchemy session for direct reads and "
+        "writes to the shared transactional database.\n\n"
         "This is the appropriate trade-off for one capstone team and one product: "
         "deployment, authentication, testing, and data consistency stay simple. "
         "Microservices would add remote-call failures, distributed transactions, "
@@ -132,15 +147,15 @@ def replace_architecture(doc: pymupdf.Document) -> None:
     cairosvg.svg2png(
         bytestring=ARCH_SVG.read_bytes(),
         write_to=str(ARCH_PNG),
-        output_width=2000,
-        output_height=1240,
+        output_width=2200,
+        output_height=1300,
     )
     figure = doc[12]
     redact(figure, pymupdf.Rect(52, 38, 542, 580))
-    figure.insert_image(pymupdf.Rect(62, 44, 534, 337), filename=str(ARCH_PNG))
+    figure.insert_image(pymupdf.Rect(62, 44, 534, 323), filename=str(ARCH_PNG))
     text_box(
         figure,
-        pymupdf.Rect(58, 345, 536, 377),
+        pymupdf.Rect(58, 331, 536, 363),
         "Figure 1: OfficeHours AI as a modular monolith. Solid green: the system "
         "boundary. Dashed orange: external resources. Every arrow names the trigger "
         "or data exchanged and the communication mechanism.",
@@ -149,19 +164,19 @@ def replace_architecture(doc: pymupdf.Document) -> None:
         lineheight=1.08,
     )
     prose = (
-        "Canvas triggers LTI launch and course synchronization over HTTPS. Inside "
-        "the system, the React app dispatches authenticated HTTPS/JSON requests to "
-        "FastAPI modules and receives live updates by WebSocket. A professor upload "
-        "triggers extraction and approval-state persistence; only approved rows for "
-        "the student's course can reach retrieval.\n\n"
-        "POST /agent/ask triggers the Study Agent inside the orchestration layer. "
-        "That layer, not the external provider, owns the 0.42 cutoff, guards, budgets, "
-        "cache, circuit breaker, and closed outcome set. It reads approved chunks "
-        "locally through the knowledge module and, only when every gate permits, "
-        "sends a bounded HTTPS/JSON verification request to Gemini or Claude. The "
-        "provider cannot access the database or publish directly to a student."
+        "The React app calls Identity for authentication and session checks, "
+        "Knowledge for upload and approval, and Academic Support for a persisted "
+        "student chat turn. Each module reads and writes its own tables directly "
+        "through an injected SQLAlchemy session; database traffic does not pass "
+        "through the Study Agent.\n\n"
+        "Academic Support invokes the outer orchestration wrapper for a Study Agent "
+        "turn. The wrapper owns the execution loop, maximum iterations, timeouts, "
+        "transport retries, state, session history and budget cuts. On each loop it "
+        "passes an immutable state snapshot to the inner Agent Layer. That inner "
+        "module performs one model-driven decision and returns call_tool, "
+        "return_answer or halt; it owns no loop, retry counter or timeout."
     )
-    text_box(figure, pymupdf.Rect(58, 390, 536, 575), prose, size=10.2, lineheight=1.12)
+    text_box(figure, pymupdf.Rect(58, 376, 536, 565), prose, size=10.2, lineheight=1.12)
 
 
 def replace_database_schema(doc: pymupdf.Document) -> None:
@@ -213,6 +228,32 @@ def correct_ai_disclosure(doc: pymupdf.Document) -> None:
         "evidence-based disclosure supersedes Diary 1's narrower description."
     )
     text_box(page, pymupdf.Rect(58, 457, 534, 539), paragraph, size=10.0, lineheight=1.1)
+
+
+def correct_agent_controls(doc: pymupdf.Document) -> None:
+    page = doc[16]
+    redact(page, pymupdf.Rect(62, 441, 525, 455))
+    text_box(page, pymupdf.Rect(64, 443, 194, 454), "Agent call / outer retry", size=6.6)
+    text_box(page, pymupdf.Rect(198, 443, 345, 454), "1 / 2", size=6.6)
+    text_box(
+        page,
+        pymupdf.Rect(349, 443, 524, 454),
+        "One model call per agent step; retry belongs to wrapper",
+        size=6.4,
+    )
+
+    redact(page, pymupdf.Rect(56, 655, 538, 740))
+    paragraph = (
+        "In the product. When armed, the outer wrapper supplies approved chunks and "
+        "the current state to the inner Agent Layer. One invocation makes one model "
+        "decision: call a bounded tool, return an answer, or halt. The wrapper alone "
+        "owns retries, timeouts, iteration limits, history and budgets. The saved "
+        "Gemini run used gemini-3.5-flash-lite with prompt study-answer-check-v1 "
+        "before this layered refactor, so its 74/75 result measures the saved "
+        "quote-check configuration, not the newer recovery loop. No model was called "
+        "while rebuilding this report."
+    )
+    text_box(page, pymupdf.Rect(58, 659, 534, 739), paragraph, size=9.8, lineheight=1.1)
 
 
 REFERENCES = [
@@ -278,10 +319,12 @@ def main() -> None:
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     doc = pymupdf.open(SOURCE)
     replace_title(doc)
+    replace_agent_terminology(doc)
     add_jill_watson(doc)
     replace_architecture(doc)
     replace_database_schema(doc)
     correct_ai_disclosure(doc)
+    correct_agent_controls(doc)
     replace_references(doc)
     add_metadata(doc)
     doc.save(OUTPUT, garbage=4, deflate=True, clean=True)

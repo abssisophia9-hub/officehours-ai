@@ -1,88 +1,100 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="620" viewBox="0 0 1000 620">
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="650" viewBox="0 0 1100 650">
 <defs>
-  <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+  <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
     <path d="M0,0 L0,6 L9,3 z" fill="#334155"/>
   </marker>
 </defs>
 <style>
   text{font-family:Arial,sans-serif;fill:#172033}
-  .title{font-size:21px;font-weight:700}
+  .title{font-size:22px;font-weight:700}
   .subtitle{font-size:14px;fill:#475569}
-  .label{font-size:16px;font-weight:700}
-  .small{font-size:14px;fill:#334155}
-  .arrowlabel{font-size:13px;fill:#334155}
-  .module{fill:#f8fafc;stroke:#2563eb;stroke-width:1.6}
-  .external{fill:#fff7ed;stroke:#c2410c;stroke-width:1.6;stroke-dasharray:7 5}
+  .label{font-size:17px;font-weight:700}
+  .small{font-size:13px;fill:#334155}
+  .tiny{font-size:12px;fill:#334155}
+  .module{fill:#f8fafc;stroke:#2563eb;stroke-width:1.7}
+  .database{fill:#ecfdf5;stroke:#0f766e;stroke-width:1.8}
+  .external{fill:#fff7ed;stroke:#c2410c;stroke-width:1.7;stroke-dasharray:7 5}
   .boundary{fill:#f8fafc;stroke:#0f766e;stroke-width:2}
-  .orchestration{fill:#eff6ff;stroke:#1d4ed8;stroke-width:2}
-  .arrow{stroke:#334155;stroke-width:1.4;fill:none;marker-end:url(#arrow)}
-  .event{stroke-dasharray:6 4}
+  .outer{fill:#eff6ff;stroke:#1d4ed8;stroke-width:2}
+  .inner{fill:#dbeafe;stroke:#1d4ed8;stroke-width:1.7}
+  .arrow{stroke:#334155;stroke-width:1.5;fill:none;marker-end:url(#arrow)}
+  .sql{stroke:#0f766e;stroke-width:1.7;fill:none;marker-end:url(#arrow)}
 </style>
-<rect width="100%" height="100%" fill="#ffffff"/>
-<text class="title" x="22" y="34">OfficeHours AI — modular monolith with bounded modules</text>
-<text class="subtitle" x="22" y="57">One backend deployable and one database; boundaries are enforced in code, not by network hops.</text>
+<rect width="100%" height="100%" fill="#fff"/>
+<text class="title" x="24" y="34">OfficeHours AI - modular monolith with explicit module interfaces</text>
+<text class="subtitle" x="24" y="58">One backend deployable; frontend routes and SQLAlchemy sessions enter each module directly.</text>
 
-<rect class="external" x="20" y="130" width="178" height="100" rx="10"/>
-<text class="label" x="109" y="158" text-anchor="middle">Canvas LMS</text>
-<text class="small" x="109" y="183" text-anchor="middle">External resource</text>
-<text class="small" x="109" y="207" text-anchor="middle">LTI + course APIs</text>
+<rect class="external" x="20" y="128" width="175" height="100" rx="10"/>
+<text class="label" x="108" y="157" text-anchor="middle">Canvas LMS</text>
+<text class="small" x="108" y="182" text-anchor="middle">External resource</text>
+<text class="small" x="108" y="207" text-anchor="middle">LTI + course APIs</text>
 
-<rect class="boundary" x="270" y="80" width="540" height="480" rx="16"/>
-<text class="label" x="292" y="111">OFFICEHOURS AI SYSTEM BOUNDARY</text>
+<rect class="boundary" x="230" y="80" width="650" height="535" rx="16"/>
+<text class="label" x="252" y="110">OFFICEHOURS AI SYSTEM BOUNDARY</text>
 
-<rect class="module" x="300" y="130" width="480" height="62" rx="9"/>
-<text class="label" x="540" y="155" text-anchor="middle">React multi-role application</text>
-<text class="small" x="540" y="179" text-anchor="middle">HTTPS/JSON requests; WebSocket notifications</text>
+<rect class="module" x="260" y="128" width="590" height="64" rx="9"/>
+<text class="label" x="555" y="154" text-anchor="middle">React multi-role application</text>
+<text class="small" x="555" y="178" text-anchor="middle">direct HTTPS/JSON dispatch to Identity, Academic Support, and Knowledge</text>
 
-<rect class="module" x="300" y="230" width="145" height="86" rx="9"/>
-<text class="label" x="372" y="256" text-anchor="middle">Identity + courses</text>
-<text class="small" x="372" y="281" text-anchor="middle">authenticate; authorize</text>
-<text class="small" x="372" y="303" text-anchor="middle">role per course</text>
+<rect class="module" x="260" y="230" width="170" height="88" rx="9"/>
+<text class="label" x="345" y="256" text-anchor="middle">Identity</text>
+<text class="small" x="345" y="280" text-anchor="middle">auth + session checks</text>
+<text class="tiny" x="345" y="302" text-anchor="middle">/auth/* and /courses/*</text>
 
-<rect class="module" x="467" y="230" width="145" height="86" rx="9"/>
-<text class="label" x="540" y="256" text-anchor="middle">Academic support</text>
-<text class="small" x="540" y="281" text-anchor="middle">Ask Triage; Help Coach</text>
-<text class="small" x="540" y="303" text-anchor="middle">Rooms; Quiet ask</text>
+<rect class="module" x="470" y="230" width="170" height="88" rx="9"/>
+<text class="label" x="555" y="256" text-anchor="middle">Academic Support</text>
+<text class="small" x="555" y="280" text-anchor="middle">student chat + Rooms</text>
+<text class="tiny" x="555" y="302" text-anchor="middle">/academic-support/*</text>
 
-<rect class="module" x="634" y="230" width="146" height="86" rx="9"/>
-<text class="label" x="707" y="256" text-anchor="middle">Knowledge</text>
-<text class="small" x="707" y="281" text-anchor="middle">upload; chunk; approve</text>
-<text class="small" x="707" y="303" text-anchor="middle">course-scoped retrieval</text>
+<rect class="module" x="680" y="230" width="170" height="88" rx="9"/>
+<text class="label" x="765" y="256" text-anchor="middle">Knowledge</text>
+<text class="small" x="765" y="280" text-anchor="middle">upload + approve + retrieve</text>
+<text class="tiny" x="765" y="302" text-anchor="middle">/knowledge/*</text>
 
-<rect class="orchestration" x="340" y="358" width="400" height="116" rx="11"/>
-<text class="label" x="540" y="386" text-anchor="middle">Study Agent orchestration layer</text>
-<text class="small" x="540" y="412" text-anchor="middle">owns cutoff → guards → budgets → cache → breaker</text>
-<text class="small" x="540" y="435" text-anchor="middle">retrieves approved chunks; invokes bounded answer check</text>
-<text class="small" x="540" y="458" text-anchor="middle">returns answer, refusal, staff hand-off, or busy state</text>
+<rect class="database" x="260" y="370" width="180" height="180" rx="10"/>
+<text class="label" x="350" y="399" text-anchor="middle">SQLAlchemy</text>
+<text class="small" x="350" y="423" text-anchor="middle">module-owned read/write</text>
+<text class="tiny" x="350" y="451" text-anchor="middle">Identity schema</text>
+<text class="tiny" x="350" y="473" text-anchor="middle">Academic Support schema</text>
+<text class="tiny" x="350" y="495" text-anchor="middle">Knowledge schema</text>
+<text class="tiny" x="350" y="527" text-anchor="middle">SQLite / Postgres</text>
 
-<rect class="module" x="340" y="508" width="400" height="60" rx="9"/>
-<text class="label" x="540" y="533" text-anchor="middle">SQLAlchemy persistence</text>
-<text class="small" x="540" y="557" text-anchor="middle">one SQLite database by default; schema owned by modules</text>
+<rect class="outer" x="480" y="350" width="350" height="220" rx="11"/>
+<text class="label" x="655" y="378" text-anchor="middle">Orchestration Layer (outer wrapper)</text>
+<text class="small" x="655" y="402" text-anchor="middle">execution loop + max iterations + timeouts</text>
+<text class="small" x="655" y="423" text-anchor="middle">retries + state + session history + budget cuts</text>
 
-<rect class="external" x="842" y="350" width="148" height="120" rx="10"/>
-<text class="label" x="916" y="380" text-anchor="middle">Model provider</text>
-<text class="small" x="916" y="405" text-anchor="middle">External resource</text>
-<text class="small" x="916" y="428" text-anchor="middle">Gemini or Claude</text>
-<text class="small" x="916" y="451" text-anchor="middle">guarded calls only</text>
+<rect class="inner" x="520" y="452" width="270" height="88" rx="9"/>
+<text class="label" x="655" y="479" text-anchor="middle">Agent Layer (inner module)</text>
+<text class="small" x="655" y="503" text-anchor="middle">one model reasoning step</text>
+<text class="small" x="655" y="524" text-anchor="middle">call tool | return answer | halt</text>
 
-<path class="arrow" d="M198 156 H300"/>
-<text class="arrowlabel" x="249" y="143" text-anchor="middle">LTI launch</text>
-<path class="arrow" d="M300 203 H198"/>
-<text class="arrowlabel" x="249" y="224" text-anchor="middle">course sync</text>
+<rect class="external" x="920" y="435" width="160" height="120" rx="10"/>
+<text class="label" x="1000" y="465" text-anchor="middle">Model provider</text>
+<text class="small" x="1000" y="490" text-anchor="middle">Gemini or Claude</text>
+<text class="small" x="1000" y="515" text-anchor="middle">HTTPS/JSON</text>
+<text class="tiny" x="1000" y="538" text-anchor="middle">one call per agent step</text>
 
-<path class="arrow" d="M540 192 V230"/>
-<text class="arrowlabel" x="552" y="216">API dispatch</text>
+<path class="arrow" d="M195 156 H260"/>
+<text class="tiny" x="228" y="145" text-anchor="middle">LTI launch</text>
+<path class="arrow" d="M260 207 H195"/>
+<text class="tiny" x="228" y="225" text-anchor="middle">course sync</text>
 
-<path class="arrow" d="M707 316 V358"/>
-<text class="arrowlabel" x="707" y="343" text-anchor="middle">approved chunks</text>
+<path class="arrow" d="M345 192 V230"/>
+<path class="arrow" d="M555 192 V230"/>
+<path class="arrow" d="M765 192 V230"/>
 
-<path class="arrow" d="M540 316 V358"/>
-<text class="arrowlabel" x="551" y="343">student ask</text>
+<path class="sql" d="M345 318 V370"/>
+<path class="sql" d="M555 318 V330 H430 V405"/>
+<path class="sql" d="M765 318 V335 H865 V585 H440 V515"/>
+<text class="tiny" x="292" y="348">SQL read/write</text>
+<text class="tiny" x="440" y="347">SQL read/write</text>
+<text class="tiny" x="778" y="347">SQL read/write</text>
 
-<path class="arrow" d="M540 474 V508"/>
-<text class="arrowlabel" x="552" y="497">SQL read/write</text>
-
-<path class="arrow" d="M740 410 H842"/>
-<text class="arrowlabel" x="791" y="389" text-anchor="middle">bounded check</text>
-<text class="arrowlabel" x="791" y="431" text-anchor="middle">HTTPS/JSON</text>
+<path class="arrow" d="M555 318 V350"/>
+<text class="tiny" x="566" y="338">chat turn</text>
+<path class="arrow" d="M830 495 H920"/>
+<text class="tiny" x="875" y="482" text-anchor="middle">one decision</text>
+<path class="arrow" d="M655 438 V452"/>
+<text class="tiny" x="667" y="447">invoke</text>
 </svg>

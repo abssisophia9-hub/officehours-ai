@@ -170,6 +170,7 @@ def answer_from_knowledge_base(
     answer_checker: AnswerCheckClient | None = None,
     check_records: list[dict[str, Any]] | None = None,
     user_id: int | None = None,
+    session_history: list[dict[str, Any]] | None = None,
 ) -> AgentAskResponse:
     """Study-agent answer. The pipeline lives in ``agent_policy``.
 
@@ -189,4 +190,5 @@ def answer_from_knowledge_base(
         answer_checker=answer_checker,
         check_records=check_records,
         user_id=user_id,
+        session_history=session_history,
     )

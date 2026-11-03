@@ -26,6 +26,7 @@ DEFAULT_LIMITS = {
     "/auth/login": (20, 60),
     "/requests/": (30, 60),
     "/agent/ask": (40, 60),
+    "/academic-support/": (40, 60),
 }
 
 
