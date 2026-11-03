@@ -20,8 +20,7 @@ SOURCE = Path(
     "OfficeHours_AI_Capstone_Interim_Report_50ee.pdf"
 )
 OUTPUT = ROOT / "reports/midreport/OfficeHours_AI_Capstone_Interim_Report.pdf"
-ARCH_SVG = ROOT / "docs/midreport/figures/architecture.svg"
-ARCH_PNG = ROOT / "reports/midreport/.architecture.png"
+ARCH_PNG = ROOT / "docs/midreport/figures/architecture.png"
 SCHEMA_SVG = ROOT / "docs/midreport/figures/database_schema.svg"
 SCHEMA_PNG = ROOT / "reports/midreport/.database_schema.png"
 
@@ -144,18 +143,16 @@ def replace_architecture(doc: pymupdf.Document) -> None:
     )
     text_box(page, pymupdf.Rect(58, 583, 535, 748), prose, size=10.2, lineheight=1.12)
 
-    cairosvg.svg2png(
-        bytestring=ARCH_SVG.read_bytes(),
-        write_to=str(ARCH_PNG),
-        output_width=2200,
-        output_height=1300,
-    )
     figure = doc[12]
     redact(figure, pymupdf.Rect(52, 38, 542, 580))
-    figure.insert_image(pymupdf.Rect(62, 44, 534, 323), filename=str(ARCH_PNG))
+    figure.insert_image(
+        pymupdf.Rect(58, 44, 538, 348),
+        filename=str(ARCH_PNG),
+        keep_proportion=True,
+    )
     text_box(
         figure,
-        pymupdf.Rect(58, 331, 536, 363),
+        pymupdf.Rect(58, 354, 536, 386),
         "Figure 1: OfficeHours AI as a modular monolith. Solid green: the system "
         "boundary. Dashed orange: external resources. Every arrow names the trigger "
         "or data exchanged and the communication mechanism.",
@@ -176,7 +173,7 @@ def replace_architecture(doc: pymupdf.Document) -> None:
         "module performs one model-driven decision and returns call_tool, "
         "return_answer or halt; it owns no loop, retry counter or timeout."
     )
-    text_box(figure, pymupdf.Rect(58, 376, 536, 565), prose, size=10.2, lineheight=1.12)
+    text_box(figure, pymupdf.Rect(58, 398, 536, 565), prose, size=10.2, lineheight=1.12)
 
 
 def replace_database_schema(doc: pymupdf.Document) -> None:
@@ -329,7 +326,6 @@ def main() -> None:
     add_metadata(doc)
     doc.save(OUTPUT, garbage=4, deflate=True, clean=True)
     doc.close()
-    ARCH_PNG.unlink(missing_ok=True)
     SCHEMA_PNG.unlink(missing_ok=True)
     print(OUTPUT)
 
