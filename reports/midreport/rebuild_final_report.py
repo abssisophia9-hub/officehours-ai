@@ -22,6 +22,8 @@ SOURCE = Path(
 OUTPUT = ROOT / "reports/midreport/OfficeHours_AI_Capstone_Interim_Report.pdf"
 ARCH_SVG = ROOT / "docs/midreport/figures/architecture.svg"
 ARCH_PNG = ROOT / "reports/midreport/.architecture.png"
+SCHEMA_SVG = ROOT / "docs/midreport/figures/database_schema.svg"
+SCHEMA_PNG = ROOT / "reports/midreport/.database_schema.png"
 
 TITLE = (
     "OfficeHours AI: A Professor-Stamped RAG and Multi-Channel Academic\n"
@@ -162,6 +164,41 @@ def replace_architecture(doc: pymupdf.Document) -> None:
     text_box(figure, pymupdf.Rect(58, 390, 536, 575), prose, size=10.2, lineheight=1.12)
 
 
+def replace_database_schema(doc: pymupdf.Document) -> None:
+    page = doc[14]
+    redact(page, pymupdf.Rect(54, 194, 541, 656))
+    prose = (
+        "The default database is SQLite at backend/officehours.db; DATABASE_URL can "
+        "select Postgres. SQLAlchemy creates the schema at startup. The application "
+        "currently defines 28 tables, while Figure 3 shows the seven core tables in "
+        "the ER diagram and the matching DDL in docs/database_schema.sql.\n\n"
+        "Only the three solid relationships are database constraints: "
+        "course_memberships.user_id to users.id, course_memberships.course_id to "
+        "courses.id, and auth_sessions.user_id to users.id. The dashed "
+        "requests.course_id and knowledge_entries.course_id links are plain INTEGER "
+        "columns. Unique constraints protect users.email, auth_sessions.token, "
+        "ta_roster.name, and each (course_id, user_id) membership pair."
+    )
+    text_box(page, pymupdf.Rect(58, 198, 535, 316), prose, size=9.7, lineheight=1.1)
+    cairosvg.svg2png(
+        bytestring=SCHEMA_SVG.read_bytes(),
+        write_to=str(SCHEMA_PNG),
+        output_width=2000,
+        output_height=1120,
+    )
+    page.insert_image(pymupdf.Rect(58, 322, 536, 590), filename=str(SCHEMA_PNG))
+    text_box(
+        page,
+        pymupdf.Rect(58, 600, 536, 636),
+        "Figure 3: Core SQL DDL schema. Solid lines are the only declared foreign "
+        "keys; dashed lines are unconstrained INTEGER links. All identifiers use "
+        "lowercase snake_case.",
+        size=9.8,
+        font="Times-Bold",
+        lineheight=1.08,
+    )
+
+
 def correct_ai_disclosure(doc: pymupdf.Document) -> None:
     page = doc[17]
     redact(page, pymupdf.Rect(56, 454, 538, 540))
@@ -243,12 +280,14 @@ def main() -> None:
     replace_title(doc)
     add_jill_watson(doc)
     replace_architecture(doc)
+    replace_database_schema(doc)
     correct_ai_disclosure(doc)
     replace_references(doc)
     add_metadata(doc)
     doc.save(OUTPUT, garbage=4, deflate=True, clean=True)
     doc.close()
     ARCH_PNG.unlink(missing_ok=True)
+    SCHEMA_PNG.unlink(missing_ok=True)
     print(OUTPUT)
 
 
