@@ -108,6 +108,10 @@ def _refuse():
     }
 
 
+def _yes():
+    return {"supports": True}
+
+
 def _ask(monkeypatch, client, rows, *, question=QUESTION, records=None, user_id=None, course_id=None):
     monkeypatch.setattr(
         "app.services.kb_agent_service.search_approved_entries",
@@ -213,16 +217,23 @@ def test_input_token_cap_is_busy_without_a_call(monkeypatch, caplog):
 
 
 def test_output_token_cap_and_timeout_reach_the_provider(monkeypatch):
-    seen = {}
+    from app.ai.claude_client import ENTAILMENT_SYSTEM
 
-    def fake_complete(system, user, *, max_tokens, temperature, timeout):
+    seen = {"systems": [], "schemas": [], "users": []}
+
+    def fake_complete(system, user, *, max_tokens, temperature, timeout, schema=None):
         seen["max_tokens"] = max_tokens
         seen["temperature"] = temperature
         seen["timeout"] = timeout
-        seen["system"] = system
-        seen["user"] = user
+        seen["systems"].append(system)
+        seen["schemas"].append(schema)
+        seen["users"].append(user)
+        if system == ENTAILMENT_SYSTEM:
+            text = json.dumps({"supports": True})
+        else:
+            text = json.dumps(_pass())
         return SimpleNamespace(
-            text=json.dumps(_pass()),
+            text=text,
             model="gemini-spy",
             input_tokens=3,
             output_tokens=2,
@@ -236,10 +247,13 @@ def test_output_token_cap_and_timeout_reach_the_provider(monkeypatch):
     assert seen["max_tokens"] == 17
     assert seen["temperature"] == 0
     assert seen["timeout"] == 3.0
-    assert seen["system"] == ANSWER_CHECK_SYSTEM
-    payload = json.loads(seen["user"])
+    assert seen["systems"][0] == ANSWER_CHECK_SYSTEM
+    assert seen["systems"][1] == ENTAILMENT_SYSTEM
+    assert seen["schemas"][1]["required"] == ["supports"]
+    payload = json.loads(seen["users"][0])
     assert payload["question"] == SECRET_QUESTION
-    assert SECRET_QUESTION not in seen["system"]
+    assert SECRET_QUESTION not in seen["systems"][0]
+    assert SECRET_QUESTION not in seen["systems"][1]
     assert "Quote:" not in response.answer
     assert "based on notes.pdf, p.3 approved by the professor" in response.answer
     assert response.should_seek_help is False
@@ -265,35 +279,35 @@ def test_answer_length_cap_fails_closed_once(monkeypatch):
 def test_user_minute_day_and_course_caps(monkeypatch):
     monkeypatch.setenv("OFFICEHOURS_LLM_USER_PER_MINUTE", "1")
     monkeypatch.setenv("OFFICEHOURS_LLM_USER_PER_DAY", "10")
-    client = ScriptedClient([_pass(), _pass()])
+    client = ScriptedClient([_pass(), _yes()])
     records = []
     first = _ask(monkeypatch, client, [_hit()], records=records, user_id=7, course_id=9)
     assert first.should_seek_help is False
     second = _ask(monkeypatch, client, [_hit()], records=records, user_id=7, course_id=9)
     assert second.answer == BUSY_ANSWER
     assert records[-1]["limit"] == "user_per_minute"
-    assert len(client.calls) == 1
+    assert len(client.calls) == 2
 
     reset_policy_state()
     monkeypatch.setenv("OFFICEHOURS_LLM_USER_PER_MINUTE", "10")
     monkeypatch.setenv("OFFICEHOURS_LLM_USER_PER_DAY", "1")
-    client = ScriptedClient([_pass(), _pass()])
+    client = ScriptedClient([_pass(), _yes()])
     records = []
     _ask(monkeypatch, client, [_hit()], records=records, user_id=7)
     blocked = _ask(monkeypatch, client, [_hit()], records=records, user_id=7)
     assert blocked.answer == BUSY_ANSWER
     assert records[-1]["limit"] == "user_per_day"
-    assert len(client.calls) == 1
+    assert len(client.calls) == 2
 
     reset_policy_state()
     monkeypatch.setenv("OFFICEHOURS_LLM_COURSE_PER_DAY", "1")
-    client = ScriptedClient([_pass(), _pass()])
+    client = ScriptedClient([_pass(), _yes()])
     records = []
     _ask(monkeypatch, client, [_hit()], records=records, course_id=9)
     blocked = _ask(monkeypatch, client, [_hit()], records=records, user_id=8, course_id=9)
     assert blocked.answer == BUSY_ANSWER
     assert records[-1]["limit"] == "course_per_day"
-    assert len(client.calls) == 1
+    assert len(client.calls) == 2
 
 
 def test_global_call_and_token_caps_and_the_utc_day_roll(monkeypatch):
@@ -322,7 +336,8 @@ def test_global_call_and_token_caps_and_the_utc_day_roll(monkeypatch):
     agent_policy._BUDGET["day"] = "1999-01-01"
     agent_policy._BUDGET["calls"] = 999
     agent_policy._BUDGET["tokens"] = 999
-    client = ScriptedClient([_pass()])
+    monkeypatch.setenv("OFFICEHOURS_LLM_GLOBAL_TOKENS_PER_DAY", "200000")
+    client = ScriptedClient([_pass(), _yes()])
     records = []
     response = _ask(
         monkeypatch,
@@ -332,7 +347,7 @@ def test_global_call_and_token_caps_and_the_utc_day_roll(monkeypatch):
         records=records,
     )
     assert response.should_seek_help is False
-    assert agent_policy._BUDGET["calls"] == 1
+    assert agent_policy._BUDGET["calls"] == 2
 
 
 def test_breaker_opens_skips_cache_and_closes_again(monkeypatch):
@@ -342,7 +357,7 @@ def test_breaker_opens_skips_cache_and_closes_again(monkeypatch):
     monkeypatch.setenv("OFFICEHOURS_LLM_BREAKER_MINUTES", "5")
     clock = {"t": 1000.0}
     monkeypatch.setattr(agent_policy.time, "monotonic", lambda: clock["t"])
-    client = ScriptedClient([_pass(), "not json", "still not json", _pass()])
+    client = ScriptedClient([_pass(), _yes(), "not json", "still not json"])
     records = []
     answered = _ask(monkeypatch, client, [_hit()], records=records)
     assert "Quote:" not in answered.answer
@@ -355,14 +370,14 @@ def test_breaker_opens_skips_cache_and_closes_again(monkeypatch):
     assert busy.student_hint
     assert records[-1]["outcome"] == "busy"
     assert records[-1]["limit"] == "circuit_breaker"
-    assert len(client.calls) == 3
+    assert len(client.calls) == 4
     assert "returns the top value." not in busy.answer
 
     clock["t"] = 1000.0 + 5 * 60
     again = _ask(monkeypatch, client, [_hit()], records=records)
     assert again.answer == answered.answer
     assert records[-1]["outcome"] == "cache_hit"
-    assert len(client.calls) == 3
+    assert len(client.calls) == 4
 
 
 def test_model_refusal_does_not_open_the_breaker(monkeypatch):
@@ -376,17 +391,17 @@ def test_model_refusal_does_not_open_the_breaker(monkeypatch):
 
 def test_success_resets_the_breaker_count(monkeypatch):
     monkeypatch.setenv("OFFICEHOURS_LLM_BREAKER_FAILURES", "2")
-    client = ScriptedClient(["not json", _pass(), "not json", _pass()])
+    client = ScriptedClient(["not json", _pass(), _yes(), "not json", _pass(), _yes()])
     for question in ("a", "b", "c", "d"):
         _ask(monkeypatch, client, [_hit()], question=question)
-    assert len(client.calls) == 4
+    assert len(client.calls) == 6
 
 
 def test_cache_hit_shares_no_identity_and_a_capped_user_stays_busy(monkeypatch):
     from app.ai import agent_policy
 
     monkeypatch.setenv("OFFICEHOURS_LLM_USER_PER_MINUTE", "1")
-    client = ScriptedClient([_pass(), _pass(), _pass()])
+    client = ScriptedClient([_pass(), _yes()])
     records = []
     first = _ask(monkeypatch, client, [_hit()], records=records, user_id=USER_ID)
     blocked = _ask(monkeypatch, client, [_hit()], records=records, user_id=USER_ID)
@@ -395,7 +410,7 @@ def test_cache_hit_shares_no_identity_and_a_capped_user_stays_busy(monkeypatch):
     assert other.answer == first.answer
     assert records[-1]["outcome"] == "cache_hit"
     assert records[-1]["called"] is False
-    assert len(client.calls) == 1
+    assert len(client.calls) == 2
     blob = json.dumps(list(agent_policy._CACHE.values()), default=str)
     assert str(USER_ID) not in blob
     assert "user_id" not in blob
@@ -410,25 +425,25 @@ def test_cache_ttl_and_status_in_the_key(monkeypatch):
     monkeypatch.setenv("OFFICEHOURS_LLM_CACHE_TTL_SECONDS", "10")
     clock = {"t": 50.0}
     monkeypatch.setattr(agent_policy.time, "monotonic", lambda: clock["t"])
-    client = ScriptedClient([_pass(), _pass()])
+    client = ScriptedClient([_pass(), _yes(), _pass(), _yes()])
     _ask(monkeypatch, client, [_hit()])
     clock["t"] = 55.0
     records = []
     _ask(monkeypatch, client, [_hit()], records=records)
     assert records[-1]["outcome"] == "cache_hit"
-    assert len(client.calls) == 1
+    assert len(client.calls) == 2
     clock["t"] = 61.0
     _ask(monkeypatch, client, [_hit()], records=records)
     assert records[-1]["outcome"] == "passed"
-    assert len(client.calls) == 2
+    assert len(client.calls) == 4
 
     reset_policy_state()
     entry = _entry()
-    client = ScriptedClient([_pass(), _pass()])
+    client = ScriptedClient([_pass(), _yes(), _pass(), _yes()])
     _ask(monkeypatch, client, [(entry, 0.8)])
     entry.status = "rejected"
     _ask(monkeypatch, client, [(entry, 0.8)])
-    assert len(client.calls) == 2
+    assert len(client.calls) == 4
 
 
 def test_invalidate_on_status_draft_and_upload_stamp():
@@ -482,22 +497,22 @@ def test_invalidate_on_status_draft_and_upload_stamp():
 def test_explicit_invalidate_drops_a_warm_answer(monkeypatch):
     from app.ai.agent_policy import invalidate_chunks
 
-    client = ScriptedClient([_pass(), _pass()])
+    client = ScriptedClient([_pass(), _yes(), _pass(), _yes()])
     _ask(monkeypatch, client, [_hit()])
     invalidate_chunks([11])
     records = []
     _ask(monkeypatch, client, [_hit()], records=records)
     assert records[-1]["outcome"] == "passed"
-    assert len(client.calls) == 2
+    assert len(client.calls) == 4
 
 
 def test_normalized_question_hits_the_cache(monkeypatch):
-    client = ScriptedClient([_pass(), _pass()])
+    client = ScriptedClient([_pass(), _yes()])
     records = []
     _ask(monkeypatch, client, [_hit()], question="What   Does STACK pop return?", records=records)
     _ask(monkeypatch, client, [_hit()], question="what does stack pop return?", records=records)
     assert records[-1]["outcome"] == "cache_hit"
-    assert len(client.calls) == 1
+    assert len(client.calls) == 2
 
 
 def test_errors_are_not_cached_and_the_pipeline_calls_the_checker_once(monkeypatch):
@@ -511,7 +526,7 @@ def test_errors_are_not_cached_and_the_pipeline_calls_the_checker_once(monkeypat
         return real(*args, **kwargs)
 
     monkeypatch.setattr("app.ai.agent_policy.verify_course_answer", wrapped)
-    client = ScriptedClient(["not json", _pass()])
+    client = ScriptedClient(["not json", _pass(), _yes()])
     first = []
     _ask(monkeypatch, client, [_hit()], records=first)
     assert first[0]["outcome"] == "invalid_json"
@@ -522,7 +537,7 @@ def test_errors_are_not_cached_and_the_pipeline_calls_the_checker_once(monkeypat
     assert "Quote:" not in response.answer
     assert "based on notes.pdf, p.3 approved by the professor" in response.answer
     assert invocations["n"] == 2
-    assert len(client.calls) == 2
+    assert len(client.calls) == 3
 
 
 def test_non_transport_error_is_one_call(monkeypatch):
@@ -555,7 +570,7 @@ def test_pipeline_invokes_the_checker_once_when_transport_retries(monkeypatch):
 
 
 def test_closed_outcome_set(monkeypatch):
-    answered = _ask(monkeypatch, ScriptedClient([_pass()]), [_hit()])
+    answered = _ask(monkeypatch, ScriptedClient([_pass(), _yes()]), [_hit()])
     refused = _ask(monkeypatch, ScriptedClient([_refuse()]), [_hit()], question="missing fact")
     staff = _ask(monkeypatch, ScriptedClient([_pass()]), [_hit(0.4199)], question="too weak")
     monkeypatch.setenv("OFFICEHOURS_LLM_MAX_INPUT_TOKENS", "1")
@@ -589,7 +604,7 @@ def test_closed_outcome_set(monkeypatch):
 
 
 def test_one_log_line_has_no_question_and_no_identity(monkeypatch, caplog):
-    client = ScriptedClient([_pass()])
+    client = ScriptedClient([_pass(), _yes()])
     with caplog.at_level("INFO", logger="officehours.agent_policy"):
         _ask(
             monkeypatch,
@@ -604,18 +619,20 @@ def test_one_log_line_has_no_question_and_no_identity(monkeypatch, caplog):
     assert "outcome=answered" in lines[0]
     assert "model=fake-model" in lines[0]
     assert "latency_ms=" in lines[0]
-    assert "input_tokens=10" in lines[0]
-    assert "output_tokens=4" in lines[0]
+    assert "input_tokens=20" in lines[0]
+    assert "output_tokens=8" in lines[0]
     assert "limit=-" in lines[0]
     assert "zephyr-secret-question" not in lines[0]
     assert str(USER_ID) not in lines[0]
     assert "stack pop" not in lines[0].lower()
     assert PROMPT_VERSION
-    assert len(client.calls) == 1
+    assert len(client.calls) == 2
 
 
 def test_miss_source_splits_refusals_from_errors():
     assert miss_source_for({"outcome": "not_answerable"}) == "model"
+    assert miss_source_for({"outcome": "unsupported"}) == "model"
+    assert miss_source_for({"outcome": "abstain"}) == "model"
     assert miss_source_for({"outcome": "api_error"}) == "error"
     assert miss_source_for({"outcome": "answer_too_long"}) == "error"
     assert miss_source_for({"outcome": "quota"}) == "quota"
@@ -722,3 +739,266 @@ def test_rerun_errors_flag_requires_with_check():
     )
     assert result.returncode == 2
     assert "--rerun-errors require --with-check." in result.stdout
+
+
+def _search(monkeypatch, script):
+    seen = []
+
+    def search(db, question, **kwargs):
+        seen.append(
+            {
+                "question": question,
+                "top_k": kwargs["top_k"],
+                "course_material_only": kwargs["course_material_only"],
+            }
+        )
+        step = script.pop(0)
+        return step(question) if callable(step) else step
+
+    monkeypatch.setattr("app.services.kb_agent_service.search_approved_entries", search)
+    return seen
+
+
+def test_entailment_no_then_abstain_hides_the_answer(monkeypatch, caplog):
+    from app.ai import agent_policy
+    from app.ai.claude_client import ENTAILMENT_SYSTEM, RECOVERY_SYSTEM
+    from app.services.kb_agent_service import ABSTAIN_ANSWER
+
+    client = ScriptedClient(
+        [
+            _pass(answer="It returns the moon."),
+            {"supports": False},
+            {"action": "abstain", "query": None},
+        ]
+    )
+    records = []
+    with caplog.at_level("INFO", logger="officehours.agent_policy"):
+        response = _ask(monkeypatch, client, [_hit()], records=records)
+    assert response.answer == ABSTAIN_ANSWER
+    assert "moon" not in response.answer
+    assert response.should_seek_help is True
+    assert response.matched_count == 0
+    assert records[0]["outcome"] == "abstain"
+    assert records[0]["recoveries"] == ["abstain"]
+    assert records[0]["attempts"] == 1
+    assert len(client.calls) == 3
+    assert client.calls[0]["system"] == ANSWER_CHECK_SYSTEM
+    assert client.calls[1]["system"] == ENTAILMENT_SYSTEM
+    assert json.loads(client.calls[1]["user"]) == {
+        "answer": "It returns the moon.",
+        "quote": "returns the top value.",
+    }
+    assert client.calls[2]["system"] == RECOVERY_SYSTEM
+    assert "moon" not in _policy_lines(caplog)[0]
+    assert agent_policy._CACHE == {}
+
+
+def test_reformulate_searches_the_new_query_and_can_pass(monkeypatch, caplog):
+    rewritten = "stack pop return value"
+    seen = _search(monkeypatch, [[_hit()], [_hit(id=11)]])
+    client = ScriptedClient(
+        [
+            _pass(answer="It returns the moon."),
+            {"supports": False},
+            {"action": "reformulate", "query": rewritten},
+            _pass(),
+            _yes(),
+        ]
+    )
+    records = []
+    with caplog.at_level("INFO", logger="officehours.agent_policy"):
+        response = answer_from_knowledge_base(
+            None,
+            QUESTION,
+            answer_checker=client,
+            check_records=records,
+        )
+    assert seen[0]["question"] == QUESTION
+    assert seen[0]["top_k"] == 3
+    assert seen[0]["course_material_only"] is True
+    assert seen[1]["question"] == rewritten
+    assert seen[1]["top_k"] == 3
+    assert json.loads(client.calls[3]["user"])["question"] == rewritten
+    assert response.should_seek_help is False
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
+    assert "moon" not in response.answer
+    assert records[0]["outcome"] == "passed"
+    assert records[0]["attempts"] == 2
+    assert records[0]["recoveries"] == ["reformulate"]
+    assert rewritten not in _policy_lines(caplog)[0]
+
+
+def test_widen_and_narrow_change_top_k_without_moving_the_cutoff(monkeypatch):
+    rows = [
+        _hit(0.9, id=index, answer_draft=f"chunk {index} returns the top value.")
+        for index in range(11, 17)
+    ]
+    seen = _search(monkeypatch, [[_hit()], rows, rows])
+    client = ScriptedClient(
+        [
+            _pass(),
+            {"supports": False},
+            {"action": "widen", "query": None},
+            _pass(chunk_id=11, quote="returns the top value."),
+            {"supports": False},
+            {"action": "narrow", "query": None},
+            _pass(chunk_id=11, quote="returns the top value."),
+            _yes(),
+        ]
+    )
+    response = answer_from_knowledge_base(None, QUESTION, answer_checker=client, check_records=[])
+    assert [row["top_k"] for row in seen] == [3, 5, 1]
+    assert all(row["course_material_only"] is True for row in seen)
+    sent_wide = json.loads(client.calls[3]["user"])
+    sent_narrow = json.loads(client.calls[6]["user"])
+    assert len(sent_wide["chunks"]) == 5
+    assert len(sent_narrow["chunks"]) == 1
+    assert response.should_seek_help is False
+
+
+def test_attempt_cap_stops_without_another_recovery(monkeypatch):
+    from app.ai.agent_policy import agent_max_attempts
+    from app.ai.claude_client import ENTAILMENT_SYSTEM
+
+    monkeypatch.setenv("OFFICEHOURS_AGENT_MAX_ATTEMPTS", "9")
+    assert agent_max_attempts() == 3
+    monkeypatch.setenv("OFFICEHOURS_AGENT_MAX_ATTEMPTS", "1")
+    assert agent_max_attempts() == 2
+    monkeypatch.setenv("OFFICEHOURS_AGENT_MAX_ATTEMPTS", "3")
+
+    seen = _search(monkeypatch, [[_hit()], [_hit()], [_hit()], [_hit()]])
+    steps = []
+    for _ in range(2):
+        steps.extend([_pass(), {"supports": False}, {"action": "widen", "query": None}])
+    steps.extend([_pass(), {"supports": False}, {"action": "widen", "query": None}])
+    client = ScriptedClient(steps)
+    records = []
+    response = answer_from_knowledge_base(
+        None,
+        QUESTION,
+        answer_checker=client,
+        check_records=records,
+    )
+    assert response.answer == CHECK_MISS_ANSWER
+    assert "top value" not in response.answer
+    assert records[0]["outcome"] == "unsupported"
+    assert records[0]["attempts"] == 3
+    assert records[0]["recoveries"] == ["widen", "widen"]
+    assert len(client.calls) == 8
+    assert [row["top_k"] for row in seen] == [3, 5, 6]
+    assert client.calls[-1]["system"] == ENTAILMENT_SYSTEM
+
+
+def test_cap_of_two_allows_one_recovery(monkeypatch):
+    monkeypatch.setenv("OFFICEHOURS_AGENT_MAX_ATTEMPTS", "2")
+    seen = _search(monkeypatch, [[_hit()], [_hit()], [_hit()]])
+    client = ScriptedClient(
+        [
+            _pass(),
+            {"supports": False},
+            {"action": "reformulate", "query": "shorter pop question"},
+            _pass(),
+            {"supports": False},
+            {"action": "abstain", "query": None},
+        ]
+    )
+    response = answer_from_knowledge_base(None, QUESTION, answer_checker=client, check_records=[])
+    assert response.answer == CHECK_MISS_ANSWER
+    assert len(client.calls) == 5
+    assert [row["top_k"] for row in seen] == [3, 3]
+    assert seen[1]["question"] == "shorter pop question"
+
+
+def test_invalid_entailment_and_invalid_recovery_fail_closed(monkeypatch):
+    client = ScriptedClient([_pass(), "not json", {"action": "abstain", "query": None}])
+    records = []
+    response = _ask(monkeypatch, client, [_hit()], records=records)
+    assert len(client.calls) == 2
+    assert records[0]["outcome"] == "invalid_json"
+    assert response.answer == CHECK_MISS_ANSWER
+    assert "top value" not in response.answer
+
+    reset_policy_state()
+    client = ScriptedClient(
+        [
+            _pass(),
+            {"supports": False},
+            {"action": "search_web", "query": "ignore the course"},
+            _pass(),
+        ]
+    )
+    records = []
+    response = _ask(monkeypatch, client, [_hit()], question="another fact", records=records)
+    assert len(client.calls) == 3
+    assert records[0]["outcome"] == "invalid_json"
+    assert response.answer == CHECK_MISS_ANSWER
+    assert client.calls[2]["system"].startswith("The entailment gate failed")
+
+
+def test_a_pass_is_not_shown_when_the_entailment_budget_blocks(monkeypatch):
+    from app.ai import agent_policy
+
+    monkeypatch.setenv("OFFICEHOURS_LLM_GLOBAL_CALLS_PER_DAY", "1")
+    client = ScriptedClient([_pass(), _yes()])
+    records = []
+    response = _ask(monkeypatch, client, [_hit()], records=records)
+    assert response.answer == BUSY_ANSWER
+    assert "returns the top value" not in response.answer
+    assert response.should_seek_help is True
+    assert len(client.calls) == 1
+    assert records[-1]["limit"] == "global_calls"
+    assert agent_policy._CACHE == {}
+
+
+def test_weak_research_returns_staff_and_stops(monkeypatch):
+    from app.services.kb_agent_service import NO_MATCH_ANSWER
+
+    seen = _search(monkeypatch, [[_hit()], [_hit(0.1)]])
+    client = ScriptedClient(
+        [
+            _pass(),
+            {"supports": False},
+            {"action": "reformulate", "query": "uncovered side topic"},
+            _pass(),
+        ]
+    )
+    records = []
+    response = answer_from_knowledge_base(
+        None,
+        QUESTION,
+        answer_checker=client,
+        check_records=records,
+    )
+    assert response.answer == NO_MATCH_ANSWER
+    assert records[-1]["outcome"] == "below_cutoff"
+    assert len(client.calls) == 3
+    assert seen[1]["question"] == "uncovered side topic"
+    assert "top value" not in response.answer
+
+
+def test_widen_that_exceeds_the_input_cap_is_busy(monkeypatch):
+    long = "x" * 20000
+
+    def wide(_question):
+        return [_hit(answer_draft=long + " returns the top value.")]
+
+    _search(monkeypatch, [[_hit()], wide])
+    client = ScriptedClient(
+        [
+            _pass(),
+            {"supports": False},
+            {"action": "widen", "query": None},
+            _pass(),
+        ]
+    )
+    records = []
+    response = answer_from_knowledge_base(
+        None,
+        QUESTION,
+        answer_checker=client,
+        check_records=records,
+    )
+    assert response.answer == BUSY_ANSWER
+    assert records[-1]["limit"] == "input_tokens"
+    assert len(client.calls) == 3
+    assert "top value" not in response.answer

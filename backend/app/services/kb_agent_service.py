@@ -39,6 +39,7 @@ NO_MATCH_HINT = (
 # Used only after a check ran and did not confirm a quote. Distinct from the
 # below-cutoff answer so the two paths can be told apart.
 CHECK_MISS_ANSWER = "I couldn't confirm an answer in the approved course material."
+ABSTAIN_ANSWER = "This isn't covered in the course materials."
 
 
 def _cite_entry(entry) -> str:
@@ -114,9 +115,14 @@ def _checked_answer(
     )
 
 
-def _check_miss(sources: list[KnowledgeSearchHit], approved_only: bool) -> AgentAskResponse:
+def _check_miss(
+    sources: list[KnowledgeSearchHit],
+    approved_only: bool,
+    *,
+    answer: str | None = None,
+) -> AgentAskResponse:
     return AgentAskResponse(
-        answer=CHECK_MISS_ANSWER,
+        answer=answer or CHECK_MISS_ANSWER,
         student_hint=NO_MATCH_HINT,
         confidence=round(sources[0].similarity, 4) if sources else 0.0,
         matched_count=0,

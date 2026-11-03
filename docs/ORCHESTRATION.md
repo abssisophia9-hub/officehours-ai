@@ -10,13 +10,16 @@ new measurement.
 
 `run_study_agent` in `backend/app/ai/agent_policy.py` is the only study-agent
 entry. `answer_from_knowledge_base` in `backend/app/services/kb_agent_service.py`
-calls it. The pipeline does not let the model pick an action, call a tool, or
-loop. It retrieves approved course material, applies a fixed cutoff and a
-fixed set of guards, makes at most one checker invocation, checks that reply,
-and returns one of four API outcomes.
+calls it. The model does not choose search, the staff form, or busy. It
+retrieves approved course material, applies a fixed cutoff and a fixed set
+of guards, then runs a quote check. A pass takes one entailment verdict. A
+no may take one recovery (reformulate, widen, narrow, or abstain) inside a
+cap of three attempts. An answer is returned only when retrieval, the quote,
+and entailment all pass.
 
-Retrieval is local. The checker, when it is allowed to run, is Gemini or
-Claude through `verify_course_answer` in `backend/app/ai/claude_client.py`.
+Retrieval is local. The quote check, the entailment verdict, and recovery,
+when they are allowed to run, use Gemini or Claude. The quote check is
+`verify_course_answer` in `backend/app/ai/claude_client.py`.
 
 ## Fixed pipeline
 
@@ -29,8 +32,9 @@ Claude through `verify_course_answer` in `backend/app/ai/claude_client.py`.
 7. If the global call cap, the global token cap, a sliding window, or the input-token estimate blocks the call, return busy. The cache is not consulted.
 8. If the cache holds this question and these chunks, return the stored decision and do not call the model.
 9. Record the per-user and per-course windows together. If one is full, record none and return busy.
-10. Call `verify_course_answer` once. Inside that call, a `TimeoutError` or `urllib.error.URLError` is tried a second time (`ANSWER_CHECK_ATTEMPTS` is 2). That is still one pipeline step.
-11. Validate the reply. A pass within the answer-length cap becomes the checked answer. A model refusal, a failed check, or an over-long answer becomes the check-miss text. The retrieval draft is not used.
+10. Call `verify_course_answer` once for this attempt. Inside that call, a `TimeoutError` or `urllib.error.URLError` is tried a second time (`ANSWER_CHECK_ATTEMPTS` is 2). Entailment and recovery do not retry.
+11. A quote-check refusal, a failed check, or an over-long answer becomes the check-miss text. The retrieval draft is not used, and entailment is not called.
+12. A quote-check pass within the answer-length cap takes one entailment call. `supports: true` becomes the checked answer and is cached. `supports: false` may ask for one recovery if an attempt remains under `OFFICEHOURS_AGENT_MAX_ATTEMPTS` (2 or 3, default 3). Reformulate searches again with the new query. Widen raises `top_k` by 2, capped at 6. Narrow sets `top_k` to 1. The 0.42 cutoff stays. Abstain returns `This isn't covered in the course materials.` Invalid entailment or an invalid recovery fails closed. A weak re-search returns the staff form.
 
 ```mermaid
 flowchart TD
@@ -50,10 +54,15 @@ flowchart TD
   budget -->|no| cacheNode{Cache hit?}
   cacheNode -->|passed| answerNode[Checked answer]
   cacheNode -->|not answerable| missNode[Check miss]
-  cacheNode -->|miss| oneCall[One verify_course_answer]
-  oneCall --> decision{Validated reply}
-  decision -->|passed and within length| answerNode
+  cacheNode -->|miss| oneCall[Quote check]
+  oneCall --> decision{Validated quote?}
   decision -->|refused or failed closed| missNode
+  decision -->|passed and within length| entailment{Quote supports the answer?}
+  entailment -->|yes| answerNode
+  entailment -->|no, attempts left| recovery[Reformulate, widen, narrow, or abstain]
+  recovery -->|abstain or cap| missNode
+  recovery -->|reformulate, widen, or narrow| searchNode
+  entailment -->|invalid| missNode
 ```
 
 ## Outcomes and the text each one returns
@@ -65,7 +74,7 @@ every one of those strings. See the last row.
 | API outcome | Record `outcome` | What `POST /agent/ask` puts in `answer` | `should_seek_help` | `matched_count` |
 | --- | --- | --- | --- | --- |
 | Answer | `passed`, or a cache hit of `passed` | The checker's `answer`, a newline, then `based on <file>, p.<page> approved by the professor` when the chunk has a file and a page. Built by `_checked_answer`. The quote is not appended. | false | 1 |
-| Refuse, including every failed check | `not_answerable`, `invalid_json`, `unfaithful`, `unknown_chunk`, `api_error`, `rate_limited`, `daily_quota`, `answer_too_long`, or a cache hit of `not_answerable` | `I couldn't confirm an answer in the approved course material.` (`CHECK_MISS_ANSWER`) | true | 0 |
+| Refuse, including every failed check | `not_answerable`, `unsupported`, `invalid_json`, `unfaithful`, `unknown_chunk`, `api_error`, `rate_limited`, `daily_quota`, `answer_too_long`, or a cache hit of `not_answerable` | `I couldn't confirm an answer in the approved course material.` (`CHECK_MISS_ANSWER`). An `abstain` uses `This isn't covered in the course materials.` | true | 0 |
 | Staff | `below_cutoff` | `I don't have professor-approved course material that answers this yet — guessing would waste your time.` followed by the Quiet-ask paragraph (`NO_MATCH_ANSWER`) | true | 0 |
 | Busy | `quota` or `busy` | `The study assistant is busy right now, so I will not guess from the notes.` followed by the Quiet-ask line (`BUSY_ANSWER`) | true | 0 |
 | Not one of the four. Kill switch off, or a guard blocked the call | `disabled`, `flag_off`, `demo_off`, `provider_off`, `ack_off` | `Based on professor-approved course knowledge — <file>, p. <page>, chunk <n>:` then the approved chunk text. Other hits are listed as `Related approved material` with a match percent (`_retrieval_answer`). | false | number of hits |
@@ -93,7 +102,7 @@ the reason in `docs/AGENT_POLICY.md`.
 | --- | --- | --- | --- | --- |
 | Kill switch | `OFFICEHOURS_LLM_ENABLED` | false (`llm_enabled`) | Off leaves the retrieval path. A key alone does not call the model. | `llm_enabled`; `run_study_agent` |
 | Question length | `OFFICEHOURS_LLM_MAX_QUESTION_CHARS` | 2000 | A study question, not a pasted chapter. The HTTP schema still allows 4000 characters. | `max_question_chars`; `run_study_agent` before search |
-| Chunks sent | `OFFICEHOURS_LLM_MAX_CHUNKS` | 3 | The checker cites one chunk. Three is the top-k the quote check was built for. | `max_chunks`; `run_study_agent`. `_material_chunks` also keeps the first 3 |
+| Chunks sent | `OFFICEHOURS_LLM_MAX_CHUNKS` | 3 | The quote check cites one chunk. Three is the top-k on the first attempt. A widen may send up to 6. | `max_chunks`; `run_study_agent`. `_material_chunks` keeps at most 6 |
 | Input estimate | `OFFICEHOURS_LLM_MAX_INPUT_TOKENS` | 3000 | Three chunks plus the prompt were expected near 1,500 tokens. 3,000 refuses a pathological paste. | `estimate_input_tokens`; `run_study_agent` |
 | Output cap | `OFFICEHOURS_LLM_MAX_OUTPUT_TOKENS` | 400 | One small JSON object. | `max_output_tokens`, passed by `GeminiAnswerCheckClient.complete` and `AnthropicAnswerCheckClient.complete` |
 | Answer length | `OFFICEHOURS_LLM_MAX_ANSWER_CHARS` | 600 | A longer body was not validated line by line, so it is refused rather than truncated. | `run_study_agent` rewrites a pass to `answer_too_long` |
@@ -101,15 +110,16 @@ the reason in `docs/AGENT_POLICY.md`.
 | Per user, per minute | `OFFICEHOURS_LLM_USER_PER_MINUTE` | 4 | A few rephrases, not a script. | `_window_checks`; `RateLimiter` in `run_study_agent`. Only if `user_id` is set |
 | Per user, per day | `OFFICEHOURS_LLM_USER_PER_DAY` | 30 | One study session. | same window list. Only if `user_id` is set |
 | Per course, per day | `OFFICEHOURS_LLM_COURSE_PER_DAY` | 150 | The fixed eval is 75 questions. 150 covers that run plus one rerun. | `_window_checks` when `course_id` is set |
-| Global calls | `OFFICEHOURS_LLM_GLOBAL_CALLS_PER_DAY` | 200 | A demo day, above one eval and below an open retry loop. | `_budget_block`; `_note_spend` |
+| Global calls | `OFFICEHOURS_LLM_GLOBAL_CALLS_PER_DAY` | 200 | A verified answer spends two calls. 200 still covers one 75-question eval and stops a recovery loop. | `_budget_block`; `_note_spend` |
 | Global tokens | `OFFICEHOURS_LLM_GLOBAL_TOKENS_PER_DAY` | 200000 | Trips before the call cap if prompts grow toward the input cap. | `_budget_block`; `_note_spend` |
-| Breaker failures | `OFFICEHOURS_LLM_BREAKER_FAILURES` | 3 | Three failed-closed results in a row. A pass and `not_answerable` reset the counter. | `_note_failure`; `breaker_open` |
+| Breaker failures | `OFFICEHOURS_LLM_BREAKER_FAILURES` | 3 | Three failed-closed results in a row. A pass, `not_answerable`, an entailment no, and an abstain reset the counter. | `_note_failure`; `breaker_open` |
 | Breaker open time | `OFFICEHOURS_LLM_BREAKER_MINUTES` | 5 | Stops a tight retry loop and leaves room to continue a demo. | `_note_failure` |
 | Cache TTL | `OFFICEHOURS_LLM_CACHE_TTL_SECONDS` | 3600 | About a lecture hour. Approval changes drop the row immediately. | `_cache_get` |
 | Answer cutoff | none. Constant `WEAK_MATCH_CONFIDENCE` | 0.42 | Kept from the retrieval baseline. This note does not change it. | `run_study_agent` after search |
 | Search include threshold | none. Constant `DEFAULT_SEARCH_THRESHOLD` | 0.35 | Hits between 0.35 and 0.42 can be retrieved and are still staffed by the 0.42 rule. | `search_approved_entries` |
-| Prompt version | none. Constant `PROMPT_VERSION` | `study-answer-check-v1` | Cache identity. | `_cache_key` |
-| Checker attempts | none. Constant `ANSWER_CHECK_ATTEMPTS` | 2 | One retry for a dropped connection inside the single invocation. | `verify_course_answer` |
+| Prompt version | none. Constant `PROMPT_VERSION` | `study-answer-check-v1` | Cache identity, with `GATE_VERSION` `study-entailment-v1+recovery-v1`. | `_cache_key` |
+| Attempt cap | `OFFICEHOURS_AGENT_MAX_ATTEMPTS` | 3, clamped to 2 or 3 | Quote-check attempts on one question. Recovery runs only after entailment says no, and not on the last attempt. | `agent_max_attempts` |
+| Checker attempts | none. Constant `ANSWER_CHECK_ATTEMPTS` | 2 | One retry for a dropped connection inside the quote check. Entailment and recovery are one call each. | `verify_course_answer` |
 | Gemini model | `GEMINI_MODEL` | `gemini-3.5-flash-lite` | Provider default in `gemini_client.py`. | `gemini_model` |
 | External flag | `OFFICEHOURS_ALLOW_EXTERNAL_LLM` | unset, treated as off | A call needs an explicit flag. | `_model_calls_allowed`; `_external_llm_allowed` |
 | Demo mode | `OFFICEHOURS_DEMO` | unset, treated as off | Course text is not sent outside demo mode. | `demo_mode`; `verify_course_answer` |
@@ -180,12 +190,14 @@ not emitted on this path.
 ## Cache
 
 Key: SHA-256 of the course id (or `-`), the question with case folded and
-internal whitespace collapsed, `chunk_id:status` for each chunk sent, the
-configured model name, and `study-answer-check-v1`. There is no user id.
+internal whitespace collapsed, `chunk_id:status` for each chunk sent on the
+first retrieval, the configured model name, `study-answer-check-v1`, and
+`study-entailment-v1+recovery-v1`. There is no user id.
 
-Stored only for `passed` and `not_answerable`: the decision, the short answer,
-the quote, the cited chunk id, the model name, and the chunk ids. Errors,
-quota stops, busy stops, and guard results are not stored.
+Stored for `passed` only after entailment says yes, and for `not_answerable`.
+The row holds the decision, the short answer, the quote, the cited chunk id,
+the model name, and the chunk ids. Abstain, an entailment no, errors, quota
+stops, busy stops, and guard results are not stored.
 
 A row is dropped when its TTL passes, when `update_entry` changes `status` or
 `answer_draft`, or when `_stamp_upload` approves or rejects an upload. Both

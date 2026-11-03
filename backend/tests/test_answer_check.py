@@ -146,7 +146,8 @@ def test_answerable_with_a_verbatim_quote(monkeypatch):
                 "supporting_chunk_id": 12,
                 "answer": "A queue removes from the front.",
                 "quote": "removes from the front.",
-            }
+            },
+            {"supports": True},
         ]
     )
     records = []
@@ -156,7 +157,7 @@ def test_answerable_with_a_verbatim_quote(monkeypatch):
         [_hit(), (other, 0.70)],
         records,
     )
-    assert len(client.calls) == 1
+    assert len(client.calls) == 2
     sent = json.loads(client.calls[0]["user"])
     assert set(sent) == {"question", "chunks"}
     assert [chunk["chunk_id"] for chunk in sent["chunks"]] == [11, 12]
@@ -176,10 +177,15 @@ def test_answerable_with_a_verbatim_quote(monkeypatch):
     assert records[0]["short_answer"] == "A queue removes from the front."
     assert records[0]["quote"] == "removes from the front."
     assert records[0]["citation"] == "other.pdf, p. 4, chunk 1"
-    assert records[0]["input_tokens"] == 10
-    assert records[0]["output_tokens"] == 4
+    assert records[0]["input_tokens"] == 20
+    assert records[0]["output_tokens"] == 8
     assert records[0]["model"] == "fake-model"
-    assert records[0]["latency_ms"] == 8.0
+    assert records[0]["latency_ms"] == 16.0
+    entailment = json.loads(client.calls[1]["user"])
+    assert entailment == {
+        "answer": "A queue removes from the front.",
+        "quote": "removes from the front.",
+    }
 
 
 def test_quote_missing_from_the_cited_chunk_is_rejected(monkeypatch):
@@ -321,10 +327,11 @@ def test_timeout_then_valid_json_passes_on_the_retry(monkeypatch):
                 "answer": "It returns the top value.",
                 "quote": "returns the top value.",
             },
+            {"supports": True},
         ]
     )
     response = _ask(monkeypatch, client, [_hit()])
-    assert len(client.calls) == 2
+    assert len(client.calls) == 3
     assert response.should_seek_help is False
     assert "returns the top value." in response.answer
     assert "based on notes.pdf, p.3 approved by the professor" in response.answer
@@ -406,12 +413,58 @@ def test_score_at_cutoff_does_call(monkeypatch):
                 "supporting_chunk_id": 11,
                 "answer": "It returns the top value.",
                 "quote": "returns the top value.",
-            }
+            },
+            {"supports": True},
         ]
     )
     response = _ask(monkeypatch, client, [_hit(0.42)])
-    assert len(client.calls) == 1
+    assert len(client.calls) == 2
     assert response.should_seek_help is False
+
+
+def test_entailment_accepts_only_a_real_boolean():
+    from app.ai.claude_client import ENTAILMENT_SYSTEM, judge_entailment
+
+    yes = ScriptedClient([{"supports": True}])
+    assert judge_entailment("It returns the top.", "returns the top", yes).outcome == "supported"
+    assert yes.calls[0]["system"] == ENTAILMENT_SYSTEM
+
+    no = ScriptedClient([{"supports": False}])
+    assert judge_entailment("It returns the moon.", "returns the top", no).outcome == "unsupported"
+
+    string_true = ScriptedClient([{"supports": "true"}])
+    assert judge_entailment("a", "a", string_true).outcome == "invalid_json"
+
+    broken = ScriptedClient([TimeoutError("down")])
+    failed = judge_entailment("a", "a", broken)
+    assert failed.outcome == "api_error"
+    assert len(broken.calls) == 1
+
+
+def test_recovery_choices_and_a_missing_query():
+    from app.ai.claude_client import choose_recovery
+
+    client = ScriptedClient(
+        [
+            {"action": "reformulate", "query": "  stack pop  "},
+            {"action": "widen", "query": None},
+            {"action": "narrow", "query": None},
+            {"action": "abstain", "query": None},
+            {"action": "reformulate", "query": "   "},
+            {"action": "browse", "query": "x"},
+        ]
+    )
+    reformulated = choose_recovery(client, question="q", answer="a", quote="q1")
+    assert reformulated.outcome == "reformulate"
+    assert reformulated.answer == "stack pop"
+    assert choose_recovery(client, question="q", answer="a", quote="q1").outcome == "widen"
+    assert choose_recovery(client, question="q", answer="a", quote="q1").outcome == "narrow"
+    assert choose_recovery(client, question="q", answer="a", quote="q1").outcome == "abstain"
+    assert choose_recovery(client, question="q", answer="a", quote="q1").outcome == "invalid_json"
+    assert choose_recovery(client, question="q", answer="a", quote="q1").outcome == "invalid_json"
+    sent = json.loads(client.calls[0]["user"])
+    assert sent["reason"] == "the quote does not fully support the answer"
+    assert sent["quote"] == "q1"
 
 
 def test_only_three_chunks_are_sent(monkeypatch):
@@ -571,6 +624,14 @@ class _EchoClient:
     def complete(self, *, system, user):
         self.calls += 1
         payload = json.loads(user)
+        if "chunks" not in payload:
+            return SimpleNamespace(
+                text=json.dumps({"supports": True}),
+                model="fake-echo",
+                input_tokens=11,
+                output_tokens=7,
+                latency_ms=4.0,
+            )
         chunk = payload["chunks"][0]
         if not chunk["text"]:
             body = {
@@ -625,7 +686,13 @@ def test_harness_with_fake_client_reports_beside_the_baseline(monkeypatch):
     retrieval_answered = sum(1 for row in both["questions"] if row["answered"])
     assert report["checker"] == "fake"
     assert report["sections"]["human_written"]["n"] == 0
-    assert report["usage"]["calls"] == retrieval_answered == echo.calls
+    passes = sum(
+        1
+        for row in report["sections"]["agent_generated"]["questions"]
+        if (row.get("check") or {}).get("outcome") == "passed"
+    )
+    assert report["usage"]["calls"] == retrieval_answered
+    assert echo.calls == retrieval_answered + passes
     assert report["usage"]["questions"] == 75
     checked = report["sections"]["agent_generated"]["counts"]
     for category, count in both["counts"].items():
@@ -634,8 +701,8 @@ def test_harness_with_fake_client_reports_beside_the_baseline(monkeypatch):
         assert checked[category]["spurious_answer"] == count["spurious_answer"]
         assert checked[category]["wrong_source"] == count["wrong_source"]
         assert checked[category]["hidden_page_cited"] == count["hidden_page_cited"]
-    assert report["usage"]["input_tokens"] == retrieval_answered * 11
-    assert report["usage"]["output_tokens"] == retrieval_answered * 7
+    assert report["usage"]["input_tokens"] == echo.calls * 11
+    assert report["usage"]["output_tokens"] == echo.calls * 7
     assert report["usage"]["input_tokens_per_question"] == round(report["usage"]["input_tokens"] / 75, 2)
     assert report["usage"]["latency_ms_worst"] >= report["usage"]["latency_ms_median"]
 
@@ -1030,19 +1097,25 @@ def test_demo_off_does_not_call_gemini(monkeypatch):
 
 
 def test_claude_provider_still_checks_without_the_gemini_ack(monkeypatch):
+    from app.ai.claude_client import ENTAILMENT_SYSTEM
+
     _gemini_env(monkeypatch, provider="claude", ack="false")
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
 
-    def fake_complete(*args, **kwargs):
-        return SimpleNamespace(
-            text=json.dumps(
+    def fake_complete(system, user, **kwargs):
+        if system == ENTAILMENT_SYSTEM:
+            text = json.dumps({"supports": True})
+        else:
+            text = json.dumps(
                 {
                     "answerable": True,
                     "supporting_chunk_id": 11,
                     "answer": "It returns the top value.",
                     "quote": "returns the top value.",
                 }
-            ),
+            )
+        return SimpleNamespace(
+            text=text,
             model="claude-haiku-5-5",
             input_tokens=2,
             output_tokens=2,

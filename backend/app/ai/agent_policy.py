@@ -1,9 +1,11 @@
-"""Study-agent orchestration. One straight pipeline, no tool loop.
+"""Study-agent orchestration.
 
-The model never picks an action. This module validates the question, asks
-the existing retriever, applies the budgets, makes at most one check call,
-validates that reply, then chooses one of four outcomes: a cited answer, a
-refusal, the existing staff form, or "assistant busy".
+The pipeline validates the question, retrieves approved course material, and
+applies the budgets. A quote check may accept one chunk or refuse. A pass
+then takes one entailment verdict: the quote must fully support the answer.
+Only an entailment miss may ask the model for one recovery (reformulate,
+widen, narrow, or abstain), and only inside a hard cap of three attempts.
+Nothing is shown unless the quote check and the entailment check both pass.
 
 ``OFFICEHOURS_LLM_ENABLED`` defaults to false. While it is false the agent
 is today's retrieval-only path. A limit or an open circuit breaker returns
@@ -27,6 +29,8 @@ from app.ai.claude_client import (
     AnswerCheckClient,
     AnswerCheckResult,
     _material_chunks,
+    choose_recovery,
+    judge_entailment,
     verify_course_answer,
 )
 from app.services.rate_limit import RateLimiter
@@ -34,6 +38,7 @@ from app.services.rate_limit import RateLimiter
 logger = logging.getLogger("officehours.agent_policy")
 
 PROMPT_VERSION = "study-answer-check-v1"
+GATE_VERSION = "study-entailment-v1+recovery-v1"
 
 # Student-facing closed set. ``staff`` is the existing below-cutoff reply.
 OUTCOMES = ("answer", "refuse", "staff", "busy")
@@ -130,6 +135,12 @@ def breaker_minutes() -> int:
 
 def cache_ttl_seconds() -> int:
     return _positive_int("OFFICEHOURS_LLM_CACHE_TTL_SECONDS", 3600)
+
+
+def agent_max_attempts() -> int:
+    """Hard cap of 2 or 3 quote-check attempts. Default is 3."""
+    value = _positive_int("OFFICEHOURS_AGENT_MAX_ATTEMPTS", 3)
+    return min(3, max(2, value))
 
 
 def reset_policy_state() -> None:
@@ -327,6 +338,7 @@ def _cache_key(
             ),
             model,
             PROMPT_VERSION,
+            GATE_VERSION,
         ]
     )
     return hashlib.sha256(identity.encode("utf-8")).hexdigest()
@@ -377,6 +389,138 @@ def _is_failure(result: AnswerCheckResult) -> bool:
     return result.outcome not in {"passed", "not_answerable", *_GUARD_OUTCOMES}
 
 
+def _live_checker(answer_checker: AnswerCheckClient | None) -> AnswerCheckClient:
+    """One client for the quote check, the entailment verdict, and recovery."""
+    if answer_checker is not None:
+        return answer_checker
+    from app.ai.claude_client import AnthropicAnswerCheckClient, GeminiAnswerCheckClient
+
+    provider = os.getenv("OFFICEHOURS_LLM_PROVIDER", "").strip().lower()
+    if provider == "claude":
+        return AnthropicAnswerCheckClient()
+    return GeminiAnswerCheckClient()
+
+
+def _chunks_from_sources(sources, limit: int) -> list[dict[str, Any]]:
+    """Chunk dicts the quote check accepts. Six is the widen ceiling."""
+    ceiling = min(max(int(limit), 1), 6)
+    chunks = []
+    for hit in list(sources)[:ceiling]:
+        entry = hit.entry
+        chunks.append(
+            {
+                "chunk_id": entry.id,
+                "file": entry.source_filename or "",
+                "page": entry.page_number,
+                "text": entry.answer_draft or "",
+                "status": entry.status or "approved",
+            }
+        )
+    return chunks
+
+
+def _absorb(totals: dict[str, Any], result: AnswerCheckResult) -> None:
+    totals["input_tokens"] += max(0, result.input_tokens)
+    totals["output_tokens"] += max(0, result.output_tokens)
+    totals["latency_ms"] += max(0.0, float(result.latency_ms))
+
+
+def _spent(result: AnswerCheckResult, totals: dict[str, Any]) -> AnswerCheckResult:
+    """Same decision, with the tokens and latency of every call on this question."""
+    return AnswerCheckResult(
+        outcome=result.outcome,
+        called=result.called,
+        answer=result.answer,
+        quote=result.quote,
+        supporting_chunk_id=result.supporting_chunk_id,
+        model=result.model,
+        input_tokens=totals["input_tokens"],
+        output_tokens=totals["output_tokens"],
+        latency_ms=totals["latency_ms"],
+        error_type=result.error_type,
+    )
+
+
+def _cache_row(result: AnswerCheckResult, chunks: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "stored_at": time.monotonic(),
+        "outcome": result.outcome,
+        "answer": result.answer,
+        "quote": result.quote,
+        "supporting_chunk_id": result.supporting_chunk_id,
+        "model": result.model,
+        "chunk_ids": tuple(chunk["chunk_id"] for chunk in chunks),
+    }
+
+
+def _finish_quote_check(
+    result: AnswerCheckResult,
+    sources,
+    chunks: list[dict[str, Any]],
+    key: str,
+    approved_only: bool,
+    check_records: list[dict[str, Any]] | None,
+):
+    """A quote check that did not pass. Entailment is not called."""
+    from app.services.kb_agent_service import _check_miss
+
+    record = result.as_record()
+    record["prompt_version"] = PROMPT_VERSION
+    record["limit"] = "answer_length" if result.outcome == "answer_too_long" else "-"
+    if result.outcome == "not_answerable":
+        _CACHE[key] = _cache_row(result, chunks)
+    _remember(check_records, record)
+    _log(
+        _policy_outcome(result),
+        result,
+        limit=record["limit"] if record["limit"] != "-" else None,
+    )
+    return _check_miss(sources, approved_only)
+
+
+def _finish_supported(
+    result: AnswerCheckResult,
+    sources,
+    chunks: list[dict[str, Any]],
+    key_chunks: list[dict[str, Any]],
+    key: str,
+    approved_only: bool,
+    check_records: list[dict[str, Any]] | None,
+    totals: dict[str, Any],
+    attempt: int,
+    recoveries: list[str],
+):
+    """Show the answer only after the quote check and the entailment check pass."""
+    from app.services.kb_agent_service import _checked_answer, _cite_entry
+
+    chosen = next(hit for hit in sources if hit.entry.id == result.supporting_chunk_id)
+    logged = _spent(result, totals)
+    record = logged.as_record()
+    record["prompt_version"] = PROMPT_VERSION
+    record["outcome"] = "passed"
+    record["limit"] = "-"
+    record["short_answer"] = result.answer or ""
+    record["quote"] = result.quote or ""
+    record["citation"] = _cite_entry(chosen.entry)
+    record["attempts"] = attempt
+    record["recoveries"] = list(recoveries)
+    seen_ids = []
+    for chunk in list(key_chunks) + list(chunks):
+        chunk_id = chunk["chunk_id"]
+        if chunk_id not in seen_ids:
+            seen_ids.append(chunk_id)
+    _CACHE[key] = _cache_row(result, [{"chunk_id": chunk_id} for chunk_id in seen_ids])
+    _remember(check_records, record)
+    _log("answered", logged, limit=None)
+    return _checked_answer(
+        sources,
+        approved_only=approved_only,
+        answer=result.answer or "",
+        quote=result.quote or "",
+        chunk_id=result.supporting_chunk_id,
+    )
+
+
 def run_study_agent(
     db,
     question: str,
@@ -392,6 +536,7 @@ def run_study_agent(
     """Fixed pipeline. Retrieval and the 0.42 cutoff stay in the knowledge service."""
     from app.models.knowledge import KnowledgeSearchHit
     from app.services.kb_agent_service import (
+        ABSTAIN_ANSWER,
         WEAK_MATCH_CONFIDENCE,
         _checked_answer,
         _check_miss,
@@ -431,18 +576,7 @@ def run_study_agent(
         _log("disabled", None, limit="kill_switch")
         return _retrieval_answer(sources, approved_only)
 
-    chunks = []
-    for hit in sources[: max_chunks()]:
-        entry = hit.entry
-        chunks.append(
-            {
-                "chunk_id": entry.id,
-                "file": entry.source_filename or "",
-                "page": entry.page_number,
-                "text": entry.answer_draft or "",
-                "status": entry.status or "approved",
-            }
-        )
+    chunks = _chunks_from_sources(sources, max_chunks())
 
     if not _model_calls_allowed() or not _provider_ready(answer_checker):
         result = verify_course_answer(question, chunks, client=answer_checker, emit_log=False)
@@ -508,77 +642,172 @@ def run_study_agent(
         _log("quota", None, limit=spent)
         return _busy_response(approved_only)
 
-    # One checker invocation. The checker may retry a single dropped connection.
-    # This pipeline does not send a second prompt and does not loop.
-    result = verify_course_answer(question, chunks, client=answer_checker, emit_log=False)
-    if result.outcome in _GUARD_OUTCOMES:
-        record = result.as_record()
-        record["prompt_version"] = PROMPT_VERSION
-        record["limit"] = result.outcome
-        _remember(check_records, record)
-        _log(result.outcome, result, limit=result.outcome)
-        return _retrieval_answer(sources, approved_only)
+    checker = _live_checker(answer_checker)
+    search_question = question
+    top_k_now = min(top_k, max_chunks())
+    key_chunks = list(chunks)
+    recoveries: list[str] = []
+    totals = {"input_tokens": 0, "output_tokens": 0, "latency_ms": 0.0}
 
-    if (
-        result.outcome == "passed"
-        and isinstance(result.answer, str)
-        and len(result.answer) > max_answer_chars()
-    ):
-        result = AnswerCheckResult(
-            outcome="answer_too_long",
-            called=True,
-            model=result.model,
-            input_tokens=result.input_tokens,
-            output_tokens=result.output_tokens,
-            latency_ms=result.latency_ms,
-            error_type="answer_length",
-        )
+    for attempt in range(1, agent_max_attempts() + 1):
+        if attempt > 1:
+            if _budget_block() is not None or breaker_open():
+                record = _blank("busy", limit=_budget_block() or "circuit_breaker")
+                _remember(check_records, record)
+                _log("busy", None, limit=record["limit"])
+                return _busy_response(approved_only)
+            matches = search_approved_entries(
+                db,
+                search_question,
+                top_k=top_k_now,
+                course_id=course_id,
+                approved_only=approved_only,
+                course_scoped=course_scoped,
+                course_material_only=True,
+            )
+            sources = [
+                KnowledgeSearchHit(entry=to_out(entry), similarity=round(similarity, 4))
+                for entry, similarity in matches
+            ]
+            if not sources or sources[0].similarity < WEAK_MATCH_CONFIDENCE:
+                _remember(check_records, _blank("below_cutoff"))
+                _log("staff", None, limit="-")
+                return _staff_response(sources, approved_only)
+            chunks = _chunks_from_sources(sources, top_k_now)
+            if estimate_input_tokens(search_question, chunks) > max_input_tokens():
+                record = _blank("quota", limit="input_tokens")
+                _remember(check_records, record)
+                _log("quota", None, limit="input_tokens")
+                return _busy_response(approved_only)
 
-    _note_spend(result.input_tokens, result.output_tokens)
-    if _is_failure(result):
-        _note_failure()
-    else:
-        _note_success()
+        result = verify_course_answer(search_question, chunks, client=checker, emit_log=False)
+        if result.outcome in _GUARD_OUTCOMES:
+            record = result.as_record()
+            record["prompt_version"] = PROMPT_VERSION
+            record["limit"] = result.outcome
+            _remember(check_records, record)
+            _log(result.outcome, result, limit=result.outcome)
+            return _retrieval_answer(sources, approved_only)
 
-    policy_outcome = _policy_outcome(result)
-    record = result.as_record()
-    record["prompt_version"] = PROMPT_VERSION
-    record["limit"] = "answer_length" if result.outcome == "answer_too_long" else "-"
-    if result.outcome == "passed" and result.supporting_chunk_id is not None:
-        from app.services.kb_agent_service import _cite_entry
+        if (
+            result.outcome == "passed"
+            and isinstance(result.answer, str)
+            and len(result.answer) > max_answer_chars()
+        ):
+            result = AnswerCheckResult(
+                outcome="answer_too_long",
+                called=True,
+                model=result.model,
+                input_tokens=result.input_tokens,
+                output_tokens=result.output_tokens,
+                latency_ms=result.latency_ms,
+                error_type="answer_length",
+            )
 
-        chosen = next(hit for hit in sources if hit.entry.id == result.supporting_chunk_id)
-        record["short_answer"] = result.answer or ""
-        record["quote"] = result.quote or ""
-        record["citation"] = _cite_entry(chosen.entry)
-        _CACHE[key] = {
-            "stored_at": time.monotonic(),
-            "outcome": "passed",
-            "answer": result.answer,
-            "quote": result.quote,
-            "supporting_chunk_id": result.supporting_chunk_id,
-            "model": result.model,
-            "chunk_ids": tuple(chunk["chunk_id"] for chunk in chunks),
-        }
-    elif result.outcome == "not_answerable":
-        _CACHE[key] = {
-            "stored_at": time.monotonic(),
-            "outcome": "not_answerable",
-            "answer": None,
-            "quote": None,
-            "supporting_chunk_id": None,
-            "model": result.model,
-            "chunk_ids": tuple(chunk["chunk_id"] for chunk in chunks),
-        }
-    _remember(check_records, record)
-    _log(policy_outcome, result, limit=record["limit"] if record["limit"] != "-" else None)
+        _absorb(totals, result)
+        _note_spend(result.input_tokens, result.output_tokens)
+        if result.outcome != "passed" or result.supporting_chunk_id is None:
+            if _is_failure(result):
+                _note_failure()
+            else:
+                _note_success()
+            return _finish_quote_check(
+                result,
+                sources,
+                chunks,
+                key,
+                approved_only,
+                check_records,
+            )
 
-    if result.outcome == "passed" and result.supporting_chunk_id is not None:
-        return _checked_answer(
-            sources,
-            approved_only=approved_only,
+        if _budget_block() is not None:
+            record = _blank("busy", limit=_budget_block() or "global_calls")
+            _remember(check_records, record)
+            _log("busy", None, limit=record["limit"])
+            return _busy_response(approved_only)
+
+        entailment = judge_entailment(result.answer or "", result.quote or "", checker)
+        _absorb(totals, entailment)
+        _note_spend(entailment.input_tokens, entailment.output_tokens)
+        if entailment.outcome == "supported":
+            _note_success()
+            return _finish_supported(
+                result,
+                sources,
+                chunks,
+                key_chunks,
+                key,
+                approved_only,
+                check_records,
+                totals,
+                attempt,
+                recoveries,
+            )
+        if entailment.outcome != "unsupported":
+            _note_failure()
+            record = _spent(entailment, totals).as_record()
+            record["prompt_version"] = PROMPT_VERSION
+            record["limit"] = "-"
+            record["attempts"] = attempt
+            record["recoveries"] = list(recoveries)
+            _remember(check_records, record)
+            _log("failed_closed_error", _spent(entailment, totals), limit=None)
+            return _check_miss(sources, approved_only)
+
+        if attempt >= agent_max_attempts():
+            _note_success()
+            record = _spent(result, totals).as_record()
+            record["prompt_version"] = PROMPT_VERSION
+            record["outcome"] = "unsupported"
+            record["limit"] = "-"
+            record["attempts"] = attempt
+            record["recoveries"] = list(recoveries)
+            _remember(check_records, record)
+            _log("refused_by_model", _spent(result, totals), limit=None)
+            return _check_miss(sources, approved_only)
+
+        if _budget_block() is not None or breaker_open():
+            record = _blank("busy", limit=_budget_block() or "circuit_breaker")
+            _remember(check_records, record)
+            _log("busy", None, limit=record["limit"])
+            return _busy_response(approved_only)
+
+        recovery = choose_recovery(
+            checker,
+            question=search_question,
             answer=result.answer or "",
             quote=result.quote or "",
-            chunk_id=result.supporting_chunk_id,
         )
+        _absorb(totals, recovery)
+        _note_spend(recovery.input_tokens, recovery.output_tokens)
+        if recovery.outcome == "abstain":
+            _note_success()
+            record = _spent(recovery, totals).as_record()
+            record["prompt_version"] = PROMPT_VERSION
+            record["outcome"] = "abstain"
+            record["limit"] = "-"
+            record["attempts"] = attempt
+            record["recoveries"] = recoveries + ["abstain"]
+            _remember(check_records, record)
+            _log("refused_by_model", _spent(recovery, totals), limit=None)
+            return _check_miss(sources, approved_only, answer=ABSTAIN_ANSWER)
+        if recovery.outcome not in {"reformulate", "widen", "narrow"}:
+            _note_failure()
+            record = _spent(recovery, totals).as_record()
+            record["prompt_version"] = PROMPT_VERSION
+            record["limit"] = "-"
+            record["attempts"] = attempt
+            record["recoveries"] = list(recoveries)
+            _remember(check_records, record)
+            _log("failed_closed_error", _spent(recovery, totals), limit=None)
+            return _check_miss(sources, approved_only)
+
+        recoveries.append(recovery.outcome)
+        if recovery.outcome == "reformulate":
+            search_question = recovery.answer or search_question
+        elif recovery.outcome == "widen":
+            top_k_now = min(top_k_now + 2, 6)
+        else:
+            top_k_now = 1
+
     return _check_miss(sources, approved_only)
