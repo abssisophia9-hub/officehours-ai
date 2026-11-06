@@ -23,6 +23,12 @@ OUTPUT = ROOT / "reports/midreport/OfficeHours_AI_Capstone_Interim_Report.pdf"
 ARCH_PNG = ROOT / "docs/midreport/figures/architecture.png"
 SCHEMA_SVG = ROOT / "docs/midreport/figures/database_schema.svg"
 SCHEMA_PNG = ROOT / "reports/midreport/.database_schema.png"
+FONT_DIR = Path("/usr/share/fonts/truetype/liberation")
+BODY_FONT = ("LibSerif", FONT_DIR / "LiberationSerif-Regular.ttf")
+BODY_BOLD = ("LibSerifBold", FONT_DIR / "LiberationSerif-Bold.ttf")
+BODY_SIZE = 12
+# 15.85 pt baseline pitch, the spacing of the untouched 12 pt body paragraphs.
+BODY_LEADING = 1.482
 
 TITLE = (
     "OfficeHours AI: A Professor-Stamped RAG and Multi-Channel Academic\n"
@@ -57,6 +63,57 @@ def text_box(
     )
     if spare < 0:
         raise RuntimeError(f"text does not fit {rect}: {-spare:.1f} points short")
+
+
+def body_paragraphs(
+    page: pymupdf.Page,
+    x0: float,
+    top: float,
+    x1: float,
+    bottom: float,
+    paragraphs: list[str],
+    *,
+    gap: float = 8,
+) -> float:
+    """Set 12 pt body paragraphs in the report's own serif; return the next free y."""
+    name, path = BODY_FONT
+    y = top
+    for paragraph in paragraphs:
+        rect = pymupdf.Rect(x0, y, x1, bottom)
+        spare = page.insert_textbox(
+            rect,
+            paragraph,
+            fontname=name,
+            fontfile=str(path),
+            fontsize=BODY_SIZE,
+            lineheight=BODY_LEADING,
+            color=(0, 0, 0),
+        )
+        if spare < 0:
+            raise RuntimeError(f"text does not fit {rect}: {-spare:.1f} points short")
+        lines = [
+            line["bbox"][3]
+            for block in page.get_text("dict", clip=rect)["blocks"]
+            for line in block.get("lines", [])
+        ]
+        y = max(lines) + gap
+    return y
+
+
+def bullet_line(page: pymupdf.Page, baseline: float, label: str, text: str) -> None:
+    """Bold objective label plus regular text, matching the source bullets."""
+    bold_name, bold_path = BODY_BOLD
+    name, path = BODY_FONT
+    page.insert_text(
+        (86.4, baseline), label, fontname=bold_name, fontfile=str(bold_path), fontsize=BODY_SIZE
+    )
+    offset = 86.4 + pymupdf.Font(fontfile=str(bold_path)).text_length(label, fontsize=BODY_SIZE)
+    end = offset + pymupdf.Font(fontfile=str(path)).text_length(text, fontsize=BODY_SIZE)
+    if end > 534:
+        raise RuntimeError(f"{label} line overflows the right margin: {end:.1f}")
+    page.insert_text(
+        (offset, baseline), text, fontname=name, fontfile=str(path), fontsize=BODY_SIZE
+    )
 
 
 def replace_title(doc: pymupdf.Document) -> None:
@@ -101,20 +158,62 @@ def add_jill_watson(doc: pymupdf.Document) -> None:
     text_box(page, pymupdf.Rect(58, 201, 534, 282), paragraph, size=10.2, lineheight=1.12)
 
 
+def replace_product_section(doc: pymupdf.Document) -> None:
+    page = doc[4]
+    redact(page, pymupdf.Rect(56, 213, 538, 427))
+    body_paragraphs(
+        page,
+        58,
+        214,
+        535,
+        428,
+        [
+            "OfficeHours AI is a unified academic-support platform for Al Akhawayn "
+            "University, built as one React application and one FastAPI service. Users "
+            "sign in once, and each course membership sets their role, so one person "
+            "can be a TA in one course and a student in another. Ask Triage classifies "
+            "a student\u2019s question and suggests a staff member, Help Coach drafts TA "
+            "replies but never publishes them, professors review and approve course "
+            "material, and classmates help one another through Rooms and shared notes.",
+            "This report focuses on the Study Agent. It answers a course question only "
+            "from professor-approved material for that course, with a citation, or "
+            "declines. After a refusal, the student can ask course staff directly or "
+            "use Quiet ask to hide their name from staff. Ask Triage, Help Coach, Rooms "
+            "and the Canvas launch appear as context in Section 5.2 but are not "
+            "evaluated here; the \u201ccustom-trained Ask Triage agents\u201d in the proposal "
+            "title are outside these measurements. The Revision Strategist planner was "
+            "left out of the build and is future work.",
+        ],
+    )
+
+    redact(page, pymupdf.Rect(84, 624, 538, 641))
+    bullet_line(
+        page,
+        636.6,
+        "O3.",
+        " Route a refused question to TAs and professors, directly or anonymously "
+        "via Quiet ask.",
+    )
+
+
 def replace_agent_terminology(doc: pymupdf.Document) -> None:
     page = doc[4]
     redact(page, pymupdf.Rect(56, 457, 538, 541))
-    paragraph = (
-        "\"Agent\" names the inner model-driven component. The surrounding Study "
-        "Agent remains a bounded workflow: an outer orchestration wrapper owns the "
-        "execution loop, maximum iterations, timeouts, retries, state, session "
-        "history and budgets. On each iteration the inner Agent Layer receives an "
-        "immutable state snapshot and chooses only among call_tool, return_answer "
-        "and halt. It cannot access the database, publish directly, manage retries "
-        "or extend its own loop. This is limited agency inside deterministic "
-        "controls, not an autonomous general-purpose agent."
+    body_paragraphs(
+        page,
+        58,
+        458,
+        535,
+        552,
+        [
+            "\u201cAgent\u201d names only the inner model-driven component. The Study Agent "
+            "as a whole is a bounded workflow: an outer orchestration wrapper owns the "
+            "loop, iteration limit, timeouts, retries, state, session history and "
+            "budgets. On each iteration the inner Agent Layer receives a state snapshot "
+            "and chooses call_tool, return_answer or halt. It cannot access the "
+            "database, publish, retry or extend its own loop.",
+        ],
     )
-    text_box(page, pymupdf.Rect(58, 460, 534, 540), paragraph, size=10.0, lineheight=1.1)
 
 
 def replace_architecture(doc: pymupdf.Document) -> None:
@@ -316,6 +415,7 @@ def main() -> None:
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     doc = pymupdf.open(SOURCE)
     replace_title(doc)
+    replace_product_section(doc)
     replace_agent_terminology(doc)
     add_jill_watson(doc)
     replace_architecture(doc)
