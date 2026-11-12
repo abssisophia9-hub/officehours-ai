@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.ai.claude_client import AnswerCheckClient
 from app.models.knowledge import AgentAskResponse, KnowledgeSearchHit
-# Bound on this module so the policy and the tests patch the same search.
+# Bound on this module so the Orchestrator and the tests patch the same search.
 from app.services.knowledge_service import search_approved_entries
 
 # Below this similarity we treat a hit as too weak to answer from.
@@ -171,7 +171,7 @@ def answer_from_knowledge_base(
     check_records: list[dict[str, Any]] | None = None,
     user_id: int | None = None,
 ) -> AgentAskResponse:
-    """Study-agent answer. The pipeline lives in ``agent_policy``.
+    """Study-agent answer. The Orchestration Layer lives in ``agent_policy``.
 
     Retrieval, the 0.42 cutoff, and the filters are unchanged. Flags stay off
     the HTTP request model. ``answer_checker`` injects a fake client in tests.

@@ -181,7 +181,7 @@ class AnthropicAnswerCheckClient:
 
 
 class GeminiAnswerCheckClient:
-    """Gemini path. Budget comes from the agent policy."""
+    """Gemini path. Budget comes from the Orchestrator's budget and safety controls."""
 
     def complete(self, *, system: str, user: str) -> Any:
         from app.ai.agent_policy import max_output_tokens, timeout_seconds
@@ -211,7 +211,7 @@ class GeminiAnswerCheckClient:
 def _material_chunks(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Question text plus chunk text, file, page, and chunk id. Nothing else.
 
-    The policy decides how many chunks to pass. Six is the hard ceiling so a
+    The Orchestrator decides how many chunks to pass. Six is the hard ceiling so a
     widened retrieval cannot send the whole course.
     """
     cleaned = []

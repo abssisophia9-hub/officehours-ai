@@ -1,21 +1,22 @@
-# Study-agent orchestration
+# Orchestration Layer
 
-This note describes the policy pipeline on this branch (`main` at the commit
-that merged pull request 121). It sits between local retrieval and the single
-model call. The numbers below were read from the modules named in each row.
-The rationale column is the reason written in `docs/AGENT_POLICY.md`, not a
-new measurement.
+This note describes the **Orchestration Layer** (short: the **Orchestrator**)
+on this branch (`main` at the commit that merged pull request 121). It sits
+between local retrieval and the single model call. The numbers below were
+read from the modules named in each row. The rationale column is the reason
+written in `docs/AGENT_POLICY.md`, not a new measurement.
 
 ## Purpose
 
-`run_study_agent` in `backend/app/ai/agent_policy.py` is the only study-agent
-entry. `answer_from_knowledge_base` in `backend/app/services/kb_agent_service.py`
-calls it. The model does not choose search, the staff form, or busy. It
-retrieves approved course material, applies a fixed cutoff and a fixed set
-of guards, then runs a quote check. A pass takes one entailment verdict. A
-no may take one recovery (reformulate, widen, narrow, or abstain) inside a
-cap of three attempts. An answer is returned only when retrieval, the quote,
-and entailment all pass.
+`run_study_agent` in `backend/app/ai/agent_policy.py` is the only Study Agent
+Orchestrator entry. `answer_from_knowledge_base` in
+`backend/app/services/kb_agent_service.py` calls it. The model does not
+choose search, the staff form, or busy. The Orchestrator retrieves approved
+course material, applies a fixed cutoff and a fixed set of guards, then runs
+a quote check. A pass takes one entailment verdict. A no may take one
+recovery (reformulate, widen, narrow, or abstain) inside a cap of three
+attempts. An answer is returned only when retrieval, the quote, and
+entailment all pass.
 
 Retrieval is local. The quote check, the entailment verdict, and recovery,
 when they are allowed to run, use Gemini or Claude. The quote check is
@@ -126,12 +127,12 @@ the reason in `docs/AGENT_POLICY.md`.
 | Provider | `OFFICEHOURS_LLM_PROVIDER` | unset, not ready | Must be `gemini` or `claude` for a live call. | `_provider_ready`; `verify_course_answer` |
 | Free-tier acknowledgement | `OFFICEHOURS_GEMINI_FREE_TIER_ACK` | unset, treated as off | Gemini's free tier may use prompts to improve Google products. | `_provider_ready`; `verify_course_answer` |
 
-`OFFICEHOURS_RATE_LIMIT=false` does not change this table. The policy uses its
-own `RateLimiter` instance, and `blocking` / `allow_all` do not read that
-flag. The HTTP limiter is separate: `DEFAULT_LIMITS` in
-`backend/app/services/rate_limit.py` includes `/agent/ask` at 40 requests
-per 60 seconds, and `rate_limit_enabled` skips that HTTP limiter when the
-flag is false.
+`OFFICEHOURS_RATE_LIMIT=false` does not change this table. The Orchestrator's
+budget and safety controls use their own `RateLimiter` instance, and
+`blocking` / `allow_all` do not read that flag. The HTTP limiter is separate:
+`DEFAULT_LIMITS` in `backend/app/services/rate_limit.py` includes
+`/agent/ask` at 40 requests per 60 seconds, and `rate_limit_enabled` skips
+that HTTP limiter when the flag is false.
 
 `complete_gemini` also sleeps so that Gemini sees at most
 `OFFICEHOURS_LLM_RPM` requests in 60 seconds. The default in `_rpm` is 5.
@@ -263,11 +264,11 @@ tokenizer. The global token cap later uses the provider's reported counts.
 
 The Study Agent page collapses busy, staff, refusal, and failed-closed into
 one sentence. A demo that needs those four strings has to read the API body
-or the policy log.
+or the Orchestrator log.
 
 `HTTPError` being a `URLError` means some HTTP failures are eligible for the
-outer retry even though the policy text describes that retry as a dropped
-connection.
+outer retry even though the Orchestrator docs describe that retry as a
+dropped connection.
 
 The saved Gemini run is one model, one prompt version, and one pass over the
 75 agent-generated questions. This pipeline does not repeat a question to

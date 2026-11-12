@@ -25,7 +25,7 @@ Naming: UI says **Revision Strategist** (`/student/revision`). API: `POST /revis
 | --- | --- |
 | `backend/app/models/revision.py` | Request/response Pydantic only (no SQLAlchemy grade table). |
 | `backend/app/routes/revision.py` | `POST /revision/plan` (student-only). |
-| `backend/app/services/revision_service.py` | observe→think→act→check; Gemini think + rule fallback; policy wrap. |
+| `backend/app/services/revision_service.py` | observe→think→act→check; Gemini think + rule fallback; Orchestrator budget and safety controls. |
 | `backend/app/services/revision_search.py` | Wikipedia (+ DDG), `link_ok`, caps. |
 | `backend/tests/test_revision_agent.py` | Mocked LLM + gate/budget cases. |
 | `frontend/officehours-app/src/pages/StudentRevisionPage.jsx` | Prefs, Build plan, mode label, Ask TA. |
@@ -46,9 +46,9 @@ Provider: `OFFICEHOURS_LLM_PROVIDER=gemini`. Model: `GEMINI_MODEL` or `gemini-3.
 
 Think JSON: `{ "action": "search"|"drop"|"stop", "query": string|null }`. Invalid → rule fallback for that step.
 
-## Orchestration wrap (shared `agent_policy`)
+## Orchestrator budget and safety controls (shared `agent_policy`)
 
-Revision does **not** enter `run_study_agent` (no quote check / entailment / recovery). It reuses:
+Revision does **not** enter the Orchestration Layer / `run_study_agent` (no quote check / entailment / recovery). It reuses the Orchestrator's budget and safety controls:
 
 | Control | Where |
 | --- | --- |
@@ -69,7 +69,7 @@ Fallback triggers: LLM off / no key / allow-demo-ack-provider gates / breaker / 
 | Mocked LLM search / stop / caps | Agent path; caps hold |
 | Per-user window full | Fallback; `complete_gemini` not called |
 | Per-course window full | Fallback; `complete_gemini` not called |
-| Policy log | One line each for agent and rule-based fallback; no grade/name/score |
+| Orchestrator log | One line each for agent and rule-based fallback; no grade/name/score |
 
 ## Out of scope
 

@@ -49,8 +49,8 @@ Neither branch was run. The report can describe the code. It cannot cite
 
 The fake-client script in this branch does show a provider exception becoming
 `api_error` and then, with the breaker threshold set to 1, the next question
-returning busy with zero further model calls. That is a unit of the policy
-with a scripted exception. It is not the invalid-key run.
+returning busy with zero further model calls. That is a unit of the
+Orchestrator with a scripted exception. It is not the invalid-key run.
 
 ## Equation-heavy PDFs
 

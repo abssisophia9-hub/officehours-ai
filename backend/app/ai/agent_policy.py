@@ -1,11 +1,12 @@
-"""Study-agent orchestration.
+"""Orchestration Layer for the Study Agent.
 
-The pipeline validates the question, retrieves approved course material, and
-applies the budgets. A quote check may accept one chunk or refuse. A pass
-then takes one entailment verdict: the quote must fully support the answer.
-Only an entailment miss may ask the model for one recovery (reformulate,
-widen, narrow, or abstain), and only inside a hard cap of three attempts.
-Nothing is shown unless the quote check and the entailment check both pass.
+The Orchestrator (this module) validates the question, retrieves approved
+course material, and applies budget and safety controls. A quote check may
+accept one chunk or refuse. A pass then takes one entailment verdict: the
+quote must fully support the answer. Only an entailment miss may ask the
+model for one recovery (reformulate, widen, narrow, or abstain), and only
+inside a hard cap of three attempts. Nothing is shown unless the quote
+check and the entailment check both pass.
 
 ``OFFICEHOURS_LLM_ENABLED`` defaults to false. While it is false the agent
 is today's retrieval-only path. A limit or an open circuit breaker returns

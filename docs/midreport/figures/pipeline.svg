@@ -2,7 +2,7 @@
 <style>text{font-family:Georgia,serif;fill:#1c1917} .small{font-size:12px} .title{font-size:18px}</style>
 <rect width="100%" height="100%" fill="#faf7f2"/>
 <text class="title" x="24" y="32">Orchestration pipeline</text>
-<text class="small" x="24" y="52">Order in run_study_agent. Defaults printed with the policy env vars unset.</text>
+<text class="small" x="24" y="52">Order in run_study_agent. Defaults printed with the Orchestrator env vars unset.</text>
 <text class="small" x="32" y="84">1. Question longer than 2000 and kill switch on: busy, no search</text>
 <text class="small" x="32" y="120">2. search_approved_entries (include threshold 0.35, course material only)</text>
 <text class="small" x="32" y="156">3. No hit or top score below 0.42: staff form, no call</text>

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the study-agent policy against a fake checker and print one row per outcome.
+"""Run the Study Agent Orchestrator against a fake checker and print one row per outcome.
 
 No network and no API key. Retrieval is stubbed, so this does not score real
 course text and does not change the 0.42 cutoff. Run from the repo root:
@@ -77,7 +77,7 @@ class FakeClient:
         del system, user
         self.calls += 1
         if not self.steps:
-            raise AssertionError("the policy made a model call that was not scripted")
+            raise AssertionError("the Orchestrator made a model call that was not scripted")
         step = self.steps.pop(0)
         if isinstance(step, BaseException):
             raise step

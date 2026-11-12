@@ -75,7 +75,7 @@ def write_architecture() -> None:
 
 
 def write_pipeline() -> None:
-    source = "Order in run_study_agent. Defaults printed with the policy env vars unset."
+    source = "Order in run_study_agent. Defaults printed with the Orchestrator env vars unset."
     steps = [
         "1. Question longer than 2000 and kill switch on: busy, no search",
         "2. search_approved_entries (include threshold 0.35, course material only)",

@@ -321,7 +321,7 @@ def build_revision_plan(
     )
     ask_draft = _ask_draft(focus_topics, preference)
 
-    # One policy line per plan: mode + fallback reason only (no grades/names/scores/hits).
+    # One Orchestrator log line per plan: mode + fallback reason only (no grades/names/scores/hits).
     policy._log(
         "answered" if mode == "agent" else "disabled",
         None,
