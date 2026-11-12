@@ -2,7 +2,7 @@
 
 Two modes:
 
-1. **Live Canvas** — set ``CANVAS_BASE_URL`` + ``CANVAS_ACCESS_TOKEN``.
+1. **Live Canvas** — set ``CANVAS_BASE_URL`` + ``CANVAS_API_TOKEN``.
    Sync pulls course **modules** (then pages/files) from the course's
    ``canvas_course_id``.
 
@@ -37,6 +37,11 @@ from app.models.auth import Course
 from app.models.knowledge import KnowledgeEntry
 from app.services.demo_mode import demo_mode
 from app.services.knowledge_service import ingest_course_material
+from app.settings import (
+    CanvasConfigError,
+    canvas_credentials_or_none,
+    require_canvas_live_credentials,
+)
 
 # Module-structured Canvas mirror keyed by canvas_course_id.
 # "2101" (CSC 3351 Operating Systems) is intentionally NOT pre-seeded in demo
@@ -173,9 +178,11 @@ class CanvasFile:
 
 
 def canvas_mode() -> str:
-    base = (os.getenv("CANVAS_BASE_URL") or "").strip()
-    token = (os.getenv("CANVAS_ACCESS_TOKEN") or "").strip()
-    if base and token:
+    try:
+        creds = canvas_credentials_or_none()
+    except CanvasConfigError:
+        raise
+    if creds:
         return "live"
     explicit = (os.getenv("OFFICEHOURS_CANVAS_MODE") or "").strip().lower()
     if explicit:
@@ -185,14 +192,22 @@ def canvas_mode() -> str:
     return "none"
 
 
+def _live_canvas_auth() -> tuple[str, dict[str, str]]:
+    """Base URL (with trailing slash) + headers for live Canvas REST calls."""
+    base, token = require_canvas_live_credentials()
+    return (
+        base.rstrip("/") + "/",
+        {"Authorization": f"Bearer {token}", "Accept": "application/json"},
+    )
+
+
 def canvas_course_snapshot(canvas_course_id: str) -> dict[str, Any] | None:
     """Course metadata used to auto-provision a tenant on first launch."""
     if canvas_mode() == "live":
-        base = (os.getenv("CANVAS_BASE_URL") or "").rstrip("/") + "/"
-        token = (os.getenv("CANVAS_ACCESS_TOKEN") or "").strip()
+        base, headers = _live_canvas_auth()
         detail = _canvas_get_single(
             urljoin(base, f"api/v1/courses/{canvas_course_id}"),
-            {"Authorization": f"Bearer {token}", "Accept": "application/json"},
+            headers,
         )
         if detail:
             return {
@@ -243,12 +258,12 @@ def canvas_status(db: Session, course: Course) -> dict[str, Any]:
             if mode == "live"
             else (
                 "Using local AUI Canvas mirror for this demo course "
-                "(set CANVAS_BASE_URL + CANVAS_ACCESS_TOKEN for a community deploy)."
+                "(set CANVAS_BASE_URL + CANVAS_API_TOKEN for a community deploy)."
                 if mode == "local" and canvas_id
                 else (
                     "No canvas_course_id on this course yet."
                     if not canvas_id
-                    else "Canvas is not configured. Set CANVAS_BASE_URL + CANVAS_ACCESS_TOKEN, or OFFICEHOURS_DEMO=true for the local mirror."
+                    else "Canvas is not configured. Set CANVAS_BASE_URL + CANVAS_API_TOKEN, or OFFICEHOURS_DEMO=true for the local mirror."
                 )
             )
         ),
@@ -287,13 +302,10 @@ def list_canvas_module_names(course: Course | None) -> list[str]:
 
 
 def _list_live_module_names(canvas_course_id: str) -> list[str]:
-    base = (os.getenv("CANVAS_BASE_URL") or "").rstrip("/") + "/"
-    token = (os.getenv("CANVAS_ACCESS_TOKEN") or "").strip()
-    if not token:
-        return []
+    base, headers = _live_canvas_auth()
     modules = _canvas_get_json(
         urljoin(base, f"api/v1/courses/{canvas_course_id}/modules?per_page=50"),
-        {"Authorization": f"Bearer {token}", "Accept": "application/json"},
+        headers,
     )
     names: list[str] = []
     for module in modules:
@@ -397,9 +409,7 @@ def _already_ingested(db: Session, course_id: int, external_id: str) -> bool:
 
 
 def _list_live_canvas_files(canvas_course_id: str) -> list[CanvasFile]:
-    base = (os.getenv("CANVAS_BASE_URL") or "").rstrip("/") + "/"
-    token = (os.getenv("CANVAS_ACCESS_TOKEN") or "").strip()
-    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+    base, headers = _live_canvas_auth()
 
     files: list[CanvasFile] = []
 

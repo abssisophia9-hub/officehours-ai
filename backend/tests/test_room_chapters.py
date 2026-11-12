@@ -46,11 +46,16 @@ def test_production_chapter_source_is_canvas_or_empty():
 
 
 def test_canvas_mode_is_none_without_demo_or_credentials(monkeypatch):
+    from app.settings import clear_settings_cache
+
     monkeypatch.delenv("CANVAS_BASE_URL", raising=False)
+    monkeypatch.delenv("CANVAS_API_TOKEN", raising=False)
     monkeypatch.delenv("CANVAS_ACCESS_TOKEN", raising=False)
     monkeypatch.delenv("OFFICEHOURS_CANVAS_MODE", raising=False)
     monkeypatch.setenv("OFFICEHOURS_DEMO", "false")
+    clear_settings_cache()
     assert demo_mode() is False
     assert canvas_mode() == "none"
     monkeypatch.setenv("OFFICEHOURS_DEMO", "true")
+    clear_settings_cache()
     assert canvas_mode() == "local"

@@ -134,7 +134,7 @@ Optional environment variables:
 - `OFFICEHOURS_ALLOW_RETRAIN=true` — required before `POST /analytics/retrain`
   may rewrite Analyzer `.joblib`.
 - `OFFICEHOURS_CANVAS_MODE=live|local|none` — optional override; live wins when
-  `CANVAS_BASE_URL` + `CANVAS_ACCESS_TOKEN` are set
+  `CANVAS_BASE_URL` + `CANVAS_API_TOKEN` are set
 
 ## Microsoft Entra ID sign-in (AUI accounts)
 
@@ -183,7 +183,7 @@ and the course agent read **that course’s modules**, not the local demo mirror
   `{issuer}/api/lti/security/jwks`
 - `OFFICEHOURS_LTI_LAUNCH_URL` — must match the developer key redirect URI
 - `OFFICEHOURS_LTI_DEPLOYMENT_ID` — optional; reject other deployments
-- `CANVAS_BASE_URL` + `CANVAS_ACCESS_TOKEN` — live module/page/file sync
+- `CANVAS_BASE_URL` + `CANVAS_API_TOKEN` — live module/page/file sync
 - `OFFICEHOURS_FRONTEND_URL` — SPA origin (launch lands on `/sso#token=…&course=`)
 - `OFFICEHOURS_DEMO=false` — hides demo routes and unsigned `/canvas/launch`
 
@@ -209,7 +209,7 @@ See [`docs/training_data.md`](../docs/training_data.md).
   `./scripts/run_product.sh`). Seeds Sara/Youssef/Alice, sample courses, and a
   sample chapter outline. Local Canvas mirror fills modules.
 - **AUI community deploy:** `OFFICEHOURS_DEMO=false`. Do **not** seed demo
-  people. Set `CANVAS_BASE_URL` + `CANVAS_ACCESS_TOKEN`. Users and courses come
+  people. Set `CANVAS_BASE_URL` + `CANVAS_API_TOKEN`. Users and courses come
   from Canvas launch; Rooms chapters are that course’s Canvas modules.
 
 ## Seed demo data
