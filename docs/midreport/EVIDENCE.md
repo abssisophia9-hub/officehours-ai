@@ -28,7 +28,7 @@ printed or stored.
 | Test suite on this branch | `266 passed, 18 warnings in 124.30s`. Exit 0. Warnings are deprecation warnings from Starlette and scikit-learn, not failures. | `venv/bin/python -m pytest -q` from `backend/`. Log mtime 28 October 2026, 11:11:17 Africa/Casablanca. | 28 October 2026, 11:11 Africa/Casablanca | This agent session | Re-run now |
 | New demo-script test | `1 passed in 3.64s` | `venv/bin/python -m pytest tests/test_demo_orchestration.py -q` | 28 October 2026, before 11:10 Africa/Casablanca | This agent session | Re-run now |
 | Kill switch default | `llm_enabled=False` | Import of `app.ai.agent_policy` after unsetting `OFFICEHOURS_LLM_ENABLED` | 28 October 2026, before 11:10 Africa/Casablanca | This agent session | Re-run now |
-| Question length default | 2000 | `max_question_chars()` with the policy variables unset | same print | This agent session | Re-run now |
+| Question length default | 2000 | `max_question_chars()` with the Orchestrator variables unset | same print | This agent session | Re-run now |
 | Chunks sent | 3 | `max_chunks()` | same print | This agent session | Re-run now |
 | Input-token estimate cap | 3000 | `max_input_tokens()` | same print | This agent session | Re-run now |
 | Output-token cap | 400 | `max_output_tokens()` | same print | This agent session | Re-run now |
@@ -46,7 +46,7 @@ printed or stored.
 | Search include threshold | 0.35 | `DEFAULT_SEARCH_THRESHOLD` | same print | This agent session | Re-run now |
 | Gemini model default | `gemini-3.5-flash-lite` | `DEFAULT_GEMINI_MODEL` | same print | This agent session | Re-run now |
 | Transport attempts inside one check | 2 | `ANSWER_CHECK_ATTEMPTS` | same print | This agent session | Re-run now |
-| Gemini client requests per minute | 5. A non-positive or non-numeric value also falls back to 5. The client sleeps. It does not return busy. Claude does not read this variable. | `OFFICEHOURS_LLM_RPM` default in `gemini_client._rpm` | Read from the module in this session. Not part of the policy-defaults print. | This agent session | Read from the source this session. The function was not called. |
+| Gemini client requests per minute | 5. A non-positive or non-numeric value also falls back to 5. The client sleeps. It does not return busy. Claude does not read this variable. | `OFFICEHOURS_LLM_RPM` default in `gemini_client._rpm` | Read from the module in this session. Not part of the Orchestrator-defaults print. | This agent session | Read from the source this session. The function was not called. |
 | Retrieval questions, agent-generated | 75 per backend | Saved baseline `sections.agent_generated.n`, and the re-run | Saved file `created_at` `20261010T180847Z` (10 October 2026, 18:08:47 Africa/Casablanca). Re-run stamp `20261028T110927Z` (28 October 2026, 11:09:27 Africa/Casablanca). | Saved file git author Cursor Agent, commit `58e50a8` (10 October 2026, 18:10:07 Africa/Casablanca). Re-run: this agent session. | Re-run now, and it matched the saved file |
 | Production cutoff during retrieval | 0.42, `cutoff_changed` false | Saved baseline and the re-run | same | same | Re-run now, matched the saved file |
 | Sentence-transformers, both filters, in-document | correct 17/20, wrong source 3, spurious 0, hidden page 0 | `backends.sentence-transformers...modes.both_on.counts.in_document` | same | same | Re-run now, matched the saved file |

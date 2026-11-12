@@ -1,7 +1,8 @@
-# Study agent policy
+# Orchestration Layer
 
-The study agent has one entry point, `run_study_agent` in
-`backend/app/ai/agent_policy.py`. The pipeline is closed:
+The Study Agent **Orchestration Layer** (short: the **Orchestrator**) has one
+entry point, `run_study_agent` in `backend/app/ai/agent_policy.py`. The
+pipeline is closed:
 
 1. Validate the question.
 2. Retrieve with the existing search (same arguments, same 0.42 cutoff, same filters).
@@ -54,13 +55,13 @@ kill switch on, keeps the retrieval answer and does not spend a budget slot.
 `scripts/run_product.sh` sets the kill switch only when that provider call
 is already armed. A key by itself stays retrieval-only.
 
-## Limits
+## Limits (Orchestrator budget and safety controls)
 
 Every value is an environment variable. A missing, blank, non-numeric, or
-non-positive value falls back to the default. The study agent uses its own
-`RateLimiter` instance. `OFFICEHOURS_RATE_LIMIT=false` disables only the
-HTTP limiter (login, asks, the agent route). It does not disable these
-budgets, including under pytest.
+non-positive value falls back to the default. The Orchestrator's budget and
+safety controls use their own `RateLimiter` instance.
+`OFFICEHOURS_RATE_LIMIT=false` disables only the HTTP limiter (login, asks,
+the agent route). It does not disable these budgets, including under pytest.
 
 Per-user windows apply only when the caller passes a user id. `POST
 /agent/ask` passes the signed-in user. The eval harness does not, so a
@@ -104,7 +105,7 @@ The quote check still requires one JSON object, a real boolean `answerable`
 (the string `"true"` does not count), a `supporting_chunk_id` from the
 chunks that were sent, and a `quote` that appears verbatim in that chunk.
 The question and the chunk text are sent as a JSON value under an explicit
-system rule that they are data, not instructions. The policy adds the
+system rule that they are data, not instructions. The Orchestrator adds the
 answer-length cap above. Anything else is a refusal, logged as
 `failed_closed_error`, and it counts toward the breaker. A failed quote
 check does not call entailment.

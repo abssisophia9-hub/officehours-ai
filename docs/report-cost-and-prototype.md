@@ -46,7 +46,7 @@ Local classifiers / synthesizer / Help Coach are **not** billed LLM APIs; listed
 
 | # | Call | File / function | Model (default) | Trigger | Rough I/O size |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Quote / answer check | `claude_client.verify_course_answer` → Gemini or Anthropic `complete` | Gemini: `gemini-3.5-flash-lite`; Claude: `claude-haiku-5-5` | Study Agent when kill switch + external flags on; after retrieval ≥ 0.42 | Cap: `OFFICEHOURS_LLM_MAX_INPUT_TOKENS` default **3000**; `OFFICEHOURS_LLM_MAX_OUTPUT_TOKENS` / `ANSWER_CHECK_MAX_TOKENS` **400**. Chunks: up to `OFFICEHOURS_LLM_MAX_CHUNKS` (3), ~900 chars each per policy docs. Exact measured tokens per ask: **[VERIFY]** (not metered in Task a; Task a ran retrieval-only) |
+| 1 | Quote / answer check | `claude_client.verify_course_answer` → Gemini or Anthropic `complete` | Gemini: `gemini-3.5-flash-lite`; Claude: `claude-haiku-5-5` | Study Agent when kill switch + external flags on; after retrieval ≥ 0.42 | Cap: `OFFICEHOURS_LLM_MAX_INPUT_TOKENS` default **3000**; `OFFICEHOURS_LLM_MAX_OUTPUT_TOKENS` / `ANSWER_CHECK_MAX_TOKENS` **400**. Chunks: up to `OFFICEHOURS_LLM_MAX_CHUNKS` (3), ~900 chars each per Orchestrator docs. Exact measured tokens per ask: **[VERIFY]** (not metered in Task a; Task a ran retrieval-only) |
 | 2 | Entailment verdict | `judge_entailment` (same clients) | Same as provider | After a passing quote check | Small JSON (answer + quote) in / boolean out — **[VERIFY]** exact tokens |
 | 3 | Recovery choice | `choose_recovery` | Same | Only if entailment says no; inside attempt cap (≤3 attempts total) | Small JSON — **[VERIFY]** exact tokens |
 | 4 | Legacy Analyzer LLM | `claude_client_legacy.analyze_question_llm` via `_complete_claude` | `ANTHROPIC_MODEL` / `claude-haiku-5-5` | Only if `OFFICEHOURS_ANALYZER_BACKEND=claude` + allow flag | **[VERIFY]** — not on FYP default path |
@@ -129,7 +129,7 @@ Primary write-up: `docs/test_results.md`. Store mirrors under `/cursor/stores/se
 
 ---
 
-## Study Agent retrieval flow (from `agent_policy.run_study_agent`)
+## Study Agent retrieval flow (Orchestration Layer / `agent_policy.run_study_agent`)
 
 1. Validate length only when LLM enabled; always `search_approved_entries` (approved, course-scoped, course-material chunks).
 2. If no hit or top similarity **&lt; 0.42** → staff miss (`should_seek_help`); **no LLM**.

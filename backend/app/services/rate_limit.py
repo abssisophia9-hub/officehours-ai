@@ -80,9 +80,9 @@ class RateLimiter:
         """Record every hit, or record none.
 
         ``checks`` items are ``(name, key, limit, window_seconds)``. The
-        return value is the name of the first full window. The study-agent
-        policy uses this so one request cannot take a per-user slot and then
-        fail a later cap.
+        return value is the name of the first full window. The Orchestrator
+        uses this so one request cannot take a per-user slot and then fail a
+        later cap.
         """
         now = time.monotonic()
         with self._lock:
