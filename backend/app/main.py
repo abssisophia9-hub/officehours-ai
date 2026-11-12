@@ -43,6 +43,7 @@ from app.routes.peer_notes import router as peer_notes_router
 from app.routes.help_room import router as help_room_router
 from app.routes.realtime import router as realtime_router
 from app.routes.requests import router as requests_router
+from app.routes.revision import router as revision_router
 from app.routes.ta import router as ta_router
 from app.routes.notifications import router as notifications_router
 from app.routes.study_conversations import router as study_conversations_router
@@ -222,4 +223,5 @@ app.include_router(help_room_router)
 app.include_router(feedback_router)
 app.include_router(notifications_router)
 app.include_router(study_conversations_router)
+app.include_router(revision_router)
 app.include_router(realtime_router)

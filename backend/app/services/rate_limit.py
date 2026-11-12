@@ -26,6 +26,7 @@ DEFAULT_LIMITS = {
     "/auth/login": (20, 60),
     "/requests/": (30, 60),
     "/agent/ask": (40, 60),
+    "/revision/plan": (10, 60),
 }
 
 
@@ -113,6 +114,8 @@ def enforce_rate_limit(request: Request) -> None:
             if prefix == "/requests/" and request.method != "POST":
                 return
             if prefix == "/agent/ask" and request.method != "POST":
+                return
+            if prefix == "/revision/plan" and request.method != "POST":
                 return
             if prefix == "/auth/login" and request.method != "POST":
                 return

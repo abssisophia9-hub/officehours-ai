@@ -1,23 +1,40 @@
 import { useEffect, useMemo, useState } from "react";
-import { Navigate } from "react-router";
+import { Navigate, useNavigate } from "react-router";
+import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 const CSC_SEED = [
-  { topic: "Trees & red-black", weight: 35, score: 62, source: "Canvas · Quiz 4" },
-  { topic: "Hashing", weight: 25, score: 78, source: "Canvas · Assignment 3" },
-  { topic: "Heaps", weight: 20, score: 88, source: "Canvas · Quiz 3" },
-  { topic: "Amortized analysis", weight: 20, score: 71, source: "Canvas · practice" },
+  { topic: "Trees & red-black", weight: 35, score: 62, source: "Canvas · Quiz 4", assignment_kind: "text" },
+  { topic: "Hashing", weight: 25, score: 78, source: "Canvas · Assignment 3", assignment_kind: "text" },
+  { topic: "Heaps", weight: 20, score: 88, source: "Canvas · Quiz 3", assignment_kind: "text" },
+  { topic: "Amortized analysis", weight: 20, score: 71, source: "Canvas · practice", assignment_kind: "text" },
 ];
 
 const GENERIC_SEED = [
-  { topic: "Core concepts", weight: 30, score: 68, source: "Canvas · Quiz" },
-  { topic: "Problem sets", weight: 30, score: 74, source: "Canvas · Assignment" },
-  { topic: "Midterm topics", weight: 25, score: 71, source: "Canvas · Midterm prep" },
-  { topic: "Project / labs", weight: 15, score: 80, source: "Canvas · Lab" },
+  { topic: "Core concepts", weight: 30, score: 68, source: "Canvas · Quiz", assignment_kind: "text" },
+  { topic: "Problem sets", weight: 30, score: 74, source: "Canvas · Assignment", assignment_kind: "text" },
+  { topic: "Midterm topics", weight: 25, score: 71, source: "Canvas · Midterm prep", assignment_kind: "text" },
+  { topic: "Project / labs", weight: 15, score: 80, source: "Canvas · Lab", assignment_kind: "project" },
+];
+
+const PREFERENCE_OPTIONS = [
+  { id: "step_by_step", label: "Step-by-step" },
+  { id: "example_driven", label: "Examples" },
+  { id: "visual_structural", label: "Visual" },
+  { id: "conceptual", label: "Conceptual" },
+  { id: "unknown", label: "No preference" },
 ];
 
 function storageKey(courseId) {
   return `officehours_revision_${courseId}`;
+}
+
+function prefsKey(courseId) {
+  return `officehours_revision_prefs_${courseId}`;
+}
+
+function planKey(courseId) {
+  return `officehours_revision_plan_${courseId}`;
 }
 
 function isCscLike(code) {
@@ -31,6 +48,12 @@ function seedGrades(courseCode) {
 
 function gap(row) {
   return row.weight * Math.max(0, 85 - row.score);
+}
+
+function weaknessFromScore(score) {
+  if (score < 70) return "high";
+  if (score < 80) return "med";
+  return "low";
 }
 
 function loadRevision(courseId, courseCode) {
@@ -60,57 +83,61 @@ function saveRevision(courseId, payload) {
   localStorage.setItem(storageKey(courseId), JSON.stringify(payload));
 }
 
-function weekPlan(focusTopic) {
-  const short = (focusTopic || "Focus").split("&")[0].trim();
-  return [
-    ["Mon", `${short} · foundations`, "2.5h"],
-    ["Tue", `${short} · practice`, "2h"],
-    ["Wed", `${short} · check-in`, "2.5h"],
-    ["Thu", "Second priority", "2h"],
-    ["Fri", "Keep / project", "1.5h"],
-    ["Sat", "Light review", "1h"],
-    ["Sun", "Rest", "—"],
-  ];
+function loadPreference(courseId) {
+  try {
+    const raw = localStorage.getItem(prefsKey(courseId));
+    if (raw && PREFERENCE_OPTIONS.some((opt) => opt.id === raw)) return raw;
+  } catch {
+    // default
+  }
+  return "step_by_step";
 }
 
-function resourcesFor(topic) {
-  const t = String(topic || "").toLowerCase();
-  if (t.includes("tree") || t.includes("red-black")) {
-    return [
-      { label: "Start here", text: "3Blue1Brown — red-black intuition" },
-      { label: "Course", text: "Stamped slides — Week 5" },
-      { label: "If stuck", text: "PatrickJMT — step-by-step" },
-    ];
+function savePreference(courseId, value) {
+  localStorage.setItem(prefsKey(courseId), value);
+}
+
+function loadPlan(courseId) {
+  try {
+    const raw = localStorage.getItem(planKey(courseId));
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // none
   }
-  if (t.includes("hash")) {
-    return [
-      { label: "Start here", text: "Course stamped FAQ — chaining vs open addressing" },
-      { label: "Course", text: "Week 6 slides · load factor" },
-      { label: "If stuck", text: "Quiet ask a TA with your collision case" },
-    ];
+  return null;
+}
+
+function savePlan(courseId, plan) {
+  if (!plan) {
+    localStorage.removeItem(planKey(courseId));
+    return;
   }
-  if (t.includes("heap")) {
-    return [
-      { label: "Start here", text: "Heapify walkthrough (course notes)" },
-      { label: "Course", text: "Stamped slides — priority queues" },
-      { label: "If stuck", text: "Work 3 textbook problems, then Quiet ask" },
-    ];
-  }
-  return [
-    { label: "Start here", text: "Syllabus outline for this topic" },
-    { label: "Course", text: "Latest stamped materials in Study Agent" },
-    { label: "If stuck", text: "Quiet ask with one concrete example" },
-  ];
+  localStorage.setItem(planKey(courseId), JSON.stringify(plan));
+}
+
+function syntheticDeadlines(grades) {
+  const ranked = [...grades].sort((a, b) => gap(b) - gap(a));
+  return ranked.slice(0, 2).map((row, index) => ({
+    topic: row.topic,
+    due_in_days: index === 0 ? 3 : 7,
+    label: index === 0 ? "Next check-in" : "Follow-up",
+  }));
 }
 
 export default function StudentRevisionPage() {
-  const { activeCourse } = useAuth();
+  const { activeCourse, token } = useAuth();
+  const navigate = useNavigate();
   const [grades, setGrades] = useState([]);
   const [editingGrade, setEditingGrade] = useState(null);
   const [gradeDraft, setGradeDraft] = useState("");
   const [todayScore, setTodayScore] = useState("75");
   const [loggedScore, setLoggedScore] = useState(null);
   const [loggedTopic, setLoggedTopic] = useState(null);
+  const [preference, setPreference] = useState("step_by_step");
+  const [plan, setPlan] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [askBusy, setAskBusy] = useState(false);
+  const [error, setError] = useState("");
   const [toast, setToast] = useState("");
 
   useEffect(() => {
@@ -119,6 +146,9 @@ export default function StudentRevisionPage() {
     setGrades(data.grades);
     setLoggedScore(data.loggedScore);
     setLoggedTopic(data.loggedTopic);
+    setPreference(loadPreference(activeCourse.id));
+    setPlan(loadPlan(activeCourse.id));
+    setError("");
   }, [activeCourse]);
 
   const ranked = useMemo(() => [...grades].sort((a, b) => gap(b) - gap(a)), [grades]);
@@ -128,8 +158,6 @@ export default function StudentRevisionPage() {
     weight: 0,
     source: "Local plan",
   };
-  const resources = useMemo(() => resourcesFor(focus.topic), [focus.topic]);
-  const week = useMemo(() => weekPlan(focus.topic), [focus.topic]);
 
   if (!activeCourse) return <Navigate to="/" replace />;
   if (activeCourse.role !== "student") {
@@ -157,6 +185,11 @@ export default function StudentRevisionPage() {
     });
   }
 
+  function onPreference(value) {
+    setPreference(value);
+    savePreference(activeCourse.id, value);
+  }
+
   function saveGrade(topic) {
     const n = Number(gradeDraft);
     if (Number.isNaN(n) || n < 0 || n > 100) return;
@@ -171,7 +204,7 @@ export default function StudentRevisionPage() {
     );
     persist(next);
     setEditingGrade(null);
-    flash("Grade updated · plan recalculated");
+    flash("Grade updated · plan will refresh when you build again");
   }
 
   function logToday() {
@@ -193,15 +226,77 @@ export default function StudentRevisionPage() {
     );
   }
 
+  async function buildPlan() {
+    setBusy(true);
+    setError("");
+    try {
+      const body = {
+        course_id: activeCourse.id,
+        preference,
+        available_minutes_today: 120,
+        deadlines: syntheticDeadlines(grades),
+        grades: grades
+          .filter((row) => (row.assignment_kind || "text") === "text")
+          .map((row) => ({
+            topic: row.topic,
+            weakness: weaknessFromScore(row.score),
+            assignment_kind: "text",
+          })),
+      };
+      const result = await api("/revision/plan", {
+        method: "POST",
+        token,
+        body,
+      });
+      setPlan(result);
+      savePlan(activeCourse.id, result);
+      flash(result.mode_label || "Plan ready");
+    } catch (err) {
+      setError(err.message || "Could not build plan.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function askTa() {
+    if (!plan?.ask_draft) return;
+    setAskBusy(true);
+    setError("");
+    try {
+      const created = await api("/requests/", {
+        method: "POST",
+        token,
+        body: {
+          text: plan.ask_draft,
+          anonymous: true,
+          course: activeCourse.code,
+          course_id: activeCourse.id,
+          help_mode: "message",
+          learning_style: preference === "unknown" ? null : preference,
+        },
+      });
+      flash("Quiet ask sent");
+      if (created?.id) {
+        window.setTimeout(() => navigate(`/student/asks?focus=${created.id}`), 500);
+      }
+    } catch (err) {
+      setError(err.message || "Could not send Quiet ask.");
+    } finally {
+      setAskBusy(false);
+    }
+  }
+
   const courseLine = [activeCourse.code, activeCourse.title].filter(Boolean).join(" · ");
+  const slots = plan?.time_slots || [];
+  const resources = plan?.resources || [];
 
   return (
     <div className="fade-up">
       <h1 className="sa-course">{courseLine}</h1>
       <h2 className="bh-page-title">Revision Strategist</h2>
       <p className="bh-page-subtitle">
-        Local grade plan for {activeCourse.code} until Canvas grades land in the
-        API. Firm priorities — you can correct a wrong score.
+        Weak-topic plan from synthetic grades, your preference, and checked
+        public links — scores stay on this device.
       </p>
 
       {toast ? (
@@ -210,10 +305,17 @@ export default function StudentRevisionPage() {
         </div>
       ) : null}
 
+      {error ? (
+        <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-900">
+          {error}
+        </div>
+      ) : null}
+
       <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-        Grades are seeded locally (not live Canvas yet). Edits stay on this device
+        Grades are seeded locally (not live Canvas). Edits stay on this device
         under key{" "}
-        <code className="font-mono">officehours_revision_{activeCourse.id}</code>.
+        <code className="font-mono">officehours_revision_{activeCourse.id}</code>
+        . The API receives weakness levels only — never numeric scores.
       </p>
 
       <div className="grid gap-5 lg:grid-cols-2">
@@ -232,7 +334,8 @@ export default function StudentRevisionPage() {
                   <div>
                     <p className="font-semibold text-aui-ink">{row.topic}</p>
                     <p className="text-xs text-aui-deep/70">
-                      {row.source} · {row.weight}% of exam
+                      {row.source} · {row.weight}% of exam · weakness{" "}
+                      {weaknessFromScore(row.score)}
                     </p>
                   </div>
                   <span
@@ -290,51 +393,121 @@ export default function StudentRevisionPage() {
 
         <section className="bh-card">
           <div className="bh-card-title">
-            <h2>Today&apos;s plan</h2>
+            <h2>Build plan</h2>
           </div>
           <p className="bh-card-note">
-            Why: {focus.source} shows {focus.score}%, and it is {focus.weight}% of
-            the exam weight. Close the biggest gap first — steady beats harsh.
+            Preference steers search queries and the one-line why on each resource.
           </p>
-          <p className="mt-3 text-sm font-semibold text-aui-ink">
-            2 h 15 min · finish by 22:30
-          </p>
-          <ol className="mt-3 space-y-2 text-sm">
-            <li className="rounded-lg border border-[#d7e0d9] bg-white px-3 py-2">
-              <strong>Block 1 · 45 min · Start here</strong>
-              <span className="mt-0.5 block text-xs text-aui-deep/70">
-                Core notes for {focus.topic.split("&")[0].trim()}
-              </span>
-            </li>
-            <li className="rounded-lg border border-[#d7e0d9] bg-white px-3 py-2">
-              <strong>Block 2 · 60 min · Practice</strong>
-              <span className="mt-0.5 block text-xs text-aui-deep/70">
-                Worked problems until one clean pass
-              </span>
-            </li>
-            <li className="rounded-lg border border-[#d7e0d9] bg-white px-3 py-2">
-              <strong>Block 3 · 30 min · Check</strong>
-              <span className="mt-0.5 block text-xs text-aui-deep/70">
-                Self quiz · target 75%+
-              </span>
-            </li>
-          </ol>
 
-          <div className="mt-4 rounded-lg border border-aui-forest/20 bg-[#f3faf5] p-3 text-xs">
-            <p className="font-semibold text-aui-ink">Resources (3 max)</p>
-            <ol className="mt-2 list-decimal space-y-1 pl-4 text-aui-deep/85">
-              {resources.map((item) => (
-                <li key={item.label}>
-                  <strong>{item.label}:</strong> {item.text}
+          <label className="mt-3 block text-sm font-semibold text-aui-ink" htmlFor="rev-pref">
+            How you learn
+          </label>
+          <select
+            id="rev-pref"
+            className="field-glass mt-1 w-full px-3 py-2 text-sm"
+            value={preference}
+            onChange={(event) => onPreference(event.target.value)}
+          >
+            {PREFERENCE_OPTIONS.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className="btn-primary px-4 py-2 text-sm"
+              onClick={buildPlan}
+              disabled={busy}
+            >
+              {busy ? "Building…" : "Build plan"}
+            </button>
+            {plan?.ask_draft ? (
+              <button
+                type="button"
+                className="rounded-lg border border-aui-forest/30 bg-white px-4 py-2 text-sm font-semibold text-aui-forest"
+                onClick={askTa}
+                disabled={askBusy}
+              >
+                {askBusy ? "Sending…" : "Ask TA"}
+              </button>
+            ) : null}
+          </div>
+
+          {plan ? (
+            <p className="mt-3 text-sm font-medium text-aui-ink">
+              {plan.mode_label ||
+                (plan.mode === "agent"
+                  ? "Planning mode: agent"
+                  : "Planning mode: rule-based fallback")}
+            </p>
+          ) : null}
+
+          {slots.length ? (
+            <ol className="mt-4 space-y-2 text-sm">
+              {slots.map((slot) => (
+                <li
+                  key={`${slot.day_offset}-${slot.label}-${slot.topic}`}
+                  className="rounded-lg border border-[#d7e0d9] bg-white px-3 py-2"
+                >
+                  <strong>
+                    Day {slot.day_offset} · {slot.minutes} min · {slot.label}
+                  </strong>
+                  <span className="mt-0.5 block text-xs text-aui-deep/70">
+                    {slot.topic} — {slot.focus}
+                  </span>
                 </li>
               ))}
             </ol>
+          ) : (
+            <p className="mt-4 text-sm text-aui-deep/70">
+              Build a plan to see deadline-backed study blocks.
+            </p>
+          )}
+
+          <div className="mt-4 rounded-lg border border-aui-forest/20 bg-[#f3faf5] p-3 text-xs">
+            <p className="font-semibold text-aui-ink">Resources</p>
+            {resources.length ? (
+              <ol className="mt-2 list-decimal space-y-2 pl-4 text-aui-deep/85">
+                {resources.map((item) => (
+                  <li key={`${item.source}-${item.title}-${item.url || "kb"}`}>
+                    {item.url ? (
+                      <a
+                        className="font-semibold text-aui-forest underline"
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {item.title}
+                      </a>
+                    ) : (
+                      <strong>{item.title}</strong>
+                    )}
+                    <span className="mt-0.5 block">
+                      Source: {item.source}. {item.why}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="mt-2 text-aui-deep/70">No checked links yet.</p>
+            )}
           </div>
+
+          {plan?.notes?.length ? (
+            <ul className="mt-3 space-y-1 text-xs text-aui-deep/75">
+              {plan.notes.map((note) => (
+                <li key={note}>{note}</li>
+              ))}
+            </ul>
+          ) : null}
 
           <div className="mt-4 rounded-lg border border-[#d7e0d9] bg-white p-3">
             <p className="text-sm font-semibold text-aui-ink">Log today&apos;s check-in</p>
             <p className="mt-1 text-xs text-aui-deep/70">
-              After Block 3, log your score — next week&apos;s glance recalculates.
+              After a study block, log your score — stays on this device only.
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <input
@@ -361,25 +534,6 @@ export default function StudentRevisionPage() {
           </div>
         </section>
       </div>
-
-      <section className="bh-card mt-5">
-        <div className="bh-card-title">
-          <h2>This week</h2>
-        </div>
-        <p className="bh-card-note">Secondary to Today — glance only.</p>
-        <div className="mt-3 grid gap-2 sm:grid-cols-7">
-          {week.map(([day, topic, dur]) => (
-            <div
-              key={day}
-              className="rounded-lg border border-[#d7e0d9] bg-white p-2 text-xs"
-            >
-              <p className="font-bold text-aui-forest">{day}</p>
-              <p className="mt-1 text-aui-ink">{topic}</p>
-              <p className="mt-2 text-aui-deep/60">{dur}</p>
-            </div>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }
