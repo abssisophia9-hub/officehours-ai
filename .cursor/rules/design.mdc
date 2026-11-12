@@ -1,0 +1,33 @@
+---
+description: Visual polish rules for TA queue + main student ask screen only
+globs: frontend/officehours-app/src/pages/TaWorkspace.jsx,frontend/officehours-app/src/pages/StudentAsksPage.jsx,frontend/officehours-app/src/styles.css
+alwaysApply: false
+---
+
+# Unslop — TA queue + student asks (visual only)
+
+Scope: `TaWorkspace.jsx`, `StudentAsksPage.jsx`, shared tokens in `styles.css`.
+No other pages. No prop/hook/API/router changes. No new dependencies.
+
+## Tokens (reuse existing theme)
+- Colors: `--theme-ink`, `--theme-forest`, `--theme-deep`, `--theme-mist`, `--theme-sand`, `--theme-surface` / `aui-*` utilities already in `@theme`.
+- Type: `--font-sans` (Source Sans 3), `--font-display` (Source Serif 4) only — no Inter/Roboto/Arial swap-ins.
+- Radius: keep existing `rounded-lg` / `rounded-xl` on interactive cards; do not add new pill clusters or multi-shadow stacks.
+- Spacing: tighten stacked gaps to a consistent `gap-3`/`gap-4` / `mt-3` rhythm; avoid one-off magic margins.
+
+## Copy (plain campus voice)
+- Prefer product names already in glossary: Ask Triage, Help Coach, Quiet ask.
+- Cut AI tells: "AI-powered", "smart draft", emoji flourishes in empty states, hype verbs ("magic", "instant genius").
+- Buttons: verb + object ("Claim ask", "Send reply", "Ask for help") — short.
+
+## TA queue
+- One clear hierarchy: queue list → selected ask → actions. Demote Help Coach chrome; keep coach controls usable.
+- Status pills stay functional; no extra badge rows or decorative icon strips.
+
+## Student asks
+- Keep stage timeline readable; reduce dashed-box / muted microcopy noise.
+- Empty state: one sentence + one CTA.
+
+## Forbidden
+- New cards for non-interactive content; layout rewrites; dark-mode experiments; purple glow trends.
+- Changing fetch/auth/queue filter logic or Help Coach API payloads.

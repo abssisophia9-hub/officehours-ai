@@ -32,6 +32,10 @@
 
 `.env.example` sets `OFFICEHOURS_ALLOW_EXTERNAL_LLM=false` for the gated product path.
 
+### LLM off vs on — triage and Study Agent
+
+With the assessed defaults (`OFFICEHOURS_ALLOW_EXTERNAL_LLM=false`, `OFFICEHOURS_LLM_ENABLED=false`, Analyzer backend `ml`), **Ask Triage does not change when the Study Agent kill switch flips**: intake still runs local Analyzer → Matcher → Synthesizer (`analyze_question` / `match_ta` / `synthesize_solution` → joblibs), and the only way triage itself calls an external LLM is the non-default `OFFICEHOURS_ANALYZER_BACKEND=claude` plus the allow flag. For the **Study Agent**, LLM **off** means `run_study_agent` still embeds/searches approved course material and, if top similarity ≥ **0.42**, returns the retrieval draft (`_retrieval_answer`) with no provider HTTP; below 0.42 it returns the staff/Quiet-ask miss. LLM **on** (kill switch plus allow + demo + provider ready) keeps the same retrieval and cutoff first, then may spend quote-check / entailment / optional recovery calls (or fall back to the same retrieval draft if a gate is incomplete, or busy/refuse if budgets or checks fail) — it does **not** invent answers outside approved chunks.
+
 ---
 
 ## 1. LLM inventory (every external LLM call site)
@@ -125,9 +129,21 @@ Primary write-up: `docs/test_results.md`. Store mirrors under `/cursor/stores/se
 
 ---
 
+## Study Agent retrieval flow (from `agent_policy.run_study_agent`)
+
+1. Validate length only when LLM enabled; always `search_approved_entries` (approved, course-scoped, course-material chunks).
+2. If no hit or top similarity **&lt; 0.42** → staff miss (`should_seek_help`); **no LLM**.
+3. If LLM kill switch **off** → return `_retrieval_answer` (cite best chunk); **0 LLM calls**.
+4. If LLM **on** but provider/demo/allow incomplete → still `_retrieval_answer` (guards spend nothing useful).
+5. If LLM **on** and ready: quote check (`verify_course_answer`) → on pass, **entailment** (`judge_entailment`); if entailment fails, optional **recovery** then re-search (attempt loop capped, default ≤3) — not free-form tools.
+6. Low confidence / below cutoff never “guesses”; busy/refuse paths do not fall back to an unchecked draft when the check path was entered and failed closed.
+
+---
+
 ## Known limitations (cost / report)
 
 - No production token telemetry → LLM $ at scale are **sketches**.
 - Hosting/DB dollar bands are **assumptions**, not invoices.
 - Uvicorn `canvas_mode=local` during Task a = stale process **[VERIFY after restart]**.
 - Q3 Study Agent ranking miss remains open; feature freeze forbids “fix by changing retrieval.”
+- Task d PREP: `.cursor/rules/design.mdc` drafted; **no UI edits** until Sophia approves.
