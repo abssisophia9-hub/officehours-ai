@@ -6,28 +6,36 @@ alwaysApply: false
 
 # Unslop — TA queue + student asks (visual only)
 
-Scope: `TaWorkspace.jsx`, `StudentAsksPage.jsx`, shared tokens in `styles.css`.
-No other pages. No prop/hook/API/router changes. No new dependencies.
+Scope: `TaWorkspace.jsx`, `StudentAsksPage.jsx`, tokens in `styles.css`.
+No other pages. No prop/hook/API/router changes. No new deps.
 
 ## Tokens (reuse existing theme)
-- Colors: `--theme-ink`, `--theme-forest`, `--theme-deep`, `--theme-mist`, `--theme-sand`, `--theme-surface` / `aui-*` utilities already in `@theme`.
-- Type: `--font-sans` (Source Sans 3), `--font-display` (Source Serif 4) only — no Inter/Roboto/Arial swap-ins.
-- Radius: keep existing `rounded-lg` / `rounded-xl` on interactive cards; do not add new pill clusters or multi-shadow stacks.
-- Spacing: tighten stacked gaps to a consistent `gap-3`/`gap-4` / `mt-3` rhythm; avoid one-off magic margins.
+- Colors: `--theme-ink/forest/deep/mist/sand/surface` and `aui-*` from `@theme`.
+- Type: `--font-sans` (Source Sans 3), `--font-display` (Source Serif 4) only.
+- Radius: keep `rounded-lg` / `rounded-xl` on interactive cards; no new pill clusters or multi-shadows.
+- Spacing: `gap-3`/`gap-4` / `mt-3` rhythm; no one-off magic margins.
 
 ## Copy (plain campus voice)
-- Prefer product names already in glossary: Ask Triage, Help Coach, Quiet ask.
-- Cut AI tells: "AI-powered", "smart draft", emoji flourishes in empty states, hype verbs ("magic", "instant genius").
-- Buttons: verb + object ("Claim ask", "Send reply", "Ask for help") — short.
+- Glossary names: Ask Triage, Help Coach, Quiet ask.
+- Cut AI tells: "AI-powered", "smart draft", empty-state emoji, hype verbs.
+- Buttons: verb + object ("Claim ask", "Send reply", "Ask for help").
 
 ## TA queue
-- One clear hierarchy: queue list → selected ask → actions. Demote Help Coach chrome; keep coach controls usable.
+- Hierarchy: queue list → selected ask → actions. Demote Help Coach chrome; keep controls usable.
 - Status pills stay functional; no extra badge rows or decorative icon strips.
 
 ## Student asks
-- Keep stage timeline readable; reduce dashed-box / muted microcopy noise.
+- Stage timeline readable; less dashed-box / muted microcopy.
 - Empty state: one sentence + one CTA.
 
 ## Forbidden
-- New cards for non-interactive content; layout rewrites; dark-mode experiments; purple glow trends.
-- Changing fetch/auth/queue filter logic or Help Coach API payloads.
+- Non-interactive cards, layout rewrites, dark-mode experiments, purple glow.
+- Changing fetch/auth/queue filters or Help Coach API payloads.
+
+## Interaction and craft
+1. Instant press feedback on primary actions: use an :active opacity change only, no scale, no delayed or click-only chrome.
+2. Keep the spatial map fixed: queue list, selected ask, and actions always appear in the same places.
+3. Simplicity over chrome: one obvious primary action per view; demote Help Coach and secondary copy.
+4. Labels name the outcome ("Claim ask", "Send reply"). No vague "Submit" or "Continue".
+5. Honor prefers-reduced-motion. Add no springs, animation libraries or gesture libraries.
+6. Craft: keep the gap-3/gap-4 rhythm, and remove leftover dashed boxes and muted filler lines.
