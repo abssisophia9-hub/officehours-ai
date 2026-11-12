@@ -4,6 +4,7 @@ os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["OFFICEHOURS_CLUSTERING_BACKEND"] = "lexical"
 os.environ["OFFICEHOURS_ALLOW_EXTERNAL_LLM"] = "false"
 os.environ.pop("CANVAS_BASE_URL", None)
+os.environ.pop("CANVAS_API_TOKEN", None)
 os.environ.pop("CANVAS_ACCESS_TOKEN", None)
 
 from fastapi.testclient import TestClient
