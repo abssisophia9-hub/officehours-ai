@@ -392,10 +392,22 @@ async def update_work_status(
             request.claimed_by = ta_name
             request.claimed_by_user_id = user.id
             request.claimed_at = _utcnow()
+    elif payload.status == "open":
+        owns = claimed_id == user.id or claimed == ta_name
+        if (claimed or claimed_id) and not owns and assigned != ta_name:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only the claimed TA can release this ask.",
+            )
+        request.claimed_by = None
+        request.claimed_by_user_id = None
+        request.claimed_at = None
 
     request.work_status = payload.status
     if payload.status == "helped":
         request.helped_at = _utcnow()
+    elif payload.status == "open":
+        request.helped_at = None
     db.add(request)
     db.commit()
     db.refresh(request)
@@ -413,7 +425,7 @@ async def update_work_status(
         "claimed": "Claimed",
         "in_progress": "Marked in progress — helping now",
         "helped": "Marked helped — student interaction done",
-        "open": "Reopened",
+        "open": "Released",
     }.get(payload.status, payload.status)
     return TaActionResponse(
         request=to_request_out(request, db=db),

@@ -1,33 +1,34 @@
 ---
-description: Visual polish rules for TA queue + main student ask screen only
-globs: frontend/officehours-app/src/pages/TaWorkspace.jsx,frontend/officehours-app/src/pages/StudentAsksPage.jsx,frontend/officehours-app/src/styles.css
+description: Visual polish rules for TA desk + main student ask screen
+globs: frontend/officehours-app/src/pages/TaWorkspace.jsx,frontend/officehours-app/src/pages/StudentAsksPage.jsx,frontend/officehours-app/src/styles.css,frontend/officehours-app/src/shell/AppShell.jsx
 alwaysApply: false
 ---
 
-# Unslop — TA queue + student asks (visual only)
+# Unslop — TA desk + student asks
 
-Scope: `TaWorkspace.jsx`, `StudentAsksPage.jsx`, shared tokens in `styles.css`.
-No other pages. No prop/hook/API/router changes. No new dependencies.
+Scope: `TaWorkspace.jsx` (4-pane Ask Detail desk), `StudentAsksPage.jsx`, TA frame bits in `AppShell.jsx`, shared tokens in `styles.css` (`.tar-*` / theme).
 
-## Tokens (reuse existing theme)
-- Colors: `--theme-ink`, `--theme-forest`, `--theme-deep`, `--theme-mist`, `--theme-sand`, `--theme-surface` / `aui-*` utilities already in `@theme`.
+## TA Ask Detail desk (product layout)
+- 100vh, zero page scroll: Zone 1 AppShell nav 220px · Zone 2 mini-queue 260px collapsible · Zone 3 center thread+composer · Zone 4 Help Coach 320px collapsible.
+- Tokens: forest `#143326` / `#1B4332`, canvas `#F8F7F4`, line `#E2E0D8`; monospace for IDs/timestamps/code (IBM Plex Mono).
+- Composer starts empty — never dump Help Coach / teaching draft into the reply textarea by default. Insert into Reply is explicit.
+- Progressive status: Claim Ask → Mark Resolved & Next + subtle Release.
+- Dense Linear/Intercom chrome — no AI-slop gradients, pill clusters, or redundant action rows.
+
+## Tokens (reuse existing theme where possible)
+- Colors: `--theme-ink`, `--theme-forest`, `--tar-*` desk vars, `aui-*` utilities already in `@theme`.
 - Type: `--font-sans` (Source Sans 3), `--font-display` (Source Serif 4) only — no Inter/Roboto/Arial swap-ins.
-- Radius: keep existing `rounded-lg` / `rounded-xl` on interactive cards; do not add new pill clusters or multi-shadow stacks.
-- Spacing: tighten stacked gaps to a consistent `gap-3`/`gap-4` / `mt-3` rhythm; avoid one-off magic margins.
+- Spacing: tight `gap` rhythm; avoid one-off magic margins.
 
 ## Copy (plain campus voice)
 - Prefer product names already in glossary: Ask Triage, Help Coach, Quiet ask.
 - Cut AI tells: "AI-powered", "smart draft", emoji flourishes in empty states, hype verbs ("magic", "instant genius").
-- Buttons: verb + object ("Claim ask", "Send reply", "Ask for help") — short.
-
-## TA queue
-- One clear hierarchy: queue list → selected ask → actions. Demote Help Coach chrome; keep coach controls usable.
-- Status pills stay functional; no extra badge rows or decorative icon strips.
+- Buttons: verb + object ("Claim Ask", "Send Reply", "Insert into Reply") — short.
 
 ## Student asks
 - Keep stage timeline readable; reduce dashed-box / muted microcopy noise.
 - Empty state: one sentence + one CTA.
 
 ## Forbidden
-- New cards for non-interactive content; layout rewrites; dark-mode experiments; purple glow trends.
-- Changing fetch/auth/queue filter logic or Help Coach API payloads.
+- New cards for non-interactive content; purple glow trends; dumping coaching into the student reply by default.
+- Changing fetch/auth/queue filter logic or inventing new Help Coach / claim / reply backend features unless required to wire existing endpoints.

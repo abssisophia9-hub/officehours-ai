@@ -1,114 +1,256 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router";
+import {
+  Bold,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Code2,
+  Image as ImageIcon,
+  Italic,
+  PanelLeft,
+  PanelRight,
+  Send,
+  Sparkles,
+  Undo2,
+} from "lucide-react";
 import { api } from "../api/client.js";
 import { pageItems, pageMeta } from "../api/page.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
-const ICONS = {
-  queue: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
-    </svg>
-  ),
-  check: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M8.5 12.5l2.5 2.5 5-5.5" />
-    </svg>
-  ),
-  flame: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M12 2s5 4.5 5 10a5 5 0 0 1-10 0c0-2 1-3.8 2-5 0 2 1 3 2 3 0-3 1-6.5 1-8z" />
-    </svg>
-  ),
-  clock: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3 3" />
-    </svg>
-  ),
-};
+function fmtWait(minutes) {
+  if (minutes == null || Number.isNaN(Number(minutes))) return "—";
+  const min = Math.max(0, Math.round(Number(minutes)));
+  if (min < 1) return "<1m";
+  if (min < 60) return `${min}m`;
+  return `${Math.floor(min / 60)}h ${min % 60}m`;
+}
 
-function workPill(status) {
+function fmtTime(value) {
+  if (!value) return "";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function previewLine(text, max = 72) {
+  const clean = String(text || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (clean.length <= max) return clean;
+  return `${clean.slice(0, max - 1)}…`;
+}
+
+function workLabel(status) {
   const value = status || "open";
-  if (value === "in_progress") return { label: "helping now", className: "bh-pill-amber" };
-  if (value === "claimed") return { label: "claimed", className: "bh-pill-blue" };
-  if (value === "helped") return { label: "helped", className: "bh-pill-green" };
-  return { label: "open", className: "bh-pill-gray" };
+  if (value === "in_progress") return "helping";
+  if (value === "claimed") return "claimed";
+  if (value === "helped") return "resolved";
+  return "open";
+}
+
+function workClass(status) {
+  const value = workLabel(status);
+  return {
+    open: "tar-pill tar-pill-open",
+    claimed: "tar-pill tar-pill-claimed",
+    helping: "tar-pill tar-pill-helping",
+    resolved: "tar-pill tar-pill-resolved",
+  }[value];
+}
+
+function studentLabel(req) {
+  if (!req) return "Student";
+  if (req.anonymous) return "Anonymous";
+  return req.student_name || req.student_id || "Identified";
+}
+
+function strategyBullets(coach, notes) {
+  const fromApproach = String(coach?.teaching_approach || notes || "")
+    .split(/\n+/)
+    .map((line) => line.replace(/^[-•*\d.)\s]+/, "").trim())
+    .filter(Boolean);
+  if (fromApproach.length) return fromApproach.slice(0, 6);
+  return [
+    "Ask for a concrete drawing or example before naming a textbook case.",
+    "Separate the broken invariant from the fixup steps.",
+    "Stop once the student can state the next move — do not hand the full solution.",
+  ];
+}
+
+function socraticPrompt(coach, steps) {
+  if (Array.isArray(steps) && steps.length) return steps[0];
+  if (Array.isArray(coach?.socratic_steps) && coach.socratic_steps.length) {
+    return coach.socratic_steps[0];
+  }
+  if (coach?.student_hint) return coach.student_hint;
+  return "What is the smallest concrete example that fails, and which single property is broken after the change?";
+}
+
+function renderThreadText(text) {
+  const blocks = [];
+  const parts = String(text || "").split(/```([\s\S]*?)```/);
+  parts.forEach((part, i) => {
+    if (i % 2 === 1) {
+      blocks.push(
+        <pre key={`pre-${i}`} className="tar-code-block">
+          {part.replace(/^\w*\n/, "")}
+        </pre>,
+      );
+      return;
+    }
+    const lines = part.split("\n");
+    lines.forEach((line, li) => {
+      const bits = [];
+      const re = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g;
+      let last = 0;
+      let match;
+      while ((match = re.exec(line)) !== null) {
+        if (match.index > last) bits.push(line.slice(last, match.index));
+        const tok = match[0];
+        if (tok.startsWith("**")) {
+          bits.push(<strong key={`${i}-${li}-${match.index}`}>{tok.slice(2, -2)}</strong>);
+        } else if (tok.startsWith("*")) {
+          bits.push(<em key={`${i}-${li}-${match.index}`}>{tok.slice(1, -1)}</em>);
+        } else {
+          bits.push(<code key={`${i}-${li}-${match.index}`}>{tok.slice(1, -1)}</code>);
+        }
+        last = match.index + tok.length;
+      }
+      if (last < line.length) bits.push(line.slice(last));
+      blocks.push(
+        <p key={`p-${i}-${li}`} className={li > 0 || i > 0 ? "mt-2" : undefined}>
+          {bits.length ? bits : "\u00A0"}
+        </p>,
+      );
+    });
+  });
+  return blocks;
+}
+
+function ToolBtn({ children, onClick, title }) {
+  return (
+    <button type="button" title={title} onClick={onClick} className="tar-tool">
+      {children}
+    </button>
+  );
 }
 
 export default function TaWorkspace() {
   const { token, user, activeCourse } = useAuth();
   const [queue, setQueue] = useState([]);
-  const [loadInfo, setLoadInfo] = useState(null);
+  const [queuePage, setQueuePage] = useState({ has_more: false, total: 0 });
   const [selectedId, setSelectedId] = useState(null);
+  const [draft, setDraft] = useState("");
   const [notes, setNotes] = useState("");
   const [hint, setHint] = useState("");
-  const [reply, setReply] = useState("");
   const [socraticSteps, setSocraticSteps] = useState([]);
   const [coachBusy, setCoachBusy] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
-  const [resolvedCount, setResolvedCount] = useState(0);
-  const [helpedCount, setHelpedCount] = useState(0);
-  const [assignmentFilter, setAssignmentFilter] = useState("desk");
-  const [busy, setBusy] = useState(false);
-  const [meetingOpen, setMeetingOpen] = useState(false);
-  const [meetingTitle, setMeetingTitle] = useState("");
-  const [meetingWhen, setMeetingWhen] = useState("");
-  const [meetingPlace, setMeetingPlace] = useState("");
-  const [goldCategory, setGoldCategory] = useState("conceptual_question");
-  const [goldHintUseful, setGoldHintUseful] = useState("1");
-  const [goldBusy, setGoldBusy] = useState(false);
-  const [queuePage, setQueuePage] = useState({ has_more: false, total: 0 });
+  const [queueOpen, setQueueOpen] = useState(true);
+  const [coachOpen, setCoachOpen] = useState(true);
+  const [localThread, setLocalThread] = useState({});
+  const composerRef = useRef(null);
+  const fileRef = useRef(null);
+  const threadRef = useRef(null);
 
   const loadQueue = useCallback(async () => {
     try {
       const params = new URLSearchParams({
         course_id: String(activeCourse.id),
-        assignment: assignmentFilter,
+        assignment: "all",
         limit: "50",
         offset: "0",
       });
       const data = await api(`/ta/queue/?${params.toString()}`, { token });
-      setQueue(pageItems(data));
+      const items = pageItems(data);
+      setQueue(items);
       setQueuePage(pageMeta(data));
       setError("");
+      return items;
     } catch (err) {
       setError(err.message);
-    }
-  }, [token, activeCourse, assignmentFilter]);
-
-  const loadPartnerLoad = useCallback(async () => {
-    try {
-      const data = await api(`/ta/load/?course_id=${activeCourse.id}`, { token });
-      setLoadInfo(data);
-    } catch {
-      setLoadInfo(null);
+      return null;
     }
   }, [token, activeCourse]);
 
   useEffect(() => {
     loadQueue();
-    loadPartnerLoad();
     const id = setInterval(() => {
       loadQueue();
-      loadPartnerLoad();
     }, 8000);
     return () => clearInterval(id);
-  }, [loadQueue, loadPartnerLoad]);
+  }, [loadQueue]);
 
   useEffect(() => {
     if (!toast) return undefined;
-    const id = setTimeout(() => setToast(""), 4000);
+    const id = setTimeout(() => setToast(""), 2400);
     return () => clearTimeout(id);
   }, [toast]);
 
   useEffect(() => {
-    if (selectedId && !queue.some((item) => item.request.id === selectedId)) {
-      setSelectedId(null);
+    if (!queue.length) {
+      if (selectedId != null) setSelectedId(null);
+      return;
     }
-  }, [queue, selectedId]);
+    if (selectedId != null && queue.some((item) => item.request.id === selectedId)) {
+      return;
+    }
+    const first = queue[0];
+    setSelectedId(first.request.id);
+    const existing = first.help_coach;
+    setNotes(existing?.teaching_approach || first.knowledge_entry?.answer_draft || "");
+    setHint(
+      existing?.student_hint ||
+        first.knowledge_entry?.student_hint ||
+        first.request.student_hint ||
+        "",
+    );
+    setSocraticSteps(existing?.socratic_steps || []);
+    setDraft("");
+    if (existing) return;
+    let cancelled = false;
+    setCoachBusy(true);
+    api(`/ta/coach/?request_id=${first.request.id}`, { token })
+      .then((packet) => {
+        if (cancelled) return;
+        setNotes(packet.teaching_approach || first.knowledge_entry?.answer_draft || "");
+        setHint(
+          packet.student_hint ||
+            first.knowledge_entry?.student_hint ||
+            first.request.student_hint ||
+            "",
+        );
+        setSocraticSteps(packet.socratic_steps || []);
+        setQueue((prev) =>
+          prev.map((row) =>
+            row.request.id === first.request.id ? { ...row, help_coach: packet } : row,
+          ),
+        );
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setCoachBusy(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [queue, selectedId, token]);
+
+  useEffect(() => {
+    setDraft("");
+  }, [selectedId]);
+
+  useEffect(() => {
+    if (threadRef.current) {
+      threadRef.current.scrollTop = threadRef.current.scrollHeight;
+    }
+  }, [selectedId, localThread, queue]);
 
   if (!activeCourse) return <Navigate to="/" replace />;
   if (activeCourse.role !== "ta") {
@@ -120,57 +262,82 @@ export default function TaWorkspace() {
     );
   }
 
-  const selected = queue.find((item) => item.request.id === selectedId) || null;
+  const selected =
+    queue.find((item) => item.request.id === selectedId) || queue[0] || null;
+  const req = selected?.request || null;
+  const activeId = req?.id ?? null;
+  const liveCount = queuePage.total || queue.length;
+  const coach = selected?.help_coach || null;
+  const bullets = strategyBullets(coach, notes);
+  const prompt = socraticPrompt(coach, socraticSteps);
+  const isHelped = (req?.work_status || "open") === "helped";
+  const iClaimed =
+    !!req &&
+    (req.claimed_by_user_id === user.id || req.claimed_by === user.display_name);
+  const isClaimed =
+    !!req &&
+    (["claimed", "in_progress"].includes(req.work_status || "") || iClaimed);
 
-  const urgentCount = queue.filter((item) =>
-    ["high", "urgent"].includes((item.request.urgency || "").toLowerCase()),
-  ).length;
-  const waits = queue
-    .map((item) => item.request.estimated_wait_minutes)
-    .filter((value) => typeof value === "number");
-  const avgWait = waits.length
-    ? Math.round(waits.reduce((total, value) => total + value, 0) / waits.length)
-    : null;
-  const inProgressCount = queue.filter(
-    (item) => item.request.work_status === "in_progress",
-  ).length;
+  const threadMessages = (() => {
+    if (!req) return [];
+    const base = [
+      {
+        id: `ask-${req.id}`,
+        role: "student",
+        author: studentLabel(req),
+        at: req.created_at || null,
+        text: req.text,
+      },
+    ];
+    if (req.ta_reply) {
+      base.push({
+        id: `reply-${req.id}`,
+        role: "ta",
+        author: req.claimed_by || user.display_name,
+        at: req.ta_replied_at || null,
+        text: req.ta_reply,
+      });
+    }
+    const extras = localThread[req.id] || [];
+    const seen = new Set(base.map((m) => m.text));
+    for (const msg of extras) {
+      if (!seen.has(msg.text)) {
+        base.push(msg);
+        seen.add(msg.text);
+      }
+    }
+    return base;
+  })();
 
   async function selectItem(item) {
     setSelectedId(item.request.id);
+    setError("");
     const existing = item.help_coach;
-    setNotes(
-      existing?.teaching_approach || item.knowledge_entry?.answer_draft || "",
-    );
+    setNotes(existing?.teaching_approach || item.knowledge_entry?.answer_draft || "");
     setHint(
       existing?.student_hint ||
         item.knowledge_entry?.student_hint ||
         item.request.student_hint ||
         "",
     );
-    setReply(item.request.ta_reply || item.knowledge_entry?.student_hint || "");
     setSocraticSteps(existing?.socratic_steps || []);
-    setMeetingOpen(false);
-    setMeetingTitle(
-      `Group review: ${item.request.triage_category || item.request.category || "topic"}`,
-    );
-    setMeetingWhen("");
-    setMeetingPlace("");
-    setError("");
+    // Composer stays empty — never dump coaching into the reply box.
+    setDraft("");
     if (existing) return;
     setCoachBusy(true);
     try {
-      const coach = await api(`/ta/coach/?request_id=${item.request.id}`, { token });
-      setNotes(coach.teaching_approach || item.knowledge_entry?.answer_draft || "");
+      const packet = await api(`/ta/coach/?request_id=${item.request.id}`, { token });
+      setNotes(packet.teaching_approach || item.knowledge_entry?.answer_draft || "");
       setHint(
-        coach.student_hint ||
+        packet.student_hint ||
           item.knowledge_entry?.student_hint ||
           item.request.student_hint ||
           "",
       );
-      setSocraticSteps(coach.socratic_steps || []);
+      setSocraticSteps(packet.socratic_steps || []);
       setQueue((prev) =>
         prev.map((row) =>
-          row.request.id === item.request.id ? { ...row, help_coach: coach } : row,
+          row.request.id === item.request.id ? { ...row, help_coach: packet } : row,
         ),
       );
     } catch (err) {
@@ -180,106 +347,29 @@ export default function TaWorkspace() {
     }
   }
 
-  async function runHelpCoach(mode) {
-    if (!selected) return;
-    setCoachBusy(true);
-    setError("");
-    try {
-      const result = await api("/ta/assist/", {
-        method: "POST",
-        token,
-        body: {
-          request_id: selected.request.id,
-          mode,
-          current_reply: reply || null,
-        },
-      });
-      setToast(result.message || "Help Coach updated");
-      if (result.draft_reply) setReply(result.draft_reply);
-      if (result.teaching_approach) setNotes(result.teaching_approach);
-      if (result.student_hint) setHint(result.student_hint);
-      if (Array.isArray(result.socratic_steps)) {
-        setSocraticSteps(result.socratic_steps);
-      }
-      if (result.help_coach) {
-        setQueue((prev) =>
-          prev.map((item) =>
-            item.request.id === selected.request.id
-              ? { ...item, help_coach: result.help_coach }
-              : item,
-          ),
-        );
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setCoachBusy(false);
-    }
+  function patchRequest(nextRequest) {
+    setQueue((prev) =>
+      prev.map((item) =>
+        item.request.id === nextRequest.id
+          ? { ...item, request: nextRequest }
+          : item,
+      ),
+    );
   }
 
-  async function proposeGroupMeeting() {
-    if (!selected || !req) return;
-    const when = meetingWhen.trim();
-    const place = meetingPlace.trim();
-    if (!when || !place) {
-      setError("Add a shared time and place/link for the group meeting.");
-      setMeetingOpen(true);
-      return;
-    }
-    const peerIds = (selected.help_coach?.similar_open || []).map((peer) => peer.id);
-    const requestIds = Array.from(new Set([req.id, ...peerIds]));
-    const title = (
-      meetingTitle ||
-      `Group review: ${req.triage_category || req.category || "topic"}`
-    ).trim();
+  async function claimAsk() {
+    if (!req || isHelped || busy) return;
     setBusy(true);
     setError("");
     try {
-      await api("/actions/recommendations/", {
+      const result = await api("/ta/claim/", {
         method: "POST",
         token,
-        body: {
-          card_id: `ta-group-${req.cluster_id || req.id}-${Date.now()}`,
-          action_kind: "group_session",
-          action_title: title,
-          status: "approved",
-          cluster_id: req.cluster_id || null,
-          request_ids: requestIds,
-          professor_note: "Proposed by TA from Help Coach similar asks.",
-          meeting_title: title,
-          meeting_when: when,
-          meeting_place: place,
-        },
+        body: { request_id: req.id },
       });
-      setToast(
-        `Group meeting set for ${requestIds.length} asks · ${when} · ${place}`,
-      );
-      setMeetingOpen(false);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function runAction(path, body, { helpedBump = false } = {}) {
-    setBusy(true);
-    setError("");
-    try {
-      const result = await api(path, { method: "POST", token, body });
-      setToast(result.message || "Updated");
-      if (helpedBump) setHelpedCount((count) => count + 1);
-      if (result.request) {
-        setQueue((prev) =>
-          prev.map((item) =>
-            item.request.id === result.request.id
-              ? { ...item, request: result.request }
-              : item,
-          ),
-        );
-      }
+      if (result.request) patchRequest(result.request);
+      setToast(result.message || `Claimed ask #${req.id}`);
       await loadQueue();
-      await loadPartnerLoad();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -287,34 +377,112 @@ export default function TaWorkspace() {
     }
   }
 
-  async function resolve(status) {
-    if (!selected) return;
-    if (notes.trim().length < 3) {
-      setError("Add at least a short teaching draft (3+ characters) before resolving.");
+  async function releaseAsk() {
+    if (!req || isHelped || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const result = await api("/ta/work-status/", {
+        method: "POST",
+        token,
+        body: { request_id: req.id, status: "open" },
+      });
+      if (result.request) patchRequest(result.request);
+      setToast(result.message || `Released ask #${req.id}`);
+      await loadQueue();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function teachingNotesForResolve() {
+    const fromNotes = notes.trim();
+    if (fromNotes.length >= 3) return fromNotes;
+    const fromCoach = String(coach?.teaching_approach || "").trim();
+    if (fromCoach.length >= 3) return fromCoach;
+    const joined = bullets.join(" ").trim();
+    if (joined.length >= 3) return joined.slice(0, 8000);
+    return `Resolved ask #${req.id} — ${activeCourse.code}`;
+  }
+
+  async function advanceAfterResolve(fromId, items) {
+    const list = items || queue;
+    const nextOpen = list.find(
+      (item) => item.request.id !== fromId && (item.request.work_status || "open") === "open",
+    );
+    const nextAny = list.find(
+      (item) =>
+        item.request.id !== fromId && (item.request.work_status || "open") !== "helped",
+    );
+    const next = nextOpen || nextAny;
+    if (next) {
+      await selectItem(next);
+    } else {
+      setSelectedId(null);
+      setDraft("");
+      setNotes("");
+      setHint("");
+      setSocraticSteps([]);
+    }
+  }
+
+  async function resolveAsk({ withReply = false } = {}) {
+    if (!req || isHelped || busy) return;
+    const text = draft.trim();
+    if (withReply && text && text.length < 3) {
+      setError("Reply needs at least 3 characters, or clear the box and mark resolved.");
       return;
     }
     setBusy(true);
     setError("");
+    const fromId = req.id;
     try {
+      if (withReply && text) {
+        const replied = await api("/ta/reply/", {
+          method: "POST",
+          token,
+          body: {
+            request_id: fromId,
+            reply: text,
+            update_student_hint: true,
+          },
+        });
+        if (replied.request) patchRequest(replied.request);
+        setLocalThread((prev) => ({
+          ...prev,
+          [fromId]: [
+            ...(prev[fromId] || []),
+            {
+              id: `local-${fromId}-${Date.now()}`,
+              role: "ta",
+              author: user.display_name,
+              at: new Date().toISOString(),
+              text,
+            },
+          ],
+        }));
+      }
+
       const result = await api("/ta/resolve/", {
         method: "POST",
         token,
         body: {
-          request_id: selected.request.id,
-          teaching_notes: notes,
-          student_hint: hint || null,
-          resolution_status: status,
+          request_id: fromId,
+          teaching_notes: teachingNotesForResolve(),
+          student_hint: hint || text || null,
+          resolution_status: "resolved",
         },
       });
-      setToast(result.message || "Saved for professor review");
-      setResolvedCount((count) => count + 1);
-      setHelpedCount((count) => count + 1);
-      setSelectedId(null);
-      setNotes("");
-      setHint("");
-      setReply("");
-      await loadQueue();
-      await loadPartnerLoad();
+      setToast(
+        withReply && text
+          ? `Resolved #${fromId} · advanced`
+          : result.message || `Resolved #${fromId}`,
+      );
+      setDraft("");
+      const items = await loadQueue();
+      await advanceAfterResolve(fromId, items || []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -322,713 +490,483 @@ export default function TaWorkspace() {
     }
   }
 
-  const req = selected?.request;
-  const tags = req?.triage_tags || [];
-  const work = workPill(req?.work_status);
-  const iAmPrimary = req?.assigned_ta === user.display_name;
-  const iAmBackup = req?.alternative_ta === user.display_name;
-  const iClaimed =
-    req?.claimed_by_user_id === user.id || req?.claimed_by === user.display_name;
+  async function sendKeepOpen() {
+    if (!req || isHelped || busy) return;
+    const text = draft.trim();
+    if (text.length < 3) {
+      setError("Write at least 3 characters before sending a reply.");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      const result = await api("/ta/reply/", {
+        method: "POST",
+        token,
+        body: {
+          request_id: req.id,
+          reply: text,
+          update_student_hint: true,
+        },
+      });
+      if (result.request) patchRequest(result.request);
+      setLocalThread((prev) => ({
+        ...prev,
+        [req.id]: [
+          ...(prev[req.id] || []),
+          {
+            id: `local-${req.id}-${Date.now()}`,
+            role: "ta",
+            author: user.display_name,
+            at: new Date().toISOString(),
+            text,
+          },
+        ],
+      }));
+      setDraft("");
+      setToast("Reply sent · ask kept open");
+      await loadQueue();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function insertCoach() {
+    if (!req || isHelped) return;
+    setDraft((current) => (current.trim() ? `${current.trim()}\n\n${prompt}` : prompt));
+    composerRef.current?.focus();
+    setToast("Inserted Socratic prompt into reply");
+  }
+
+  function wrapSelection(before, after = before) {
+    const el = composerRef.current;
+    if (!el) {
+      setDraft((d) => `${d}${before}${after}`);
+      return;
+    }
+    const start = el.selectionStart ?? draft.length;
+    const end = el.selectionEnd ?? draft.length;
+    const selectedText = draft.slice(start, end) || "text";
+    const next = draft.slice(0, start) + before + selectedText + after + draft.slice(end);
+    setDraft(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(start + before.length, start + before.length + selectedText.length);
+    });
+  }
+
+  function onComposerKeyDown(event) {
+    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+      event.preventDefault();
+      resolveAsk({ withReply: true });
+    }
+  }
 
   return (
-    <div className="td fade-up">
-      <header className="td-hero">
-        <p className="td-kicker">
-          AUI · {activeCourse.code} · {activeCourse.title}
-        </p>
-        <h1 className="td-title">Who needs help next?</h1>
-        <p className="td-lead">
-          <strong>Live Queue</strong> is the main action — claim an ask, help with
-          Help Coach, reply async, then send drafts for professor curation.
-        </p>
-        <p className="td-alt">
-          Dual-TA Matcher assigns primary + backup. Work your desk first; open
-          asks still need a human.
-        </p>
-        <div className="td-pulse">
-          <span className="td-chip">
-            <strong>{queue.length}</strong> open on desk
-          </span>
-          {urgentCount > 0 ? (
-            <span className="td-chip td-chip-hot">
-              <strong>{urgentCount}</strong> urgent
-            </span>
-          ) : (
-            <span className="td-chip">
-              <strong>{inProgressCount}</strong> helping now
-            </span>
-          )}
-          <span className="td-chip">
-            Avg wait <strong>{avgWait === null ? "—" : `${avgWait}m`}</strong>
-          </span>
-          <span className="td-chip">
-            Helped <strong>{helpedCount}</strong>
-          </span>
-          <span className="td-chip">
-            To curation <strong>{resolvedCount}</strong>
-          </span>
-        </div>
-      </header>
-
-      {loadInfo ? (
-        <section className="td-panel mb-4">
-          <p className="td-panel-label">TA load (you + partner)</p>
-          <h3>Dual staffing for {activeCourse.code}</h3>
-          <p>
-            {loadInfo.ta_count ? `${loadInfo.ta_count} TAs` : "Matcher depth"} —
-            take asks where you are primary or backup first.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {(loadInfo.tas || []).map((ta) => (
-              <span
-                key={ta.name}
-                className={`bh-pill ${
-                  ta.name === user.display_name ? "bh-pill-green" : "bh-pill-gray"
-                }`}
+    <div className="tar-desk">
+      {/* Zone 2 · Mini-queue */}
+      <section
+        className={`tar-queue ${queueOpen ? "tar-queue-open" : "tar-queue-collapsed"}`}
+        aria-label="Mini queue"
+      >
+        <div className="tar-pane-head">
+          {queueOpen ? (
+            <>
+              <div className="px-1">
+                <div className="tar-pane-title">Queue</div>
+                <div className="tar-pane-sub font-mono">
+                  {liveCount} open · {activeCourse.code}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="tar-icon-btn"
+                onClick={() => setQueueOpen(false)}
+                title="Collapse queue"
+                aria-label="Collapse queue"
               >
-                {ta.name}
-                {ta.name === user.display_name ? " (you)" : ""} · depth{" "}
-                {ta.queue_depth ?? "—"}
-                {Array.isArray(ta.expertise_tags) && ta.expertise_tags.length
-                  ? ` · ${ta.expertise_tags.slice(0, 2).join(", ")}`
-                  : ""}
-              </span>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      <div className="td-layout">
-      <section id="queue" className="td-primary scroll-mt-6">
-        <div className="td-primary-head">
-          <div>
-            <h2>Live Queue</h2>
-            <p className="td-primary-copy">
-              Use when a student is waiting. Pick a row to claim, help, and reply —
-              students read your reply in My asks.
-            </p>
-          </div>
-          <span className="td-badge">Primary</span>
-        </div>
-        <div className="td-filters">
-          {[
-            ["desk", "My desk"],
-            ["mine", "Assigned / claimed by me"],
-            ["backup", "I'm backup"],
-            ["in_progress", "I'm helping now"],
-            ["unassigned", "Unassigned"],
-            ["all", "All open asks"],
-          ].map(([value, label]) => (
+                <ChevronLeft size={16} />
+              </button>
+            </>
+          ) : (
             <button
-              key={value}
               type="button"
-              className={`td-filter${assignmentFilter === value ? " td-filter-on" : ""}`}
-              onClick={() => setAssignmentFilter(value)}
+              className="tar-icon-btn mx-auto"
+              onClick={() => setQueueOpen(true)}
+              title="Expand queue"
+              aria-label="Expand queue"
             >
-              {label}
+              <ChevronRight size={16} />
             </button>
-          ))}
+          )}
         </div>
-        {error ? <p className="mt-2 pl-2 text-sm text-[var(--theme-red-fg)]">{error}</p> : null}
-        {toast ? <p className="mt-2 pl-2 text-sm text-[var(--theme-emerald-fg)]">{toast}</p> : null}
-
-        {queue.length === 0 ? (
-          <p className="td-empty">No open requests for this filter.</p>
-        ) : (
-          <table className="bh-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Question</th>
-                <th>From</th>
-                <th>Status</th>
-                <th>Help</th>
-                <th>Category</th>
-                <th>Similar</th>
-                <th>Urgency</th>
-                <th>Primary</th>
-                <th>Backup</th>
-              </tr>
-            </thead>
-            <tbody>
-              {queue.map((item) => {
+        {queueOpen ? (
+          <div className="tar-scroll flex-1">
+            {queue.length === 0 ? (
+              <p className="tar-empty">No open asks.</p>
+            ) : (
+              queue.map((item) => {
                 const request = item.request;
-                const urgency = (request.urgency || "n/a").toLowerCase();
-                const helpMode = request.help_mode || "message";
-                const status = workPill(request.work_status);
-                const similarN =
-                  item.similar_open_count || item.help_coach?.similar_open_count || 0;
+                const selectedRow = request.id === activeId;
+                const mine =
+                  request.claimed_by_user_id === user.id ||
+                  request.claimed_by === user.display_name;
+                const status = request.work_status || "open";
                 return (
-                  <tr
+                  <button
                     key={request.id}
-                    className={`bh-row-click${selectedId === request.id ? " bh-row-active" : ""}`}
+                    type="button"
                     onClick={() => selectItem(item)}
+                    className={`tar-queue-row ${selectedRow ? "tar-queue-row-on" : ""}`}
                   >
-                    <td className="font-semibold">#{request.id}</td>
-                    <td className="max-w-[22rem]">
-                      <span className="line-clamp-2">{request.text}</span>
-                    </td>
-                    <td>
-                      {request.anonymous
-                        ? "Anonymous"
-                        : request.student_name || request.student_id || "Identified"}
-                    </td>
-                    <td>
-                      <span className={`bh-pill ${status.className}`}>{status.label}</span>
-                    </td>
-                    <td>
-                      <span
-                        className={`bh-pill ${
-                          helpMode === "face_to_face"
-                            ? "bh-pill-amber"
-                            : helpMode === "online_meeting"
-                              ? "bh-pill-blue"
-                              : "bh-pill-gray"
-                        }`}
-                      >
-                        {helpMode === "face_to_face"
-                          ? "in person"
-                          : helpMode === "online_meeting"
-                            ? "online"
-                            : "message"}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-[11px] text-[var(--tar-mute)]">
+                        #{request.id}
                       </span>
-                    </td>
-                    <td>{request.triage_category || request.category || "n/a"}</td>
-                    <td>
-                      {similarN > 0 ? (
+                      <span className="inline-flex items-center gap-1.5">
                         <span
-                          className={`bh-pill ${
-                            similarN >= 2 ? "bh-pill-amber" : "bh-pill-blue"
+                          className={`tar-dot ${
+                            status === "open" && !mine ? "tar-dot-open" : "tar-dot-claimed"
                           }`}
-                          title="Similar open asks — consider group help"
-                        >
-                          {similarN} similar
-                        </span>
-                      ) : (
-                        <span className="text-aui-deep/45">—</span>
-                      )}
-                    </td>
-                    <td>
-                      <span
-                        className={`bh-pill ${
-                          ["high", "urgent"].includes(urgency)
-                            ? "bh-pill-red"
-                            : urgency === "medium"
-                              ? "bh-pill-amber"
-                              : "bh-pill-gray"
-                        }`}
-                      >
-                        {urgency}
+                          title={
+                            status === "open" && !mine
+                              ? "Unclaimed"
+                              : mine
+                                ? "Claimed by You"
+                                : `Claimed by ${request.claimed_by || "TA"}`
+                          }
+                        />
+                        <span className={workClass(status)}>{workLabel(status)}</span>
                       </span>
-                    </td>
-                    <td>{request.assigned_ta || "Unassigned"}</td>
-                    <td>{request.alternative_ta || "—"}</td>
-                  </tr>
+                    </div>
+                    <div className="mt-1 truncate text-[13px] font-medium text-[var(--tar-ink)]">
+                      {studentLabel(request)}
+                    </div>
+                    <div className="tar-queue-preview">{previewLine(request.text)}</div>
+                    <div className="mt-1.5 flex items-center gap-2 font-mono text-[11px] text-[var(--tar-mute)]">
+                      <span className="inline-flex items-center gap-1">
+                        <Clock size={11} />
+                        {fmtWait(request.estimated_wait_minutes)}
+                      </span>
+                      <span>·</span>
+                      <span>
+                        {status === "open" && !mine
+                          ? "Unclaimed"
+                          : mine
+                            ? "Claimed by You"
+                            : request.claimed_by || "Claimed"}
+                      </span>
+                    </div>
+                  </button>
                 );
-              })}
-            </tbody>
-          </table>
-        )}
-        {queuePage.has_more ? (
-          <p className="mt-2 text-xs text-aui-deep/70">
-            Showing {queue.length} of {queuePage.total}. Refine the desk filter
-            or raise the page size — this is a paged queue.
-          </p>
+              })
+            )}
+          </div>
         ) : null}
       </section>
 
-      <aside className="td-rail">
-      {selected && req ? (
-        <section className="td-panel">
-          <div className="bh-card-title">
-            <h2>Ask · #{req.id}</h2>
-            <span className={`bh-pill ${work.className}`}>{work.label}</span>
-          </div>
-          <p className="bh-card-note">{req.text}</p>
-
-          <div className="mt-3 rounded-xl border border-aui-forest/20 bg-[#f3faf5] p-3 text-xs text-aui-deep">
-            <p className="font-semibold text-aui-ink">Ask Triage</p>
-            <p className="mt-0.5 text-[11px] text-aui-deep/60">
-              Analyzer → Matcher → Synthesizer for this ask (local models)
-            </p>
-            <ul className="mt-2 space-y-1">
-              <li>
-                <strong>Category:</strong> {req.triage_category || req.category || "n/a"}
-                {" · "}
-                <strong>Difficulty:</strong> {req.triage_difficulty || "n/a"}
-                {" · "}
-                <strong>Est.:</strong>{" "}
-                {req.triage_estimated_minutes != null
-                  ? `${req.triage_estimated_minutes} min`
-                  : "n/a"}
-              </li>
-              {selected.learning_style &&
-              selected.learning_style !== "unknown" &&
-              req.learning_style &&
-              req.learning_style !== "unknown" ? (
-                <li>
-                  <strong>Learning style:</strong>{" "}
-                  {selected.learning_style || req.learning_style}
-                  {" · "}
-                  <strong>Urgency:</strong> {req.urgency || "n/a"}
-                </li>
-              ) : (
-                <li>
-                  <strong>Urgency:</strong> {req.urgency || "n/a"}
-                </li>
-              )}
-              <li>
-                <strong>Tags:</strong> {tags.length ? tags.join(", ") : "none"}
-              </li>
-              <li>
-                <strong>Sensitive:</strong> {req.sensitive ? "yes — keep private" : "no"}
-              </li>
-              {req.triage?.matcher?.rationale ? (
-                <li>
-                  <strong>Matcher:</strong> {req.triage.matcher.rationale}
-                </li>
-              ) : (
-                <li>
-                  <strong>Matcher:</strong> {req.assigned_ta || "Unassigned"}
-                  {req.alternative_ta ? ` (backup ${req.alternative_ta})` : ""}
-                </li>
-              )}
-              {(selected.help_coach?.kb_insight ||
-                req.triage?.synthesizer?.kb_insight) ? (
-                <li>
-                  <strong>KB insight:</strong>{" "}
-                  {selected.help_coach?.kb_insight ||
-                    req.triage?.synthesizer?.kb_insight}
-                </li>
-              ) : null}
-            </ul>
-          </div>
-
-          {(() => {
-            const coach = selected.help_coach;
-            if (!coach) return null;
-            return (
-              <div className="mt-3 rounded-xl border border-[#c5d9cc] bg-white p-3 text-xs text-aui-deep">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="font-semibold text-aui-ink">Help Coach</p>
-                    <p className="mt-0.5 text-[11px] text-aui-deep/65">
-                      Live co-pilot while you help ·{" "}
-                      {coach.coach_summary || "ready"}
-                    </p>
-                  </div>
-                  {coach.group_help_suggested ? (
-                    <span className="bh-pill bh-pill-amber">
-                      Group help · {coach.similar_open_count} similar open
-                    </span>
+      {/* Zone 3 · Center workspace */}
+      <main className="tar-center">
+        {req ? (
+          <>
+            <header className="tar-center-head">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="tar-ask-title">
+                    Ask <span className="font-mono text-[18px]">#{req.id}</span>
+                  </h1>
+                  <span className={workClass(req.work_status)}>{workLabel(req.work_status)}</span>
+                  {(req.triage_category || req.category) && (
+                    <span className="tar-topic">{req.triage_category || req.category}</span>
+                  )}
+                </div>
+                <div className="mt-0.5 text-[12px] text-[var(--tar-mute)]">
+                  {studentLabel(req)}
+                  {req.student_id && !req.anonymous ? (
+                    <>
+                      {" "}
+                      · <span className="font-mono">{req.student_id}</span>
+                    </>
+                  ) : null}{" "}
+                  · waited{" "}
+                  <span className="font-mono">{fmtWait(req.estimated_wait_minutes)}</span>
+                  {req.claimed_by ? (
+                    <>
+                      {" "}
+                      · claimed by <span className="text-[var(--tar-ink)]">{req.claimed_by}</span>
+                    </>
                   ) : null}
                 </div>
+              </div>
 
-                {coach.similar_open_count > 0 ? (
-                  <div className="mt-3">
-                    <p className="font-semibold text-aui-ink">Similar open asks</p>
-                    <ul className="mt-1 space-y-1">
-                      {coach.similar_open.map((peer) => (
-                        <li key={peer.id} className="rounded-lg bg-[#f3faf5] px-2 py-1.5">
-                          <button
-                            type="button"
-                            className="text-left text-aui-forest underline-offset-2 hover:underline"
-                            onClick={() => {
-                              const peerItem = queue.find(
-                                (item) => item.request.id === peer.id,
-                              );
-                              if (peerItem) selectItem(peerItem);
-                            }}
-                          >
-                            #{peer.id}
-                          </button>
-                          {" · "}
-                          <span className="text-aui-deep/80">
-                            {(peer.text || "").slice(0, 90)}
-                            {(peer.text || "").length > 90 ? "…" : ""}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+              <div className="flex shrink-0 items-center gap-2">
+                {!queueOpen ? (
+                  <button
+                    type="button"
+                    className="tar-ghost-icon"
+                    onClick={() => setQueueOpen(true)}
+                    title="Show queue"
+                  >
+                    <PanelLeft size={15} />
+                  </button>
+                ) : null}
+                {!coachOpen ? (
+                  <button
+                    type="button"
+                    className="tar-ghost-icon"
+                    onClick={() => setCoachOpen(true)}
+                    title="Show Help Coach"
+                  >
+                    <PanelRight size={15} />
+                  </button>
+                ) : null}
+
+                {isHelped ? (
+                  <span className="px-2 text-[12px] text-[var(--tar-mute)]">Resolved</span>
+                ) : !isClaimed ? (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={claimAsk}
+                    className="tar-btn-primary"
+                  >
+                    Claim Ask
+                  </button>
+                ) : (
+                  <>
                     <button
                       type="button"
-                      className="btn-ghost mt-2 px-3 py-1.5 text-xs"
                       disabled={busy}
-                      onClick={() => setMeetingOpen((value) => !value)}
+                      onClick={() => resolveAsk({ withReply: false })}
+                      className="tar-btn-primary"
                     >
-                      {meetingOpen ? "Hide group meeting form" : "Propose one group meeting"}
+                      <Check size={14} />
+                      Mark Resolved &amp; Next
                     </button>
-                    {meetingOpen ? (
-                      <div className="mt-2 rounded-lg border border-[#d7e0d9] bg-white p-2.5">
-                        <p className="text-[11px] text-aui-deep/70">
-                          Schedules the same time/place on status for this ask and{" "}
-                          {coach.similar_open_count} similar open ask
-                          {coach.similar_open_count === 1 ? "" : "s"}.
-                        </p>
-                        <input
-                          className="field-glass mt-2 w-full px-2.5 py-1.5 text-xs"
-                          value={meetingTitle}
-                          onChange={(event) => setMeetingTitle(event.target.value)}
-                          placeholder="Meeting title"
-                        />
-                        <div className="mt-1.5 grid gap-1.5 sm:grid-cols-2">
-                          <input
-                            className="field-glass w-full px-2.5 py-1.5 text-xs"
-                            value={meetingWhen}
-                            onChange={(event) => setMeetingWhen(event.target.value)}
-                            placeholder="When · Thu 4:00–4:30 PM"
-                          />
-                          <input
-                            className="field-glass w-full px-2.5 py-1.5 text-xs"
-                            value={meetingPlace}
-                            onChange={(event) => setMeetingPlace(event.target.value)}
-                            placeholder="Where / Zoom link"
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          className="btn-primary mt-2 px-3 py-1.5 text-xs"
-                          disabled={busy}
-                          onClick={proposeGroupMeeting}
-                        >
-                          Schedule shared meeting
-                        </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={releaseAsk}
+                      className="tar-btn-subtle"
+                      title="Release claim"
+                    >
+                      <Undo2 size={14} />
+                      Release
+                    </button>
+                  </>
+                )}
+              </div>
+            </header>
+
+            <div ref={threadRef} className="tar-thread tar-scroll">
+              <div className="tar-thread-inner">
+                {threadMessages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`tar-msg ${message.role === "ta" ? "tar-msg-ta" : "tar-msg-student"}`}
+                  >
+                    <div className="mb-1.5 flex items-baseline justify-between gap-2">
+                      <div className="text-[12.5px] font-semibold text-[var(--tar-ink)]">
+                        {message.author}
+                        <span className="ml-1.5 font-normal text-[var(--tar-mute)]">
+                          {message.role === "ta" ? "TA" : "Student"}
+                        </span>
                       </div>
-                    ) : null}
+                      {message.at ? (
+                        <time className="font-mono text-[11px] text-[var(--tar-mute)]">
+                          {fmtTime(message.at)}
+                        </time>
+                      ) : null}
+                    </div>
+                    <div className="tar-prose">{renderThreadText(message.text)}</div>
                   </div>
-                ) : null}
+                ))}
+              </div>
+            </div>
 
-                {coach.similar_kb?.length ? (
-                  <div className="mt-3">
-                    <p className="font-semibold text-aui-ink">Approved KB neighbors</p>
-                    <ul className="mt-1 space-y-1.5">
-                      {coach.similar_kb.map((hit) => (
-                        <li
-                          key={`${hit.id}-${hit.question_text}`}
-                          className="rounded-lg border border-[#e4ece6] px-2 py-1.5"
-                        >
-                          <p className="font-medium text-aui-ink">
-                            #{hit.id}{" "}
-                            {hit.similarity != null
-                              ? `(${Math.round(Number(hit.similarity) * 100)}%)`
-                              : ""}
-                          </p>
-                          <p className="text-aui-deep/80">
-                            {(hit.question_text || "").slice(0, 110)}
-                          </p>
-                          {hit.answer_preview ? (
-                            <p className="mt-1 text-aui-deep/70">
-                              {hit.answer_preview.slice(0, 160)}
-                              {hit.answer_preview.length > 160 ? "…" : ""}
-                            </p>
-                          ) : null}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
+            <div className="tar-composer">
+              <div className="tar-composer-inner">
+                <div className="mb-2 flex items-center gap-0.5">
+                  <ToolBtn title="Bold" onClick={() => wrapSelection("**")}>
+                    <Bold size={14} />
+                  </ToolBtn>
+                  <ToolBtn title="Italic" onClick={() => wrapSelection("*")}>
+                    <Italic size={14} />
+                  </ToolBtn>
+                  <ToolBtn title="Inline code" onClick={() => wrapSelection("`")}>
+                    <Code2 size={14} />
+                  </ToolBtn>
+                  <ToolBtn
+                    title="Code block"
+                    onClick={() => wrapSelection("```\n", "\n```")}
+                  >
+                    <span className="px-0.5 font-mono text-[10px] font-semibold">{"{ }"}</span>
+                  </ToolBtn>
+                  <ToolBtn title="Attach image" onClick={() => fileRef.current?.click()}>
+                    <ImageIcon size={14} />
+                  </ToolBtn>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) {
+                        setDraft(
+                          (current) =>
+                            `${current}${current && !current.endsWith("\n") ? "\n" : ""}![${file.name}](attachment)`,
+                        );
+                        setToast(`Attached ${file.name} (UI stub — no upload endpoint)`);
+                      }
+                      event.target.value = "";
+                    }}
+                  />
+                  <span className="ml-auto font-mono text-[11px] text-[var(--tar-mute)]">
+                    ⌘/Ctrl+Enter · Send &amp; Resolve
+                  </span>
+                </div>
 
-                {socraticSteps.length ? (
-                  <div className="mt-3">
-                    <p className="font-semibold text-aui-ink">Socratic steps</p>
-                    <ol className="mt-1 list-decimal space-y-1 pl-4">
-                      {socraticSteps.map((step) => (
-                        <li key={step}>{step}</li>
-                      ))}
-                    </ol>
-                  </div>
-                ) : null}
+                <textarea
+                  ref={composerRef}
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
+                  onKeyDown={onComposerKeyDown}
+                  disabled={isHelped || busy}
+                  placeholder={
+                    isHelped
+                      ? "Ask resolved — select another from the queue"
+                      : "Write a reply to the student…"
+                  }
+                  rows={4}
+                  className="tar-textarea"
+                />
 
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-2.5 flex items-center justify-end gap-2">
                   <button
                     type="button"
-                    disabled={busy || coachBusy}
-                    className="btn-primary px-3 py-1.5 text-xs"
-                    onClick={() => runHelpCoach("draft_reply")}
+                    disabled={isHelped || busy || !draft.trim()}
+                    onClick={sendKeepOpen}
+                    className="tar-btn-secondary"
                   >
-                    {coachBusy ? "Coaching…" : "Draft student reply"}
+                    Send Reply · Keep Open
                   </button>
                   <button
                     type="button"
-                    disabled={busy || coachBusy}
-                    className="btn-ghost px-3 py-1.5 text-xs"
-                    onClick={() => runHelpCoach("socratic")}
+                    disabled={isHelped || busy}
+                    onClick={() => resolveAsk({ withReply: true })}
+                    className="tar-btn-primary"
                   >
-                    Socratic steps
-                  </button>
-                  <button
-                    type="button"
-                    disabled={busy || coachBusy}
-                    className="btn-ghost px-3 py-1.5 text-xs"
-                    onClick={() => runHelpCoach("refresh_teaching")}
-                  >
-                    Refresh teaching script
-                  </button>
-                  <button
-                    type="button"
-                    disabled={busy || coachBusy || reply.trim().length < 3}
-                    className="btn-ghost px-3 py-1.5 text-xs"
-                    onClick={() => runHelpCoach("rewrite_reply")}
-                  >
-                    Rewrite reply
+                    <Send size={14} />
+                    Send &amp; Resolve
                   </button>
                 </div>
               </div>
-            );
-          })()}
-
-          <div className="mt-2 flex flex-wrap gap-2 text-xs">
-            <span className="bh-pill bh-pill-gray">
-              {req.anonymous
-                ? "Anonymous"
-                : req.student_name || req.student_id || "Identified"}
-            </span>
-            <span
-              className={`bh-pill ${
-                req.help_mode === "face_to_face"
-                  ? "bh-pill-amber"
-                  : req.help_mode === "online_meeting"
-                    ? "bh-pill-blue"
-                    : "bh-pill-gray"
-              }`}
-            >
-              {req.help_mode === "face_to_face"
-                ? "Wants face-to-face"
-                : req.help_mode === "online_meeting"
-                  ? "Wants online meeting"
-                  : "Message / async"}
-            </span>
-            {req.claimed_by ? (
-              <span className="bh-pill bh-pill-blue">Claimed by {req.claimed_by}</span>
-            ) : null}
-          </div>
-
-          {req.recommended_action ? (
-            <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-950">
-              <strong>Suggested action:</strong> {req.recommended_action}
-            </p>
-          ) : null}
-          {req.code_snippet ? (
-            <pre className="soft-stat mt-3 overflow-x-auto font-mono text-xs">
-              {req.code_snippet}
-            </pre>
-          ) : null}
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={busy || (req.claimed_by && !iClaimed && req.work_status !== "open")}
-              className="btn-primary px-4 py-2 text-sm"
-              onClick={() => runAction("/ta/claim/", { request_id: req.id })}
-            >
-              Claim
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              className="btn-ghost px-4 py-2 text-sm"
-              onClick={() =>
-                runAction("/ta/work-status/", {
-                  request_id: req.id,
-                  status: "in_progress",
-                })
-              }
-            >
-              Start helping
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              className="btn-ghost px-4 py-2 text-sm"
-              onClick={() =>
-                runAction(
-                  "/ta/work-status/",
-                  { request_id: req.id, status: "helped" },
-                  { helpedBump: true },
-                )
-              }
-            >
-              Done helping
-            </button>
-            {iAmBackup || (!iAmPrimary && req.alternative_ta === user.display_name) ? (
-              <button
-                type="button"
-                disabled={busy}
-                className="btn-ghost px-4 py-2 text-sm"
-                onClick={() => runAction("/ta/take-backup/", { request_id: req.id })}
-              >
-                Take as primary (backup handoff)
-              </button>
-            ) : null}
-            {!iAmPrimary && !iAmBackup && (!req.assigned_ta || req.assigned_ta === "Unassigned") ? (
-              <button
-                type="button"
-                disabled={busy}
-                className="btn-ghost px-4 py-2 text-sm"
-                onClick={() => runAction("/ta/take-backup/", { request_id: req.id })}
-              >
-                Take ownership
-              </button>
-            ) : null}
-          </div>
-
-          {(req.help_mode === "message" || !req.help_mode) && (
-            <div className="mt-4 rounded-xl border border-[#d7e0d9] p-3">
-              <p className="text-sm font-semibold text-aui-ink">Reply to student</p>
-              <p className="mt-1 text-xs text-aui-deep/70">
-                Publishes on their request status immediately (does not wait for
-                professor KB approval). Use Help Coach to draft, then edit.
-              </p>
-              <textarea
-                className="field-glass mt-2 min-h-24 w-full px-3 py-2.5 text-sm"
-                value={reply}
-                onChange={(event) => setReply(event.target.value)}
-                placeholder="Write a short reply the student can read…"
-              />
-              <button
-                type="button"
-                disabled={busy || reply.trim().length < 3}
-                className="btn-primary mt-2 px-4 py-2 text-sm"
-                onClick={() =>
-                  runAction("/ta/reply/", {
-                    request_id: req.id,
-                    reply: reply.trim(),
-                    update_student_hint: true,
-                  })
-                }
-              >
-                Send reply to student
-              </button>
-              {req.ta_reply ? (
-                <p className="mt-2 text-xs text-aui-deep">
-                  <strong>Last reply:</strong> {req.ta_reply}
-                </p>
-              ) : null}
             </div>
+          </>
+        ) : (
+          <div className="flex flex-1 items-center justify-center text-[var(--tar-mute)]">
+            No asks in queue.
+          </div>
+        )}
+      </main>
+
+      {/* Zone 4 · Help Coach */}
+      <aside
+        className={`tar-coach ${coachOpen ? "tar-coach-open" : "tar-coach-collapsed"}`}
+        aria-label="Help Coach"
+      >
+        <div className="tar-pane-head">
+          {coachOpen ? (
+            <>
+              <button
+                type="button"
+                className="tar-icon-btn"
+                onClick={() => setCoachOpen(false)}
+                title="Collapse Help Coach"
+                aria-label="Collapse Help Coach"
+              >
+                <ChevronRight size={16} />
+              </button>
+              <div className="flex-1 px-1">
+                <div className="tar-pane-title flex items-center gap-1.5">
+                  <Sparkles size={13} className="text-[var(--tar-forest-mid)]" />
+                  Help Coach
+                </div>
+                <div className="tar-pane-sub">Private · not sent to student</div>
+              </div>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="tar-icon-btn mx-auto"
+              onClick={() => setCoachOpen(true)}
+              title="Expand Help Coach"
+              aria-label="Expand Help Coach"
+            >
+              <ChevronLeft size={16} />
+            </button>
           )}
+        </div>
 
-          <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-aui-deep/60">
-            Teaching draft (for professor curation)
-            <textarea
-              className="field-glass mt-1.5 min-h-40 w-full px-3 py-2.5 text-sm"
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-            />
-          </label>
-          <label className="mt-3 block text-xs font-semibold uppercase tracking-wide text-aui-deep/60">
-            Student hint (KB draft)
-            <textarea
-              className="field-glass mt-1.5 min-h-20 w-full px-3 py-2.5 text-sm"
-              value={hint}
-              onChange={(event) => setHint(event.target.value)}
-              placeholder="Student hint"
-            />
-          </label>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={busy}
-              className="btn-primary px-4 py-2 text-sm"
-              onClick={() => resolve("resolved")}
-            >
-              Done + send to professor curation
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              className="btn-ghost px-4 py-2 text-sm"
-              onClick={() => resolve("needs_professor")}
-            >
-              Needs professor
-            </button>
-          </div>
+        {coachOpen ? (
+          <div className="tar-scroll flex-1 space-y-4 px-3 py-3">
+            {!req ? (
+              <p className="tar-empty">Select an ask to load coaching.</p>
+            ) : (
+              <>
+                <section>
+                  <h2 className="tar-section-label">TA Strategy</h2>
+                  {coachBusy ? (
+                    <p className="mt-2 text-[12.5px] text-[var(--tar-mute)]">Loading coach…</p>
+                  ) : (
+                    <ul className="mt-2 space-y-2">
+                      {bullets.map((line) => (
+                        <li
+                          key={line}
+                          className="flex gap-2 text-[12.5px] leading-snug text-[var(--tar-ink)]"
+                        >
+                          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[var(--tar-forest-mid)]" />
+                          <span>{line}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
 
-          <div className="mt-5 rounded-xl border border-[#d7e0d9] p-3">
-            <p className="text-sm font-semibold text-aui-ink">Gold label this ask</p>
-            <p className="mt-1 text-xs text-aui-deep/70">
-              Staff judgment for evaluation — category + whether the Synthesizer
-              hint helped. This does not retrain the live student agent. Protocol:
-              one 45-minute TA lab, ≥40 asks, not a satisfaction survey.
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <select
-                className="field-glass px-3 py-2 text-xs"
-                value={goldCategory}
-                onChange={(event) => setGoldCategory(event.target.value)}
-              >
-                {[
-                  "conceptual_question",
-                  "exam_logistics",
-                  "retake_request",
-                  "accessibility_accommodation",
-                  "grading_dispute",
-                  "emotional_stress",
-                  "project_submission",
-                  "office_hours_access",
-                  "academic_integrity",
-                  "uncategorized",
-                ].map((value) => (
-                  <option key={value} value={value}>
-                    {value.replaceAll("_", " ")}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="field-glass px-3 py-2 text-xs"
-                value={goldHintUseful}
-                onChange={(event) => setGoldHintUseful(event.target.value)}
-              >
-                <option value="1">Hint was useful</option>
-                <option value="0">Hint was not useful</option>
-              </select>
-              <button
-                type="button"
-                disabled={goldBusy}
-                className="btn-ghost px-3 py-2 text-xs"
-                onClick={async () => {
-                  setGoldBusy(true);
-                  setError("");
-                  try {
-                    await api("/analytics/gold-labels", {
-                      method: "POST",
-                      token,
-                      body: {
-                        text: req.text,
-                        gold_category: goldCategory,
-                        gold_assigned_ta: req.assigned_ta || user.display_name,
-                        gold_hint_useful: Number(goldHintUseful),
-                        course_id: activeCourse.id,
-                        course_code: activeCourse.code,
-                        department: activeCourse.code.split(" ")[0],
-                        labeled_by: user.email,
-                        notes: `request #${req.id}`,
-                      },
-                    });
-                    setToast(`Gold label saved for #${req.id}`);
-                  } catch (err) {
-                    setError(err.message);
-                  } finally {
-                    setGoldBusy(false);
-                  }
-                }}
-              >
-                {goldBusy ? "Saving…" : "Save gold label"}
-              </button>
-            </div>
+                <section className="rounded-md border border-[var(--tar-line)] bg-[var(--tar-canvas)] p-3">
+                  <h2 className="tar-section-label">Socratic Prompt</h2>
+                  <p className="mt-2 text-[12.5px] leading-relaxed text-[var(--tar-ink)]">
+                    {prompt}
+                  </p>
+                  <button
+                    type="button"
+                    disabled={isHelped || !req}
+                    onClick={insertCoach}
+                    className="tar-btn-insert mt-3"
+                  >
+                    Insert into Reply
+                  </button>
+                </section>
+
+                <p className="px-0.5 text-[11px] leading-snug text-[var(--tar-mute)]">
+                  Coaching stays on this pane. The composer starts empty so you choose what
+                  the student sees.
+                </p>
+              </>
+            )}
           </div>
-        </section>
-      ) : (
-        <section className="td-panel">
-          <p className="td-panel-label">Working ask</p>
-          <h3>Select a row in Live Queue</h3>
-          <p>
-            Claim it, help with Help Coach, reply async — the student sees your
-            reply in My asks.
-          </p>
-        </section>
-      )}
+        ) : null}
       </aside>
-      </div>
+
+      {error ? (
+        <div className="tar-flash tar-flash-error" role="alert">
+          {error}
+        </div>
+      ) : null}
+      {toast ? <div className="tar-flash">{toast}</div> : null}
     </div>
   );
 }
