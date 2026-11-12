@@ -76,6 +76,23 @@ def test_claim_in_progress_helped_and_reply():
     assert claimed.json()["request"]["work_status"] == "claimed"
     assert claimed.json()["request"]["claimed_by"] == "Alice Chen"
 
+    released = client.post(
+        "/ta/work-status/",
+        headers=_auth(alice),
+        json={"request_id": rid, "status": "open"},
+    )
+    assert released.status_code == 200, released.text
+    assert released.json()["request"]["work_status"] == "open"
+    assert not released.json()["request"]["claimed_by"]
+    assert released.json()["request"]["claimed_by_user_id"] is None
+
+    reclaimed = client.post(
+        "/ta/claim/",
+        headers=_auth(alice),
+        json={"request_id": rid},
+    )
+    assert reclaimed.status_code == 200, reclaimed.text
+
     started = client.post(
         "/ta/work-status/",
         headers=_auth(alice),

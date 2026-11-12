@@ -143,10 +143,28 @@ const SECTION_NAV = {
       group: "Desk",
       items: [
         {
+          id: "dashboard",
+          label: "Dashboard",
+          icon: "dashboard",
+          to: "/",
+        },
+        {
           id: "queue",
           label: "Live Queue",
           icon: "queue",
+          to: "/ta",
           hint: "Claim, help, reply to students",
+        },
+        {
+          id: "courses",
+          label: "My Courses",
+          icon: "courses",
+          to: "/",
+        },
+        {
+          id: "inbox",
+          label: "Inbox",
+          icon: "requests",
         },
       ],
     },
@@ -258,11 +276,51 @@ function useStudentReplyCount(token, userId, course, pathname) {
   return count;
 }
 
+function useTaLiveCount(token, course) {
+  const [count, setCount] = useState(0);
+  const courseId = course?.role === "ta" ? course.id : null;
+
+  useEffect(() => {
+    if (!token || !courseId) {
+      setCount(0);
+      return undefined;
+    }
+    let cancelled = false;
+    function load() {
+      const params = new URLSearchParams({
+        course_id: String(courseId),
+        assignment: "all",
+        limit: "1",
+        offset: "0",
+      });
+      api(`/ta/queue/?${params.toString()}`, { token })
+        .then((data) => {
+          if (cancelled) return;
+          const meta = pageMeta(data);
+          const items = pageItems(data);
+          setCount(meta.total || items.length || 0);
+        })
+        .catch(() => {
+          if (!cancelled) setCount(0);
+        });
+    }
+    load();
+    const id = setInterval(load, 8000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [token, courseId]);
+
+  return count;
+}
+
 export default function AppShell() {
   const { user, token, activeCourse, setActiveCourse } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const replyCount = useStudentReplyCount(token, user?.id, activeCourse, location.pathname);
+  const taLiveCount = useTaLiveCount(token, activeCourse);
 
   const role = activeCourse?.role;
   const roleHome =
@@ -301,15 +359,52 @@ export default function AppShell() {
   }
 
   function renderNavItem(section) {
+    const badge =
+      section.id === "queue" && role === "ta" && taLiveCount > 0
+        ? taLiveCount
+        : section.badge;
+    const content = <NavItemContent section={{ ...section, badge }} />;
     if (section.to) {
       return (
         <NavLink
           key={section.id}
           to={section.to}
-          className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+          end={section.to === "/ta" || section.to === "/"}
+          className={({ isActive }) => {
+            // Live Queue owns /ta. Dashboard is active on course home; My Courses stays inactive.
+            let active = isActive;
+            if (section.id === "queue") {
+              active = location.pathname.startsWith("/ta");
+            } else if (section.id === "dashboard") {
+              active = location.pathname === "/";
+            } else if (section.id === "courses") {
+              active = false;
+            }
+            return `bh-nav-item${active ? " active" : ""}`;
+          }}
         >
-          <NavItemContent section={section} />
+          {content}
         </NavLink>
+      );
+    }
+    if (section.id === "inbox") {
+      return (
+        <button
+          key={section.id}
+          type="button"
+          className="bh-nav-item"
+          onClick={() => {
+            const buttons = document.querySelectorAll(".bh-sidebar-footer button");
+            for (const button of buttons) {
+              if ((button.textContent || "").includes("Inbox")) {
+                button.click();
+                break;
+              }
+            }
+          }}
+        >
+          {content}
+        </button>
       );
     }
     return (
@@ -319,7 +414,7 @@ export default function AppShell() {
         className="bh-nav-item"
         onClick={() => scrollToSection(section.id)}
       >
-        <NavItemContent section={section} />
+        {content}
       </button>
     );
   }
@@ -333,7 +428,11 @@ export default function AppShell() {
   }
 
   return (
-    <div className={`bh-frame${role === "student" ? " bh-frame-student" : ""}`}>
+    <div
+      className={`bh-frame${
+        role === "student" ? " bh-frame-student" : role === "ta" ? " bh-frame-ta" : ""
+      }`}
+    >
       <aside className="bh-sidebar">
         <div className="bh-logo">
           OfficeHours AI
@@ -386,6 +485,13 @@ export default function AppShell() {
                 </NavLink>
               </div>
             </>
+          ) : role === "ta" ? (
+            sections.map((group) => (
+              <div key={group.group} className="bh-nav-group">
+                <p className="bh-nav-label">{group.group}</p>
+                {group.items.map((section) => renderNavItem(section))}
+              </div>
+            ))
           ) : (
             <>
               <NavLink

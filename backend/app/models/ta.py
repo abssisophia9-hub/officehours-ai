@@ -11,7 +11,7 @@ from app.models.knowledge import KnowledgeEntryOut
 from app.models.request import RequestOut
 
 TaResolveStatus = Literal["resolved", "needs_professor"]
-TaWorkStatusUpdate = Literal["claimed", "in_progress", "helped"]
+TaWorkStatusUpdate = Literal["open", "claimed", "in_progress", "helped"]
 TaAssistMode = Literal[
     "draft_reply", "socratic", "refresh_teaching", "rewrite_reply"
 ]
