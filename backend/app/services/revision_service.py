@@ -321,6 +321,13 @@ def build_revision_plan(
     )
     ask_draft = _ask_draft(focus_topics, preference)
 
+    # One policy line per plan: mode + fallback reason only (no grades/names/scores/hits).
+    policy._log(
+        "answered" if mode == "agent" else "disabled",
+        None,
+        limit=f"{mode}:{fallback_reason or '-'}",
+    )
+
     return RevisionPlanOut(
         mode=mode,  # type: ignore[arg-type]
         mode_label=mode_label,
@@ -501,6 +508,16 @@ def _think(
             "rules",
             f"LLM gate: {gate}",
             {"called": False, "fallback_reason": gate},
+        )
+
+    # Same spend as Study Agent: record user/course windows or fall back.
+    spent = policy._WINDOWS.allow_all(policy._window_checks(user_id, course_id))
+    if spent is not None:
+        return (
+            _rule_think(observation),
+            "rules",
+            f"LLM gate: budget:{spent}",
+            {"called": False, "fallback_reason": f"budget:{spent}"},
         )
 
     try:

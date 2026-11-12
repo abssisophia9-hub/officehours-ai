@@ -467,3 +467,154 @@ def test_caps_hold_with_greedy_llm(monkeypatch):
     assert plan.caps["checked_links"] <= MAX_CHECKED_LINKS
     web = [r for r in plan.resources if r.url]
     assert len(web) <= MAX_CHECKED_LINKS
+
+
+def _arm_revision_llm(monkeypatch):
+    monkeypatch.setenv("OFFICEHOURS_LLM_ENABLED", "true")
+    monkeypatch.setenv("OFFICEHOURS_ALLOW_EXTERNAL_LLM", "true")
+    monkeypatch.setenv("OFFICEHOURS_DEMO", "true")
+    monkeypatch.setenv("OFFICEHOURS_LLM_PROVIDER", "gemini")
+    monkeypatch.setenv("OFFICEHOURS_GEMINI_FREE_TIER_ACK", "true")
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key-not-real")
+
+
+def _fill_window(user_id: int | None, course_id: int | None, *, times: int) -> None:
+    checks = agent_policy._window_checks(user_id, course_id)
+    for _ in range(times):
+        assert agent_policy._WINDOWS.allow_all(checks) is None
+
+
+def test_per_user_cap_falls_back_to_rules(monkeypatch):
+    headers, course_id = student_auth(client, "CSC 3374")
+    _arm_revision_llm(monkeypatch)
+    user_id = 9001
+    _fill_window(user_id, course_id, times=agent_policy.user_per_minute())
+
+    calls = {"n": 0}
+
+    def boom(*_a, **_k):
+        calls["n"] += 1
+        raise AssertionError("complete_gemini must not run when user window is full")
+
+    monkeypatch.setattr("app.services.revision_service.complete_gemini", boom)
+    monkeypatch.setattr(
+        "app.services.revision_service.article_search",
+        lambda *_a, **_k: [],
+    )
+
+    db = SessionLocal()
+    try:
+        plan = build_revision_plan(
+            db,
+            RevisionPlanRequest(**_plan_payload(course_id)),
+            user_id=user_id,
+        )
+    finally:
+        db.close()
+
+    assert calls["n"] == 0
+    assert plan.mode == "rule-based fallback"
+    assert "Planning mode: rule-based fallback" in plan.mode_label
+    assert any("user_per_minute" in (n or "") or "budget" in (n or "").lower() for n in plan.notes) or any(
+        "budget" in (step.note or "") for step in plan.iterations
+    )
+
+
+def test_per_course_cap_falls_back_to_rules(monkeypatch):
+    headers, course_id = student_auth(client, "CSC 3374")
+    _arm_revision_llm(monkeypatch)
+    user_id = 9002
+    # Fill only the course day window (leave per-user room empty by using a fresh user).
+    course_checks = [
+        check
+        for check in agent_policy._window_checks(user_id, course_id)
+        if check[0] == "course_per_day"
+    ]
+    assert course_checks
+    for _ in range(agent_policy.course_per_day()):
+        assert agent_policy._WINDOWS.allow_all(course_checks) is None
+
+    calls = {"n": 0}
+
+    def boom(*_a, **_k):
+        calls["n"] += 1
+        raise AssertionError("complete_gemini must not run when course window is full")
+
+    monkeypatch.setattr("app.services.revision_service.complete_gemini", boom)
+    monkeypatch.setattr(
+        "app.services.revision_service.article_search",
+        lambda *_a, **_k: [],
+    )
+
+    db = SessionLocal()
+    try:
+        plan = build_revision_plan(
+            db,
+            RevisionPlanRequest(**_plan_payload(course_id)),
+            user_id=user_id,
+        )
+    finally:
+        db.close()
+
+    assert calls["n"] == 0
+    assert plan.mode == "rule-based fallback"
+    assert "Planning mode: rule-based fallback" in plan.mode_label
+    assert any("course_per_day" in (n or "") or "budget" in (n or "").lower() for n in plan.notes) or any(
+        "course_per_day" in (step.note or "") or "budget" in (step.note or "") for step in plan.iterations
+    )
+
+
+def test_policy_log_modes_omit_grades_and_names(monkeypatch, caplog):
+    headers, course_id = student_auth(client, "CSC 3374")
+    monkeypatch.setattr(
+        "app.services.revision_service.article_search",
+        lambda *_a, **_k: [],
+    )
+    monkeypatch.setattr(
+        "app.services.revision_service.link_ok",
+        lambda *_a, **_k: False,
+    )
+
+    def _policy_lines():
+        return [
+            record.getMessage()
+            for record in caplog.records
+            if record.name == "officehours.agent_policy"
+        ]
+
+    with caplog.at_level("INFO", logger="officehours.agent_policy"):
+        # Rule-based fallback path (LLM off default).
+        fallback = client.post(
+            "/revision/plan",
+            headers=headers,
+            json=_plan_payload(course_id),
+        )
+        assert fallback.status_code == 200
+        assert fallback.json()["mode"] == "rule-based fallback"
+
+        # Agent path via injected thinker (no provider HTTP).
+        def think_fn(_obs):
+            return {"action": "stop", "query": None}
+
+        db = SessionLocal()
+        try:
+            agent_plan = build_revision_plan(
+                db,
+                RevisionPlanRequest(**_plan_payload(course_id)),
+                user_id=1,
+                think_fn=think_fn,
+            )
+        finally:
+            db.close()
+        assert agent_plan.mode == "agent"
+
+    lines = _policy_lines()
+    assert any("limit=rule-based fallback:" in line for line in lines)
+    assert any("limit=agent:" in line for line in lines)
+    blob = "\n".join(lines).lower()
+    assert "sara" not in blob
+    assert "youssef" not in blob
+    assert "student_name" not in blob
+    assert "score" not in blob
+    assert "62" not in blob
+    assert "red-black tree balancing" not in blob
