@@ -525,7 +525,7 @@ def test_errors_are_not_cached_and_the_pipeline_calls_the_checker_once(monkeypat
         invocations["n"] += 1
         return real(*args, **kwargs)
 
-    monkeypatch.setattr("app.ai.agent_policy.verify_course_answer", wrapped)
+    monkeypatch.setattr("app.ai.study_agent_layer.verify_course_answer", wrapped)
     client = ScriptedClient(["not json", _pass(), _yes()])
     first = []
     _ask(monkeypatch, client, [_hit()], records=first)
@@ -549,7 +549,7 @@ def test_non_transport_error_is_one_call(monkeypatch):
     assert response.answer == CHECK_MISS_ANSWER
 
 
-def test_pipeline_invokes_the_checker_once_when_transport_retries(monkeypatch):
+def test_outer_orchestrator_retries_a_transport_error(monkeypatch):
     import urllib.error
 
     from app.ai import claude_client
@@ -561,12 +561,12 @@ def test_pipeline_invokes_the_checker_once_when_transport_retries(monkeypatch):
         invocations["n"] += 1
         return real(*args, **kwargs)
 
-    monkeypatch.setattr("app.ai.agent_policy.verify_course_answer", wrapped)
-    client = ScriptedClient([urllib.error.URLError("down"), urllib.error.URLError("down"), _pass()])
+    monkeypatch.setattr("app.ai.study_agent_layer.verify_course_answer", wrapped)
+    client = ScriptedClient([urllib.error.URLError("down"), _pass(), _yes()])
     response = _ask(monkeypatch, client, [_hit()])
-    assert invocations["n"] == 1
-    assert len(client.calls) == 2
-    assert response.answer == CHECK_MISS_ANSWER
+    assert invocations["n"] == 2
+    assert len(client.calls) == 3
+    assert "based on notes.pdf, p.3 approved by the professor" in response.answer
 
 
 def test_closed_outcome_set(monkeypatch):

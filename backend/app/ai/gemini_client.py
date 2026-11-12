@@ -32,8 +32,7 @@ DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite"
 def gemini_model() -> str:
     return os.getenv("GEMINI_MODEL", DEFAULT_GEMINI_MODEL).strip() or DEFAULT_GEMINI_MODEL
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-RATE_LIMIT_ATTEMPTS = 3
-RATE_LIMIT_BACKOFF_SECONDS = (1.0, 2.0)
+RATE_LIMIT_ATTEMPTS = 1
 
 # Response contract shared with the Claude check. Nullable fields use the
 # JSON Schema form the generateContent REST examples accept.
@@ -182,11 +181,10 @@ def complete_gemini(
     timeout: float = 10,
     schema: dict | None = None,
 ) -> GeminiCompletion:
-    """One generateContent call. 429/503 are retried inside this function.
+    """Make one generateContent call.
 
-    A daily quota is not retried. Exhausted retries raise
-    ``RateLimitExhausted``, which is not a ``URLError``, so the outer gate
-    does not retry them again. Timeouts and other transport errors propagate.
+    The orchestration wrapper owns retries and backoff. This provider adapter
+    only classifies retryable rate-limit responses.
     """
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
     if not api_key:
@@ -215,39 +213,21 @@ def complete_gemini(
         "x-goog-api-key": api_key,
     }
 
-    for attempt in range(1, RATE_LIMIT_ATTEMPTS + 1):
-        _throttle()
-        request = urllib.request.Request(url, data=data, headers=headers, method="POST")
-        started = time.perf_counter()
-        try:
-            with urllib.request.urlopen(request, timeout=timeout) as response:
-                raw = response.read()
-        except urllib.error.HTTPError as exc:
-            status = getattr(exc, "code", None)
-            body = _error_body(exc)
-            if status == 429 and _is_daily_quota(body):
-                logger.warning("answer_check daily_quota provider=gemini")
-                raise DailyQuotaError("daily_quota") from None
-            if status in {429, 503} and attempt < RATE_LIMIT_ATTEMPTS:
-                logger.warning(
-                    "answer_check retry status=%s attempt=%s provider=gemini",
-                    status,
-                    attempt,
-                )
-                time.sleep(RATE_LIMIT_BACKOFF_SECONDS[attempt - 1])
-                continue
-            if status in {429, 503}:
-                logger.warning(
-                    "answer_check rate_limit_exhausted provider=gemini attempts=%s",
-                    RATE_LIMIT_ATTEMPTS,
-                )
-                raise RateLimitExhausted("rate_limit_exhausted") from None
-            raise
-        latency_ms = (time.perf_counter() - started) * 1000
-        return _completion_from_body(raw, model, latency_ms)
-
-    logger.warning(
-        "answer_check rate_limit_exhausted provider=gemini attempts=%s",
-        RATE_LIMIT_ATTEMPTS,
-    )
-    raise RateLimitExhausted("rate_limit_exhausted")
+    _throttle()
+    request = urllib.request.Request(url, data=data, headers=headers, method="POST")
+    started = time.perf_counter()
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except urllib.error.HTTPError as exc:
+        status = getattr(exc, "code", None)
+        body = _error_body(exc)
+        if status == 429 and _is_daily_quota(body):
+            logger.warning("answer_check daily_quota provider=gemini")
+            raise DailyQuotaError("daily_quota") from None
+        if status in {429, 503}:
+            logger.warning("answer_check retryable status=%s provider=gemini", status)
+            raise RateLimitExhausted("rate_limit_exhausted") from None
+        raise
+    latency_ms = (time.perf_counter() - started) * 1000
+    return _completion_from_body(raw, model, latency_ms)

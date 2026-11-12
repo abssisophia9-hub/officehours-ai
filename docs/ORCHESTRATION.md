@@ -1,21 +1,19 @@
 # Study-agent orchestration
 
-This note describes the policy pipeline on this branch (`main` at the commit
-that merged pull request 121). It sits between local retrieval and the single
-model call. The numbers below were read from the modules named in each row.
-The rationale column is the reason written in `docs/AGENT_POLICY.md`, not a
-new measurement.
+This note describes the current policy pipeline. The numbers below were read
+from the modules named in each row. The rationale column is the reason written
+in `docs/AGENT_POLICY.md`, not a new measurement.
 
 ## Purpose
 
-`run_study_agent` in `backend/app/ai/agent_policy.py` is the only study-agent
-entry. `answer_from_knowledge_base` in `backend/app/services/kb_agent_service.py`
-calls it. The model does not choose search, the staff form, or busy. It
-retrieves approved course material, applies a fixed cutoff and a fixed set
-of guards, then runs a quote check. A pass takes one entailment verdict. A
-no may take one recovery (reformulate, widen, narrow, or abstain) inside a
-cap of three attempts. An answer is returned only when retrieval, the quote,
-and entailment all pass.
+`run_study_agent` in `backend/app/ai/agent_policy.py` is the outer
+orchestration wrapper. It owns the execution loop, maximum attempts, provider
+timeouts, transport retries, state, session history, budgets, cache, breaker,
+and final outcomes. `decide_next_action` in
+`backend/app/ai/study_agent_layer.py` is the inner Agent Layer. It receives one
+immutable state snapshot, performs one model-driven decision, and returns
+`call_tool`, `return_answer`, or `halt`. It has no loop, retry counter, budget,
+or timeout policy.
 
 Retrieval is local. The quote check, the entailment verdict, and recovery,
 when they are allowed to run, use Gemini or Claude. The quote check is
@@ -32,7 +30,7 @@ when they are allowed to run, use Gemini or Claude. The quote check is
 7. If the global call cap, the global token cap, a sliding window, or the input-token estimate blocks the call, return busy. The cache is not consulted.
 8. If the cache holds this question and these chunks, return the stored decision and do not call the model.
 9. Record the per-user and per-course windows together. If one is full, record none and return busy.
-10. Call `verify_course_answer` once for this attempt. Inside that call, a `TimeoutError` or `urllib.error.URLError` is tried a second time (`ANSWER_CHECK_ATTEMPTS` is 2). Entailment and recovery do not retry.
+10. The outer wrapper invokes one Agent Layer step. A `TimeoutError`, `urllib.error.URLError`, or retryable provider limit may be attempted again by the wrapper, up to `OFFICEHOURS_ORCHESTRATION_RETRY_ATTEMPTS`. The Agent Layer and provider adapters make one call and never retry themselves.
 11. A quote-check refusal, a failed check, or an over-long answer becomes the check-miss text. The retrieval draft is not used, and entailment is not called.
 12. A quote-check pass within the answer-length cap takes one entailment call. `supports: true` becomes the checked answer and is cached. `supports: false` may ask for one recovery if an attempt remains under `OFFICEHOURS_AGENT_MAX_ATTEMPTS` (2 or 3, default 3). Reformulate searches again with the new query. Widen raises `top_k` by 2, capped at 6. Narrow sets `top_k` to 1. The 0.42 cutoff stays. Abstain returns `This isn't covered in the course materials.` Invalid entailment or an invalid recovery fails closed. A weak re-search returns the staff form.
 
@@ -119,7 +117,8 @@ the reason in `docs/AGENT_POLICY.md`.
 | Search include threshold | none. Constant `DEFAULT_SEARCH_THRESHOLD` | 0.35 | Hits between 0.35 and 0.42 can be retrieved and are still staffed by the 0.42 rule. | `search_approved_entries` |
 | Prompt version | none. Constant `PROMPT_VERSION` | `study-answer-check-v1` | Cache identity, with `GATE_VERSION` `study-entailment-v1+recovery-v1`. | `_cache_key` |
 | Attempt cap | `OFFICEHOURS_AGENT_MAX_ATTEMPTS` | 3, clamped to 2 or 3 | Quote-check attempts on one question. Recovery runs only after entailment says no, and not on the last attempt. | `agent_max_attempts` |
-| Checker attempts | none. Constant `ANSWER_CHECK_ATTEMPTS` | 2 | One retry for a dropped connection inside the quote check. Entailment and recovery are one call each. | `verify_course_answer` |
+| Orchestration retry attempts | `OFFICEHOURS_ORCHESTRATION_RETRY_ATTEMPTS` | 2, capped at 3 | One outer-wrapper retry for a transient transport or provider-limit failure. | `_invoke_agent_step` |
+| Agent-layer attempts | none. Constant `ANSWER_CHECK_ATTEMPTS` | 1 | The inner layer performs exactly one model call per invocation. | `verify_course_answer` |
 | Gemini model | `GEMINI_MODEL` | `gemini-3.5-flash-lite` | Provider default in `gemini_client.py`. | `gemini_model` |
 | External flag | `OFFICEHOURS_ALLOW_EXTERNAL_LLM` | unset, treated as off | A call needs an explicit flag. | `_model_calls_allowed`; `_external_llm_allowed` |
 | Demo mode | `OFFICEHOURS_DEMO` | unset, treated as off | Course text is not sent outside demo mode. | `demo_mode`; `verify_course_answer` |

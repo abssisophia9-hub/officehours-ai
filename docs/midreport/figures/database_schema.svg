@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560">
+<defs>
+  <marker id="solid_arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L9,3 z" fill="#0f766e"/>
+  </marker>
+  <marker id="dashed_arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L9,3 z" fill="#c2410c"/>
+  </marker>
+</defs>
+<style>
+  text{font-family:Arial,sans-serif;fill:#172033}
+  .title{font-size:21px;font-weight:700}
+  .subtitle{font-size:14px;fill:#475569}
+  .table_name{font-size:17px;font-weight:700;fill:#fff}
+  .column{font-size:14px;fill:#172033}
+  .box{fill:#fff;stroke:#2563eb;stroke-width:1.7}
+  .header{fill:#1d4ed8}
+  .solid{fill:none;stroke:#0f766e;stroke-width:2.3;marker-end:url(#solid_arrow)}
+  .dashed{fill:none;stroke:#c2410c;stroke-width:2.3;stroke-dasharray:8 6;marker-end:url(#dashed_arrow)}
+</style>
+<rect width="100%" height="100%" fill="#fff"/>
+<text class="title" x="22" y="31">Core SQL DDL schema</text>
+<text class="subtitle" x="22" y="55">Solid green = declared FOREIGN KEY. Dashed orange = logical link stored as plain INTEGER.</text>
+
+<!-- Relationship lines are drawn first so table boxes remain unobstructed. -->
+<path class="solid" d="M140 326 V246"/>
+<path class="solid" d="M348 326 C330 286 235 274 205 246"/>
+<path class="solid" d="M432 326 C438 288 478 275 500 246"/>
+<path class="dashed" d="M630 326 C620 286 548 274 530 246"/>
+<path class="dashed" d="M862 326 C840 270 620 265 560 246"/>
+
+<!-- users -->
+<rect class="box" x="30" y="80" width="220" height="166" rx="8"/>
+<path class="header" d="M38 80 H242 Q250 80 250 88 V112 H30 V88 Q30 80 38 80"/>
+<text class="table_name" x="45" y="103">users</text>
+<text class="column" x="45" y="134">id  PK</text>
+<text class="column" x="45" y="155">email  UNIQUE</text>
+<text class="column" x="45" y="176">password_hash</text>
+<text class="column" x="45" y="197">display_name</text>
+<text class="column" x="45" y="218">student_id ; is_active</text>
+
+<!-- courses -->
+<rect class="box" x="390" y="80" width="220" height="166" rx="8"/>
+<path class="header" d="M398 80 H602 Q610 80 610 88 V112 H390 V88 Q390 80 398 80"/>
+<text class="table_name" x="405" y="103">courses</text>
+<text class="column" x="405" y="134">id  PK</text>
+<text class="column" x="405" y="155">code ; title ; term</text>
+<text class="column" x="405" y="176">canvas_course_id</text>
+<text class="column" x="405" y="197">is_active</text>
+<text class="column" x="405" y="218">created_at</text>
+
+<!-- ta_roster -->
+<rect class="box" x="750" y="80" width="220" height="166" rx="8"/>
+<path class="header" d="M758 80 H962 Q970 80 970 88 V112 H750 V88 Q750 80 758 80"/>
+<text class="table_name" x="765" y="103">ta_roster</text>
+<text class="column" x="765" y="134">id  PK</text>
+<text class="column" x="765" y="155">name  UNIQUE</text>
+<text class="column" x="765" y="176">expertise_tags</text>
+<text class="column" x="765" y="197">queue_depth ; is_available</text>
+<text class="column" x="765" y="218">created_at</text>
+
+<!-- auth_sessions -->
+<rect class="box" x="30" y="326" width="220" height="170" rx="8"/>
+<path class="header" d="M38 326 H242 Q250 326 250 334 V358 H30 V334 Q30 326 38 326"/>
+<text class="table_name" x="45" y="349">auth_sessions</text>
+<text class="column" x="45" y="380">id  PK</text>
+<text class="column" x="45" y="401">token  UNIQUE</text>
+<text class="column" x="45" y="422">user_id  FK</text>
+<text class="column" x="45" y="443">created_at</text>
+<text class="column" x="45" y="464">expires_at</text>
+
+<!-- course_memberships -->
+<rect class="box" x="280" y="326" width="220" height="170" rx="8"/>
+<path class="header" d="M288 326 H492 Q500 326 500 334 V358 H280 V334 Q280 326 288 326"/>
+<text class="table_name" x="295" y="349">course_memberships</text>
+<text class="column" x="295" y="380">id  PK</text>
+<text class="column" x="295" y="401">course_id  FK</text>
+<text class="column" x="295" y="422">user_id  FK</text>
+<text class="column" x="295" y="443">role ; created_at</text>
+<text class="column" x="295" y="464">UNIQUE(course_id, user_id)</text>
+
+<!-- requests -->
+<rect class="box" x="530" y="326" width="210" height="170" rx="8"/>
+<path class="header" d="M538 326 H732 Q740 326 740 334 V358 H530 V334 Q530 326 538 326"/>
+<text class="table_name" x="545" y="349">requests</text>
+<text class="column" x="545" y="380">id  PK ; text ; anonymous</text>
+<text class="column" x="545" y="401">help_mode ; category</text>
+<text class="column" x="545" y="422">course_id  INTEGER</text>
+<text class="column" x="545" y="443">student_id ; student_name</text>
+<text class="column" x="545" y="464">created_at</text>
+
+<!-- knowledge_entries -->
+<rect class="box" x="760" y="326" width="210" height="170" rx="8"/>
+<path class="header" d="M768 326 H962 Q970 326 970 334 V358 H760 V334 Q760 326 768 326"/>
+<text class="table_name" x="775" y="349">knowledge_entries</text>
+<text class="column" x="775" y="380">id  PK ; status</text>
+<text class="column" x="775" y="401">question_text ; answer_draft</text>
+<text class="column" x="775" y="422">course_id  INTEGER</text>
+<text class="column" x="775" y="443">source_request_id  INTEGER</text>
+<text class="column" x="775" y="464">created_at ; updated_at</text>
+
+<text class="subtitle" x="30" y="535">Exactly three FK constraints: membership -&gt; user, membership -&gt; course, and auth session -&gt; user.</text>
+</svg>

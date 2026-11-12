@@ -30,7 +30,7 @@ logger = logging.getLogger("officehours.answer_check")
 
 ANSWER_CHECK_MAX_TOKENS = 400
 ANSWER_CHECK_TIMEOUT_SECONDS = 10
-ANSWER_CHECK_ATTEMPTS = 2
+ANSWER_CHECK_ATTEMPTS = 1
 ANSWER_CHECK_PROMPT_VERSION = "study-answer-check-v1"
 
 _ack_warned = False
@@ -269,6 +269,7 @@ def verify_course_answer(
     client: AnswerCheckClient | None = None,
     *,
     emit_log: bool = True,
+    session_history: list[dict[str, Any]] | None = None,
 ) -> AnswerCheckResult:
     """Ask whether one of the chunks answers the question.
 
@@ -276,8 +277,8 @@ def verify_course_answer(
     and a provider is selected. An injected ``client`` skips provider selection
     so tests can exercise the shared quote check. Invalid output, a quote that
     is not in the cited chunk, an unknown chunk id, and transport errors all
-    fail closed. Transport errors are retried once. Gemini 429/503 retries
-    happen inside that client and then fail closed.
+    fail closed. This function performs one provider call; the orchestration
+    wrapper owns all retry decisions.
     """
     if not _external_llm_allowed():
         return AnswerCheckResult(outcome="flag_off", called=False)
@@ -301,74 +302,68 @@ def verify_course_answer(
 
     material = _material_chunks(chunks)
     by_id = {chunk["chunk_id"]: chunk for chunk in material}
-    user = json.dumps({"question": question, "chunks": material}, ensure_ascii=False)
+    payload: dict[str, Any] = {"question": question, "chunks": material}
+    if session_history:
+        payload["session_history"] = session_history[-20:]
+    user = json.dumps(payload, ensure_ascii=False)
     model = None
     input_tokens = 0
     output_tokens = 0
     latency_ms = 0.0
 
-    completion = None
-    for attempt in range(1, ANSWER_CHECK_ATTEMPTS + 1):
-        started = time.perf_counter()
-        try:
-            completion = active.complete(system=ANSWER_CHECK_SYSTEM, user=user)
-        except (TimeoutError, urllib.error.URLError) as exc:
-            latency_ms += (time.perf_counter() - started) * 1000
-            error_type = type(exc).__name__
-            logger.warning(
-                "answer_check transport_error error_type=%s attempt=%s",
-                error_type,
-                attempt,
-            )
-            if attempt >= ANSWER_CHECK_ATTEMPTS:
-                return _fail(
-                    "api_error",
-                    error_type=error_type,
-                    model=model,
-                    input_tokens=input_tokens,
-                    output_tokens=output_tokens,
-                    latency_ms=latency_ms,
-                    log=emit_log,
-                )
-            continue
-        except DailyQuotaError:
-            latency_ms += (time.perf_counter() - started) * 1000
-            return _fail(
-                "daily_quota",
-                error_type="daily_quota",
-                model=model,
-                input_tokens=input_tokens,
-                output_tokens=output_tokens,
-                latency_ms=latency_ms,
-                log=emit_log,
-            )
-        except RateLimitExhausted:
-            latency_ms += (time.perf_counter() - started) * 1000
-            return _fail(
-                "rate_limited",
-                error_type="rate_limited",
-                model=model,
-                input_tokens=input_tokens,
-                output_tokens=output_tokens,
-                latency_ms=latency_ms,
-                log=emit_log,
-            )
-        except Exception as exc:
-            latency_ms += (time.perf_counter() - started) * 1000
-            return _fail(
-                "api_error",
-                error_type=type(exc).__name__,
-                model=model,
-                input_tokens=input_tokens,
-                output_tokens=output_tokens,
-                latency_ms=latency_ms,
-                log=emit_log,
-            )
-        model = getattr(completion, "model", None)
-        input_tokens += int(getattr(completion, "input_tokens", 0) or 0)
-        output_tokens += int(getattr(completion, "output_tokens", 0) or 0)
-        latency_ms += float(getattr(completion, "latency_ms", 0) or 0)
-        break
+    started = time.perf_counter()
+    try:
+        completion = active.complete(system=ANSWER_CHECK_SYSTEM, user=user)
+    except (TimeoutError, urllib.error.URLError) as exc:
+        latency_ms += (time.perf_counter() - started) * 1000
+        error_type = type(exc).__name__
+        logger.warning("answer_check transport_error error_type=%s", error_type)
+        return _fail(
+            "api_error",
+            error_type=error_type,
+            model=model,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            latency_ms=latency_ms,
+            log=emit_log,
+        )
+    except DailyQuotaError:
+        latency_ms += (time.perf_counter() - started) * 1000
+        return _fail(
+            "daily_quota",
+            error_type="daily_quota",
+            model=model,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            latency_ms=latency_ms,
+            log=emit_log,
+        )
+    except RateLimitExhausted:
+        latency_ms += (time.perf_counter() - started) * 1000
+        return _fail(
+            "rate_limited",
+            error_type="rate_limited",
+            model=model,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            latency_ms=latency_ms,
+            log=emit_log,
+        )
+    except Exception as exc:
+        latency_ms += (time.perf_counter() - started) * 1000
+        return _fail(
+            "api_error",
+            error_type=type(exc).__name__,
+            model=model,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            latency_ms=latency_ms,
+            log=emit_log,
+        )
+    model = getattr(completion, "model", None)
+    input_tokens += int(getattr(completion, "input_tokens", 0) or 0)
+    output_tokens += int(getattr(completion, "output_tokens", 0) or 0)
+    latency_ms += float(getattr(completion, "latency_ms", 0) or 0)
 
     raw = getattr(completion, "text", "")
     try:

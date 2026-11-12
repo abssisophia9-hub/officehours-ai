@@ -33,6 +33,7 @@ from app.models import notification as _notification_model  # noqa: F401
 from app.models import study_conversation as _study_conversation_model  # noqa: F401
 from app.realtime.hub import set_main_loop
 from app.routes.actions import router as actions_router
+from app.routes.academic_support import router as academic_support_router
 from app.routes.auth import courses_router, router as auth_router
 from app.routes.canvas import router as canvas_router
 from app.routes.lti import router as lti_router
@@ -210,6 +211,7 @@ def health_check():
 
 app.include_router(auth_router)
 app.include_router(courses_router)
+app.include_router(academic_support_router)
 app.include_router(requests_router)
 app.include_router(actions_router)
 app.include_router(office_hours_router)

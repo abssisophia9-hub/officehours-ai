@@ -1,7 +1,14 @@
 # Study agent policy
 
 The study agent has one entry point, `run_study_agent` in
-`backend/app/ai/agent_policy.py`. The pipeline is closed:
+`backend/app/ai/agent_policy.py`. That function is the outer orchestration
+wrapper: it owns loops, attempt limits, timeouts, retries, state, session
+history and budgets. The inner `decide_next_action` function in
+`backend/app/ai/study_agent_layer.py` makes exactly one model-driven decision
+from an immutable state snapshot and returns `call_tool`, `return_answer`, or
+`halt`. It owns no loop, retry counter, timeout, budget, or persistence.
+
+The pipeline is closed:
 
 1. Validate the question.
 2. Retrieve with the existing search (same arguments, same 0.42 cutoff, same filters).
@@ -17,10 +24,10 @@ search, the staff form, or busy. It chooses only inside the quote check
 (accept or refuse), the entailment verdict (yes or no), and, after a no,
 one recovery action.
 
-A dropped connection (`TimeoutError` or `URLError`) is retried once inside
-the quote check only. Entailment and recovery are one call each, with no
-retry. Invalid JSON, a bad quote, an unknown chunk, and any other error
-fail closed and do not start a recovery.
+A dropped connection (`TimeoutError` or `URLError`) and a retryable provider
+limit are retried by the outer wrapper only. The inner Agent Layer and each
+provider adapter make one call per invocation. Invalid JSON, a bad quote, an
+unknown chunk, and any other error fail closed and do not start a recovery.
 
 ## Outcomes
 
@@ -72,6 +79,7 @@ applies when `course_id` is set.
 | `OFFICEHOURS_LLM_MAX_QUESTION_CHARS` | 2000 | Question longer than this, and the kill switch is on | A study question, not a pasted chapter. The HTTP schema still allows 4000 characters so the request is not rejected at the door; past 2000 the model is not asked. |
 | `OFFICEHOURS_LLM_MAX_CHUNKS` | 3 | Only the first N retrieved chunks are sent on the first attempt | The quote check cites one chunk. Three is the existing top-k. A recovery widen may raise the later attempt to 6, which is the ceiling. |
 | `OFFICEHOURS_AGENT_MAX_ATTEMPTS` | 3 | Quote-check attempts on one student question | Clamped to 2 or 3. Each attempt is one quote check. Entailment runs only after a pass. Recovery runs only after entailment says no, and not on the last attempt. |
+| `OFFICEHOURS_ORCHESTRATION_RETRY_ATTEMPTS` | 2 | Transient provider attempts for one Agent Layer step | Capped at 3 and enforced only by the outer wrapper. |
 | `OFFICEHOURS_LLM_MAX_INPUT_TOKENS` | 3000 | Estimated input (system prompt + JSON of the question and chunks, characters ÷ 4) is larger | Three course chunks are capped at about 900 characters each. With the question and the system prompt that lands near 1,500 tokens. 3,000 leaves headroom and still refuses a pathological paste. |
 | `OFFICEHOURS_LLM_MAX_OUTPUT_TOKENS` | 400 | Passed to the provider as `maxOutputTokens` | The reply is one small JSON object: a short answer, one quote, one chunk id. 400 is the existing check budget. |
 | `OFFICEHOURS_LLM_MAX_ANSWER_CHARS` | 600 | A passing answer longer than this fails closed (`answer_too_long`) | The student-facing answer is a sentence or two plus a quote that was checked. A longer body was not validated line by line, so it is refused rather than truncated. |

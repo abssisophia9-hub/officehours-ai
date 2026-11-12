@@ -1,32 +1,98 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="880" height="460" viewBox="0 0 880 460">
-<style>text{font-family:Georgia,serif;fill:#1c1917} .small{font-size:12px} .title{font-size:18px}</style>
-<rect width="100%" height="100%" fill="#faf7f2"/>
-<text class="title" x="24" y="32">Study-agent architecture</text>
-<text class="small" x="24" y="52">Read from backend/app/ai/agent_policy.py, kb_agent_service.py, and gemini_client.py. Not measured.</text>
-<g stroke="#44403c" stroke-width="1.2" fill="#fff">
-<rect x="40" y="80" width="250" height="70" rx="8"/>
-<rect x="40" y="180" width="250" height="70" rx="8"/>
-<rect x="340" y="80" width="250" height="70" rx="8"/>
-<rect x="340" y="180" width="250" height="90" rx="8"/>
-<rect x="640" y="80" width="200" height="70" rx="8"/>
-<rect x="640" y="180" width="200" height="90" rx="8"/>
-<rect x="340" y="320" width="250" height="80" rx="8"/>
-<rect x="640" y="320" width="200" height="80" rx="8"/>
-</g>
-<text x="54" y="108" font-size="15">Professor upload</text>
-<text class="small" x="54" y="130">Stamp approved or rejected</text>
-<text x="54" y="208" font-size="15">Approved course chunks</text>
-<text class="small" x="54" y="230">course_id, file, page, text</text>
-<text x="354" y="108" font-size="15">Student question</text>
-<text class="small" x="354" y="130">POST /agent/ask</text>
-<text x="354" y="208" font-size="15">run_study_agent</text>
-<text class="small" x="354" y="230">Local search, then one gate</text>
-<text x="654" y="108" font-size="15">Search</text>
-<text class="small" x="654" y="130">Include threshold 0.35</text>
-<text x="654" y="208" font-size="15">verify_course_answer</text>
-<text class="small" x="654" y="230">Gemini or Claude, at most once</text>
-<text x="354" y="348" font-size="15">API answer</text>
-<text class="small" x="354" y="370">Checked, miss, staff, busy, or draft</text>
-<text x="654" y="348" font-size="15">Study Agent page</text>
-<text class="small" x="654" y="370">Misses share one sentence</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="650" viewBox="0 0 1100 650">
+<defs>
+  <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L9,3 z" fill="#334155"/>
+  </marker>
+</defs>
+<style>
+  text{font-family:Arial,sans-serif;fill:#172033}
+  .title{font-size:22px;font-weight:700}
+  .subtitle{font-size:14px;fill:#475569}
+  .label{font-size:17px;font-weight:700}
+  .small{font-size:13px;fill:#334155}
+  .tiny{font-size:12px;fill:#334155}
+  .module{fill:#f8fafc;stroke:#2563eb;stroke-width:1.7}
+  .database{fill:#ecfdf5;stroke:#0f766e;stroke-width:1.8}
+  .external{fill:#fff7ed;stroke:#c2410c;stroke-width:1.7;stroke-dasharray:7 5}
+  .boundary{fill:#f8fafc;stroke:#0f766e;stroke-width:2}
+  .outer{fill:#eff6ff;stroke:#1d4ed8;stroke-width:2}
+  .inner{fill:#dbeafe;stroke:#1d4ed8;stroke-width:1.7}
+  .arrow{stroke:#334155;stroke-width:1.5;fill:none;marker-end:url(#arrow)}
+  .sql{stroke:#0f766e;stroke-width:1.7;fill:none;marker-end:url(#arrow)}
+  .bridge{stroke:#fff;stroke-width:6;fill:none}
+</style>
+<rect width="100%" height="100%" fill="#fff"/>
+<text class="title" x="24" y="34">OfficeHours AI - modular monolith with explicit module interfaces</text>
+<text class="subtitle" x="24" y="58">One backend deployable; frontend routes and SQLAlchemy sessions enter each module directly.</text>
+
+<rect class="external" x="20" y="128" width="175" height="100" rx="10"/>
+<text class="label" x="108" y="157" text-anchor="middle">Canvas LMS</text>
+<text class="small" x="108" y="182" text-anchor="middle">External resource</text>
+<text class="small" x="108" y="207" text-anchor="middle">LTI + course APIs</text>
+
+<rect class="boundary" x="230" y="80" width="650" height="535" rx="16"/>
+<text class="label" x="252" y="110">OFFICEHOURS AI SYSTEM BOUNDARY</text>
+
+<rect class="module" x="260" y="128" width="590" height="64" rx="9"/>
+<text class="label" x="555" y="154" text-anchor="middle">React multi-role application</text>
+<text class="small" x="555" y="178" text-anchor="middle">direct HTTPS/JSON dispatch to Identity, Academic Support, and Knowledge</text>
+
+<rect class="module" x="260" y="230" width="170" height="88" rx="9"/>
+<text class="label" x="345" y="256" text-anchor="middle">Identity</text>
+<text class="small" x="345" y="280" text-anchor="middle">auth + session checks</text>
+<text class="tiny" x="345" y="302" text-anchor="middle">/auth/* and /courses/*</text>
+
+<rect class="module" x="470" y="230" width="170" height="88" rx="9"/>
+<text class="label" x="555" y="256" text-anchor="middle">Academic Support</text>
+<text class="small" x="555" y="280" text-anchor="middle">student chat + Rooms</text>
+<text class="tiny" x="555" y="302" text-anchor="middle">/academic-support/*</text>
+
+<rect class="module" x="680" y="230" width="170" height="88" rx="9"/>
+<text class="label" x="765" y="256" text-anchor="middle">Knowledge</text>
+<text class="small" x="765" y="280" text-anchor="middle">upload + approve + retrieve</text>
+<text class="tiny" x="765" y="302" text-anchor="middle">/knowledge/*</text>
+
+<rect class="database" x="260" y="535" width="590" height="65" rx="10"/>
+<text class="label" x="555" y="561" text-anchor="middle">SQLAlchemy persistence - direct module-owned read/write</text>
+<text class="tiny" x="555" y="585" text-anchor="middle">Identity schema | Academic Support schema | Knowledge schema | SQLite / Postgres</text>
+
+<rect class="outer" x="515" y="350" width="300" height="170" rx="11"/>
+<text class="label" x="665" y="378" text-anchor="middle">Orchestration Layer (outer wrapper)</text>
+<text class="small" x="665" y="402" text-anchor="middle">execution loop + max iterations + timeouts</text>
+<text class="small" x="665" y="423" text-anchor="middle">retries + state + session history + budget cuts</text>
+
+<rect class="inner" x="540" y="440" width="250" height="70" rx="9"/>
+<text class="label" x="665" y="466" text-anchor="middle">Agent Layer (inner module)</text>
+<text class="small" x="665" y="487" text-anchor="middle">one model reasoning step</text>
+<text class="tiny" x="665" y="504" text-anchor="middle">call tool | return answer | halt</text>
+
+<rect class="external" x="920" y="435" width="160" height="120" rx="10"/>
+<text class="label" x="1000" y="465" text-anchor="middle">Model provider</text>
+<text class="small" x="1000" y="490" text-anchor="middle">Gemini or Claude</text>
+<text class="small" x="1000" y="515" text-anchor="middle">HTTPS/JSON</text>
+<text class="tiny" x="1000" y="538" text-anchor="middle">one call per agent step</text>
+
+<path class="arrow" d="M195 156 H260"/>
+<text class="tiny" x="228" y="145" text-anchor="middle">LTI launch</text>
+<path class="arrow" d="M260 207 H195"/>
+<text class="tiny" x="228" y="225" text-anchor="middle">course sync</text>
+
+<path class="arrow" d="M345 192 V230"/>
+<path class="arrow" d="M555 192 V230"/>
+<path class="arrow" d="M765 192 V230"/>
+
+<path class="sql" d="M345 318 V535"/>
+<path class="sql" d="M490 318 V535"/>
+<path class="sql" d="M830 318 V535"/>
+<text class="tiny" x="274" y="340">SQL read/write</text>
+<text class="tiny" x="414" y="340">SQL read/write</text>
+<text class="tiny" x="758" y="340">SQL read/write</text>
+
+<path class="arrow" d="M570 318 V350"/>
+<text class="tiny" x="580" y="340">chat turn</text>
+<path class="bridge" d="M815 475 H920"/>
+<path class="arrow" d="M815 475 H920"/>
+<text class="tiny" x="868" y="462" text-anchor="middle">one decision</text>
+<path class="arrow" d="M665 423 V440"/>
+<text class="tiny" x="677" y="437">invoke</text>
 </svg>
