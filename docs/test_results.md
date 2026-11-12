@@ -59,6 +59,12 @@ Full module list: `test_actions`, `test_agent_metrics`, `test_agent_policy`, `te
 Source: `/cursor/stores/self/docs/task-a-canvas-study-evidence.md`  
 Course: FA26-CSC430701 Agile Software Engineering and DevO (Canvas id `16517`); 10/16 files synced → 120 chunks stamped approved.
 
+### How Task a sync actually ran
+
+- **Live Canvas API**, not local fixtures: smoke used settings `CANVAS_BASE_URL` + `CANVAS_API_TOKEN` (from `backend/.env` via pydantic-settings). `list_canvas_files_by_id` pulled real modules/files for Canvas course `16517`, then `ingest_course_material` wrote KB rows.
+- **Approval was smoke bulk stamp**, not the professor UI: pending rows were approved with repeated `update_entry(..., KnowledgeEntryUpdate(status="approved"))` in the smoke script — **not** `PATCH` from the professor Material UI and **not** `POST /knowledge/uploads/{upload_id}/approve`.
+- **`canvas_mode=local` on running uvicorn was a stale process** started without loading `.env`; the smoke script itself reported `canvas_mode=live`. **[VERIFY after restart]** that `:8000` `/auth/config` shows live once the API is restarted with Canvas env loaded.
+
 | # | Result |
 | --- | --- |
 | Q1 Unit 1 / agile SE | **correct** |
