@@ -451,6 +451,13 @@ export default function AppShell() {
                 <span>Study Agent</span>
               </NavLink>
               <NavLink
+                to="/student/revision"
+                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+              >
+                {ICONS.insights}
+                <span>Revision Strategist</span>
+              </NavLink>
+              <NavLink
                 to="/student/ask"
                 className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
               >
