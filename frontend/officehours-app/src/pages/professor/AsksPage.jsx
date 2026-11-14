@@ -23,12 +23,16 @@ export default function AsksPage() {
 
   return (
     <div className="pf-page">
-      <header className="pf-head">
-        <h1>Your desk</h1>
-        <p className="pf-line">
-          Asks assigned to you and urgent items first. Repeated topics live on{" "}
-          <Link to="/professor/insights">Insights</Link>.
-        </p>
+      <header className="pf-head pf-head-stack">
+        <div>
+          <p className="pf-kicker">Teaching desk</p>
+          <h1>Your desk</h1>
+          <p className="pf-line">
+            Assigned and urgent asks first. Patterns across the class live on{" "}
+            <Link to="/professor/insights">Insights</Link>; file approvals live on{" "}
+            <Link to="/professor">Material</Link>.
+          </p>
+        </div>
       </header>
       {error ? (
         <p className="pf-error" role="alert">

@@ -114,7 +114,7 @@ const SECTION_NAV = {
           label: "Pedagogy Agent",
           icon: "insights",
           to: "/student/revision",
-          hint: "7-day focus plan from practice scores",
+          hint: "Short focus plan from practice scores",
         },
       ],
     },
@@ -146,7 +146,8 @@ const SECTION_NAV = {
           id: "dashboard",
           label: "Dashboard",
           icon: "dashboard",
-          to: "/",
+          to: "/ta/home",
+          hint: "Open asks and recent replies",
         },
         {
           id: "queue",
@@ -374,7 +375,8 @@ export default function AppShell() {
             } else if (section.id === "past") {
               active = location.pathname.startsWith("/ta/past");
             } else if (section.id === "dashboard") {
-              active = location.pathname === "/";
+              active =
+                location.pathname === "/ta/home" || location.pathname === "/";
             }
             return `bh-nav-item${active ? " active" : ""}`;
           }}

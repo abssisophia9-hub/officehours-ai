@@ -8988,7 +8988,396 @@ html:has(.oh-open) {
   .glass-panel,
   .glass-panel-deep,
   #bh-inbox-panel,
+  .bh-inbox-panel,
   .bh-card {
     border: 1px solid var(--theme-text);
+  }
+}
+
+/* ---------- Polish redo: inbox, TA desk, Past asks, professor hierarchy, apple pages ---------- */
+
+.bh-inbox-panel {
+  background: var(--theme-surface);
+  color: var(--theme-text);
+  border: 1px solid color-mix(in srgb, var(--theme-forest) 22%, transparent);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--theme-ink) 18%, transparent);
+  transform-origin: top left;
+  animation: bh-inbox-in 180ms ease-out;
+}
+
+.bh-inbox-close {
+  min-width: 2rem;
+  min-height: 2rem;
+  border-radius: 0.55rem;
+  border: 1px solid var(--theme-border);
+  background: var(--theme-surface-muted);
+  color: var(--theme-title);
+  font-size: 1.15rem;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bh-inbox-close:active {
+  transform: scale(0.94);
+}
+
+.bh-inbox-close:hover,
+.bh-inbox-close:focus-visible {
+  background: var(--theme-row-hover);
+}
+
+.td-dash-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+.td-dash-kicker,
+.pf-kicker {
+  margin: 0 0 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--theme-deep);
+}
+
+.td-dash-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.td-dash-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.1rem;
+}
+
+.td-dash-stat {
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-panel);
+  background: var(--theme-surface);
+  padding: 0.85rem 0.95rem;
+  transition: transform 120ms ease-out, box-shadow 160ms ease;
+}
+
+.td-dash-stat:active {
+  transform: scale(0.985);
+}
+
+.td-dash-stat-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--theme-text-muted);
+}
+
+.td-dash-stat-value {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--theme-title);
+}
+
+.td-dash-stat-value-sm {
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+}
+
+.td-dash-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.td-dash-list {
+  list-style: none;
+  margin: 0.85rem 0 0;
+  padding: 0;
+}
+
+.td-dash-list li {
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--theme-table-rule);
+}
+
+.td-dash-ask {
+  margin: 0;
+  font-weight: 650;
+  color: var(--theme-text);
+  overflow-wrap: anywhere;
+}
+
+.td-dash-meta {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: var(--theme-text-muted);
+}
+
+.td-dash-link {
+  display: inline-flex;
+  margin-top: 0.75rem;
+  font-weight: 700;
+  color: var(--theme-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ta-past-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--theme-text-muted);
+}
+
+.ta-past-card {
+  background: var(--theme-surface);
+  color: var(--theme-text);
+  border-color: var(--theme-border);
+}
+
+.ta-past-title {
+  margin: 0;
+  font-weight: 700;
+  color: var(--theme-title);
+}
+
+.ta-past-question,
+.ta-past-reply-body {
+  color: var(--theme-text);
+}
+
+.ta-past-reply {
+  border: 1px solid var(--theme-border);
+  background: var(--theme-surface-muted);
+}
+
+.ta-past-reply-label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--theme-text-muted);
+}
+
+.ta-past-meta {
+  font-size: 0.8rem;
+  color: var(--theme-text-muted);
+}
+
+.ta-past-meta dt {
+  font-weight: 700;
+  color: var(--theme-title);
+}
+
+.ta-past-meta dd {
+  margin: 0.1rem 0 0;
+  color: var(--theme-text);
+}
+
+.pf-head-stack {
+  align-items: flex-start;
+}
+
+.pf-head-stack .pf-line {
+  max-width: 40rem;
+}
+
+.pf-wait-age {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--theme-amber-fg);
+}
+
+.pf-bars-track {
+  height: 0.7rem;
+}
+
+.pf-bars-fill {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--theme-forest) 88%, #0f4a30),
+    var(--theme-forest)
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.pa-page .bh-card,
+.td-dash-panel,
+.ta-past-card,
+.pf-page .pf-block {
+  transition: transform 140ms ease-out, box-shadow 180ms ease;
+}
+
+.pa-checkin,
+.td-dash-stat,
+.bh-card,
+.pf-file-block,
+.rooms-page .rooms-card,
+.rooms-page article {
+  transform-origin: center;
+}
+
+.btn-primary:active,
+.btn-ghost:active,
+.td-dash-link:active,
+.pf-approve:active,
+.bh-inbox-close:active,
+.rooms-page button:active {
+  transform: scale(0.97);
+}
+
+@media (max-width: 900px) {
+  .td-dash-stats,
+  .td-dash-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .td-dash-stats,
+  .td-dash-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dark: landing lime / Rooms cream-on-green, Past asks, inbox */
+[data-theme="dark"] .oh-open-lime,
+[data-theme="dark"] .oh-block-lime {
+  background:
+    repeating-linear-gradient(
+      -28deg,
+      rgba(231, 215, 177, 0.04) 0 2px,
+      transparent 2px 14px
+    ),
+    #1a2420;
+  color: #f2ebe0;
+  border-top-color: #8a7348;
+}
+
+[data-theme="dark"] .oh-open-lime h2,
+[data-theme="dark"] .oh-block-lime h2 {
+  color: #faf6ef;
+}
+
+[data-theme="dark"] .oh-open-lime-quote,
+[data-theme="dark"] .oh-open-lime-note,
+[data-theme="dark"] .oh-block-lime .oh-open-rooms-copy p,
+[data-theme="dark"] .oh-block-lime .oh-open-kicker {
+  color: #d4cbb8;
+}
+
+[data-theme="dark"] .oh-open-lime-panel {
+  background: #243028;
+  color: #f2ebe0;
+}
+
+[data-theme="dark"] .oh-open-signin-on-lime {
+  background: #e7d7b1;
+  color: #1a140c;
+}
+
+[data-theme="dark"] .sr-banner,
+[data-theme="dark"] .sr-teaser-banner {
+  background: linear-gradient(115deg, #142018 0%, #1f3a2c 45%, #163226 100%);
+}
+
+[data-theme="dark"] .sr-avatar {
+  border-color: #1f1c18;
+  background: linear-gradient(160deg, #3d3420, #255a40);
+  color: #f2ebe0;
+}
+
+[data-theme="dark"] .sr-kicker,
+[data-theme="dark"] .sr-head-copy p {
+  color: #d4cbb8;
+}
+
+[data-theme="dark"] .sr-head-copy h1,
+[data-theme="dark"] .sr-teaser-body h2,
+[data-theme="dark"] .sr-empty h2,
+[data-theme="dark"] .sr-submit h2,
+[data-theme="dark"] .sr-post-main h2,
+[data-theme="dark"] .sr-row-main h2 {
+  color: #faf6ef;
+}
+
+[data-theme="dark"] .sr-vote {
+  background: #252219;
+  color: #f2ebe0;
+}
+
+[data-theme="dark"] .sr-vote-btn:hover:not(:disabled),
+[data-theme="dark"] .sr-vote-btn.is-on,
+[data-theme="dark"] .sr-vote-count.is-on {
+  color: #e7d7b1;
+}
+
+[data-theme="dark"] .rooms-page,
+[data-theme="dark"] .ta-past,
+[data-theme="dark"] .td-dash {
+  color: var(--theme-text);
+}
+
+[data-theme="dark"] .ta-past-reply,
+[data-theme="dark"] .ta-past-filters,
+[data-theme="dark"] .td-dash-stat,
+[data-theme="dark"] .bh-inbox-panel li.rounded-lg {
+  background: var(--theme-surface-muted);
+  border-color: var(--theme-border);
+  color: var(--theme-text);
+}
+
+[data-theme="dark"] .bh-inbox-panel {
+  background: var(--theme-surface) !important;
+  color: var(--theme-text) !important;
+}
+
+[data-theme="dark"] .text-aui-ink,
+[data-theme="dark"] .text-aui-deep {
+  color: var(--theme-text) !important;
+}
+
+[data-theme="dark"] .soft-stat {
+  background: var(--theme-surface-muted);
+  color: var(--theme-text);
+}
+
+[data-theme="dark"] .pa-checkin,
+[data-theme="dark"] .pa-page .rounded-lg.border {
+  background: var(--theme-surface) !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bh-inbox-panel,
+  .td-dash-stat,
+  .pa-page .bh-card,
+  .td-dash-panel,
+  .ta-past-card {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .btn-primary:active,
+  .btn-ghost:active,
+  .td-dash-link:active,
+  .pf-approve:active,
+  .bh-inbox-close:active,
+  .rooms-page button:active,
+  .td-dash-stat:active {
+    transform: none !important;
   }
 }

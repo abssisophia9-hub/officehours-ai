@@ -14,6 +14,7 @@ import StudentNotesPage from "./pages/StudentNotesPage.jsx";
 import StuckRoomPage from "./pages/StuckRoomPage.jsx";
 import TaWorkspace from "./pages/TaWorkspace.jsx";
 import TaPastAsksPage from "./pages/TaPastAsksPage.jsx";
+import TaDashboardPage from "./pages/TaDashboardPage.jsx";
 import MaterialPage from "./pages/professor/MaterialPage.jsx";
 import AsksPage from "./pages/professor/AsksPage.jsx";
 import InsightsPage from "./pages/professor/InsightsPage.jsx";
@@ -90,6 +91,7 @@ export default function App() {
         <Route path="student/notes" element={<StudentNotesPage />} />
         <Route path="student/room" element={<StuckRoomPage />} />
         <Route path="ta" element={<TaWorkspace />} />
+        <Route path="ta/home" element={<TaDashboardPage />} />
         <Route path="ta/past" element={<TaPastAsksPage />} />
         <Route path="professor" element={<ProfessorGate />}>
           <Route index element={<MaterialPage />} />

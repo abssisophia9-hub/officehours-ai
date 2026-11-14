@@ -89,7 +89,7 @@ def test_no_grades_still_returns_plan(monkeypatch):
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["mode"] == "rule-based fallback"
-    assert "Planning mode: rule-based fallback" in body["mode_label"]
+    assert "Plan built from your scores and preference" in body["mode_label"]
     assert isinstance(body["resources"], list)
     assert len(body["time_slots"]) >= 1
     _assert_no_scores(body)
@@ -263,7 +263,7 @@ def test_mocked_llm_search_again_then_resources(monkeypatch):
         db.close()
 
     assert plan.mode == "agent"
-    assert "Planning mode: agent" in plan.mode_label
+    assert "Plan built with the Pedagogy Agent" in plan.mode_label
     assert len(search_queries) >= 2
     assert any(step.action == "search" for step in plan.iterations)
     assert any(r.url and "Red-black" in (r.title or "") for r in plan.resources)
@@ -514,7 +514,7 @@ def test_per_user_cap_falls_back_to_rules(monkeypatch):
 
     assert calls["n"] == 0
     assert plan.mode == "rule-based fallback"
-    assert "Planning mode: rule-based fallback" in plan.mode_label
+    assert "Plan built from your scores and preference" in plan.mode_label
     assert any("user_per_minute" in (n or "") or "budget" in (n or "").lower() for n in plan.notes) or any(
         "budget" in (step.note or "") for step in plan.iterations
     )
@@ -558,7 +558,7 @@ def test_per_course_cap_falls_back_to_rules(monkeypatch):
 
     assert calls["n"] == 0
     assert plan.mode == "rule-based fallback"
-    assert "Planning mode: rule-based fallback" in plan.mode_label
+    assert "Plan built from your scores and preference" in plan.mode_label
     assert any("course_per_day" in (n or "") or "budget" in (n or "").lower() for n in plan.notes) or any(
         "course_per_day" in (step.note or "") or "budget" in (step.note or "") for step in plan.iterations
     )

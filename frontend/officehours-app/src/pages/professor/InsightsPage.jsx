@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { api } from "../../api/client.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { useProfessorData } from "./ProfessorData.jsx";
@@ -196,8 +197,16 @@ export default function InsightsPage() {
 
   return (
     <div className="pf-page">
-      <header className="pf-head">
-        <h1>Insights</h1>
+      <header className="pf-head pf-head-stack">
+        <div>
+          <p className="pf-kicker">Class patterns</p>
+          <h1>Insights</h1>
+          <p className="pf-line">
+            Repeated topics and share of asks — even a couple of related asks show
+            up as bars. Individual desk work stays on{" "}
+            <Link to="/professor/asks">Your desk</Link>.
+          </p>
+        </div>
       </header>
       {error ? (
         <p className="pf-error" role="alert">
@@ -233,7 +242,11 @@ export default function InsightsPage() {
                     clusterAskTotal > 0
                       ? Math.round((count / clusterAskTotal) * 100)
                       : 0;
-                  const width = Math.max(4, Math.round((count / clusterBarMax) * 100));
+                  // Keep a readable bar even when only 1–2 asks exist.
+                  const width = Math.max(
+                    count <= 2 ? 28 : 8,
+                    Math.round((count / clusterBarMax) * 100),
+                  );
                   return (
                     <li key={`bar-${cluster.cluster_id}`}>
                       <div className="pf-bars-label">
@@ -242,7 +255,11 @@ export default function InsightsPage() {
                           {count} ask{count === 1 ? "" : "s"} · {pct}%
                         </span>
                       </div>
-                      <div className="pf-bars-track" aria-hidden="true">
+                      <div
+                        className="pf-bars-track"
+                        aria-hidden="true"
+                        title={`${count} of ${clusterAskTotal} asks`}
+                      >
                         <span className="pf-bars-fill" style={{ width: `${width}%` }} />
                       </div>
                     </li>

@@ -64,8 +64,19 @@ const WEAKNESS_LABEL = {
 
 function planModeLabel(plan) {
   if (!plan) return "";
+  if (plan.mode_label && !/planning mode|rule-based|llm_|fallback|gate:/i.test(plan.mode_label)) {
+    return plan.mode_label;
+  }
   if (plan.mode === "agent") return "Plan built with the Pedagogy Agent";
-  return "Simple plan from your scores and preference";
+  return "Plan built from your scores and preference";
+}
+
+function publicPlanNotes(notes) {
+  const blocked =
+    /llm_|fallback|gate:|budget:|quota|rule-based|invalid model|api key|gemini|orchestrat/i;
+  return (notes || [])
+    .map((note) => String(note || "").trim())
+    .filter((note) => note && !blocked.test(note));
 }
 
 function loadRevision(courseId, courseCode) {
@@ -128,12 +139,20 @@ function savePlan(courseId, plan) {
 }
 
 function syntheticDeadlines(grades) {
+  // Space focus blocks across a short study window sized to how many topics need work —
+  // not a fixed 3/7 pair, and not a semester calendar.
   const ranked = [...grades].sort((a, b) => gap(b) - gap(a));
-  return ranked.slice(0, 2).map((row, index) => ({
-    topic: row.topic,
-    due_in_days: index === 0 ? 3 : 7,
-    label: index === 0 ? "Next check-in" : "Follow-up",
-  }));
+  const weak = ranked.filter((row) => row.score < 85);
+  const focus = (weak.length ? weak : ranked).slice(0, 3);
+  const horizon = Math.min(14, Math.max(5, focus.length * 3 + 2));
+  return focus.map((row, index) => {
+    const due = Math.round(((index + 1) / focus.length) * horizon);
+    return {
+      topic: row.topic,
+      due_in_days: Math.max(2, Math.min(horizon, due)),
+      label: index === 0 ? "Primary focus" : index === 1 ? "Second focus" : "Follow-up",
+    };
+  });
 }
 
 export default function StudentRevisionPage() {
@@ -301,14 +320,19 @@ export default function StudentRevisionPage() {
   const courseLine = [activeCourse.code, activeCourse.title].filter(Boolean).join(" · ");
   const slots = plan?.time_slots || [];
   const resources = plan?.resources || [];
+  const visibleNotes = publicPlanNotes(plan?.notes);
+  const horizonDays = slots.reduce(
+    (max, slot) => Math.max(max, Number(slot.day_offset) || 0),
+    0,
+  );
 
   return (
-    <div className="fade-up">
+    <div className="fade-up pa-page">
       <h1 className="sa-course">{courseLine}</h1>
       <h2 className="bh-page-title">Pedagogy Agent</h2>
       <p className="bh-page-subtitle">
-        A 7-day focus plan from your practice scores, how you learn, and
-        checked public links — scores stay on this device.
+        A short focus plan from your practice scores, how you learn, and
+        checked public links. Adjust any score that looks wrong before you build.
       </p>
 
       {toast ? (
@@ -323,18 +347,15 @@ export default function StudentRevisionPage() {
         </div>
       ) : null}
 
-      <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-        Practice scores on this device (not from Canvas). Edits stay here.
-        When you build a plan, only priority levels are sent — never your
-        numeric scores.
-      </p>
-
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="bh-card">
           <div className="bh-card-title">
-            <h2>From Canvas + syllabus</h2>
+            <h2>Practice scores</h2>
           </div>
-          <p className="bh-card-note">Each row shows its source. Fix if a score is wrong.</p>
+          <p className="bh-card-note">
+            Demo scores start from typical quiz and assignment results. Fix a row
+            if yours differ — only priority levels leave this page when you build.
+          </p>
           <ul className="mt-4 space-y-2">
             {ranked.map((row) => (
               <li
@@ -408,7 +429,7 @@ export default function StudentRevisionPage() {
             <h2>Build plan</h2>
           </div>
           <p className="bh-card-note">
-            Preference steers search queries and the one-line why on each resource.
+            Tell us how you learn so resources and study blocks match your style.
           </p>
 
           <label className="mt-3 block text-sm font-semibold text-aui-ink" htmlFor="rev-pref">
@@ -457,8 +478,10 @@ export default function StudentRevisionPage() {
           {slots.length ? (
             <>
               <p className="mt-4 text-xs text-aui-deep/70">
-                This is a <strong>7-day focus plan</strong> for your weakest
-                topics — not a full semester calendar. Blocks count from today.
+                Focus window: next{" "}
+                <strong>{Math.max(horizonDays, 1)} day{horizonDays === 1 ? "" : "s"}</strong>{" "}
+                for your weakest topics — not a full semester calendar. Blocks
+                count from today.
               </p>
               <ol className="mt-2 space-y-2 text-sm">
                 {slots.map((slot) => (
@@ -478,7 +501,7 @@ export default function StudentRevisionPage() {
             </>
           ) : (
             <p className="mt-4 text-sm text-aui-deep/70">
-              Build a plan to see a 7-day focus schedule for your weakest topics.
+              Build a plan to see a short focus schedule for your weakest topics.
             </p>
           )}
 
@@ -501,38 +524,40 @@ export default function StudentRevisionPage() {
                       <>
                         <strong>{item.title}</strong>
                         <span className="mt-0.5 block text-aui-deep/70">
-                          Course material on this device — no public link.
+                          From your course materials (no public web link).
                         </span>
                       </>
                     )}
                     <span className="mt-0.5 block">
-                      Source: {item.source}. {item.why}
+                      {item.source === "course KB" ? "Course materials" : item.source}
+                      {item.why ? `. ${item.why}` : ""}
                     </span>
                   </li>
                 ))}
               </ol>
             ) : (
               <p className="mt-2 text-aui-deep/70">
-                No checked public links yet. Course material may still appear
-                after you build a plan when the professor has approved slides.
+                No public links passed a topic check yet. Approved course slides
+                still appear here when your professor has shared them.
               </p>
             )}
           </div>
 
-          {plan?.notes?.length ? (
+          {visibleNotes.length ? (
             <ul className="mt-3 space-y-1 text-xs text-aui-deep/75">
-              {plan.notes.map((note) => (
+              {visibleNotes.map((note) => (
                 <li key={note}>{note}</li>
               ))}
             </ul>
           ) : null}
 
-          <div className="mt-4 rounded-lg border border-[#d7e0d9] bg-white p-3">
-            <p className="text-sm font-semibold text-aui-ink">Log today&apos;s check-in</p>
+          {plan ? (
+          <div className="mt-4 rounded-lg border border-[#d7e0d9] bg-white p-3 pa-checkin">
+            <p className="text-sm font-semibold text-aui-ink">How did studying go?</p>
             <p className="mt-1 text-xs text-aui-deep/70">
-              After a study block, how ready do you feel on{" "}
-              <strong>{focus.topic}</strong>? This updates your practice score
-              on this device only — it is not sent to Canvas.
+              After a study block on <strong>{focus.topic}</strong>, rate how ready
+              you feel (0–100). We update that topic&apos;s practice score here so
+              your next plan can shift.
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <input
@@ -542,21 +567,24 @@ export default function StudentRevisionPage() {
                 max="100"
                 value={todayScore}
                 onChange={(event) => setTodayScore(event.target.value)}
+                aria-label={`Readiness for ${focus.topic}`}
               />
               <button
                 type="button"
                 className="btn-primary px-3 py-1.5 text-xs"
                 onClick={logToday}
               >
-                Log score
+                Save check-in
               </button>
             </div>
             {loggedScore != null ? (
               <p className="mt-2 text-xs font-medium text-aui-forest">
-                Saved {loggedScore}% for {loggedTopic || focus.topic}.
+                Saved {loggedScore}% for {loggedTopic || focus.topic}. Rebuild the
+                plan when you want the schedule to catch up.
               </p>
             ) : null}
           </div>
+          ) : null}
         </section>
       </div>
     </div>

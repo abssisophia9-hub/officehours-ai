@@ -145,8 +145,9 @@ def build_revision_plan(
             model_name = llm_meta.get("model") or gemini_model()
         if llm_meta.get("fallback_reason") and fallback_reason is None:
             fallback_reason = llm_meta["fallback_reason"]
+            # Keep operator reason in logs only — never surface gate/LLM codes to students.
             notes.append(
-                f"Rule-based fallback ({fallback_reason}) — agent think unavailable."
+                "Built from your scores and study preference while the full agent was unavailable."
             )
 
         action = decision["action"]
@@ -308,10 +309,10 @@ def build_revision_plan(
     mode_label: str
     if used_llm and fallback_reason is None:
         mode = "agent"
-        mode_label = "Planning mode: agent"
+        mode_label = "Plan built with the Pedagogy Agent"
     else:
         mode = "rule-based fallback"
-        mode_label = "Planning mode: rule-based fallback"
+        mode_label = "Plan built from your scores and preference"
 
     slots = _backwards_schedule(
         focus_rows=focus_rows,
