@@ -6219,8 +6219,14 @@ html:has(.oh-open) {
   color: rgba(255, 255, 255, 0.78);
 }
 
+.bh-nav-item.active .bh-nav-item-stack strong,
+.bh-nav-item.active .bh-nav-icon {
+  color: #102e24;
+}
+
 .bh-nav-item.active .bh-nav-hint {
-  color: color-mix(in srgb, var(--theme-accent-ink) 78%, transparent);
+  /* Active pill is cream — never use theme cream ink here. */
+  color: #3d5348;
 }
 
 .bh-nav-item:has(.bh-nav-item-stack) {
@@ -6610,7 +6616,8 @@ html:has(.oh-open) {
 .sa-history-group {
   margin: 0.85rem 0.45rem 0.3rem;
   font-size: 0.75rem;
-  color: var(--theme-text-subtle);
+  font-weight: 650;
+  color: var(--theme-text-muted);
 }
 
 .sa-history-item {
@@ -7655,8 +7662,11 @@ html:has(.oh-open) {
   cursor: pointer;
 }
 
-[data-theme="dark"] .bh-frame-professor .bh-avatar {
-  background: #255a40;
+[data-theme="dark"] .bh-avatar,
+[data-theme="dark"] .bh-frame-professor .bh-avatar,
+[data-theme="dark"] .bh-frame-ta .bh-avatar,
+[data-theme="dark"] .bh-frame-student .bh-avatar {
+  background: #1f5c42;
   color: #ffffff;
 }
 
@@ -8409,9 +8419,38 @@ html:has(.oh-open) {
 }
 
 .bh-frame-ta .bh-nav-item.active {
-  background: var(--tar-canvas);
-  color: var(--tar-forest);
+  background: #f8f7f4;
+  color: #143326;
   box-shadow: none;
+}
+
+.bh-frame-ta .bh-nav-item.active .bh-nav-item-stack strong,
+.bh-frame-ta .bh-nav-item.active .bh-nav-icon {
+  color: #143326;
+}
+
+.bh-frame-ta .bh-nav-item.active .bh-nav-hint {
+  color: #3d5348;
+}
+
+[data-theme="dark"] .bh-nav-item.active,
+[data-theme="dark"] .bh-frame-ta .bh-nav-item.active,
+[data-theme="dark"] .bh-frame-student .bh-nav-item.active,
+[data-theme="dark"] .bh-frame-professor .bh-nav-item.active {
+  background: #e7d7b1;
+  color: #141210;
+}
+
+[data-theme="dark"] .bh-nav-item.active .bh-nav-item-stack strong,
+[data-theme="dark"] .bh-nav-item.active .bh-nav-icon,
+[data-theme="dark"] .bh-frame-ta .bh-nav-item.active .bh-nav-item-stack strong,
+[data-theme="dark"] .bh-frame-ta .bh-nav-item.active .bh-nav-icon {
+  color: #141210;
+}
+
+[data-theme="dark"] .bh-nav-item.active .bh-nav-hint,
+[data-theme="dark"] .bh-frame-ta .bh-nav-item.active .bh-nav-hint {
+  color: #3a3328;
 }
 
 .bh-frame-ta .bh-main {
