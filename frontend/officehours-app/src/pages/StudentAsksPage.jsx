@@ -17,13 +17,10 @@ function workStageLabels(workStatus, statusPayload) {
   const work = String(workStatus || statusPayload?.work_status || "open").toLowerCase();
   const claimed = Boolean(statusPayload?.claimed_by || work === "claimed" || work === "in_progress" || work === "helped");
   const inProgress = work === "in_progress" || work === "helped" || Boolean(statusPayload?.ta_reply);
-  const answered =
-    Boolean(statusPayload?.ta_reply) ||
-    work === "helped" ||
-    work === "done" ||
-    work === "answered" ||
-    statusPayload?.status === "ta_replied" ||
-    statusPayload?.status === "helped";
+  const answered = Boolean(
+    String(statusPayload?.ta_reply || "").trim() ||
+      statusPayload?.status === "ta_replied",
+  );
 
   const who =
     statusPayload?.claimed_by ||
@@ -66,10 +63,10 @@ function workStageLabels(workStatus, statusPayload) {
       label: "Answered",
       done: answered,
       detail: answered
-        ? statusPayload?.ta_reply
-          ? "Reply posted"
-          : statusPayload?.headline || "Marked helped"
-        : "—",
+        ? "Reply posted"
+        : work === "helped"
+          ? "Closed — check below for any note"
+          : "—",
     },
   ];
 }
@@ -216,11 +213,7 @@ export default function StudentAsksPage() {
           ) : (
             <ul className="mt-3 space-y-2">
               {asks.map((ask) => {
-                const hasReply =
-                  Boolean(ask.ta_reply) ||
-                  ["helped", "done", "answered"].includes(
-                    String(ask.work_status || "").toLowerCase(),
-                  );
+                const hasReply = askHasReply(ask);
                 return (
                   <li key={ask.id}>
                     <button
@@ -323,11 +316,24 @@ export default function StudentAsksPage() {
               {status?.ta_reply || selected.ta_reply ? (
                 <div className="soft-stat mt-4 text-sm">
                   <p className="font-semibold text-aui-ink">TA reply</p>
-                  <p className="mt-1">{status?.ta_reply || selected.ta_reply}</p>
+                  <p className="mt-1 whitespace-pre-wrap">
+                    {status?.ta_reply || selected.ta_reply}
+                  </p>
                 </div>
+              ) : status?.student_hint || selected.student_hint ? (
+                <div className="soft-stat mt-4 text-sm">
+                  <p className="font-semibold text-aui-ink">Note from staff</p>
+                  <p className="mt-1 whitespace-pre-wrap">
+                    {status?.student_hint || selected.student_hint}
+                  </p>
+                </div>
+              ) : String(selected.work_status || "").toLowerCase() === "helped" ? (
+                <p className="mt-4 text-xs text-aui-deep/60">
+                  This ask was closed without a written reply.
+                </p>
               ) : (
                 <p className="mt-4 text-xs text-aui-deep/60">
-                  No reply yet — status above is the source of truth.
+                  No reply yet — when a TA writes one, it appears here.
                 </p>
               )}
 

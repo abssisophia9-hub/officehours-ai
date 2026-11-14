@@ -176,6 +176,16 @@ def test_backup_takeover_and_resolve_auth():
     else:
         resolver = alice if primary == "Alice Chen" else bob
 
+    replied = client.post(
+        "/ta/reply/",
+        headers=_auth(resolver),
+        json={
+            "request_id": rid,
+            "reply": "Start from the color invariant, then check the uncle cases.",
+        },
+    )
+    assert replied.status_code == 200, replied.text
+
     resolved = client.post(
         "/ta/resolve/",
         headers=_auth(resolver),
