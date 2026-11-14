@@ -158,7 +158,7 @@ export default function MaterialPage() {
       await reload();
       note(
         upload.upload_id,
-        `Approved. Students can now see ${seen} of ${seen} chunks.`,
+        `Approved. Students can now see ${seen} of ${seen} sections.`,
       );
     } catch (err) {
       setError(err.message || "Could not approve that file.");
@@ -198,10 +198,10 @@ export default function MaterialPage() {
       await reload();
       note(
         upload.upload_id,
-        `Approved. Students can now see ${next} of ${upload.chunk_count} chunks.`,
+        `Approved. Students can now see ${next} of ${upload.chunk_count} sections.`,
       );
     } catch (err) {
-      setError(err.message || "Could not approve that chunk.");
+      setError(err.message || "Could not approve that section.");
     } finally {
       setBusyId("");
     }
@@ -565,7 +565,7 @@ function FileRow({
         </p>
         <p className="pf-cell" role="cell">
           <span className="pf-cell-label">Students see</span>
-          {upload.approved_count} of {upload.chunk_count}
+          {upload.approved_count} of {upload.chunk_count} sections
         </p>
         <div className="pf-actions" role="cell">
           {waiting ? (
@@ -587,7 +587,7 @@ function FileRow({
           {menuOpen ? (
             <div ref={menuRef} id={menuId} className="pf-menu" role="menu" onKeyDown={onMenuKey}>
               <button type="button" className="pf-menu-item" role="menuitem" onClick={onReview}>
-                {reviewOpen ? "Hide chunks" : "Review chunks"}
+                {reviewOpen ? "Hide sections" : "Review sections"}
               </button>
               {upload.status !== "rejected" ? (
                 <button type="button" className="pf-menu-item" role="menuitem" onClick={onAskReject}>
@@ -618,7 +618,7 @@ function FileRow({
       ) : null}
       {reviewOpen ? (
         <ul className="pf-chunks">
-          {chunks.length === 0 ? <li>No chunks loaded for this file.</li> : null}
+          {chunks.length === 0 ? <li>No sections loaded for this file.</li> : null}
           {chunks.map((entry) => (
             <li key={entry.id}>
               <p className="pf-chunk-page">

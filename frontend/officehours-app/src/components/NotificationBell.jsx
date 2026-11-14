@@ -46,8 +46,8 @@ export default function NotificationBell({ plain = false }) {
             {plain
               ? "Notifications for this account."
               : inbox.smtp_configured
-                ? "Also emailed when SMTP is set."
-                : "In-app + live socket. Set SMTP to also email."}
+                ? "Also emailed when email alerts are enabled."
+                : "In-app alerts for this account. Email alerts when enabled."}
           </p>
           <ul className="mt-2 max-h-56 space-y-2 overflow-auto">
             {(inbox.items || []).map((item) => (

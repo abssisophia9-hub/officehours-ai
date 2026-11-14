@@ -5,6 +5,14 @@ import { pageItems } from "../api/page.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { askHasReply, markReplySeen } from "../student/replySeen.js";
 
+function workStatusLabel(workStatus) {
+  const work = String(workStatus || "open").toLowerCase();
+  if (work === "claimed") return "Claimed";
+  if (work === "in_progress") return "In progress";
+  if (work === "helped" || work === "done" || work === "answered") return "Resolved";
+  return "Waiting";
+}
+
 function workStageLabels(workStatus, statusPayload) {
   const work = String(workStatus || statusPayload?.work_status || "open").toLowerCase();
   const claimed = Boolean(statusPayload?.claimed_by || work === "claimed" || work === "in_progress" || work === "helped");
@@ -228,7 +236,7 @@ export default function StudentAsksPage() {
                       {" · "}
                       {ask.anonymous ? "Quiet ask" : "Identify me"}
                       {" · "}
-                      {ask.work_status || "open"}
+                      {workStatusLabel(ask.work_status)}
                       {hasReply ? (
                         <span className="ml-1 rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
                           reply

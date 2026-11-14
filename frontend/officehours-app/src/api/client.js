@@ -1,5 +1,25 @@
 const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
 
+const GENERIC_REQUEST_ERROR = "Something went wrong. Please try again.";
+const GENERIC_UPLOAD_ERROR = "Upload failed. Please try again.";
+
+function userFacingError(detail, fallback) {
+  if (typeof detail === "string") {
+    const trimmed = detail.trim();
+    // Short plain messages from the API are safe to show; skip JSON/HTML dumps.
+    if (
+      trimmed &&
+      trimmed.length <= 160 &&
+      !trimmed.startsWith("{") &&
+      !trimmed.startsWith("[") &&
+      !trimmed.startsWith("<")
+    ) {
+      return trimmed;
+    }
+  }
+  return fallback;
+}
+
 export async function api(path, { method = "GET", token, body } = {}) {
   const headers = { Accept: "application/json" };
   if (body !== undefined) {
@@ -22,10 +42,10 @@ export async function api(path, { method = "GET", token, body } = {}) {
   }
   if (!response.ok) {
     const detail = data?.detail;
-    const message = Array.isArray(detail)
-      ? detail.map((item) => item.msg || JSON.stringify(item)).join("; ")
-      : detail || `Request failed (${response.status})`;
-    throw new Error(typeof message === "string" ? message : JSON.stringify(message));
+    if (typeof console !== "undefined" && console.warn) {
+      console.warn("API error", response.status, path, detail ?? text);
+    }
+    throw new Error(userFacingError(detail, GENERIC_REQUEST_ERROR));
   }
   return data;
 }
@@ -47,10 +67,10 @@ export async function apiUpload(path, { token, formData }) {
   }
   if (!response.ok) {
     const detail = data?.detail;
-    const message = Array.isArray(detail)
-      ? detail.map((item) => item.msg || JSON.stringify(item)).join("; ")
-      : detail || `Upload failed (${response.status})`;
-    throw new Error(typeof message === "string" ? message : JSON.stringify(message));
+    if (typeof console !== "undefined" && console.warn) {
+      console.warn("Upload error", response.status, path, detail ?? text);
+    }
+    throw new Error(userFacingError(detail, GENERIC_UPLOAD_ERROR));
   }
   return data;
 }

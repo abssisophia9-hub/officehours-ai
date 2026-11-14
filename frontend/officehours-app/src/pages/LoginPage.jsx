@@ -164,7 +164,7 @@ export default function LoginPage() {
             </p>
           ) : (
             <p className="mt-4 text-center text-sm font-medium text-aui-deep/60">
-              Sign in with the account provisioned from your Canvas course.
+              Sign in with the account linked from your Canvas course.
             </p>
           )}
         </form>
