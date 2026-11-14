@@ -5577,6 +5577,19 @@ html:has(.oh-open) {
   color: var(--theme-text-muted) !important;
 }
 
+/* Light AA: Tailwind /70 greens sat under 4.5:1 on cream cards */
+.text-aui-deep\/70,
+.text-aui-deep\/60,
+.text-aui-deep\/55 {
+  color: #3f5248 !important;
+}
+
+[data-theme="light"] .text-aui-deep\/70,
+[data-theme="light"] .text-aui-deep\/60,
+[data-theme="light"] .text-aui-deep\/55 {
+  color: #3f5248 !important;
+}
+
 
 /* ---------- Student dashboard composition ---------- */
 
