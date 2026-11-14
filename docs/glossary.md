@@ -41,7 +41,7 @@ A TA is not a classmate in the section they staff.
 | **Shared group meeting** | TA or professor | One title + when + place on **all** linked request statuses |
 | **Material approve** | Professor | Approved **course material** feeds Study Agent (Orchestration Layer). FAQ/staff drafts may still exist in the API for TA coaching — not shown as Suggested answers in the product UI. |
 | **Rooms** (API still `/help-room/`) | Students (course-scoped) | Stack Overflow hybrid: named Problem/Discussion/Article rooms, Canvas-module chapters, Express Interest, classmate leaderboard. Staff do not sit in the room. Quiet ask is the anonymous path to staff. Demo syllabus only if `OFFICEHOURS_DEMO=true`. |
-| **Rooms board / classmate points (ŵ)** | Students (per course) | Quality-over-volume reputation on the Rooms board. ŵ is the playful point unit. |
+| **Rooms board / classmate points** | Students (per course) | Quality-over-volume reputation on the Rooms board (shown as points). |
 | **Express Interest** | Students | Offer to help on a room without it being a private chat. |
 | **Review insights** | Professor | End-of-chapter question board from Quiet asks + Rooms chapters — emphasize / cover / draft FAQ / next-cohort note. |
 

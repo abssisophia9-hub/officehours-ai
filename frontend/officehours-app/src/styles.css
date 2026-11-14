@@ -9058,9 +9058,36 @@ html:has(.oh-open) {
   box-shadow: 0 12px 28px color-mix(in srgb, var(--theme-ink) 18%, transparent);
   transform-origin: top left;
   animation: bh-inbox-in 180ms ease-out;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.bh-inbox-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--theme-surface);
+  padding-bottom: 0.15rem;
+}
+
+.bh-inbox-header .font-semibold {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding-right: 0.35rem;
+}
+
+.bh-inbox-panel .pf-inbox-note,
+.bh-frame-professor .pf-inbox-note {
+  position: relative;
+  z-index: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--theme-text-muted);
 }
 
 .bh-inbox-close {
+  flex: 0 0 auto;
   min-width: 2rem;
   min-height: 2rem;
   border-radius: 0.55rem;
@@ -9071,6 +9098,17 @@ html:has(.oh-open) {
   line-height: 1;
   font-weight: 700;
   cursor: pointer;
+}
+
+.peer-note-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.peer-note-delete-icon {
+  font-size: 0.95rem;
+  line-height: 1;
 }
 
 .bh-inbox-close:active {
@@ -9419,13 +9457,16 @@ html:has(.oh-open) {
 
 /* Opening story: remap hardcoded forest/muted ink that fails on dark blocks. */
 [data-theme="dark"] .oh-open-kicker,
-[data-theme="dark"] .oh-open-pane-kicker,
 [data-theme="dark"] .oh-open-fine,
 [data-theme="dark"] .oh-open-sub,
 [data-theme="dark"] .oh-open-choice-copy p,
 [data-theme="dark"] .oh-open-rooms-copy p,
 [data-theme="dark"] .oh-open-trio-sec p,
-[data-theme="dark"] .oh-open-body {
+[data-theme="dark"] .oh-open-body,
+[data-theme="dark"] .oh-open-stitch-copy p,
+[data-theme="dark"] .oh-open-desk-head p,
+[data-theme="dark"] .oh-open-close p,
+[data-theme="dark"] .oh-open-lead {
   color: #d4cbb8;
 }
 
@@ -9433,6 +9474,9 @@ html:has(.oh-open) {
 [data-theme="dark"] .oh-open-choice-copy h2,
 [data-theme="dark"] .oh-open-rooms-copy h2,
 [data-theme="dark"] .oh-open-trio-sec h2,
+[data-theme="dark"] .oh-open-stitch-copy h2,
+[data-theme="dark"] .oh-open-desk-head h2,
+[data-theme="dark"] .oh-open-close h2,
 [data-theme="dark"] .oh-open-drop,
 [data-theme="dark"] .oh-open-mark {
   color: #faf6ef;
@@ -9456,6 +9500,49 @@ html:has(.oh-open) {
 
 [data-theme="dark"] .oh-choice-grid p {
   color: #d4cbb8;
+}
+
+/* Cream surfaces that stay cream in dark: force dark ink (after cream-text remap). */
+[data-theme="dark"] .oh-open-pane,
+[data-theme="dark"] .oh-open-pane p,
+[data-theme="dark"] .oh-open-pane h3,
+[data-theme="dark"] .oh-open-pane .oh-open-pane-kicker,
+[data-theme="dark"] .oh-open-pane .oh-open-fine,
+[data-theme="dark"] .oh-open-loom-out article,
+[data-theme="dark"] .oh-open-loom-out article p,
+[data-theme="dark"] .oh-open-loom-out article h3,
+[data-theme="dark"] .oh-open-loom-out .oh-open-loom-label {
+  color: #1a140c;
+}
+
+[data-theme="dark"] .oh-open-pane .oh-open-pane-kicker,
+[data-theme="dark"] .oh-open-pane .oh-open-fine,
+[data-theme="dark"] .oh-open-loom-out .oh-open-loom-label {
+  color: #2a4a38;
+}
+
+[data-theme="dark"] .oh-open-toggle button,
+[data-theme="dark"] .oh-open-course-switch button {
+  background: #e7d7b1;
+  color: #1a140c;
+}
+
+[data-theme="dark"] .oh-open-toggle button.is-on,
+[data-theme="dark"] .oh-open-course-switch button.is-on {
+  background: #c6e86a;
+  color: #1a140c;
+}
+
+[data-theme="dark"] .oh-open-course-switch button small {
+  color: #2a4a38;
+}
+
+[data-theme="dark"] .oh-open-loom-split {
+  color: #d4cbb8;
+}
+
+[data-theme="light"] .oh-open-loom-out .oh-open-loom-label {
+  color: #2a4a38;
 }
 
 /* Landing Rooms cards: keep dark ink on cream panels (do not inherit cream text). */

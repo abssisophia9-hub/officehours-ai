@@ -52,3 +52,10 @@ Thumbs.db
 *.log
 .coverage
 htmlcov/
+
+# --- Evidence / local media (keep out of PRs) ---
+media/
+production-fix/
+**/screenshots/
+*.screenshot.png
+evidence/

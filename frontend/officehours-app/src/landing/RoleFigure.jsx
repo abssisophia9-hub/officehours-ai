@@ -136,7 +136,6 @@ export default function RoleFigure({
       className={`oh-fig oh-fig-${data.id} oh-fig-${size} ${active ? "is-on" : ""}`}
       onClick={onClick}
       aria-pressed={active}
-      aria-label={`${data.label}. ${data.tools}`}
     >
       <span className="oh-fig-art" aria-hidden="true">
         <span className="oh-fig-floor" />

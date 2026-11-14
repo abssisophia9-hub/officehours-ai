@@ -82,23 +82,24 @@ export default function NotificationBell({ plain = false }) {
           id={panelId}
           role="dialog"
           aria-label="Inbox"
-          className={`bh-inbox-panel absolute top-full left-0 z-20 mt-2 w-72 rounded-xl border border-aui-forest/20 p-3 text-xs text-aui-ink shadow-lg${plain ? " pf-inbox" : ""}`}
+          className={`bh-inbox-panel absolute top-full left-0 right-0 z-40 mt-2 w-auto min-w-0 rounded-xl border border-aui-forest/20 p-3 text-xs text-aui-ink shadow-lg${plain ? " pf-inbox" : ""}`}
           onClick={(event) => event.stopPropagation()}
           onPointerDown={(event) => event.stopPropagation()}
         >
-          <div className="flex items-start justify-between gap-2">
+          <div className="bh-inbox-header flex items-center justify-between gap-2">
             <p className="font-semibold">Notifications</p>
             <button
               type="button"
               className="bh-inbox-close"
               aria-label="Close inbox"
+              title="Close"
               onClick={closeInbox}
               onPointerDown={(event) => event.stopPropagation()}
             >
               ×
             </button>
           </div>
-          <p className={plain ? "pf-inbox-note" : "mt-1 text-[11px] text-aui-deep/60"}>
+          <p className={plain ? "pf-inbox-note" : "mt-1 text-[11px] text-aui-deep/70"}>
             {plain
               ? "Notifications for this account."
               : inbox.smtp_configured

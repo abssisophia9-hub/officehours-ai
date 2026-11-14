@@ -304,6 +304,7 @@ export default function MaterialPage() {
           type="file"
           tabIndex={-1}
           accept=".pdf,.docx,.txt,.md,.vtt,.srt"
+          aria-label="Upload course material file"
           onChange={(event) => {
             const chosen = Array.from(event.target.files || []);
             event.target.value = "";

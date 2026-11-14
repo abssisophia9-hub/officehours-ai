@@ -19,11 +19,20 @@ const GENERIC_SEED = [
 
 const HORIZON_OPTIONS = [
   { id: "3", days: 3, label: "3 days" },
-  { id: "5", days: 5, label: "5 days" },
-  { id: "7", days: 7, label: "7 days" },
   { id: "10", days: 10, label: "10 days" },
-  { id: "14", days: 14, label: "14 days" },
+  { id: "21", days: 21, label: "21 days" },
+  { id: "exam", days: null, label: "Exam date" },
 ];
+
+function daysUntilExam(isoDate) {
+  if (!isoDate) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const exam = new Date(`${isoDate}T00:00:00`);
+  if (Number.isNaN(exam.getTime())) return null;
+  const diff = Math.round((exam.getTime() - today.getTime()) / 86400000);
+  return Math.max(1, Math.min(60, diff));
+}
 
 const PREFERENCE_OPTIONS = [
   { id: "step_by_step", label: "Step-by-step" },
@@ -129,19 +138,35 @@ function horizonKey(courseId) {
   return `officehours_revision_horizon_${courseId}`;
 }
 
-function loadHorizonDays(courseId) {
+function examKey(courseId) {
+  return `officehours_revision_exam_${courseId}`;
+}
+
+function loadHorizonState(courseId) {
   try {
     const raw = localStorage.getItem(horizonKey(courseId));
+    if (raw === "exam") {
+      const examDate = localStorage.getItem(examKey(courseId)) || "";
+      const days = daysUntilExam(examDate) || 14;
+      return { mode: "exam", examDate, days };
+    }
     const days = Number(raw);
-    if (HORIZON_OPTIONS.some((opt) => opt.days === days)) return days;
+    if (HORIZON_OPTIONS.some((opt) => opt.days === days)) {
+      return { mode: String(days), examDate: "", days };
+    }
   } catch {
     // default
   }
-  return 7;
+  return { mode: "10", examDate: "", days: 10 };
 }
 
-function saveHorizonDays(courseId, days) {
-  localStorage.setItem(horizonKey(courseId), String(days));
+function saveHorizonState(courseId, mode, examDate) {
+  localStorage.setItem(horizonKey(courseId), mode);
+  if (mode === "exam") {
+    localStorage.setItem(examKey(courseId), examDate || "");
+  } else {
+    localStorage.removeItem(examKey(courseId));
+  }
 }
 
 function loadPreference(courseId) {
@@ -177,7 +202,7 @@ function savePlan(courseId, plan) {
 }
 
 function planDeadlines(grades, horizonDays) {
-  const horizon = Math.max(2, Math.min(30, Number(horizonDays) || 7));
+  const horizon = Math.max(1, Math.min(60, Number(horizonDays) || 10));
   const ranked = [...grades].sort((a, b) => gap(b) - gap(a));
   const weak = ranked.filter((row) => row.score < 85);
   const focus = (weak.length ? weak : ranked).slice(0, 3);
@@ -198,7 +223,9 @@ export default function StudentRevisionPage() {
   const [editingGrade, setEditingGrade] = useState(null);
   const [gradeDraft, setGradeDraft] = useState("");
   const [preference, setPreference] = useState("step_by_step");
-  const [horizonDays, setHorizonDays] = useState(7);
+  const [horizonMode, setHorizonMode] = useState("10");
+  const [examDate, setExamDate] = useState("");
+  const [horizonDays, setHorizonDays] = useState(10);
   const [plan, setPlan] = useState(null);
   const [busy, setBusy] = useState(false);
   const [askBusy, setAskBusy] = useState(false);
@@ -210,7 +237,10 @@ export default function StudentRevisionPage() {
     const data = loadRevision(activeCourse.id, activeCourse.code);
     setGrades(data.grades);
     setPreference(loadPreference(activeCourse.id));
-    setHorizonDays(loadHorizonDays(activeCourse.id));
+    const horizon = loadHorizonState(activeCourse.id);
+    setHorizonMode(horizon.mode);
+    setExamDate(horizon.examDate);
+    setHorizonDays(horizon.days);
     setPlan(loadPlan(activeCourse.id));
     setError("");
   }, [activeCourse]);
@@ -248,10 +278,26 @@ export default function StudentRevisionPage() {
     savePreference(activeCourse.id, value);
   }
 
-  function onHorizon(value) {
+  function onHorizonMode(value) {
+    if (value === "exam") {
+      const days = daysUntilExam(examDate) || 14;
+      setHorizonMode("exam");
+      setHorizonDays(days);
+      saveHorizonState(activeCourse.id, "exam", examDate);
+      return;
+    }
     const days = Number(value);
+    setHorizonMode(String(days));
     setHorizonDays(days);
-    saveHorizonDays(activeCourse.id, days);
+    saveHorizonState(activeCourse.id, String(days), "");
+  }
+
+  function onExamDate(value) {
+    setExamDate(value);
+    const days = daysUntilExam(value) || 14;
+    setHorizonMode("exam");
+    setHorizonDays(days);
+    saveHorizonState(activeCourse.id, "exam", value);
   }
 
   function saveGrade(topic) {
@@ -470,17 +516,31 @@ export default function StudentRevisionPage() {
           <select
             id="rev-horizon"
             className="field-glass mt-1 w-full px-3 py-2 text-sm"
-            value={String(horizonDays)}
-            onChange={(event) => onHorizon(event.target.value)}
+            value={horizonMode}
+            onChange={(event) => onHorizonMode(event.target.value)}
           >
             {HORIZON_OPTIONS.map((opt) => (
-              <option key={opt.id} value={opt.days}>
+              <option key={opt.id} value={opt.id === "exam" ? "exam" : String(opt.days)}>
                 {opt.label}
               </option>
             ))}
           </select>
+          {horizonMode === "exam" ? (
+            <label className="mt-2 block text-sm text-aui-ink" htmlFor="rev-exam-date">
+              Exam date
+              <input
+                id="rev-exam-date"
+                type="date"
+                className="field-glass mt-1 w-full px-3 py-2 text-sm"
+                value={examDate}
+                onChange={(event) => onExamDate(event.target.value)}
+              />
+            </label>
+          ) : null}
           <p className="mt-1 text-xs text-aui-deep/70">
-            Choose the window before you build. The schedule fits inside these days.
+            Choose the window before you build. The schedule fits inside these{" "}
+            <strong>{horizonDays}</strong> day{horizonDays === 1 ? "" : "s"}
+            {horizonMode === "exam" && examDate ? ` (until ${examDate})` : ""}.
           </p>
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -515,10 +575,16 @@ export default function StudentRevisionPage() {
               <p className="mt-4 text-xs text-aui-deep/70">
                 Focus window: next{" "}
                 <strong>
-                  {Math.max(planWindowDays || horizonDays, 1)} day
-                  {(planWindowDays || horizonDays) === 1 ? "" : "s"}
-                </strong>{" "}
-                — the length you chose above. Blocks count from today.
+                  {Math.max(horizonDays, 1)} day
+                  {horizonDays === 1 ? "" : "s"}
+                </strong>
+                {horizonMode === "exam" && examDate
+                  ? ` until your exam on ${examDate}`
+                  : " — the length you chose above"}
+                {planWindowDays > 0 && planWindowDays !== horizonDays
+                  ? ` (blocks through day ${planWindowDays})`
+                  : ""}
+                . Blocks count from today.
               </p>
               <ol className="mt-2 space-y-2 text-sm">
                 {slots.map((slot) => (

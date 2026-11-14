@@ -66,14 +66,46 @@ export default function InsightsPage() {
   }
 
   const clusters = commandCenter?.clusters || [];
-  const clusterAskTotal = clusters.reduce(
-    (sum, cluster) => sum + Number(cluster.request_count || 0),
+  const topicBars = (() => {
+    const byTitle = new Map();
+    for (const cluster of clusters) {
+      const title = String(cluster.title || "Topic").trim() || "Topic";
+      const key = title.toLowerCase();
+      const prev = byTitle.get(key);
+      const count = Number(cluster.request_count || 0);
+      if (!prev) {
+        byTitle.set(key, {
+          key,
+          title,
+          request_count: count,
+          cluster_ids: [cluster.cluster_id],
+        });
+      } else {
+        prev.request_count += count;
+        prev.cluster_ids.push(cluster.cluster_id);
+      }
+    }
+    return [...byTitle.values()].sort(
+      (a, b) => Number(b.request_count || 0) - Number(a.request_count || 0),
+    );
+  })();
+  const clusterAskTotal = topicBars.reduce(
+    (sum, bar) => sum + Number(bar.request_count || 0),
     0,
   );
   const clusterBarMax = Math.max(
     1,
-    ...clusters.map((cluster) => Number(cluster.request_count || 0)),
+    ...topicBars.map((bar) => Number(bar.request_count || 0)),
   );
+
+  function actionLabel(action) {
+    const key = String(action || "").toLowerCase();
+    if (key === "manual_review") return "Keep watching";
+    if (key === "group_session") return "Shared review";
+    if (key === "one_to_one") return "Private follow-up";
+    if (key === "faq") return "Course FAQ";
+    return key.replaceAll("_", " ") || "Keep watching";
+  }
   const topics = reviewInsights?.topics || [];
   const visibleTopics = topics.filter((topic) => {
     if (insightFilter === "all") return true;
@@ -232,13 +264,8 @@ export default function InsightsPage() {
         {clusters.length > 0 ? (
           <>
             <ul className="pf-bars" aria-label="Ask share by topic">
-              {[...clusters]
-                .sort(
-                  (a, b) =>
-                    Number(b.request_count || 0) - Number(a.request_count || 0),
-                )
-                .map((cluster) => {
-                  const count = Number(cluster.request_count || 0);
+              {topicBars.map((bar) => {
+                  const count = Number(bar.request_count || 0);
                   const pct =
                     clusterAskTotal > 0
                       ? Math.round((count / clusterAskTotal) * 100)
@@ -249,9 +276,9 @@ export default function InsightsPage() {
                     Math.round((count / clusterBarMax) * 100),
                   );
                   return (
-                    <li key={`bar-${cluster.cluster_id}`}>
+                    <li key={`bar-${bar.key}`}>
                       <div className="pf-bars-label">
-                        <span>{cluster.title}</span>
+                        <span>{bar.title}</span>
                         <span>
                           {count} ask{count === 1 ? "" : "s"} · {pct}%
                         </span>
@@ -271,7 +298,7 @@ export default function InsightsPage() {
             {clusters.map((cluster) => (
               <li key={cluster.cluster_id}>
                 <p className="pf-meta">
-                  {cluster.request_count} asks · {cluster.suggested_action.replaceAll("_", " ")}
+                  {cluster.request_count} asks · {actionLabel(cluster.suggested_action)}
                 </p>
                 <h3 className="pf-topic">{cluster.title}</h3>
                 <p className="pf-line">{cluster.suggestion_reason}</p>

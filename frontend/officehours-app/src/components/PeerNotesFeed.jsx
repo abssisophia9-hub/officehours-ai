@@ -257,11 +257,13 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
             type="file"
             accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg,.webp,.gif"
             className="sr-only"
+            aria-label="Choose a notes file to share"
             onChange={(event) => setFile(event.target.files?.[0] || null)}
           />
           <button
             type="button"
             className="btn-ghost px-3 py-2 text-sm"
+            aria-controls={fileInputId}
             onClick={() => fileInputRef.current?.click()}
           >
             Choose file
@@ -287,7 +289,7 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
             <span className="text-sm text-aui-deep/70">No file selected</span>
           )}
         </div>
-        <p className="text-xs text-aui-deep/65">
+        <p className="text-xs text-aui-deep/85">
           PDF, DOCX, TXT/MD, or images · 20 MB max
         </p>
         {error ? <p className="text-sm text-red-700">{error}</p> : null}
@@ -380,8 +382,10 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
                   {note.is_mine ? (
                     <button
                       type="button"
-                      className="btn-ghost px-3 py-1.5 text-xs font-semibold text-red-700"
+                      className="btn-ghost peer-note-delete px-3 py-1.5 text-xs font-semibold text-red-700"
                       data-testid="peer-note-delete"
+                      title="Delete your note"
+                      aria-label={`Delete note ${note.title}`}
                       onClick={() => {
                         if (
                           window.confirm(
@@ -392,7 +396,10 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
                         }
                       }}
                     >
-                      Delete
+                      <span aria-hidden="true" className="peer-note-delete-icon">
+                        ⌫
+                      </span>
+                      <span>Delete</span>
                     </button>
                   ) : null}
                 </div>

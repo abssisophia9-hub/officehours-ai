@@ -204,7 +204,7 @@ export default function OpeningTrio({ variant = "live" }) {
             <button type="button" className="oh-open-vote" onClick={voteUp} disabled={stance === "ignore"}>
               <span aria-hidden="true">▲</span>
               <strong>{votes}</strong>
-              <small>ŵ</small>
+              <small>points</small>
             </button>
             <div>
               <p className="oh-open-pane-kicker">{course.code} · {module.name}</p>
@@ -239,15 +239,15 @@ export default function OpeningTrio({ variant = "live" }) {
             <ol>
               <li>
                 <span>Karim</span>
-                <strong>12 ŵ</strong>
+                <strong>12 points</strong>
               </li>
               <li>
                 <span>Sara</span>
-                <strong>8 ŵ</strong>
+                <strong>8 points</strong>
               </li>
               <li>
                 <span>Youssef</span>
-                <strong>5 ŵ</strong>
+                <strong>5 points</strong>
               </li>
             </ol>
             <p className="oh-open-fine">Accepted solutions count. Noise does not.</p>
