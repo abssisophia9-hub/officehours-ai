@@ -24,7 +24,7 @@ const SLIPS = [
     pin: "lime",
     kicker: "Rooms",
     title: "Heap vs stack — anyone?",
-    body: "Named classmate help. Helpers can show on the Hilbert board.",
+    body: "Named classmate help. Helpers can show on the Rooms board.",
   },
   {
     id: "queue",

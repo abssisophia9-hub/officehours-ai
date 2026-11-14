@@ -16,7 +16,7 @@ const ROLE_COPY = [
         <p>
           <strong>Identify me</strong> when you want a meeting.{" "}
           <strong>Rooms</strong> are named on purpose: classmates help classmates,
-          and that help can show up on the Hilbert board. Staff do not lurk there.
+          and that help can show up on the Rooms board. Staff do not lurk there.
         </p>
       </>
     ),
