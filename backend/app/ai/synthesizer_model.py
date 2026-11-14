@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import csv
 import os
+import re
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -121,6 +122,26 @@ def _department_from_course(course: str | None) -> str | None:
     return token or None
 
 
+def _bank_shares_tokens(question_text: str, row: dict[str, str]) -> bool:
+    """Require at least one meaningful token from the ask in the bank row text."""
+    tokens = [
+        part
+        for part in re.split(r"[^a-z0-9]+", (question_text or "").lower())
+        if len(part) > 3
+    ]
+    if not tokens:
+        return True
+    blob = " ".join(
+        [
+            str(row.get("category") or ""),
+            str(row.get("teaching_approach") or ""),
+            str(row.get("student_hint") or ""),
+            str(row.get("entry_id") or ""),
+        ]
+    ).lower()
+    return any(token in blob for token in tokens)
+
+
 def synthesize_with_model(
     *,
     question_text: str,
@@ -218,9 +239,18 @@ def synthesize_with_model(
     if not ranked:
         return _seek_help_fallback(topic, style, tags, question_text, code_snippet, backend)
     ranked.sort(key=lambda item: item[0], reverse=True)
-    best_score, best_row = ranked[0]
-    # Weak bank match → do not pretend we solved it; push human help.
-    if best_score < 0.38:
+    # Weak / off-topic bank match → do not pretend we solved it; push human help.
+    # Require both a higher cosine floor and at least one meaningful token overlap
+    # with the student question so distant CSC bank rows cannot drive Socratic.
+    best_score = None
+    best_row = None
+    for score, row in ranked:
+        if score < 0.48:
+            break
+        if _bank_shares_tokens(question_text, row):
+            best_score, best_row = score, row
+            break
+    if best_row is None:
         return _seek_help_fallback(topic, style, tags, question_text, code_snippet, backend)
 
     teaching = best_row["teaching_approach"]

@@ -44,6 +44,7 @@ def build_help_coach(
         difficulty=request.triage_difficulty,
         category=request.triage_category or request.category,
         learning_style=request.learning_style,
+        ask_text=request.text,
     )
     return {
         "teaching_approach": teaching,
@@ -89,6 +90,7 @@ def run_help_coach_assist(
             difficulty=request.triage_difficulty,
             category=request.triage_category or request.category,
             learning_style=request.learning_style,
+            ask_text=request.text,
         )
         coach.update(
             {
@@ -281,13 +283,19 @@ def _socratic_steps(
     difficulty: str | None,
     category: str | None,
     learning_style: str | None,
+    ask_text: str | None = None,
 ) -> list[str]:
-    """Turn the teaching script into ask-the-student prompts."""
+    """Turn the teaching script into ask-the-student prompts grounded in the ask."""
     numbered = re.findall(
         r"(?:^|\n)\s*\d+[.)]\s*(.+)",
         teaching_approach or "",
     )
     steps: list[str] = []
+    ask = " ".join((ask_text or "").split()).strip()
+    if ask:
+        snippet = ask if len(ask) <= 110 else f"{ask[:107]}…"
+        steps.append(f"Looking at their ask (“{snippet}”), what have they already tried?")
+
     for line in numbered[:5]:
         cleaned = line.strip().rstrip(".")
         if not cleaned:
@@ -302,13 +310,15 @@ def _socratic_steps(
     style = (learning_style or "unknown").replace("_", " ")
     diff = (difficulty or "MEDIUM").upper()
 
-    if not steps:
-        steps = [
-            f"In one sentence, what about {topic} is breaking for you?",
-            "Walk me through the smallest example where it still works.",
-            "Where does that example first go wrong?",
-            "What would you try next, before I hint?",
-        ]
+    if len(steps) <= 1:
+        steps.extend(
+            [
+                f"In one sentence, what about {topic} is breaking for you?",
+                "Walk me through the smallest example where it still works.",
+                "Where does that example first go wrong?",
+                "What would you try next, before I hint?",
+            ]
+        )
 
     if diff == "HARD":
         steps.append(
@@ -437,6 +447,7 @@ def _refresh_teaching(db: Session, request: Request) -> dict[str, Any]:
         similar_questions=similar,
         learning_style=request.learning_style,
         code_snippet=request.code_snippet,
+        course=request.course,
     )
     similar_kb = [
         {
