@@ -672,6 +672,7 @@ def _drop_weak_candidates(
 
 
 def _hit_matches_topic(hit: dict[str, Any], topics: list[str]) -> bool:
+    """Require real topic overlap — one long token is not enough when the topic has several."""
     if not topics:
         return True
     blob = f"{hit.get('title') or ''} {hit.get('snippet') or ''}".lower()
@@ -682,8 +683,13 @@ def _hit_matches_topic(hit: dict[str, Any], topics: list[str]) -> bool:
             if len(part) > 3
         ]
         if not tokens:
-            return True
-        if any(part in blob for part in tokens):
+            compact = re.sub(r"[^a-z0-9]+", " ", topic.lower()).strip()
+            if compact and compact in blob:
+                return True
+            continue
+        matches = sum(1 for part in tokens if part in blob)
+        need = 2 if len(tokens) >= 2 else 1
+        if matches >= need:
             return True
     return False
 

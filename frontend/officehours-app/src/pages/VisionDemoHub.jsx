@@ -23,9 +23,9 @@ const CARDS = [
   {
     to: "/demo/student-vision",
     n: "04",
-    title: "Student IA + Revision Strategist",
+    title: "Student IA + Pedagogy Agent",
     blurb:
-      "Prototype only — scannable Home, My asks tracking, Study Agent vs Revision Strategist (Canvas grades + syllabus). Not merged.",
+      "Student Home, My asks tracking, Study Agent vs Pedagogy Agent (practice scores + syllabus).",
   },
 ];
 

@@ -111,10 +111,10 @@ const SECTION_NAV = {
       items: [
         {
           id: "revision",
-          label: "Revision Strategist",
+          label: "Pedagogy Agent",
           icon: "insights",
           to: "/student/revision",
-          hint: "Today-first exam plan",
+          hint: "7-day focus plan from practice scores",
         },
       ],
     },
@@ -470,7 +470,7 @@ export default function AppShell() {
                 className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
               >
                 {ICONS.insights}
-                <span>Revision Strategist</span>
+                <span>Pedagogy Agent</span>
               </NavLink>
               <NavLink
                 to="/student/ask"
