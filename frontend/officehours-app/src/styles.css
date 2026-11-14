@@ -978,7 +978,8 @@ button.clay-panel:hover {
   border-radius: 0.75rem;
   border: 1px solid var(--hive-card-border);
   background: #fff;
-  transition: border-color 140ms ease, background 140ms ease;
+  color: var(--theme-ink);
+  transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
 }
 
 button.clay-blob:hover {
@@ -1004,6 +1005,39 @@ button.clay-blob:hover {
 .clay-blob-sky {
   background: #ecf5fb;
   border-color: rgba(40, 120, 160, 0.14);
+}
+
+/* Dark: cream ink must not sit on leftover light blob fills. */
+[data-theme="dark"] .clay-blob {
+  background: var(--theme-surface);
+  border-color: var(--theme-border);
+  color: var(--theme-text);
+}
+
+[data-theme="dark"] button.clay-blob:hover {
+  border-color: var(--theme-border-strong);
+  background: var(--theme-row-hover);
+}
+
+[data-theme="dark"] .clay-blob-mint {
+  background: var(--theme-clay-mint);
+  border-color: rgba(215, 231, 212, 0.22);
+}
+
+[data-theme="dark"] .clay-blob-butter {
+  background: var(--theme-clay-butter);
+  border-color: rgba(245, 212, 138, 0.28);
+}
+
+[data-theme="dark"] .clay-blob-coral {
+  background: var(--theme-clay-coral);
+  border-color: rgba(243, 168, 154, 0.35);
+  color: var(--theme-red-fg);
+}
+
+[data-theme="dark"] .clay-blob-sky {
+  background: var(--theme-clay-sky);
+  border-color: rgba(158, 201, 234, 0.28);
 }
 
 .soft-stat {
@@ -3248,7 +3282,7 @@ html:has(.vd) {
   align-items: center;
   gap: 0.8rem;
   margin: 1.4rem 0 -0.9rem;
-  color: #6d8177;
+  color: var(--theme-text-muted);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -3260,7 +3294,7 @@ html:has(.vd) {
   content: "";
   flex: 1;
   height: 1px;
-  background: rgba(22, 51, 40, 0.15);
+  background: color-mix(in srgb, var(--theme-border-strong) 70%, transparent);
 }
 
 /* ---------- Opening (Option 3 live): three people, one picture ---------- */
@@ -7582,26 +7616,36 @@ html:has(.oh-open) {
   color: #ffffff;
 }
 
-[data-theme="dark"] .bh-frame-professor .bh-account-menu {
+/* Shell modals (tour / bug report): avoid cream-on-white in dark. */
+[data-theme="dark"] .bh-modal {
   background: var(--theme-surface);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
-}
-
-[data-theme="dark"] .bh-frame-professor .bh-account-item,
-[data-theme="dark"] .bh-frame-professor .bh-account-item-icon {
+  border: 1px solid var(--theme-border);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
   color: var(--theme-text);
 }
 
-[data-theme="dark"] .bh-frame-professor .bh-account-item:hover {
+/* Account menu: all roles (student / TA / professor), not professor-only. */
+[data-theme="dark"] .bh-account-menu {
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="dark"] .bh-account-item,
+[data-theme="dark"] .bh-account-item-icon {
+  color: var(--theme-text);
+}
+
+[data-theme="dark"] .bh-account-item:hover {
   background: var(--theme-row-hover);
 }
 
-[data-theme="dark"] .bh-frame-professor .bh-account-item-danger,
-[data-theme="dark"] .bh-frame-professor .bh-account-item-danger .bh-account-item-icon {
+[data-theme="dark"] .bh-account-item-danger,
+[data-theme="dark"] .bh-account-item-danger .bh-account-item-icon {
   color: var(--theme-red-fg);
 }
 
-[data-theme="dark"] .bh-frame-professor .bh-account-item-danger:hover {
+[data-theme="dark"] .bh-account-item-danger:hover {
   background: var(--theme-row-hover);
 }
 
@@ -8258,6 +8302,7 @@ html:has(.oh-open) {
   --tar-forest-mid: #1b4332;
   --tar-forest-soft: #2d5a45;
   --tar-canvas: #f8f7f4;
+  --tar-pane: #ffffff;
   --tar-line: #e2e0d8;
   --tar-ink: #1a1a18;
   --tar-mute: #6b6a63;
@@ -8269,6 +8314,35 @@ html:has(.oh-open) {
   --tar-helping-fg: #5c4a2a;
   --tar-resolved-bg: #ededeb;
   --tar-resolved-fg: #5a5954;
+  --tar-msg-ta: #f3f6f4;
+  --tar-code-bg: #f0eee8;
+  --tar-insert-hover: #eef3ef;
+  --tar-row-on: #eef3ef;
+  --tar-scroll-thumb: #d4d2c8;
+}
+
+[data-theme="dark"] {
+  --tar-forest: #1b4332;
+  --tar-forest-mid: #2d5a45;
+  --tar-forest-soft: #3a6b54;
+  --tar-canvas: #141210;
+  --tar-pane: #1f1c18;
+  --tar-line: #3a352c;
+  --tar-ink: #f2ebe0;
+  --tar-mute: #c2b8a6;
+  --tar-open-bg: #243022;
+  --tar-open-fg: #d7e7d4;
+  --tar-claimed-bg: #1a3144;
+  --tar-claimed-fg: #9ec9ea;
+  --tar-helping-bg: #3d3214;
+  --tar-helping-fg: #f5d48a;
+  --tar-resolved-bg: #2a2620;
+  --tar-resolved-fg: #c2b8a8;
+  --tar-msg-ta: #243028;
+  --tar-code-bg: #252219;
+  --tar-insert-hover: #243028;
+  --tar-row-on: #243028;
+  --tar-scroll-thumb: #4a4438;
 }
 
 .bh-frame-ta {
@@ -8333,7 +8407,7 @@ html:has(.oh-open) {
   height: 100%;
   min-height: 0;
   flex-shrink: 0;
-  background: #fff;
+  background: var(--tar-pane);
   border-color: var(--tar-line);
   transition: width 150ms ease;
 }
@@ -8412,7 +8486,7 @@ html:has(.oh-open) {
   overflow-x: hidden;
   min-height: 0;
   scrollbar-width: thin;
-  scrollbar-color: #d4d2c8 transparent;
+  scrollbar-color: var(--tar-scroll-thumb) transparent;
 }
 
 .tar-empty {
@@ -8438,7 +8512,7 @@ html:has(.oh-open) {
 }
 
 .tar-queue-row-on {
-  background: #eef3ef;
+  background: var(--tar-row-on);
 }
 
 .tar-queue-preview {
@@ -8514,7 +8588,7 @@ html:has(.oh-open) {
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  background: #fff;
+  background: var(--tar-pane);
   border-bottom: 1px solid var(--tar-line);
 }
 
@@ -8566,7 +8640,7 @@ html:has(.oh-open) {
 }
 
 .tar-btn-secondary {
-  background: #fff;
+  background: var(--tar-pane);
   color: var(--tar-ink);
   border-color: var(--tar-line);
   font-weight: 500;
@@ -8577,7 +8651,7 @@ html:has(.oh-open) {
 }
 
 .tar-btn-subtle {
-  background: #fff;
+  background: var(--tar-pane);
   color: var(--tar-mute);
   border-color: var(--tar-line);
   font-weight: 500;
@@ -8590,13 +8664,13 @@ html:has(.oh-open) {
 
 .tar-btn-insert {
   width: 100%;
-  background: #fff;
+  background: var(--tar-pane);
   color: var(--tar-forest);
   border-color: color-mix(in srgb, var(--tar-forest) 30%, transparent);
 }
 
 .tar-btn-insert:hover:not(:disabled) {
-  background: #eef3ef;
+  background: var(--tar-insert-hover);
 }
 
 .tar-btn-primary:disabled,
@@ -8625,7 +8699,7 @@ html:has(.oh-open) {
   border: 1px solid var(--tar-line);
   border-radius: 0.4rem;
   padding: 0.75rem 0.9rem;
-  background: #fff;
+  background: var(--tar-pane);
 }
 
 .tar-msg-student {
@@ -8634,7 +8708,7 @@ html:has(.oh-open) {
 
 .tar-msg-ta {
   margin-left: 1.5rem;
-  background: #f3f6f4;
+  background: var(--tar-msg-ta);
 }
 
 .tar-prose {
@@ -8645,14 +8719,14 @@ html:has(.oh-open) {
 
 .tar-prose code {
   font-size: 12px;
-  background: #f0eee8;
+  background: var(--tar-code-bg);
   padding: 1px 4px;
   border-radius: 3px;
 }
 
 .tar-code-block {
   font-size: 12px;
-  background: #f0eee8;
+  background: var(--tar-code-bg);
   border: 1px solid var(--tar-line);
   border-radius: 6px;
   padding: 10px 12px;
@@ -8664,7 +8738,7 @@ html:has(.oh-open) {
 .tar-composer {
   flex-shrink: 0;
   border-top: 1px solid var(--tar-line);
-  background: #fff;
+  background: var(--tar-pane);
   padding: 0.75rem 1rem;
 }
 
