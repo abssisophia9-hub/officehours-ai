@@ -171,9 +171,80 @@ def test_empty_search_does_not_invent_urls(monkeypatch):
         headers=headers,
         json=_plan_payload(course_id),
     ).json()
-    assert all(not r.get("url") or r.get("source") == "course KB" for r in body["resources"])
-    assert any("no live web" in n.lower() for n in body["notes"])
+    assert body["resources"] == []
+    assert any(
+        "couldn't find resources right now" in n.lower() for n in body["notes"]
+    )
     assert len(body["time_slots"]) >= 1
+
+
+def test_resources_are_web_only_never_course_kb(monkeypatch):
+    headers, course_id = student_auth(client, "CSC 3374")
+    monkeypatch.setattr(
+        "app.services.revision_service.article_search",
+        lambda *_a, **_k: [],
+    )
+    monkeypatch.setenv("OFFICEHOURS_DEMO", "true")
+    body = client.post(
+        "/revision/plan",
+        headers=headers,
+        json=_plan_payload(course_id),
+    ).json()
+    assert body["resources"] == []
+    assert all(r.get("source") != "course KB" for r in body["resources"])
+    assert not any("course kb" in (n or "").lower() for n in body["notes"])
+
+
+def test_preferences_drive_different_queries(monkeypatch):
+    headers, course_id = student_auth(client, "CSC 3374")
+    seen: dict[str, list[str]] = {}
+
+    def fake_search(query, **_kwargs):
+        return []
+
+    monkeypatch.setattr("app.services.revision_service.article_search", fake_search)
+
+    for pref in ("visual_structural", "step_by_step"):
+        queries: list[str] = []
+
+        def capture(query, **_kwargs):
+            queries.append(query)
+            return []
+
+        monkeypatch.setattr("app.services.revision_service.article_search", capture)
+        body = client.post(
+            "/revision/plan",
+            headers=headers,
+            json=_plan_payload(course_id, preference=pref),
+        ).json()
+        assert body["preference"] == pref
+        assert queries
+        seen[pref] = list(queries)
+
+    visual = " ".join(seen["visual_structural"]).lower()
+    steps = " ".join(seen["step_by_step"]).lower()
+    assert "diagram" in visual or "visualization" in visual
+    assert "step" in steps
+    assert seen["visual_structural"] != seen["step_by_step"]
+
+
+def test_fallback_empty_state_copy(monkeypatch):
+    headers, course_id = student_auth(client, "CSC 3374")
+    monkeypatch.setenv("OFFICEHOURS_LLM_ENABLED", "false")
+    monkeypatch.setattr(
+        "app.services.revision_service.article_search",
+        lambda *_a, **_k: [],
+    )
+    body = client.post(
+        "/revision/plan",
+        headers=headers,
+        json=_plan_payload(course_id),
+    ).json()
+    assert body["mode"] == "rule-based fallback"
+    assert body["resources"] == []
+    assert (
+        "We couldn't find resources right now. Try again later." in body["notes"]
+    )
 
 
 def test_llm_off_is_rule_based_and_skips_provider(monkeypatch):

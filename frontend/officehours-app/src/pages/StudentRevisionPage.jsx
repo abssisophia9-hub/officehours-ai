@@ -91,9 +91,12 @@ function planModeLabel(plan) {
 function publicPlanNotes(notes) {
   const blocked =
     /llm_|fallback|gate:|budget:|quota|rule-based|invalid model|api key|gemini|orchestrat/i;
+  // Resources box already shows the empty-state sentence — don't repeat it under notes.
+  const emptyResources =
+    /^we couldn't find resources right now\. try again later\.?$/i;
   return (notes || [])
     .map((note) => String(note || "").trim())
-    .filter((note) => note && !blocked.test(note));
+    .filter((note) => note && !blocked.test(note) && !emptyResources.test(note));
 }
 
 function scrubCanvasLabel(source) {
@@ -491,7 +494,7 @@ export default function StudentRevisionPage() {
             <h2>Build plan</h2>
           </div>
           <p className="bh-card-note">
-            Tell us how you learn so resources and study blocks match your style.
+            Tell us how you learn so resources and the focus schedule match your style.
           </p>
 
           <label className="mt-3 block text-sm font-semibold text-aui-ink" htmlFor="rev-pref">
@@ -582,9 +585,9 @@ export default function StudentRevisionPage() {
                   ? ` until your exam on ${examDate}`
                   : " — the length you chose above"}
                 {planWindowDays > 0 && planWindowDays !== horizonDays
-                  ? ` (blocks through day ${planWindowDays})`
+                  ? ` (through day ${planWindowDays})`
                   : ""}
-                . Blocks count from today.
+                . Days count from today.
               </p>
               <ol className="mt-2 space-y-2 text-sm">
                 {slots.map((slot) => (
@@ -610,11 +613,12 @@ export default function StudentRevisionPage() {
 
           <div className="mt-4 rounded-lg border border-aui-forest/20 bg-[#f3faf5] p-3 text-xs">
             <p className="font-semibold text-aui-ink">Resources</p>
-            {resources.length ? (
+            {resources.filter((item) => item.url).length ? (
               <ol className="mt-2 list-decimal space-y-2 pl-4 text-aui-deep/85">
-                {resources.map((item) => (
-                  <li key={`${item.source}-${item.title}-${item.url || "kb"}`}>
-                    {item.url ? (
+                {resources
+                  .filter((item) => item.url)
+                  .map((item) => (
+                    <li key={`${item.source}-${item.title}-${item.url}`}>
                       <a
                         className="font-semibold text-aui-forest underline"
                         href={item.url}
@@ -623,25 +627,16 @@ export default function StudentRevisionPage() {
                       >
                         {item.title}
                       </a>
-                    ) : (
-                      <>
-                        <strong>{item.title}</strong>
-                        <span className="mt-0.5 block text-aui-deep/70">
-                          From your course materials (no public web link).
-                        </span>
-                      </>
-                    )}
-                    <span className="mt-0.5 block">
-                      {item.source === "course KB" ? "Course materials" : item.source}
-                      {item.why ? `. ${item.why}` : ""}
-                    </span>
-                  </li>
-                ))}
+                      <span className="mt-0.5 block">
+                        {item.source}
+                        {item.why ? `. ${item.why}` : ""}
+                      </span>
+                    </li>
+                  ))}
               </ol>
             ) : (
               <p className="mt-2 text-aui-deep/70">
-                No public links passed a topic check yet. Approved course slides
-                still appear here when your professor has shared them.
+                We couldn't find resources right now. Try again later.
               </p>
             )}
           </div>

@@ -32,10 +32,7 @@ from app.models.revision import (
     RevisionPlanRequest,
     TimeSlotOut,
 )
-from app.services.demo_mode import demo_mode
-from app.services.knowledge_service import search_approved_entries
 from app.services.revision_search import article_search, link_ok
-from app.services.room_chapters import DEMO_COURSE_CHAPTERS, canvas_chapter_label
 
 logger = logging.getLogger("officehours.revision")
 
@@ -99,16 +96,16 @@ def build_revision_plan(
     focus_topics = [row["topic"] for row in focus_rows]
     notes: list[str] = []
     if not focus_topics:
-        notes.append("No weak text topics yet — preference and course KB still shape the plan.")
+        notes.append("No weak text topics yet — preference still shapes the plan.")
         focus_topics = []
 
-    kb_resources = _kb_first(db, course_id=payload.course_id, topics=focus_topics or ["revision"])
+    # Pedagogy Resources are live web only — never course KB / demo outlines.
     search_impl = search_fn or article_search
     check_impl = link_check_fn or link_ok
 
     allowed_urls: set[str] = set()
     candidates: list[dict[str, Any]] = []
-    live_resources: list[ResourceOut] = list(kb_resources)
+    live_resources: list[ResourceOut] = []
     iterations: list[IterationTraceOut] = []
     search_count = 0
     checked_count = 0
@@ -122,7 +119,7 @@ def build_revision_plan(
         observation = _observe(
             focus_rows=focus_rows,
             preference=preference,
-            kb_titles=[r.title for r in kb_resources],
+            kb_titles=[],
             live_count=len([r for r in live_resources if r.url]),
             search_count=search_count,
             checked_count=checked_count,
@@ -286,25 +283,16 @@ def build_revision_plan(
             # Prefer an early stop on the next think when enough links exist.
             continue
 
-    # Strip any resource whose URL was not from search or KB (KB has url=None).
+    # Strip any resource whose URL was not returned by search (no invented / KB URLs).
     safe_resources: list[ResourceOut] = []
     for resource in live_resources:
-        if resource.url is None and resource.source == "course KB":
-            safe_resources.append(resource)
-            continue
         if resource.url and resource.url in allowed_urls:
             safe_resources.append(resource)
-            continue
-        if resource.url and resource.source == "course KB":
-            safe_resources.append(resource)
-    # Dedupe by URL/title, cap checked web links + keep KB.
-    safe_resources = _dedupe_resources(safe_resources)[: MAX_CHECKED_LINKS + len(kb_resources)]
+    safe_resources = _dedupe_resources(safe_resources)[:MAX_CHECKED_LINKS]
 
     web_live = [r for r in safe_resources if r.url]
-    if not web_live and not kb_resources:
-        notes.append("No live web hits — plan blocks still returned; try again later.")
-    elif not web_live:
-        notes.append("No live web hits; course KB resources listed first.")
+    if not web_live:
+        notes.append("We couldn't find resources right now. Try again later.")
 
     mode: str
     mode_label: str
@@ -397,94 +385,6 @@ def _rank_topics(
         )
     )
     return rows
-
-
-def _kb_first(db: Session, *, course_id: int, topics: list[str]) -> list[ResourceOut]:
-    out: list[ResourceOut] = []
-    seen: set[str] = set()
-    for topic in topics[:3]:
-        try:
-            matches = search_approved_entries(
-                db,
-                topic,
-                course_id=course_id,
-                course_material_only=True,
-                top_k=2,
-            )
-        except Exception:
-            matches = []
-        for entry, _score in matches:
-            title = (entry.question_text or entry.source_filename or "Course material").strip()
-            unit = _unit_label(title)
-            key = title.lower()
-            if key in seen:
-                continue
-            seen.add(key)
-            out.append(
-                ResourceOut(
-                    title=title[:200],
-                    url=None,
-                    source="course KB",
-                    why=f"Professor-approved course material for {topic}"
-                    + (f" ({unit})" if unit else "")
-                    + ".",
-                    kind="course",
-                )
-            )
-    if out or not demo_mode():
-        return out[:3]
-    # Demo courses often have no uploaded slides yet — surface the sample
-    # syllabus chapters that match focus topics so Resources is not empty.
-    from app.models.auth import Course
-
-    course = db.get(Course, course_id)
-    code = (course.code if course else "") or ""
-    chapters = DEMO_COURSE_CHAPTERS.get(code) or ()
-    topic_tokens = {
-        tok
-        for topic in topics[:3]
-        for tok in re.findall(r"[a-z0-9]+", topic.lower())
-        if len(tok) > 3
-    }
-    for chapter in chapters:
-        words = set(re.findall(r"[a-z0-9]+", chapter.lower()))
-        if topic_tokens and not (words & topic_tokens):
-            continue
-        key = chapter.lower()
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append(
-            ResourceOut(
-                title=f"{code} · {chapter}",
-                url=None,
-                source="course KB",
-                why=f"Demo course outline chapter related to {topics[0] if topics else 'your focus'}.",
-                kind="course",
-            )
-        )
-        if len(out) >= 3:
-            break
-    if not out and chapters:
-        for chapter in chapters[:2]:
-            out.append(
-                ResourceOut(
-                    title=f"{code} · {chapter}",
-                    url=None,
-                    source="course KB",
-                    why="Demo course outline — upload and approve slides for richer links.",
-                    kind="course",
-                )
-            )
-    return out[:3]
-
-
-def _unit_label(title: str) -> str | None:
-    left = title.split("·", 1)[0].strip()
-    if not left:
-        return None
-    label = canvas_chapter_label(left)
-    return label or None
 
 
 def _observe(**kwargs: Any) -> dict[str, Any]:
@@ -816,7 +716,7 @@ def _backwards_schedule(
     topic = str(primary["topic"])
     style = STYLE_LABELS.get(preference, "general")
     blocks = [
-        (max(due - 2, 0), "Foundations", min(45, available_minutes), "Build the base with course KB first."),
+        (max(due - 2, 0), "Foundations", min(45, available_minutes), "Build the base for this topic."),
         (max(due - 1, 0), "Practice", min(60, max(30, available_minutes // 2)), f"Work problems for a {style} learner."),
         (due, "Self-check", min(30, available_minutes // 3 or 30), "Self-quiz the day before the deadline."),
     ]
