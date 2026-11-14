@@ -6858,15 +6858,22 @@ html:has(.oh-open) {
   outline-offset: 2px;
 }
 
-.bh-course-all {
-  display: inline-flex;
-  align-items: center;
+.bh-course-switcher {
+  flex-shrink: 0;
   margin: 0 0 0.35rem;
-  color: rgba(255, 255, 255, 0.86);
-  font-size: 0.82rem;
-  font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 0.15rem;
+  padding: 0 0 0.55rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.bh-course-switcher .bh-nav-label {
+  margin-top: 0.35rem;
+}
+
+.bh-course-all {
+  /* Match other nav links — no special underline. */
+  margin: 0 0 0.2rem;
+  text-decoration: none;
+  font-weight: 500;
 }
 
 .bh-frame-student .bh-nav-badge {

@@ -40,7 +40,7 @@ export default function NotificationBell({ plain = false }) {
         ) : null}
       </button>
       {open ? (
-        <div className={`absolute bottom-full left-0 z-20 mb-2 w-72 rounded-xl border border-aui-forest/20 bg-white p-3 text-xs text-aui-ink shadow-lg${plain ? " pf-inbox" : ""}`}>
+        <div className={`absolute top-full left-0 z-20 mt-2 w-72 rounded-xl border border-aui-forest/20 bg-white p-3 text-xs text-aui-ink shadow-lg${plain ? " pf-inbox" : ""}`}>
           <p className="font-semibold">Notifications</p>
           <p className={plain ? "pf-inbox-note" : "mt-1 text-[11px] text-aui-deep/60"}>
             {plain
