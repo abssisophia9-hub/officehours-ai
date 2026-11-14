@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 export default function NotificationBell({ plain = false }) {
   const { token } = useAuth();
+  const rootRef = useRef(null);
   const [open, setOpen] = useState(false);
   const [inbox, setInbox] = useState({ unread: 0, items: [], smtp_configured: false });
 
@@ -22,16 +23,34 @@ export default function NotificationBell({ plain = false }) {
     return () => clearInterval(timer);
   }, [load]);
 
+  useEffect(() => {
+    if (!open) return undefined;
+    function onDocClick(event) {
+      if (!rootRef.current?.contains(event.target)) setOpen(false);
+    }
+    function onKey(event) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   async function markRead(id) {
     await api(`/notifications/${id}/read`, { method: "POST", token });
     await load();
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={rootRef}>
       <button
         type="button"
         className="bh-nav-item w-full"
+        aria-expanded={open}
+        aria-controls="bh-inbox-panel"
         onClick={() => setOpen((value) => !value)}
       >
         Inbox
@@ -40,8 +59,23 @@ export default function NotificationBell({ plain = false }) {
         ) : null}
       </button>
       {open ? (
-        <div className={`absolute top-full left-0 z-20 mt-2 w-72 rounded-xl border border-aui-forest/20 bg-white p-3 text-xs text-aui-ink shadow-lg${plain ? " pf-inbox" : ""}`}>
-          <p className="font-semibold">Notifications</p>
+        <div
+          id="bh-inbox-panel"
+          role="dialog"
+          aria-label="Inbox"
+          className={`absolute top-full left-0 z-20 mt-2 w-72 rounded-xl border border-aui-forest/20 bg-white p-3 text-xs text-aui-ink shadow-lg${plain ? " pf-inbox" : ""}`}
+        >
+          <div className="flex items-start justify-between gap-2">
+            <p className="font-semibold">Notifications</p>
+            <button
+              type="button"
+              className="rounded px-1.5 py-0.5 text-sm font-semibold text-aui-deep/70 hover:bg-aui-mist"
+              aria-label="Close inbox"
+              onClick={() => setOpen(false)}
+            >
+              ×
+            </button>
+          </div>
           <p className={plain ? "pf-inbox-note" : "mt-1 text-[11px] text-aui-deep/60"}>
             {plain
               ? "Notifications for this account."
