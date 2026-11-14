@@ -8900,3 +8900,95 @@ html:has(.oh-open) {
     transition: none !important;
   }
 }
+
+/* ---------- E1 apple-design pass (shell / chrome only) ---------- */
+/* Response: press feedback on pointer-down, not only hover */
+.bh-nav-item:active,
+.btn-primary:active,
+.btn-ghost:active,
+.pf-quiet:active,
+.pf-approve:active {
+  transform: scale(0.97);
+  transition: transform 100ms ease-out, background 130ms ease, color 130ms ease;
+}
+
+.bh-nav-item.active:active {
+  transform: none;
+}
+
+/* Craft: inbox panel follows theme (Agency close already present) */
+#bh-inbox-panel {
+  background: var(--theme-surface);
+  color: var(--theme-text);
+  border-color: color-mix(in srgb, var(--theme-forest) 22%, transparent);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--theme-ink) 18%, transparent);
+  transform-origin: top left;
+  animation: bh-inbox-in 180ms ease-out;
+}
+
+#bh-inbox-panel .font-semibold {
+  color: var(--theme-title);
+}
+
+#bh-inbox-panel li.rounded-lg {
+  background: var(--theme-surface-muted);
+}
+
+@keyframes bh-inbox-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-anim,
+  html.theme-anim body,
+  html.theme-anim .bh-frame,
+  html.theme-anim .bh-main,
+  html.theme-anim .bh-card,
+  html.theme-anim .bh-sidebar,
+  html.theme-anim .bh-stat-card,
+  html.theme-anim .aui-shell,
+  html.theme-anim .glass-panel,
+  html.theme-anim .clay-panel,
+  html.theme-anim .oh-open,
+  html.theme-anim .oh-open-nav,
+  html.theme-anim .theme-toggle {
+    transition: none !important;
+  }
+
+  .bh-nav-item:active,
+  .btn-primary:active,
+  .btn-ghost:active,
+  .pf-quiet:active,
+  .pf-approve:active {
+    transform: none !important;
+  }
+
+  #bh-inbox-panel {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass-panel,
+  .glass-panel-deep,
+  .oh-land-nav {
+    backdrop-filter: none;
+    background: var(--theme-surface);
+  }
+}
+
+@media (prefers-contrast: more) {
+  .glass-panel,
+  .glass-panel-deep,
+  #bh-inbox-panel,
+  .bh-card {
+    border: 1px solid var(--theme-text);
+  }
+}
