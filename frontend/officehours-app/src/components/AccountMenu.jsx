@@ -64,7 +64,7 @@ const TOURS = {
     },
     {
       title: "Asks",
-      body: "Questions assigned to you come first. Suggested answers stay here, and the study agent does not use them.",
+      body: "Questions assigned to you come first. Approve course material on Material so the Study Agent can quote it.",
       to: "/professor/asks",
     },
     {

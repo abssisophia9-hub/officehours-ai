@@ -75,28 +75,6 @@ export default function InsightsPage() {
   const asks = hitRate?.total_asks || 0;
   const answered = hitRate?.total_hits || 0;
 
-  async function draftFaq(cluster) {
-    setBusy(true);
-    setError("");
-    try {
-      await api("/knowledge/from-cluster", {
-        method: "POST",
-        token,
-        body: {
-          cluster_id: cluster.cluster_id,
-          course_id: activeCourse.id,
-          course: activeCourse.code,
-        },
-      });
-      setMessage("Suggested answer saved. The study agent does not use these.");
-      await reload();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function setInsightStatus(topic, reviewStatus) {
     setBusy(true);
     setError("");
@@ -142,24 +120,6 @@ export default function InsightsPage() {
       });
       setReviewInsights(updated);
       setMessage(`Saved a note for ${topic.label}.`);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function draftInsightFaq(topic) {
-    setBusy(true);
-    setError("");
-    try {
-      await api("/knowledge/from-insight", {
-        method: "POST",
-        token,
-        body: { course_id: activeCourse.id, topic_key: topic.topic_key },
-      });
-      setMessage("Suggested answer saved. The study agent does not use these.");
-      await reload();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -278,14 +238,6 @@ export default function InsightsPage() {
                       {meetingDraft(cluster.cluster_id).open ? "Hide meeting form" : "Set a group meeting"}
                     </button>
                   ) : null}
-                  <button
-                    type="button"
-                    className="btn-ghost pf-btn"
-                    disabled={busy}
-                    onClick={() => draftFaq(cluster)}
-                  >
-                    Draft a suggested answer
-                  </button>
                 </div>
                 {meetingDraft(cluster.cluster_id).open ? (
                   <div className="pf-panel">
@@ -407,14 +359,6 @@ export default function InsightsPage() {
                       onClick={() => setInsightStatus(topic, "covered")}
                     >
                       Mark covered
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-ghost pf-btn"
-                      disabled={busy}
-                      onClick={() => draftInsightFaq(topic)}
-                    >
-                      Draft a suggested answer
                     </button>
                   </div>
                   {openInsight === topic.topic_key ? (

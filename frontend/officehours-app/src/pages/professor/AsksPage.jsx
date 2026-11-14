@@ -1,6 +1,3 @@
-import { useState } from "react";
-import { api } from "../../api/client.js";
-import { useAuth } from "../../auth/AuthContext.jsx";
 import { assignedToProfessor, useProfessorData } from "./ProfessorData.jsx";
 
 function helpLabel(mode) {
@@ -15,41 +12,11 @@ function personLabel(request) {
 }
 
 export default function AsksPage() {
-  const { token } = useAuth();
-  const { requests, entries, commandCenter, noTa, ready, error, setError, reload } = useProfessorData();
-  const [busyId, setBusyId] = useState("");
-  const [approvedNotes, setApprovedNotes] = useState([]);
+  const { requests, commandCenter, noTa, ready, error } = useProfessorData();
 
   const assigned = assignedToProfessor(requests);
   const escalations = commandCenter?.escalations || [];
-  const drafts = entries.filter(
-    (entry) => entry.status === "pending_review" && entry.entry_kind !== "course_material",
-  );
   const recent = requests.slice(0, 12);
-
-  async function approveDraft(entry) {
-    setBusyId(String(entry.id));
-    setError("");
-    try {
-      await api(`/knowledge/${entry.id}`, {
-        method: "PATCH",
-        token,
-        body: { status: "approved" },
-      });
-      setApprovedNotes((prev) => [
-        ...prev,
-        {
-          id: entry.id,
-          text: entry.question_text,
-        },
-      ]);
-      await reload();
-    } catch (err) {
-      setError(err.message || "Could not approve that answer.");
-    } finally {
-      setBusyId("");
-    }
-  }
 
   return (
     <div className="pf-page">
@@ -133,39 +100,6 @@ export default function AsksPage() {
           </table>
         ) : null}
       </section>
-
-      {drafts.length > 0 || approvedNotes.length > 0 ? (
-        <section className="pf-block" aria-label="Suggested answers">
-          <h2>Suggested answers</h2>
-          <p className="pf-line">The study agent does not use these.</p>
-          <ul className="pf-ask-list">
-            {drafts.map((entry) => (
-              <li key={entry.id}>
-                <p className="pf-ask-title">{entry.question_text}</p>
-                <p className="pf-chunk-text">{entry.answer_draft}</p>
-                <button
-                  type="button"
-                  className="pf-approve"
-                  disabled={busyId === String(entry.id)}
-                  onClick={() => approveDraft(entry)}
-                >
-                  Approve
-                </button>
-              </li>
-            ))}
-            {approvedNotes
-              .filter((item) => !drafts.some((entry) => entry.id === item.id))
-              .map((item) => (
-                <li key={`done-${item.id}`}>
-                  <p className="pf-ask-title">{item.text}</p>
-                  <p className="pf-note" role="status">
-                    Approved. The study agent does not use these.
-                  </p>
-                </li>
-              ))}
-          </ul>
-        </section>
-      ) : null}
     </div>
   );
 }
