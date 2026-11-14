@@ -573,7 +573,7 @@ export default function AppShell() {
 
 const PROFESSOR_NAV = [
   { id: "material", label: "Material", to: "/professor", end: true, icon: "knowledge", badgeKey: "waitingFiles" },
-  { id: "asks", label: "Asks", to: "/professor/asks", icon: "requests", badgeKey: "assignedAsks" },
+  { id: "asks", label: "Your desk", to: "/professor/asks", icon: "requests", badgeKey: "assignedAsks" },
   { id: "insights", label: "Insights", to: "/professor/insights", icon: "insights" },
   { id: "team", label: "Team", to: "/professor/team", icon: "queue" },
 ];
