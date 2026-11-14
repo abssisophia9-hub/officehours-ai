@@ -155,6 +155,13 @@ const SECTION_NAV = {
           to: "/ta",
           hint: "Claim, help, reply to students",
         },
+        {
+          id: "past",
+          label: "Past asks",
+          icon: "requests",
+          to: "/ta/past",
+          hint: "Resolved asks with replies",
+        },
       ],
     },
   ],
@@ -363,7 +370,9 @@ export default function AppShell() {
             // Live Queue owns /ta. Dashboard is active on course home.
             let active = isActive;
             if (section.id === "queue") {
-              active = location.pathname.startsWith("/ta");
+              active = location.pathname === "/ta";
+            } else if (section.id === "past") {
+              active = location.pathname.startsWith("/ta/past");
             } else if (section.id === "dashboard") {
               active = location.pathname === "/";
             }
