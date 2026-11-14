@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { API_BASE, api, apiUpload } from "../api/client.js";
 
 function formatBytes(size) {
@@ -33,6 +33,8 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
   const [caption, setCaption] = useState("");
   const [anonymous, setAnonymous] = useState(false);
   const [file, setFile] = useState(null);
+  const fileInputRef = useRef(null);
+  const fileInputId = useId();
   const [openComments, setOpenComments] = useState(null);
   const [comments, setComments] = useState([]);
   const [commentBody, setCommentBody] = useState("");
@@ -248,13 +250,43 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
           />
           Post as Classmate (hide my name)
         </label>
-        <input
-          type="file"
-          accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg,.webp,.gif"
-          className="block w-full text-sm text-aui-deep"
-          onChange={(event) => setFile(event.target.files?.[0] || null)}
-          required
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            ref={fileInputRef}
+            id={fileInputId}
+            type="file"
+            accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg,.webp,.gif"
+            className="sr-only"
+            onChange={(event) => setFile(event.target.files?.[0] || null)}
+          />
+          <button
+            type="button"
+            className="btn-ghost px-3 py-2 text-sm"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Choose file
+          </button>
+          {file ? (
+            <span className="inline-flex max-w-full items-center gap-2 rounded-lg border border-aui-forest/25 bg-white px-2.5 py-1.5 text-sm text-aui-ink">
+              <span className="truncate" title={file.name}>
+                {file.name}
+              </span>
+              <button
+                type="button"
+                className="bh-inbox-close shrink-0"
+                aria-label="Remove selected file"
+                onClick={() => {
+                  setFile(null);
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                }}
+              >
+                ×
+              </button>
+            </span>
+          ) : (
+            <span className="text-sm text-aui-deep/70">No file selected</span>
+          )}
+        </div>
         <p className="text-xs text-aui-deep/65">
           PDF, DOCX, TXT/MD, or images · 20 MB max
         </p>
@@ -348,18 +380,19 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
                   {note.is_mine ? (
                     <button
                       type="button"
-                      className="btn-ghost px-3 py-1.5 text-xs text-red-700"
+                      className="btn-ghost px-3 py-1.5 text-xs font-semibold text-red-700"
+                      data-testid="peer-note-delete"
                       onClick={() => {
                         if (
                           window.confirm(
-                            `Delete “${note.title}”? Classmates will no longer see it.`,
+                            `Delete “${note.title}”? The file, likes, and comments are removed.`,
                           )
                         ) {
                           removeMine(note.id);
                         }
                       }}
                     >
-                      Delete my note
+                      Delete
                     </button>
                   ) : null}
                 </div>

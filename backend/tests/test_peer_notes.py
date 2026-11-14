@@ -204,8 +204,21 @@ def test_share_like_comment_download_feed():
         )
         assert blocked.status_code == 403
 
+    # Non-owner cannot delete Sara's note (Youssef is a classmate on the course).
+    denied = client.delete(
+        f"/peer-notes/{note_id}",
+        headers={"Authorization": f"Bearer {youssef}"},
+    )
+    assert denied.status_code == 403
+
     deleted = client.delete(
         f"/peer-notes/{note_id}",
         headers={"Authorization": f"Bearer {sara}"},
     )
     assert deleted.status_code == 204
+    # File is cleaned up — download after delete is gone.
+    gone = client.get(
+        f"/peer-notes/{note_id}/download",
+        headers={"Authorization": f"Bearer {sara}"},
+    )
+    assert gone.status_code in {404, 410}

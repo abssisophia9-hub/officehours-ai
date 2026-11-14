@@ -3,6 +3,7 @@ import { Navigate } from "react-router";
 import { api } from "../api/client.js";
 import { pageItems } from "../api/page.js";
 import { useAuth } from "../auth/AuthContext.jsx";
+import { plainAskText } from "../lib/plainAskText.js";
 
 function dayKey(iso) {
   if (!iso) return "";
@@ -154,7 +155,7 @@ export default function TaPastAsksPage() {
                 <p className="ta-past-title">
                   #{req.id} · {req.course || "Course"}
                 </p>
-                <p className="ta-past-question mt-2 whitespace-pre-wrap">{req.text}</p>
+                <p className="ta-past-question mt-2 whitespace-pre-wrap">{plainAskText(req.text)}</p>
                 <div className="ta-past-reply mt-3 rounded-lg p-3">
                   <p className="ta-past-reply-label">TA response</p>
                   <p className="ta-past-reply-body mt-1 whitespace-pre-wrap">

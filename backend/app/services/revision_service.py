@@ -32,9 +32,10 @@ from app.models.revision import (
     RevisionPlanRequest,
     TimeSlotOut,
 )
+from app.services.demo_mode import demo_mode
 from app.services.knowledge_service import search_approved_entries
 from app.services.revision_search import article_search, link_ok
-from app.services.room_chapters import canvas_chapter_label
+from app.services.room_chapters import DEMO_COURSE_CHAPTERS, canvas_chapter_label
 
 logger = logging.getLogger("officehours.revision")
 
@@ -329,6 +330,17 @@ def build_revision_plan(
         limit=f"{mode}:{fallback_reason or '-'}",
     )
 
+    clean_iterations = [
+        IterationTraceOut(
+            iteration=step.iteration,
+            action=step.action,
+            query=step.query,
+            thinker=step.thinker,
+            note=_public_iteration_note(step.note),
+        )
+        for step in iterations
+    ]
+
     return RevisionPlanOut(
         mode=mode,  # type: ignore[arg-type]
         mode_label=mode_label,
@@ -337,7 +349,7 @@ def build_revision_plan(
         resources=safe_resources[:8],
         time_slots=slots,
         ask_draft=ask_draft,
-        iterations=iterations,
+        iterations=clean_iterations,
         notes=notes,
         caps={
             "max_iterations": MAX_ITERATIONS,
@@ -416,6 +428,51 @@ def _kb_first(db: Session, *, course_id: int, topics: list[str]) -> list[Resourc
                     why=f"Professor-approved course material for {topic}"
                     + (f" ({unit})" if unit else "")
                     + ".",
+                    kind="course",
+                )
+            )
+    if out or not demo_mode():
+        return out[:3]
+    # Demo courses often have no uploaded slides yet — surface the sample
+    # syllabus chapters that match focus topics so Resources is not empty.
+    from app.models.auth import Course
+
+    course = db.get(Course, course_id)
+    code = (course.code if course else "") or ""
+    chapters = DEMO_COURSE_CHAPTERS.get(code) or ()
+    topic_tokens = {
+        tok
+        for topic in topics[:3]
+        for tok in re.findall(r"[a-z0-9]+", topic.lower())
+        if len(tok) > 3
+    }
+    for chapter in chapters:
+        words = set(re.findall(r"[a-z0-9]+", chapter.lower()))
+        if topic_tokens and not (words & topic_tokens):
+            continue
+        key = chapter.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(
+            ResourceOut(
+                title=f"{code} · {chapter}",
+                url=None,
+                source="course KB",
+                why=f"Demo course outline chapter related to {topics[0] if topics else 'your focus'}.",
+                kind="course",
+            )
+        )
+        if len(out) >= 3:
+            break
+    if not out and chapters:
+        for chapter in chapters[:2]:
+            out.append(
+                ResourceOut(
+                    title=f"{code} · {chapter}",
+                    url=None,
+                    source="course KB",
+                    why="Demo course outline — upload and approve slides for richer links.",
                     kind="course",
                 )
             )
@@ -579,9 +636,23 @@ def _think(
         )
 
 
+def _public_iteration_note(note: str | None) -> str | None:
+    """Strip operator/gate codes so API traces never leak llm_off-style jargon."""
+    text = (note or "").strip()
+    if not text:
+        return None
+    if re.search(
+        r"llm_|fallback|gate:|budget:|quota|rule-based|invalid model|api key|gemini|orchestrat",
+        text,
+        re.I,
+    ):
+        return "Used a simple planner from your scores and preference."
+    return text
+
+
 def _llm_gate(*, user_id: int | None, course_id: int, llm_calls: int) -> str | None:
     if not policy.llm_enabled():
-        return "llm_off"
+        return "unavailable"
     if llm_calls >= MAX_LLM_CALLS:
         return "llm_cap"
     if not policy._model_calls_allowed():

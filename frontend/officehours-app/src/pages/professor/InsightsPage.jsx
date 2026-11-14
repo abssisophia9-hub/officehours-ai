@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { api } from "../../api/client.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
+import { plainAskText } from "../../lib/plainAskText.js";
 import { useProfessorData } from "./ProfessorData.jsx";
 
 function meetingSeed() {
@@ -345,7 +346,7 @@ export default function InsightsPage() {
                 ) : null}
                 <ul className="pf-plain-list">
                   {cluster.sample_texts.map((sample) => (
-                    <li key={sample}>{sample}</li>
+                    <li key={sample}>{plainAskText(sample)}</li>
                   ))}
                 </ul>
               </li>
@@ -428,7 +429,7 @@ export default function InsightsPage() {
                         {(topic.questions || []).map((question, index) => (
                           <li key={`${question.source}-${question.request_id || question.stuck_post_id || index}`}>
                             {question.source === "stuck_room" ? "Room. " : "Ask. "}
-                            {question.text}
+                            {plainAskText(question.text)}
                           </li>
                         ))}
                       </ul>
@@ -458,7 +459,7 @@ export default function InsightsPage() {
                   ) : (
                     <ul className="pf-plain-list">
                       {(topic.sample_questions || []).map((sample) => (
-                        <li key={sample}>{sample}</li>
+                        <li key={sample}>{plainAskText(sample)}</li>
                       ))}
                     </ul>
                   )}

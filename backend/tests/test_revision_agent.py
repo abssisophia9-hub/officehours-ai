@@ -1,6 +1,7 @@
 """Revision Agent: LLM-in-loop (mocked) + rule-based fallback."""
 
 import os
+import re
 
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["OFFICEHOURS_CLUSTERING_BACKEND"] = "lexical"
@@ -331,7 +332,16 @@ def test_invalid_llm_output_falls_back_to_rules(monkeypatch):
 
     assert plan.mode == "rule-based fallback"
     assert any(step.thinker == "rules" for step in plan.iterations)
-    assert any("invalid" in (step.note or "").lower() for step in plan.iterations)
+    # Iteration notes stay student-safe (no invalid-model / llm jargon).
+    assert any(
+        "simple planner" in (step.note or "").lower()
+        or "scores and preference" in (step.note or "").lower()
+        for step in plan.iterations
+    )
+    assert not any(
+        re.search(r"llm_|invalid model|fallback|gate:", step.note or "", re.I)
+        for step in plan.iterations
+    )
 
 
 def test_invented_url_dropped(monkeypatch):
@@ -515,8 +525,13 @@ def test_per_user_cap_falls_back_to_rules(monkeypatch):
     assert calls["n"] == 0
     assert plan.mode == "rule-based fallback"
     assert "Plan built from your scores and preference" in plan.mode_label
-    assert any("user_per_minute" in (n or "") or "budget" in (n or "").lower() for n in plan.notes) or any(
-        "budget" in (step.note or "") for step in plan.iterations
+    assert any(
+        "scores and preference" in (n or "").lower() or "unavailable" in (n or "").lower()
+        for n in plan.notes
+    ) or any(step.thinker == "rules" for step in plan.iterations)
+    assert not any(
+        re.search(r"user_per_minute|budget:|llm_|gate:", text or "", re.I)
+        for text in list(plan.notes) + [step.note for step in plan.iterations]
     )
 
 
@@ -559,8 +574,10 @@ def test_per_course_cap_falls_back_to_rules(monkeypatch):
     assert calls["n"] == 0
     assert plan.mode == "rule-based fallback"
     assert "Plan built from your scores and preference" in plan.mode_label
-    assert any("course_per_day" in (n or "") or "budget" in (n or "").lower() for n in plan.notes) or any(
-        "course_per_day" in (step.note or "") or "budget" in (step.note or "") for step in plan.iterations
+    assert any(step.thinker == "rules" for step in plan.iterations)
+    assert not any(
+        re.search(r"course_per_day|budget:|llm_|gate:", text or "", re.I)
+        for text in list(plan.notes) + [step.note for step in plan.iterations]
     )
 
 

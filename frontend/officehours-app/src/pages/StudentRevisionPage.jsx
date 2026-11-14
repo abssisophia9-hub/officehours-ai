@@ -4,17 +4,25 @@ import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 const CSC_SEED = [
-  { topic: "Trees & red-black", weight: 35, score: 62, source: "Canvas · Quiz 4", assignment_kind: "text" },
-  { topic: "Hashing", weight: 25, score: 78, source: "Canvas · Assignment 3", assignment_kind: "text" },
-  { topic: "Heaps", weight: 20, score: 88, source: "Canvas · Quiz 3", assignment_kind: "text" },
-  { topic: "Amortized analysis", weight: 20, score: 71, source: "Canvas · practice", assignment_kind: "text" },
+  { topic: "Trees & red-black", weight: 35, score: 62, source: "Demo sample · Quiz 4", assignment_kind: "text" },
+  { topic: "Hashing", weight: 25, score: 78, source: "Demo sample · Assignment 3", assignment_kind: "text" },
+  { topic: "Heaps", weight: 20, score: 88, source: "Demo sample · Quiz 3", assignment_kind: "text" },
+  { topic: "Amortized analysis", weight: 20, score: 71, source: "Demo sample · practice", assignment_kind: "text" },
 ];
 
 const GENERIC_SEED = [
-  { topic: "Core concepts", weight: 30, score: 68, source: "Canvas · Quiz", assignment_kind: "text" },
-  { topic: "Problem sets", weight: 30, score: 74, source: "Canvas · Assignment", assignment_kind: "text" },
-  { topic: "Midterm topics", weight: 25, score: 71, source: "Canvas · Midterm prep", assignment_kind: "text" },
-  { topic: "Project / labs", weight: 15, score: 80, source: "Canvas · Lab", assignment_kind: "project" },
+  { topic: "Core concepts", weight: 30, score: 68, source: "Demo sample · Quiz", assignment_kind: "text" },
+  { topic: "Problem sets", weight: 30, score: 74, source: "Demo sample · Assignment", assignment_kind: "text" },
+  { topic: "Midterm topics", weight: 25, score: 71, source: "Demo sample · Midterm prep", assignment_kind: "text" },
+  { topic: "Project / labs", weight: 15, score: 80, source: "Demo sample · Lab", assignment_kind: "project" },
+];
+
+const HORIZON_OPTIONS = [
+  { id: "3", days: 3, label: "3 days" },
+  { id: "5", days: 5, label: "5 days" },
+  { id: "7", days: 7, label: "7 days" },
+  { id: "10", days: 10, label: "10 days" },
+  { id: "14", days: 14, label: "14 days" },
 ];
 
 const PREFERENCE_OPTIONS = [
@@ -79,6 +87,15 @@ function publicPlanNotes(notes) {
     .filter((note) => note && !blocked.test(note));
 }
 
+function scrubCanvasLabel(source) {
+  const text = String(source || "").trim();
+  if (!text) return "Demo sample";
+  if (/^canvas\b/i.test(text)) {
+    return text.replace(/^canvas\b/i, "Demo sample");
+  }
+  return text;
+}
+
 function loadRevision(courseId, courseCode) {
   try {
     const raw = localStorage.getItem(storageKey(courseId));
@@ -86,24 +103,45 @@ function loadRevision(courseId, courseCode) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed?.grades) && parsed.grades.length) {
         return {
-          grades: parsed.grades,
-          loggedScore: parsed.loggedScore ?? null,
-          loggedTopic: parsed.loggedTopic ?? null,
+          grades: parsed.grades.map((row) => ({
+            ...row,
+            source: scrubCanvasLabel(row.source),
+          })),
         };
       }
     }
   } catch {
-    // seed fresh
+    // start from demo samples
   }
   return {
     grades: seedGrades(courseCode),
-    loggedScore: null,
-    loggedTopic: null,
   };
 }
 
 function saveRevision(courseId, payload) {
-  localStorage.setItem(storageKey(courseId), JSON.stringify(payload));
+  localStorage.setItem(
+    storageKey(courseId),
+    JSON.stringify({ grades: payload.grades || [] }),
+  );
+}
+
+function horizonKey(courseId) {
+  return `officehours_revision_horizon_${courseId}`;
+}
+
+function loadHorizonDays(courseId) {
+  try {
+    const raw = localStorage.getItem(horizonKey(courseId));
+    const days = Number(raw);
+    if (HORIZON_OPTIONS.some((opt) => opt.days === days)) return days;
+  } catch {
+    // default
+  }
+  return 7;
+}
+
+function saveHorizonDays(courseId, days) {
+  localStorage.setItem(horizonKey(courseId), String(days));
 }
 
 function loadPreference(courseId) {
@@ -138,18 +176,16 @@ function savePlan(courseId, plan) {
   localStorage.setItem(planKey(courseId), JSON.stringify(plan));
 }
 
-function syntheticDeadlines(grades) {
-  // Space focus blocks across a short study window sized to how many topics need work —
-  // not a fixed 3/7 pair, and not a semester calendar.
+function planDeadlines(grades, horizonDays) {
+  const horizon = Math.max(2, Math.min(30, Number(horizonDays) || 7));
   const ranked = [...grades].sort((a, b) => gap(b) - gap(a));
   const weak = ranked.filter((row) => row.score < 85);
   const focus = (weak.length ? weak : ranked).slice(0, 3);
-  const horizon = Math.min(14, Math.max(5, focus.length * 3 + 2));
   return focus.map((row, index) => {
     const due = Math.round(((index + 1) / focus.length) * horizon);
     return {
       topic: row.topic,
-      due_in_days: Math.max(2, Math.min(horizon, due)),
+      due_in_days: Math.max(1, Math.min(horizon, due)),
       label: index === 0 ? "Primary focus" : index === 1 ? "Second focus" : "Follow-up",
     };
   });
@@ -161,10 +197,8 @@ export default function StudentRevisionPage() {
   const [grades, setGrades] = useState([]);
   const [editingGrade, setEditingGrade] = useState(null);
   const [gradeDraft, setGradeDraft] = useState("");
-  const [todayScore, setTodayScore] = useState("75");
-  const [loggedScore, setLoggedScore] = useState(null);
-  const [loggedTopic, setLoggedTopic] = useState(null);
   const [preference, setPreference] = useState("step_by_step");
+  const [horizonDays, setHorizonDays] = useState(7);
   const [plan, setPlan] = useState(null);
   const [busy, setBusy] = useState(false);
   const [askBusy, setAskBusy] = useState(false);
@@ -175,9 +209,8 @@ export default function StudentRevisionPage() {
     if (!activeCourse) return;
     const data = loadRevision(activeCourse.id, activeCourse.code);
     setGrades(data.grades);
-    setLoggedScore(data.loggedScore);
-    setLoggedTopic(data.loggedTopic);
     setPreference(loadPreference(activeCourse.id));
+    setHorizonDays(loadHorizonDays(activeCourse.id));
     setPlan(loadPlan(activeCourse.id));
     setError("");
   }, [activeCourse]);
@@ -205,20 +238,20 @@ export default function StudentRevisionPage() {
     window.setTimeout(() => setToast(""), 3200);
   }
 
-  function persist(nextGrades, nextLogged = loggedScore, nextTopic = loggedTopic) {
+  function persist(nextGrades) {
     setGrades(nextGrades);
-    setLoggedScore(nextLogged);
-    setLoggedTopic(nextTopic);
-    saveRevision(activeCourse.id, {
-      grades: nextGrades,
-      loggedScore: nextLogged,
-      loggedTopic: nextTopic,
-    });
+    saveRevision(activeCourse.id, { grades: nextGrades });
   }
 
   function onPreference(value) {
     setPreference(value);
     savePreference(activeCourse.id, value);
+  }
+
+  function onHorizon(value) {
+    const days = Number(value);
+    setHorizonDays(days);
+    saveHorizonDays(activeCourse.id, days);
   }
 
   function saveGrade(topic) {
@@ -229,32 +262,13 @@ export default function StudentRevisionPage() {
         ? {
             ...row,
             score: n,
-            source: `${String(row.source || "Canvas").split(" · ")[0]} · adjusted by you`,
+            source: "Adjusted by you",
           }
         : row,
     );
     persist(next);
     setEditingGrade(null);
-    flash("Grade updated · plan will refresh when you build again");
-  }
-
-  function logToday() {
-    const n = Number(todayScore);
-    if (Number.isNaN(n) || n < 0 || n > 100) return;
-    const next = grades.map((row) =>
-      row.topic === focus.topic
-        ? { ...row, score: n, source: "You · today's check-in" }
-        : row,
-    );
-    persist(next, n, focus.topic);
-    const short = focus.topic.split("&")[0].trim();
-    flash(
-      n >= 75
-        ? `Logged ${n}% · next week can ease ${short}`
-        : n >= 65
-          ? `Logged ${n}% · keep three solid days on ${short}`
-          : `Logged ${n}% · next week escalates ${short}`,
-    );
+    flash("Score updated · rebuild the plan when you are ready");
   }
 
   async function buildPlan() {
@@ -265,7 +279,7 @@ export default function StudentRevisionPage() {
         course_id: activeCourse.id,
         preference,
         available_minutes_today: 120,
-        deadlines: syntheticDeadlines(grades),
+        deadlines: planDeadlines(grades, horizonDays),
         grades: grades
           .filter((row) => (row.assignment_kind || "text") === "text")
           .map((row) => ({
@@ -321,7 +335,7 @@ export default function StudentRevisionPage() {
   const slots = plan?.time_slots || [];
   const resources = plan?.resources || [];
   const visibleNotes = publicPlanNotes(plan?.notes);
-  const horizonDays = slots.reduce(
+  const planWindowDays = slots.reduce(
     (max, slot) => Math.max(max, Number(slot.day_offset) || 0),
     0,
   );
@@ -353,8 +367,10 @@ export default function StudentRevisionPage() {
             <h2>Practice scores</h2>
           </div>
           <p className="bh-card-note">
-            Demo scores start from typical quiz and assignment results. Fix a row
-            if yours differ — only priority levels leave this page when you build.
+            These are demo practice scores for a typical quiz and assignment mix —
+            not live Canvas grades. Use Fix this grade to set your own score before
+            you build; only the priority level (needs work / getting there / on track)
+            is sent when the plan is built.
           </p>
           <ul className="mt-4 space-y-2">
             {ranked.map((row) => (
@@ -448,6 +464,25 @@ export default function StudentRevisionPage() {
             ))}
           </select>
 
+          <label className="mt-3 block text-sm font-semibold text-aui-ink" htmlFor="rev-horizon">
+            How many days until you need this plan
+          </label>
+          <select
+            id="rev-horizon"
+            className="field-glass mt-1 w-full px-3 py-2 text-sm"
+            value={String(horizonDays)}
+            onChange={(event) => onHorizon(event.target.value)}
+          >
+            {HORIZON_OPTIONS.map((opt) => (
+              <option key={opt.id} value={opt.days}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-aui-deep/70">
+            Choose the window before you build. The schedule fits inside these days.
+          </p>
+
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -479,9 +514,11 @@ export default function StudentRevisionPage() {
             <>
               <p className="mt-4 text-xs text-aui-deep/70">
                 Focus window: next{" "}
-                <strong>{Math.max(horizonDays, 1)} day{horizonDays === 1 ? "" : "s"}</strong>{" "}
-                for your weakest topics — not a full semester calendar. Blocks
-                count from today.
+                <strong>
+                  {Math.max(planWindowDays || horizonDays, 1)} day
+                  {(planWindowDays || horizonDays) === 1 ? "" : "s"}
+                </strong>{" "}
+                — the length you chose above. Blocks count from today.
               </p>
               <ol className="mt-2 space-y-2 text-sm">
                 {slots.map((slot) => (
@@ -549,41 +586,6 @@ export default function StudentRevisionPage() {
                 <li key={note}>{note}</li>
               ))}
             </ul>
-          ) : null}
-
-          {plan ? (
-          <div className="mt-4 rounded-lg border border-[#d7e0d9] bg-white p-3 pa-checkin">
-            <p className="text-sm font-semibold text-aui-ink">How did studying go?</p>
-            <p className="mt-1 text-xs text-aui-deep/70">
-              After a study block on <strong>{focus.topic}</strong>, rate how ready
-              you feel (0–100). We update that topic&apos;s practice score here so
-              your next plan can shift.
-            </p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <input
-                className="field-glass w-24 px-2 py-1.5 text-sm"
-                type="number"
-                min="0"
-                max="100"
-                value={todayScore}
-                onChange={(event) => setTodayScore(event.target.value)}
-                aria-label={`Readiness for ${focus.topic}`}
-              />
-              <button
-                type="button"
-                className="btn-primary px-3 py-1.5 text-xs"
-                onClick={logToday}
-              >
-                Save check-in
-              </button>
-            </div>
-            {loggedScore != null ? (
-              <p className="mt-2 text-xs font-medium text-aui-forest">
-                Saved {loggedScore}% for {loggedTopic || focus.topic}. Rebuild the
-                plan when you want the schedule to catch up.
-              </p>
-            ) : null}
-          </div>
           ) : null}
         </section>
       </div>

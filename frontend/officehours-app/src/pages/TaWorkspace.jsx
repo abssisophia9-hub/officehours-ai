@@ -938,8 +938,11 @@ export default function TaWorkspace() {
                 </section>
 
                 <p className="px-0.5 text-[11px] leading-snug text-[var(--tar-mute)]">
-                  Coaching stays on this pane. The composer starts empty so you choose what
-                  the student sees.
+                  Teaching bank: about 70 curated teaching tips written for this
+                  product (CSC and other departments), not live Canvas. Approved
+                  course material is tried first. A weak match says so or asks about
+                  this ask — never an unrelated tip. Coaching stays here; the
+                  composer starts empty.
                 </p>
               </>
             )}

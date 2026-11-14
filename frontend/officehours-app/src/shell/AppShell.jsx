@@ -5,7 +5,7 @@ import NotificationBell from "../components/NotificationBell.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { api } from "../api/client.js";
-import { pageItems } from "../api/page.js";
+import { pageItems, pageMeta } from "../api/page.js";
 import { ProfessorProvider, useProfessorData } from "../pages/professor/ProfessorData.jsx";
 import { askHasReply, seenReplyIds, subscribeReplySeen } from "../student/replySeen.js";
 

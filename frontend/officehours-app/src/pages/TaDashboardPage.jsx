@@ -3,6 +3,7 @@ import { Link, Navigate } from "react-router";
 import { api } from "../api/client.js";
 import { pageItems } from "../api/page.js";
 import { useAuth } from "../auth/AuthContext.jsx";
+import { plainAskText } from "../lib/plainAskText.js";
 
 function fmtAgo(iso) {
   if (!iso) return null;
@@ -164,7 +165,7 @@ export default function TaDashboardPage() {
             <ul className="td-dash-list">
               {openRows.slice(0, 6).map((req) => (
                 <li key={req.id}>
-                  <p className="td-dash-ask">{req.text}</p>
+                  <p className="td-dash-ask">{plainAskText(req.text)}</p>
                   <p className="td-dash-meta">
                     #{req.id}
                     {req.urgency ? ` · ${req.urgency}` : ""}
@@ -195,7 +196,7 @@ export default function TaDashboardPage() {
             <ul className="td-dash-list">
               {helpedRows.map((req) => (
                 <li key={req.id}>
-                  <p className="td-dash-ask">{req.text}</p>
+                  <p className="td-dash-ask">{plainAskText(req.text)}</p>
                   <p className="td-dash-meta">
                     #{req.id}
                     {fmtAgo(req.helped_at || req.ta_replied_at)
