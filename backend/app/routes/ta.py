@@ -149,13 +149,16 @@ def list_ta_queue(
     items: list[TaQueueItem] = []
     for request in requests:
         entry = entries.get(request.id)
+        work = str(getattr(request, "work_status", None) or "open")
+        # Desk hides curated/resolved rows; Past asks passes include_helped=true
+        # and still needs those helped rows even after a knowledge draft exists.
         if entry is not None and (
             entry.status in {"approved", "rejected"}
             or getattr(entry, "ta_resolution", None)
         ):
-            continue
+            if not (include_helped and work == "helped"):
+                continue
 
-        work = str(getattr(request, "work_status", None) or "open")
         if work == "helped" and not include_helped:
             continue
 
