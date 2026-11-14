@@ -313,15 +313,6 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
                       {new Date(note.created_at).toLocaleString()}
                     </p>
                   </div>
-                  {note.is_mine ? (
-                    <button
-                      type="button"
-                      className="text-xs text-red-700 underline"
-                      onClick={() => removeMine(note.id)}
-                    >
-                      Delete
-                    </button>
-                  ) : null}
                 </div>
                 <p className="text-sm text-aui-deep">
                   <span className="font-medium text-aui-ink">About: </span>
@@ -354,6 +345,23 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
                   >
                     Download
                   </button>
+                  {note.is_mine ? (
+                    <button
+                      type="button"
+                      className="btn-ghost px-3 py-1.5 text-xs text-red-700"
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            `Delete “${note.title}”? Classmates will no longer see it.`,
+                          )
+                        ) {
+                          removeMine(note.id);
+                        }
+                      }}
+                    >
+                      Delete my note
+                    </button>
+                  ) : null}
                 </div>
                 {openComments === note.id ? (
                   <div className="mt-3 space-y-2 rounded-xl bg-[#f7faf7] p-3">
