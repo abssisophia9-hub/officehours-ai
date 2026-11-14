@@ -96,8 +96,16 @@ export default function TaDashboardPage() {
     return <Navigate to="/student" replace />;
   }
 
-  const openCount = Number(load?.open_requests ?? openRows.length) || openRows.length;
-  const unassigned = Number(load?.unassigned_open ?? 0);
+  // Prefer live queue rows over /ta/load aggregates — load may still count helped.
+  const openCount = openRows.length;
+  const unassigned =
+    Number(load?.unassigned_open) >= 0 && openRows.length
+      ? Math.min(Number(load.unassigned_open), openRows.length)
+      : openRows.filter(
+          (req) =>
+            !(req.claimed_by || req.claimed_by_user_id) &&
+            (!req.assigned_ta || req.assigned_ta === "Unassigned"),
+        ).length;
   const wait = avgWaitLabel(openRows);
 
   return (
