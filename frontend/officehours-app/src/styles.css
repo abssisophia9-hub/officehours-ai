@@ -7468,6 +7468,43 @@ html:has(.oh-open) {
   overflow-wrap: anywhere;
 }
 
+.pf-bars {
+  list-style: none;
+  margin: 0.75rem 0 1rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.pf-bars-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.82rem;
+  color: var(--theme-text);
+}
+
+.pf-bars-label span:last-child {
+  flex-shrink: 0;
+  color: var(--theme-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-bars-track {
+  height: 0.55rem;
+  border-radius: 999px;
+  background: var(--theme-surface-muted);
+  overflow: hidden;
+}
+
+.pf-bars-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--theme-forest);
+}
+
 .pf-ask-list,
 .pf-plain-list {
   list-style: none;
