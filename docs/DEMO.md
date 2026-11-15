@@ -9,7 +9,9 @@ Verified on this machine on 10 Oct 2026:
 
 This session is that Ubuntu machine. If your laptop is Windows or macOS, use the same commands inside WSL or a terminal that can run `bash`. Do not install Node or Python system packages until you ask; everything below stays inside the project folder.
 
-The product script is `./scripts/run_product.sh`. There is no separate Windows script.
+The product script is `./scripts/run_product.sh`. On Windows PowerShell use
+`.\scripts\start-backend.ps1` and `.\scripts\start-frontend.ps1` from the
+repo root (frontend script only runs `npm run dev`).
 
 ## Setup (once)
 

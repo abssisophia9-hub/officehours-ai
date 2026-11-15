@@ -40,6 +40,23 @@ Start here:
 # Community deploy: OFFICEHOURS_DEMO=false + live Canvas credentials
 ```
 
+**Windows (two PowerShell windows, from repo root):**
+
+```powershell
+# Terminal 1 — API (creates/uses backend\venv; needs pip install -r requirements.txt once)
+.\scripts\start-backend.ps1
+# → http://127.0.0.1:8000
+
+# Terminal 2 — product app (cd into frontend\officehours-app, then npm run dev)
+.\scripts\start-frontend.ps1
+# → http://127.0.0.1:5180  (Vite port from vite.config.js)
+```
+
+Fresh PowerShell: run backend first, then frontend. Frontend script only runs
+`npm run dev` from `frontend\officehours-app` (install deps once with
+`npm ci` in that folder). `tzdata` is in `backend/requirements.txt` so
+`ZoneInfo("America/Los_Angeles")` works on Windows.
+
 ## Agents (custom-trained)
 
 | Surface | When it runs | Agents / modes |
