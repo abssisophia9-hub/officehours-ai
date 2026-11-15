@@ -19,6 +19,9 @@ instance/
 
 # Peer study-note uploads (local disk storage)
 backend/data/peer_notes/
+# Pedagogy Resources YouTube topic cache + daily quota counters
+backend/data/resources_cache.json
+backend/data/resources_cache.tmp
 
 # Environment variables / secrets
 .env
