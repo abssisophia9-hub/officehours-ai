@@ -272,6 +272,8 @@ class StruggleNeedOut(BaseModel):
     action_href: str | None = None
     request_id: int | None = None
     topic: str | None = None
+    age_minutes: float | None = None
+    ask_count: int | None = None
 
 
 class StruggleAskOut(BaseModel):

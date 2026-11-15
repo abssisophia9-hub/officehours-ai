@@ -910,28 +910,32 @@ def build_struggle_monitor(
                     action_label="Add material",
                     action_href="/professor",
                     topic=bar.topic,
+                    ask_count=bar.count,
                 )
             )
+    # Struggle Radar overdue lane: open asks waiting more than 24 hours.
+    overdue_cut = 24 * 60
     for r in waiting:
-        if (r.urgency or "").lower() in HARD_URGENCIES or bool(
-            getattr(r, "sensitive", False)
-        ):
-            text = (r.text or "").strip()
-            if bool(getattr(r, "anonymous", False)):
-                preview = "Anonymous ask waiting too long"
-            else:
-                preview = text[:120] or f"Ask #{r.id}"
-            needs.append(
-                StruggleNeedOut(
-                    kind="urgent_ask",
-                    title=preview,
-                    detail=f"Waiting {int(_age_minutes(r.created_at, now))} minutes · {(r.category or 'topic').replace('_', ' ')}",
-                    action_label="Open Your desk",
-                    action_href="/professor/asks",
-                    request_id=r.id,
-                    topic=r.category,
-                )
+        age = float(_age_minutes(r.created_at, now))
+        if age < overdue_cut:
+            continue
+        text = (r.text or "").strip()
+        if bool(getattr(r, "anonymous", False)):
+            preview = "Anonymous ask waiting too long"
+        else:
+            preview = text[:120] or f"Ask #{r.id}"
+        needs.append(
+            StruggleNeedOut(
+                kind="overdue_ask",
+                title=preview,
+                detail=f"Waiting {int(age)} minutes · {(r.category or 'topic').replace('_', ' ')}",
+                action_label="Open Your desk",
+                action_href="/professor/asks",
+                request_id=r.id,
+                topic=r.category,
+                age_minutes=age,
             )
+        )
 
     enough = asks_n >= 8
     message = (
@@ -947,7 +951,7 @@ def build_struggle_monitor(
         kpis=kpis,
         asks_per_day=asks_per_day,
         topics=topics,
-        needs_you=needs[:12],
+        needs_you=needs[:24],
         selected_asks=[],
         enough_for_trend=enough,
         missing_fields=missing_fields,
