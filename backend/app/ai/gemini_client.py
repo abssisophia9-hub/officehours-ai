@@ -8,8 +8,9 @@ minimal, so a 400-token cap stays on the answer. ``gemini-3.8-flash`` is
 also free, but it is the large agent model and spends the free quota faster.
 ``gemini-2.5-flash`` is restricted for new projects.
 
-The key is read only from ``GEMINI_API_KEY``. It is sent in the
-``x-goog-api-key`` header, never placed in the URL, and never logged.
+By default the key is read from ``GEMINI_API_KEY``. Callers may pass an
+explicit ``api_key`` (Pedagogy Agent). It is sent in the ``x-goog-api-key``
+header, never placed in the URL, and never logged.
 """
 
 from __future__ import annotations
@@ -181,16 +182,21 @@ def complete_gemini(
     temperature: float = 0,
     timeout: float = 10,
     schema: dict | None = None,
+    api_key: str | None = None,
 ) -> GeminiCompletion:
     """One generateContent call. 429/503 are retried inside this function.
 
     A daily quota is not retried. Exhausted retries raise
     ``RateLimitExhausted``, which is not a ``URLError``, so the outer gate
     does not retry them again. Timeouts and other transport errors propagate.
+
+    When ``api_key`` is None, ``GEMINI_API_KEY`` is used (Study Agent path).
+    The key value is never logged or included in error messages.
     """
-    api_key = os.getenv("GEMINI_API_KEY", "").strip()
-    if not api_key:
+    resolved = (api_key if api_key is not None else os.getenv("GEMINI_API_KEY", "")).strip()
+    if not resolved:
         raise RuntimeError("GEMINI_API_KEY missing")
+    api_key = resolved
 
     model = gemini_model()
     url = GEMINI_ENDPOINT.format(model=quote(model, safe=""))

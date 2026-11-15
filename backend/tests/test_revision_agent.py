@@ -521,6 +521,7 @@ def test_no_key_falls_back(monkeypatch):
     monkeypatch.setenv("OFFICEHOURS_LLM_PROVIDER", "gemini")
     monkeypatch.setenv("OFFICEHOURS_GEMINI_FREE_TIER_ACK", "true")
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("PEDAGOGY_GEMINI_API_KEY", raising=False)
 
     def boom(*_a, **_k):
         raise RuntimeError("GEMINI_API_KEY missing")

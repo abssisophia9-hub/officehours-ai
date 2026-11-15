@@ -48,6 +48,14 @@ MAX_RESOURCES = 5
 
 WEAKNESS_RANK = {"high": 3, "med": 2, "low": 1}
 
+
+def _pedagogy_gemini_api_key() -> str:
+    """Prefer PEDAGOGY_GEMINI_API_KEY; fall back to GEMINI_API_KEY. Never log."""
+    pedagogy = (os.getenv("PEDAGOGY_GEMINI_API_KEY") or "").strip()
+    if pedagogy:
+        return pedagogy
+    return (os.getenv("GEMINI_API_KEY") or "").strip()
+
 # Preference → search phrasing (YouTube + articles). Visual favors diagrams /
 # animation; step-by-step favors worked tutorials; examples favor worked examples.
 STYLE_QUERY_HINTS = {
@@ -643,6 +651,7 @@ def _think(
             temperature=0,
             timeout=policy.timeout_seconds(),
             schema=REVISION_THINK_SCHEMA,
+            api_key=_pedagogy_gemini_api_key(),
         )
         policy._note_spend(completion.input_tokens, completion.output_tokens)
         policy._note_success()
@@ -718,7 +727,7 @@ def _llm_gate(*, user_id: int | None, course_id: int, llm_calls: int) -> str | N
         return "provider_off"
     if not policy._truthy("OFFICEHOURS_GEMINI_FREE_TIER_ACK"):
         return "free_tier_ack_off"
-    if not (os.getenv("GEMINI_API_KEY") or "").strip():
+    if not _pedagogy_gemini_api_key():
         return "no_key"
     if policy.breaker_open():
         return "circuit_breaker"
@@ -965,6 +974,7 @@ def _rank_resources(
             temperature=0,
             timeout=policy.timeout_seconds(),
             schema=REVISION_RANK_SCHEMA,
+            api_key=_pedagogy_gemini_api_key(),
         )
         policy._note_spend(completion.input_tokens, completion.output_tokens)
         policy._note_success()
