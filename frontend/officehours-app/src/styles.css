@@ -279,7 +279,12 @@ body {
   top: 0;
   height: 100vh;
   max-height: 100vh;
-  overflow: hidden;
+  /* Whole sidebar scrolls — avoid a tiny nested nav scroller that clips items. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
 }
 
 .bh-logo {
@@ -309,13 +314,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  flex: 1;
+  flex: 1 0 auto;
   min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow: visible;
   padding-bottom: 0.35rem;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
 }
 
 .bh-sidebar-footer {
@@ -647,6 +649,9 @@ body {
   flex: 1;
   min-width: 0;
   padding: 2.2rem 2.4rem 3rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .bh-page-title {
@@ -4650,20 +4655,24 @@ html:has(.oh-open) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.2rem;
+  gap: 0.35rem;
   border: none;
   background: transparent;
   cursor: pointer;
   font: inherit;
-  color: inherit;
-  opacity: 0.78;
+  /* Keep labels at full contrast — never fade the whole control with opacity. */
+  color: #102e24;
+  opacity: 1;
   transform: translateY(4px);
-  transition: opacity 180ms ease, transform 180ms ease;
+  transition: transform 180ms ease;
 }
 
 .oh-fig.is-on {
-  opacity: 1;
   transform: translateY(0);
+}
+
+.oh-fig:not(.is-on) .oh-fig-art {
+  filter: saturate(0.82) brightness(0.96);
 }
 
 .oh-fig-student {
@@ -4701,6 +4710,9 @@ html:has(.oh-open) {
   position: relative;
   width: var(--art-w);
   height: var(--art-h);
+  overflow: visible;
+  /* Room for QUIET / ROOMS / INSIGHTS / KB tags that sit below objects. */
+  margin-bottom: 0.85rem;
 }
 
 .oh-fig-floor {
@@ -4780,16 +4792,20 @@ html:has(.oh-open) {
 }
 
 .oh-fig-name {
-  font-size: 0.74rem;
+  font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: #102e24;
 }
 
 .oh-fig-tools {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 650;
-  color: #2f453a;
+  color: #1a3d2e;
+  max-width: 14rem;
+  text-align: center;
+  line-height: 1.25;
 }
 
 .oh-fig-sm .oh-fig-tools,
@@ -4809,14 +4825,18 @@ html:has(.oh-open) {
 .oh-obj-tag {
   position: absolute;
   left: 50%;
-  bottom: -1.05rem;
+  bottom: -1.15rem;
   transform: translateX(-50%);
   white-space: nowrap;
-  font-size: 0.58rem;
+  font-size: 0.66rem;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #2f453a;
+  color: #102e24;
+  background: rgba(255, 253, 247, 0.92);
+  padding: 0.08rem 0.35rem;
+  border-radius: 0.2rem;
+  border: 1px solid rgba(16, 46, 36, 0.14);
 }
 
 .oh-obj-ask {
@@ -8426,6 +8446,13 @@ html:has(.oh-open) {
   width: 220px;
   background: linear-gradient(180deg, var(--tar-forest-mid) 0%, var(--tar-forest) 100%);
   padding: 1.15rem 0.7rem 0.85rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.bh-frame-ta .bh-nav {
+  overflow: visible;
+  flex: 1 0 auto;
 }
 
 .bh-frame-ta .bh-logo {
@@ -8473,11 +8500,21 @@ html:has(.oh-open) {
   padding: 0;
   height: 100vh;
   max-height: 100vh;
-  overflow: hidden;
+  /* Dashboard / Past asks scroll here; Live Queue desk keeps panes nested. */
+  overflow: auto;
   background: var(--tar-canvas);
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+.bh-frame-ta .bh-main:has(.tar-desk) {
+  overflow: hidden;
+  padding: 0;
+}
+
+.bh-frame-ta .bh-main:not(:has(.tar-desk)) {
+  padding: 1.4rem 1.5rem 2rem;
 }
 
 .tar-desk {
@@ -9143,13 +9180,20 @@ html:has(.oh-open) {
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
+  max-width: 100%;
+  overflow: visible;
+}
+
+.td-dash-actions a {
+  white-space: nowrap;
 }
 
 .td-dash-stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(8.5rem, 1fr));
   gap: 0.75rem;
   margin-bottom: 1.1rem;
+  overflow: visible;
 }
 
 .td-dash-stat {
@@ -9425,9 +9469,22 @@ html:has(.oh-open) {
   color: #d4cbb8;
 }
 
+[data-theme="dark"] .oh-fig {
+  color: #faf6ef;
+}
+
+[data-theme="dark"] .oh-fig-name {
+  color: #faf6ef;
+}
+
 [data-theme="dark"] .oh-fig-tools,
 [data-theme="dark"] .oh-obj-tag {
-  color: #d4cbb8;
+  color: #f3ecd9;
+}
+
+[data-theme="dark"] .oh-obj-tag {
+  background: rgba(28, 24, 18, 0.92);
+  border-color: rgba(243, 236, 217, 0.28);
 }
 
 [data-theme="dark"] .oh-open-lead {
