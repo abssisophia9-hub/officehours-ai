@@ -736,6 +736,8 @@ def _think(
             timeout=policy.timeout_seconds(),
             schema=REVISION_THINK_SCHEMA,
             api_key=_pedagogy_gemini_api_key(),
+            agent="pedagogy",
+            tool="think",
         )
         policy._note_spend(completion.input_tokens, completion.output_tokens)
         policy._note_success()
@@ -1163,6 +1165,8 @@ def _rank_resources(
             timeout=policy.timeout_seconds(),
             schema=REVISION_RANK_SCHEMA,
             api_key=_pedagogy_gemini_api_key(),
+            agent="pedagogy",
+            tool="rank",
         )
         policy._note_spend(completion.input_tokens, completion.output_tokens)
         policy._note_success()

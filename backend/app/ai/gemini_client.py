@@ -183,6 +183,8 @@ def complete_gemini(
     timeout: float = 10,
     schema: dict | None = None,
     api_key: str | None = None,
+    agent: str = "unknown",
+    tool: str = "generateContent",
 ) -> GeminiCompletion:
     """One generateContent call. 429/503 are retried inside this function.
 
@@ -192,7 +194,10 @@ def complete_gemini(
 
     When ``api_key`` is None, ``GEMINI_API_KEY`` is used (Study Agent path).
     The key value is never logged or included in error messages.
+    ``agent`` / ``tool`` are for structured ai_call logs only (no content).
     """
+    from app.services.ai_call_log import log_ai_call
+
     resolved = (api_key if api_key is not None else os.getenv("GEMINI_API_KEY", "")).strip()
     if not resolved:
         raise RuntimeError("GEMINI_API_KEY missing")
@@ -231,8 +236,18 @@ def complete_gemini(
         except urllib.error.HTTPError as exc:
             status = getattr(exc, "code", None)
             body = _error_body(exc)
+            latency_ms = (time.perf_counter() - started) * 1000
             if status == 429 and _is_daily_quota(body):
                 logger.warning("answer_check daily_quota provider=gemini")
+                log_ai_call(
+                    agent=agent,
+                    tool=tool,
+                    status="error",
+                    latency_ms=latency_ms,
+                    provider="gemini",
+                    model=model,
+                    error_type="daily_quota",
+                )
                 raise DailyQuotaError("daily_quota") from None
             if status in {429, 503} and attempt < RATE_LIMIT_ATTEMPTS:
                 logger.warning(
@@ -247,13 +262,50 @@ def complete_gemini(
                     "answer_check rate_limit_exhausted provider=gemini attempts=%s",
                     RATE_LIMIT_ATTEMPTS,
                 )
+                log_ai_call(
+                    agent=agent,
+                    tool=tool,
+                    status="error",
+                    latency_ms=latency_ms,
+                    provider="gemini",
+                    model=model,
+                    error_type="rate_limit_exhausted",
+                )
                 raise RateLimitExhausted("rate_limit_exhausted") from None
+            log_ai_call(
+                agent=agent,
+                tool=tool,
+                status="error",
+                latency_ms=latency_ms,
+                provider="gemini",
+                model=model,
+                error_type=f"http_{status}",
+            )
             raise
         latency_ms = (time.perf_counter() - started) * 1000
-        return _completion_from_body(raw, model, latency_ms)
+        completion = _completion_from_body(raw, model, latency_ms)
+        log_ai_call(
+            agent=agent,
+            tool=tool,
+            status="ok",
+            latency_ms=completion.latency_ms,
+            input_tokens=completion.input_tokens,
+            output_tokens=completion.output_tokens,
+            provider="gemini",
+            model=completion.model,
+        )
+        return completion
 
     logger.warning(
         "answer_check rate_limit_exhausted provider=gemini attempts=%s",
         RATE_LIMIT_ATTEMPTS,
+    )
+    log_ai_call(
+        agent=agent,
+        tool=tool,
+        status="error",
+        provider="gemini",
+        model=model,
+        error_type="rate_limit_exhausted",
     )
     raise RateLimitExhausted("rate_limit_exhausted")

@@ -313,6 +313,28 @@ def _record_quota(search_list: int = 0, other_units: int = 0) -> None:
         if "entries" not in data or not isinstance(data["entries"], dict):
             data["entries"] = {}
         _write_persist_unlocked(data)
+    # Structured ops log — no query text, titles, or keys.
+    try:
+        from app.services.ai_call_log import log_ai_call
+
+        if search_list:
+            log_ai_call(
+                agent="pedagogy",
+                tool="youtube_search_list",
+                status="ok",
+                quota_units=int(search_list),
+                provider="youtube",
+            )
+        if other_units:
+            log_ai_call(
+                agent="pedagogy",
+                tool="youtube_videos_list",
+                status="ok",
+                quota_units=int(other_units),
+                provider="youtube",
+            )
+    except Exception:
+        logger.debug("ai_call_log youtube quota emit skipped", exc_info=True)
 
 
 def _cache_get(key: str) -> list[dict[str, Any]] | None:
