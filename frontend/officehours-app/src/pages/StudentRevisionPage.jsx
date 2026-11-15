@@ -17,21 +17,30 @@ const GENERIC_SEED = [
   { topic: "Project / labs", weight: 15, score: 80, source: "Demo sample · Lab", assignment_kind: "project" },
 ];
 
-const HORIZON_OPTIONS = [
+/** Plan duration bounds (days). Custom values clamp to this range. */
+export const PLAN_DURATION_MIN = 1;
+export const PLAN_DURATION_MAX = 60;
+export const PLAN_DURATION_DEFAULT = 7;
+
+const DURATION_PRESETS = [
   { id: "3", days: 3, label: "3 days" },
-  { id: "10", days: 10, label: "10 days" },
-  { id: "21", days: 21, label: "21 days" },
-  { id: "exam", days: null, label: "Exam date" },
+  { id: "7", days: 7, label: "1 week" },
+  { id: "14", days: 14, label: "2 weeks" },
+  { id: "30", days: 30, label: "1 month" },
 ];
 
-function daysUntilExam(isoDate) {
-  if (!isoDate) return null;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const exam = new Date(`${isoDate}T00:00:00`);
-  if (Number.isNaN(exam.getTime())) return null;
-  const diff = Math.round((exam.getTime() - today.getTime()) / 86400000);
-  return Math.max(1, Math.min(60, diff));
+function clampPlanDays(value) {
+  const n = Math.round(Number(value));
+  if (!Number.isFinite(n)) return PLAN_DURATION_DEFAULT;
+  return Math.max(PLAN_DURATION_MIN, Math.min(PLAN_DURATION_MAX, n));
+}
+
+function durationModeForDays(days) {
+  const clamped = clampPlanDays(days);
+  if (DURATION_PRESETS.some((opt) => opt.days === clamped)) {
+    return { mode: String(clamped), days: clamped };
+  }
+  return { mode: "custom", days: clamped };
 }
 
 const PREFERENCE_OPTIONS = [
@@ -137,39 +146,48 @@ function saveRevision(courseId, payload) {
   );
 }
 
-function horizonKey(courseId) {
+function durationKey(courseId) {
+  return `officehours_revision_duration_${courseId}`;
+}
+
+function legacyHorizonKey(courseId) {
   return `officehours_revision_horizon_${courseId}`;
 }
 
-function examKey(courseId) {
-  return `officehours_revision_exam_${courseId}`;
-}
-
-function loadHorizonState(courseId) {
+function loadDurationState(courseId) {
   try {
-    const raw = localStorage.getItem(horizonKey(courseId));
-    if (raw === "exam") {
-      const examDate = localStorage.getItem(examKey(courseId)) || "";
-      const days = daysUntilExam(examDate) || 14;
-      return { mode: "exam", examDate, days };
+    const raw =
+      localStorage.getItem(durationKey(courseId)) ??
+      localStorage.getItem(legacyHorizonKey(courseId));
+    if (raw && raw !== "exam" && raw !== "custom") {
+      const days = Number(raw);
+      if (Number.isFinite(days) && days >= PLAN_DURATION_MIN) {
+        return durationModeForDays(days);
+      }
     }
-    const days = Number(raw);
-    if (HORIZON_OPTIONS.some((opt) => opt.days === days)) {
-      return { mode: String(days), examDate: "", days };
+    if (raw === "custom") {
+      const customRaw = localStorage.getItem(`${durationKey(courseId)}_custom`);
+      const days = clampPlanDays(customRaw || PLAN_DURATION_DEFAULT);
+      return { mode: "custom", days };
     }
   } catch {
     // default
   }
-  return { mode: "10", examDate: "", days: 10 };
+  return durationModeForDays(PLAN_DURATION_DEFAULT);
 }
 
-function saveHorizonState(courseId, mode, examDate) {
-  localStorage.setItem(horizonKey(courseId), mode);
-  if (mode === "exam") {
-    localStorage.setItem(examKey(courseId), examDate || "");
+function saveDurationState(courseId, mode, days) {
+  const clamped = clampPlanDays(days);
+  if (mode === "custom") {
+    localStorage.setItem(durationKey(courseId), "custom");
+    localStorage.setItem(`${durationKey(courseId)}_custom`, String(clamped));
   } else {
-    localStorage.removeItem(examKey(courseId));
+    localStorage.setItem(durationKey(courseId), String(clamped));
+    localStorage.removeItem(`${durationKey(courseId)}_custom`);
   }
+  // Drop legacy "days until / exam" keys so old copy cannot resurface.
+  localStorage.removeItem(legacyHorizonKey(courseId));
+  localStorage.removeItem(`officehours_revision_exam_${courseId}`);
 }
 
 function loadPreference(courseId) {
@@ -204,16 +222,17 @@ function savePlan(courseId, plan) {
   localStorage.setItem(planKey(courseId), JSON.stringify(plan));
 }
 
-function planDeadlines(grades, horizonDays) {
-  const horizon = Math.max(1, Math.min(60, Number(horizonDays) || 10));
+function planDeadlines(grades, planDays) {
+  const horizon = clampPlanDays(planDays);
   const ranked = [...grades].sort((a, b) => gap(b) - gap(a));
   const weak = ranked.filter((row) => row.score < 85);
   const focus = (weak.length ? weak : ranked).slice(0, 3);
+  // Primary (weakest) lands on the chosen plan end so length matches exactly.
   return focus.map((row, index) => {
-    const due = Math.round(((index + 1) / focus.length) * horizon);
+    const due = Math.round(((focus.length - index) / focus.length) * horizon);
     return {
       topic: row.topic,
-      due_in_days: Math.max(1, Math.min(horizon, due)),
+      due_in_days: Math.max(PLAN_DURATION_MIN, Math.min(horizon, due || horizon)),
       label: index === 0 ? "Primary focus" : index === 1 ? "Second focus" : "Follow-up",
     };
   });
@@ -226,9 +245,9 @@ export default function StudentRevisionPage() {
   const [editingGrade, setEditingGrade] = useState(null);
   const [gradeDraft, setGradeDraft] = useState("");
   const [preference, setPreference] = useState("step_by_step");
-  const [horizonMode, setHorizonMode] = useState("10");
-  const [examDate, setExamDate] = useState("");
-  const [horizonDays, setHorizonDays] = useState(10);
+  const [durationMode, setDurationMode] = useState(String(PLAN_DURATION_DEFAULT));
+  const [planDays, setPlanDays] = useState(PLAN_DURATION_DEFAULT);
+  const [customDaysDraft, setCustomDaysDraft] = useState(String(PLAN_DURATION_DEFAULT));
   const [plan, setPlan] = useState(null);
   const [busy, setBusy] = useState(false);
   const [askBusy, setAskBusy] = useState(false);
@@ -240,10 +259,10 @@ export default function StudentRevisionPage() {
     const data = loadRevision(activeCourse.id, activeCourse.code);
     setGrades(data.grades);
     setPreference(loadPreference(activeCourse.id));
-    const horizon = loadHorizonState(activeCourse.id);
-    setHorizonMode(horizon.mode);
-    setExamDate(horizon.examDate);
-    setHorizonDays(horizon.days);
+    const duration = loadDurationState(activeCourse.id);
+    setDurationMode(duration.mode);
+    setPlanDays(duration.days);
+    setCustomDaysDraft(String(duration.days));
     setPlan(loadPlan(activeCourse.id));
     setError("");
   }, [activeCourse]);
@@ -281,26 +300,30 @@ export default function StudentRevisionPage() {
     savePreference(activeCourse.id, value);
   }
 
-  function onHorizonMode(value) {
-    if (value === "exam") {
-      const days = daysUntilExam(examDate) || 14;
-      setHorizonMode("exam");
-      setHorizonDays(days);
-      saveHorizonState(activeCourse.id, "exam", examDate);
+  function onDurationMode(value) {
+    if (value === "custom") {
+      const days = clampPlanDays(customDaysDraft || planDays);
+      setDurationMode("custom");
+      setPlanDays(days);
+      setCustomDaysDraft(String(days));
+      saveDurationState(activeCourse.id, "custom", days);
       return;
     }
-    const days = Number(value);
-    setHorizonMode(String(days));
-    setHorizonDays(days);
-    saveHorizonState(activeCourse.id, String(days), "");
+    const days = clampPlanDays(value);
+    setDurationMode(String(days));
+    setPlanDays(days);
+    setCustomDaysDraft(String(days));
+    saveDurationState(activeCourse.id, String(days), days);
   }
 
-  function onExamDate(value) {
-    setExamDate(value);
-    const days = daysUntilExam(value) || 14;
-    setHorizonMode("exam");
-    setHorizonDays(days);
-    saveHorizonState(activeCourse.id, "exam", value);
+  function onCustomDays(value) {
+    setCustomDaysDraft(value);
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return;
+    const days = clampPlanDays(parsed);
+    setDurationMode("custom");
+    setPlanDays(days);
+    saveDurationState(activeCourse.id, "custom", days);
   }
 
   function saveGrade(topic) {
@@ -328,7 +351,7 @@ export default function StudentRevisionPage() {
         course_id: activeCourse.id,
         preference,
         available_minutes_today: 120,
-        deadlines: planDeadlines(grades, horizonDays),
+        deadlines: planDeadlines(grades, planDays),
         grades: grades
           .filter((row) => (row.assignment_kind || "text") === "text")
           .map((row) => ({
@@ -384,10 +407,11 @@ export default function StudentRevisionPage() {
   const slots = plan?.time_slots || [];
   const resources = plan?.resources || [];
   const visibleNotes = publicPlanNotes(plan?.notes);
-  const planWindowDays = slots.reduce(
-    (max, slot) => Math.max(max, Number(slot.day_offset) || 0),
-    0,
+  const planWindowDays = Math.max(
+    PLAN_DURATION_MIN,
+    slots.reduce((max, slot) => Math.max(max, Number(slot.day_offset) || 0), 0),
   );
+  const focusDays = clampPlanDays(planDays);
 
   return (
     <div className="fade-up pa-page">
@@ -513,37 +537,38 @@ export default function StudentRevisionPage() {
             ))}
           </select>
 
-          <label className="mt-3 block text-sm font-semibold text-aui-ink" htmlFor="rev-horizon">
-            How many days until you need this plan
+          <label className="mt-3 block text-sm font-semibold text-aui-ink" htmlFor="rev-duration">
+            How long should your plan be?
           </label>
           <select
-            id="rev-horizon"
+            id="rev-duration"
             className="field-glass mt-1 w-full px-3 py-2 text-sm"
-            value={horizonMode}
-            onChange={(event) => onHorizonMode(event.target.value)}
+            value={durationMode}
+            onChange={(event) => onDurationMode(event.target.value)}
           >
-            {HORIZON_OPTIONS.map((opt) => (
-              <option key={opt.id} value={opt.id === "exam" ? "exam" : String(opt.days)}>
+            {DURATION_PRESETS.map((opt) => (
+              <option key={opt.id} value={String(opt.days)}>
                 {opt.label}
               </option>
             ))}
+            <option value="custom">Custom days</option>
           </select>
-          {horizonMode === "exam" ? (
-            <label className="mt-2 block text-sm text-aui-ink" htmlFor="rev-exam-date">
-              Exam date
+          {durationMode === "custom" ? (
+            <label className="mt-2 block text-sm text-aui-ink" htmlFor="rev-duration-custom">
+              Custom length (days)
               <input
-                id="rev-exam-date"
-                type="date"
+                id="rev-duration-custom"
+                type="number"
+                min={PLAN_DURATION_MIN}
+                max={PLAN_DURATION_MAX}
                 className="field-glass mt-1 w-full px-3 py-2 text-sm"
-                value={examDate}
-                onChange={(event) => onExamDate(event.target.value)}
+                value={customDaysDraft}
+                onChange={(event) => onCustomDays(event.target.value)}
               />
             </label>
           ) : null}
           <p className="mt-1 text-xs text-aui-deep/70">
-            Choose the window before you build. The schedule fits inside these{" "}
-            <strong>{horizonDays}</strong> day{horizonDays === 1 ? "" : "s"}
-            {horizonMode === "exam" && examDate ? ` (until ${examDate})` : ""}.
+            Your plan will fit inside this time.
           </p>
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -576,16 +601,14 @@ export default function StudentRevisionPage() {
           {slots.length ? (
             <>
               <p className="mt-4 text-xs text-aui-deep/70">
-                Focus window: next{" "}
+                Focus window:{" "}
                 <strong>
-                  {Math.max(horizonDays, 1)} day
-                  {horizonDays === 1 ? "" : "s"}
-                </strong>
-                {horizonMode === "exam" && examDate
-                  ? ` until your exam on ${examDate}`
-                  : " - the length you chose above"}
-                {planWindowDays > 0 && planWindowDays !== horizonDays
-                  ? ` (through day ${planWindowDays})`
+                  {focusDays} day
+                  {focusDays === 1 ? "" : "s"}
+                </strong>{" "}
+                - the length you chose above
+                {planWindowDays > 0 && planWindowDays !== focusDays
+                  ? ` (sessions through day ${planWindowDays})`
                   : ""}
                 . Days count from today.
               </p>

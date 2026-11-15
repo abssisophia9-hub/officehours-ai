@@ -21,7 +21,7 @@ A TA is not a classmate in the section they staff.
 | **Ask Triage** | Everyone (runs at submit) | `POST /requests/` | Analyzer → Matcher → Synthesizer. Internal module: `ask_triage_service.py`; columns/API use `triage_*` (renamed from historical `oracle_*`). |
 | **Help Coach** | TA (while helping) | `POST /ta/assist/` | Similar opens, KB neighbors, Socratic steps, draft/rewrite reply, refresh teaching script. |
 | **Study Agent** | Student | `POST /agent/ask` | Answers only from **professor-approved** KB / materials. |
-| **Pedagogy Agent** | Student | `POST /revision/plan` (route `/student/revision`) | 7-day focus plan from on-device practice scores + preference; web/KB resources. Internal IDs stay `revision_*`. |
+| **Pedagogy Agent** | Student | `POST /revision/plan` (route `/student/revision`) | Student-chosen duration focus plan (1–60 days; presets 3 days / 1 week / 2 weeks / 1 month + custom) from on-device practice scores + preference; web resources. Internal IDs stay `revision_*`. |
 | **Lifetime confusion** | Professor analytics | `/analytics/lifetime-confusion` | Hotspots from approved KB topics. |
 
 ## Help modes

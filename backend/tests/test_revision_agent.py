@@ -257,6 +257,41 @@ def test_fallback_empty_state_copy(monkeypatch):
     )
 
 
+def test_plan_slots_follow_deadline_horizon(monkeypatch):
+    """Slot day_offsets follow chosen deadlines — not a hardcoded 7-day window."""
+    headers, course_id = student_auth(client, "CSC 3374")
+    monkeypatch.setattr(
+        "app.services.revision_service.resource_search",
+        lambda *_a, **_k: [],
+    )
+    for horizon in (1, 3, 7, 14, 30):
+        body = client.post(
+            "/revision/plan",
+            headers=headers,
+            json=_plan_payload(
+                course_id,
+                deadlines=[
+                    {
+                        "topic": "Trees & red-black",
+                        "due_in_days": max(1, horizon // 3) or 1,
+                        "label": "Primary focus",
+                    },
+                    {
+                        "topic": "Hashing",
+                        "due_in_days": horizon,
+                        "label": "Second focus",
+                    },
+                ],
+            ),
+        ).json()
+        offsets = [int(s["day_offset"]) for s in body["time_slots"]]
+        assert offsets, f"expected slots for horizon={horizon}"
+        assert max(offsets) == horizon, (
+            f"horizon={horizon} produced max day_offset={max(offsets)}"
+        )
+        assert all(0 <= d <= horizon for d in offsets)
+
+
 def test_llm_off_is_rule_based_and_skips_provider(monkeypatch):
     headers, course_id = student_auth(client, "CSC 3374")
     calls = {"n": 0}

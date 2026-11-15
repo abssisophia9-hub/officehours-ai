@@ -518,6 +518,9 @@ def _rank_topics(
         for d in deadlines
         if d.topic and d.topic.strip()
     }
+    # Topics without an explicit deadline inherit the plan end (max due),
+    # never a hardcoded day count.
+    default_due = max(due_map.values()) if due_map else 14
     rows: list[dict[str, Any]] = []
     for grade in grades:
         if grade.assignment_kind != "text":
@@ -527,7 +530,7 @@ def _rank_topics(
             {
                 "topic": topic,
                 "weakness": grade.weakness,
-                "due_in_days": due_map.get(topic.lower(), 7),
+                "due_in_days": due_map.get(topic.lower(), default_due),
             }
         )
     rows.sort(
@@ -1195,9 +1198,10 @@ def _backwards_schedule(
         )
     if len(focus_rows) > 1:
         secondary = focus_rows[1]
+        secondary_due = int(secondary.get("due_in_days") or due)
         slots.append(
             TimeSlotOut(
-                day_offset=int(secondary.get("due_in_days") or 7),
+                day_offset=secondary_due,
                 label="Secondary topic",
                 minutes=30,
                 topic=str(secondary["topic"]),
