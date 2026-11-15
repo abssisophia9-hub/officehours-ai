@@ -39,6 +39,7 @@ class HelpCoachKbHit(BaseModel):
 class HelpCoachOut(BaseModel):
     """TA-facing Help Coach packet (while helping, not only at intake)."""
 
+    ask_kind: Literal["factual", "conceptual"] | None = None
     teaching_approach: str | None = None
     student_hint: str | None = None
     kb_insight: str | None = None

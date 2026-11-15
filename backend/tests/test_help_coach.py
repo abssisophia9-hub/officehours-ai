@@ -249,3 +249,158 @@ def test_bank_match_requires_token_overlap_for_exam_chapter():
     assert "red-black" not in teaching
     # Prefer seek-help / template fallback over a distant CSC bank hit.
     assert "bank_rag" not in str(out.get("backend") or "")
+
+
+def test_factual_exam_ask_skips_teaching_bank():
+    """Exam coverage ask must not surface TB007 / teaching checklists."""
+    from app.ai.synthesizer_model import is_factual_ask, synthesize_with_model
+
+    ask = "please for the exam do we also have the last part of the chapter or not"
+    assert is_factual_ask(question_text=ask, category="exam_logistics")
+    out = synthesize_with_model(
+        question_text=ask,
+        analyzer={
+            "category": "Exam Logistics",
+            "ml_category": "exam_logistics",
+            "tags": ["exam"],
+        },
+        similar_questions=[],
+        learning_style="step_by_step",
+        course="CSC 3347",
+    )
+    teaching = out.get("teaching_approach") or ""
+    assert out.get("ask_kind") == "factual"
+    assert "factual question" in teaching.lower()
+    assert "no teaching method" in teaching.lower()
+    assert "course material doesn't cover this" in teaching.lower()
+    assert "4-step checklist" not in teaching.lower()
+    assert "TB007" not in (out.get("kb_insight") or "")
+    assert "bank_rag" not in str(out.get("backend") or "")
+
+
+def test_factual_exam_ask_with_approved_material_is_reference_only():
+    """Approved syllabus note is TA-only reference, not a Help Coach answer."""
+    from app.ai.synthesizer_model import synthesize_with_model
+
+    ask = "please for the exam do we also have the last part of the chapter or not"
+    similar = [
+        {
+            "id": 8,
+            "question_text": "Syllabus exam coverage note",
+            "category": "exam_logistics",
+            "score": 0.71,
+            "answer_draft": (
+                "Exam covers chapters 1–8 including the last section of chapter 8. "
+                "Yes — the last part of the chapter is on the exam."
+            ),
+            "student_hint": "This answer comes from course materials (paste): Syllabus.",
+        }
+    ]
+    out = synthesize_with_model(
+        question_text=ask,
+        analyzer={
+            "category": "Exam Logistics",
+            "ml_category": "exam_logistics",
+            "tags": ["exam"],
+        },
+        similar_questions=similar,
+        learning_style="step_by_step",
+        course="CSC 3347",
+    )
+    teaching = out.get("teaching_approach") or ""
+    assert out.get("ask_kind") == "factual"
+    assert "factual question" in teaching.lower()
+    assert "not a Help Coach answer" in teaching
+    assert "Source: Syllabus exam coverage note" in teaching
+    assert "last part of the chapter is on the exam" in teaching
+    assert "Teaching approach adapted from approved KB" not in teaching
+    assert "4-step checklist" not in teaching.lower()
+
+
+def test_conceptual_ask_keeps_suggested_approach():
+    student = _login("s.elidrissi@aui.ma")
+    alice = _login("a.chen@aui.ma")
+    course_id = _csc2302(student)
+
+    created = client.post(
+        "/requests/",
+        headers=_auth(student),
+        json={
+            "text": (
+                "Why does red-black deletion fixup restore black-height "
+                "after deleting a black leaf?"
+            ),
+            "anonymous": True,
+            "course": "CSC 2302",
+            "course_id": course_id,
+            "help_mode": "message",
+        },
+    ).json()
+    coach = client.get(
+        f"/ta/coach/?request_id={created['id']}",
+        headers=_auth(alice),
+    ).json()
+    assert coach["ask_kind"] == "conceptual"
+    assert coach["teaching_approach"]
+    assert "factual question" not in (coach["teaching_approach"] or "").lower()
+    assert len(coach["socratic_steps"]) >= 1
+    assert "Suggested approach" in (coach.get("coach_summary") or "")
+
+
+def test_factual_coach_endpoint_no_socratic_checklist():
+    student = _login("s.elidrissi@aui.ma")
+    alice = _login("a.chen@aui.ma")
+    professor = _login("a.benali@aui.ma")
+    course_id = _csc2302(student)
+
+    created = client.post(
+        "/requests/",
+        headers=_auth(student),
+        json={
+            "text": (
+                "please for the exam do we also have the last part of "
+                "the chapter or not"
+            ),
+            "anonymous": True,
+            "course": "CSC 2302",
+            "course_id": course_id,
+            "help_mode": "message",
+        },
+    ).json()
+    coach = client.get(
+        f"/ta/coach/?request_id={created['id']}",
+        headers=_auth(alice),
+    ).json()
+    assert coach["ask_kind"] == "factual"
+    teaching = coach["teaching_approach"] or ""
+    assert "factual question" in teaching.lower()
+    assert "no teaching method" in teaching.lower()
+    assert "4-step checklist" not in teaching.lower()
+    assert coach["socratic_steps"] == []
+    assert "Course material doesn't cover this" in teaching
+
+    pasted = client.post(
+        "/knowledge/materials",
+        headers=_auth(professor),
+        json={
+            "course_id": course_id,
+            "title": "Syllabus exam coverage note",
+            "content": (
+                "Exam covers chapters 1–8 including the last section of chapter 8. "
+                "Yes — the last part of the chapter is on the exam."
+            ),
+            "auto_approve": True,
+        },
+    )
+    assert pasted.status_code in {200, 201}, pasted.text
+    coach2 = client.get(
+        f"/ta/coach/?request_id={created['id']}",
+        headers=_auth(alice),
+    ).json()
+    assert coach2["ask_kind"] == "factual"
+    text2 = coach2["teaching_approach"] or ""
+    assert "factual question" in text2.lower()
+    assert "not a Help Coach answer" in text2
+    assert "last part of the chapter is on the exam" in text2
+    assert "4-step checklist" not in text2.lower()
+    assert coach2["socratic_steps"] == []

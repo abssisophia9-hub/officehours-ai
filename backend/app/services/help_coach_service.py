@@ -7,6 +7,11 @@ Help Coach runs *during* the TA staffing loop: similar open asks, approved KB
 neighbors, teaching script, Socratic steps, and draft student replies.
 
 Uses the same local RAG stack as the Synthesizer / Study Agent (no external LLM).
+
+Factual vs conceptual: Help Coach is a TEACHING METHOD for the TA.
+Factual asks (exam coverage, deadlines, grading, logistics) get no TB checklist —
+only a plain note plus optional approved-material reference. Conceptual asks keep
+the Suggested approach path from the teaching bank.
 """
 
 from __future__ import annotations
@@ -17,7 +22,7 @@ from typing import Any, Literal
 
 from sqlalchemy.orm import Session
 
-from app.ai.synthesizer_model import synthesize_with_model
+from app.ai.synthesizer_model import is_factual_ask, synthesize_with_model
 from app.models.knowledge import KnowledgeEntry
 from app.models.request import Request
 from app.services.knowledge_service import search_approved_entries
@@ -25,6 +30,11 @@ from app.services.knowledge_service import search_approved_entries
 AssistMode = Literal["draft_reply", "socratic", "refresh_teaching", "rewrite_reply"]
 
 OPEN_WORK = {"open", "claimed", "in_progress"}
+
+FACTUAL_PLAIN_NOTE = (
+    "This is a factual question. There's no teaching method to suggest."
+)
+FACTUAL_NO_MATERIAL = "Course material doesn't cover this. Ask the professor."
 
 
 def build_help_coach(
@@ -34,19 +44,24 @@ def build_help_coach(
     knowledge_entry: KnowledgeEntry | None = None,
 ) -> dict[str, Any]:
     """Snapshot Help Coach payload for one queue item / selected ask."""
-    teaching = _teaching_approach(request, knowledge_entry)
-    hint = _student_hint(request, knowledge_entry)
-    kb_insight = _kb_insight(request)
     similar_kb = _similar_kb(db, request)
     similar_open = _similar_open_asks(db, request)
-    steps = _socratic_steps(
-        teaching_approach=teaching,
-        difficulty=request.triage_difficulty,
-        category=request.triage_category or request.category,
-        learning_style=request.learning_style,
-        ask_text=request.text,
-    )
+    ask_kind = _ask_kind(request)
+    if ask_kind == "factual":
+        teaching, hint, kb_insight, steps = _factual_coach_fields(similar_kb)
+    else:
+        teaching = _teaching_approach(request, knowledge_entry)
+        hint = _student_hint(request, knowledge_entry)
+        kb_insight = _kb_insight(request)
+        steps = _socratic_steps(
+            teaching_approach=teaching,
+            difficulty=request.triage_difficulty,
+            category=request.triage_category or request.category,
+            learning_style=request.learning_style,
+            ask_text=request.text,
+        )
     return {
+        "ask_kind": ask_kind,
         "teaching_approach": teaching,
         "student_hint": hint,
         "kb_insight": kb_insight,
@@ -64,6 +79,7 @@ def build_help_coach(
             similar_kb_count=len(similar_kb),
             difficulty=request.triage_difficulty,
             estimated_minutes=request.triage_estimated_minutes,
+            ask_kind=ask_kind,
         ),
     }
 
@@ -85,25 +101,43 @@ def run_help_coach_assist(
         teaching = refreshed["teaching_approach"]
         hint = refreshed["student_hint"]
         kb_insight = refreshed["kb_insight"]
-        steps = _socratic_steps(
-            teaching_approach=teaching,
-            difficulty=request.triage_difficulty,
-            category=request.triage_category or request.category,
-            learning_style=request.learning_style,
-            ask_text=request.text,
-        )
+        ask_kind = refreshed.get("ask_kind") or coach.get("ask_kind") or "conceptual"
+        if ask_kind == "factual":
+            steps = []
+        else:
+            steps = _socratic_steps(
+                teaching_approach=teaching,
+                difficulty=request.triage_difficulty,
+                category=request.triage_category or request.category,
+                learning_style=request.learning_style,
+                ask_text=request.text,
+            )
         coach.update(
             {
+                "ask_kind": ask_kind,
                 "teaching_approach": teaching,
                 "student_hint": hint,
                 "kb_insight": kb_insight,
                 "socratic_steps": steps,
                 "similar_kb": refreshed.get("similar_kb") or coach["similar_kb"],
+                "coach_summary": _coach_summary(
+                    similar_open_count=coach["similar_open_count"],
+                    similar_kb_count=len(
+                        refreshed.get("similar_kb") or coach["similar_kb"]
+                    ),
+                    difficulty=request.triage_difficulty,
+                    estimated_minutes=request.triage_estimated_minutes,
+                    ask_kind=ask_kind,
+                ),
             }
         )
         return {
             "mode": mode,
-            "message": "Refreshed teaching script from approved KB / teaching bank.",
+            "message": (
+                "Factual ask — no teaching method; refreshed material reference."
+                if ask_kind == "factual"
+                else "Refreshed teaching script from approved KB / teaching bank."
+            ),
             "draft_reply": None,
             "teaching_approach": teaching,
             "student_hint": hint,
@@ -113,6 +147,17 @@ def run_help_coach_assist(
         }
 
     if mode == "socratic":
+        if coach.get("ask_kind") == "factual":
+            return {
+                "mode": mode,
+                "message": "Factual ask — no Socratic teaching steps to suggest.",
+                "draft_reply": None,
+                "teaching_approach": coach["teaching_approach"],
+                "student_hint": coach["student_hint"],
+                "socratic_steps": [],
+                "help_coach": coach,
+                "backend": "help_coach_factual",
+            }
         steps = list(coach["socratic_steps"])
         if focus and focus.strip():
             steps = [f"Focus on: {focus.strip()}", *steps]
@@ -348,6 +393,9 @@ def _compose_draft_reply(
     focus: str | None = None,
 ) -> str:
     del request  # reserved for future personalization
+    if coach.get("ask_kind") == "factual":
+        return _compose_factual_draft(coach, focus=focus)
+
     topic = (coach.get("category") or "your question").replace("_", " ")
     hint = (coach.get("student_hint") or "").strip()
     teaching = (coach.get("teaching_approach") or "").strip()
@@ -399,6 +447,38 @@ def _compose_draft_reply(
     return "\n".join(parts).strip()
 
 
+def _compose_factual_draft(
+    coach: dict[str, Any], *, focus: str | None = None
+) -> str:
+    """Student-facing draft for logistics/facts — never a teaching checklist."""
+    kb = list(coach.get("similar_kb") or [])
+    parts = [
+        "Thanks for checking — this looks like a course-policy / logistics question.",
+        "",
+    ]
+    if kb:
+        best = kb[0]
+        source = _material_source_label(best)
+        preview = (best.get("answer_preview") or "").strip()
+        parts.append(
+            "Here is what the approved course material says "
+            "(please confirm with the professor if anything is unclear):"
+        )
+        if source:
+            parts.append(f"Source: {source}")
+        if preview:
+            parts.append(preview[:280] + ("…" if len(preview) > 280 else ""))
+    else:
+        parts.append(
+            "I don't see this covered in the approved course material yet. "
+            "I'll check with the professor and follow up."
+        )
+    if focus and focus.strip():
+        parts.extend(["", f"Focusing on: {focus.strip()}"])
+    parts.extend(["", "Let me know if you need anything else."])
+    return "\n".join(parts).strip()
+
+
 def _rewrite_reply(source: str, request: Request, coach: dict[str, Any]) -> str:
     text = " ".join(source.split()).strip()
     topic = (coach.get("category") or request.triage_category or "this").replace(
@@ -434,6 +514,29 @@ def _refresh_teaching(db: Session, request: Request) -> dict[str, Any]:
                 "student_hint": entry.student_hint,
             }
         )
+    ask_kind = _ask_kind(request)
+    similar_kb = [
+        {
+            "id": item.get("id"),
+            "question_text": item.get("question_text"),
+            "category": item.get("category"),
+            "similarity": item.get("score") or item.get("similarity"),
+            "student_hint": item.get("student_hint"),
+            "answer_preview": (item.get("answer_draft") or "")[:280],
+        }
+        for item in similar[:3]
+    ]
+    if ask_kind == "factual":
+        teaching, hint, kb_insight, _steps = _factual_coach_fields(similar_kb)
+        return {
+            "ask_kind": ask_kind,
+            "teaching_approach": teaching,
+            "student_hint": hint,
+            "kb_insight": kb_insight,
+            "backend": "help_coach_factual",
+            "similar_kb": similar_kb,
+        }
+
     analyzer = {
         "category": request.triage_category or request.category or "General",
         "ml_category": request.category or "uncategorized",
@@ -461,6 +564,7 @@ def _refresh_teaching(db: Session, request: Request) -> dict[str, Any]:
         for item in (result.get("similar_questions") or similar)[:3]
     ]
     return {
+        "ask_kind": ask_kind,
         "teaching_approach": str(result.get("teaching_approach") or ""),
         "student_hint": str(result.get("student_hint") or ""),
         "kb_insight": str(result.get("kb_insight") or ""),
@@ -487,8 +591,13 @@ def _coach_summary(
     similar_kb_count: int,
     difficulty: str | None,
     estimated_minutes: int | None,
+    ask_kind: str | None = None,
 ) -> str:
     bits = []
+    if ask_kind == "factual":
+        bits.append("factual")
+    elif ask_kind == "conceptual":
+        bits.append("Suggested approach")
     if difficulty:
         bits.append(str(difficulty))
     if estimated_minutes is not None:
@@ -498,3 +607,51 @@ def _coach_summary(
     if similar_kb_count:
         bits.append(f"{similar_kb_count} approved KB")
     return " · ".join(bits) if bits else "Help Coach ready"
+
+
+def _ask_kind(request: Request) -> Literal["factual", "conceptual"]:
+    category = request.triage_category or request.category
+    if is_factual_ask(question_text=request.text, category=category):
+        return "factual"
+    return "conceptual"
+
+
+def _factual_coach_fields(
+    similar_kb: list[dict[str, Any]],
+) -> tuple[str, str, str, list[str]]:
+    """Plain note + optional material reference. Never a teaching checklist."""
+    lines = [FACTUAL_PLAIN_NOTE]
+    if similar_kb:
+        best = similar_kb[0]
+        source = _material_source_label(best)
+        preview = (best.get("answer_preview") or "").strip()
+        lines.extend(
+            [
+                "",
+                "Reference (approved course material — for the TA only; "
+                "not a Help Coach answer):",
+            ]
+        )
+        if source:
+            lines.append(f"Source: {source}")
+        if preview:
+            lines.append(preview)
+        insight = (
+            f"Factual ask; showing approved material reference "
+            f"#{best.get('id')} as TA-only context."
+        )
+    else:
+        lines.extend(["", FACTUAL_NO_MATERIAL])
+        insight = "Factual ask; no approved course material matched."
+    return "\n".join(lines).strip(), "", insight, []
+
+
+def _material_source_label(hit: dict[str, Any]) -> str:
+    question = " ".join(str(hit.get("question_text") or "").split()).strip()
+    if question:
+        # Material chunks often look like "Syllabus… (p.1, chunk 1)".
+        return question if len(question) <= 120 else f"{question[:117]}…"
+    hint = " ".join(str(hit.get("student_hint") or "").split()).strip()
+    if "course materials" in hint.lower():
+        return hint if len(hint) <= 120 else f"{hint[:117]}…"
+    return ""

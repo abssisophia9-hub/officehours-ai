@@ -33,6 +33,116 @@ DEFAULT_BANK_PATH = (
 )
 DEFAULT_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 
+# Logistics / policy categories — Help Coach must not invent a teaching method.
+FACTUAL_CATEGORIES = frozenset(
+    {
+        "exam_logistics",
+        "grading_dispute",
+        "project_submission",
+        "office_hours_access",
+        "retake_request",
+        "accessibility_accommodation",
+        "academic_integrity",
+    }
+)
+
+_FACTUAL_CUES = (
+    "exam",
+    "midterm",
+    "final",
+    "deadline",
+    "due date",
+    "due by",
+    "syllabus",
+    "coverage",
+    "chapters on",
+    "chapter on",
+    "last part of the chapter",
+    "grading",
+    "grade",
+    "rubric",
+    "regrade",
+    "allowed",
+    "calculator",
+    "cheat sheet",
+    "formula sheet",
+    "closed book",
+    "open notes",
+    "office hours",
+    "when is",
+    "what time",
+    "what room",
+    "late policy",
+    "late work",
+    "attendance",
+)
+
+_CONCEPTUAL_CUES = (
+    "explain",
+    "why does",
+    "how does",
+    "how do i",
+    "prove",
+    "proof",
+    "induction",
+    "red-black",
+    "red black",
+    "hash",
+    "avl",
+    "bst",
+    "recursion",
+    "invariant",
+    "fixup",
+    "rotation",
+    "understand",
+    "confused about",
+    "derivation",
+)
+
+
+def is_factual_ask(
+    *,
+    question_text: str | None = None,
+    category: str | None = None,
+) -> bool:
+    """Heuristic: logistics/policy facts vs conceptual teaching asks. No LLM."""
+    cat = (category or "").strip().lower().replace(" ", "_")
+    text = (question_text or "").strip().lower()
+
+    conceptual_hit = any(cue in text for cue in _CONCEPTUAL_CUES)
+    factual_hit = any(cue in text for cue in _FACTUAL_CUES)
+
+    if cat in FACTUAL_CATEGORIES:
+        # "How do I prepare for the final — trees or hashing first?" is still
+        # logistics priority, not a teaching-bank checklist about exams.
+        if conceptual_hit and not factual_hit:
+            return False
+        return True
+    if cat == "conceptual_question":
+        return False
+    if factual_hit and not conceptual_hit:
+        return True
+    if factual_hit and conceptual_hit:
+        # Exam + concept mixed → treat as factual when the ask is coverage/
+        # policy shaped ("is X on the exam") rather than "explain X".
+        coverage_shaped = any(
+            cue in text
+            for cue in (
+                "on the exam",
+                "on the midterm",
+                "on the final",
+                "covered",
+                "coverage",
+                "do we also have",
+                "is the last",
+                "allowed",
+                "deadline",
+                "due",
+            )
+        )
+        return coverage_shaped
+    return False
+
 
 def build_ranker() -> LogisticRegression:
     return LogisticRegression(max_iter=4000, class_weight="balanced", C=2.0)
@@ -156,6 +266,7 @@ def synthesize_with_model(
     category = str(analyzer.get("ml_category") or "uncategorized")
     tags = list(analyzer.get("tags") or [])
     topic = str(analyzer.get("category") or category).replace("_", " ")
+    factual = is_factual_ask(question_text=question_text, category=category)
 
     predicted_style = style
     backend = "custom_synthesizer_rag"
@@ -171,6 +282,14 @@ def synthesize_with_model(
         backend = "custom_synthesizer"
     except FileNotFoundError:
         backend = "custom_synthesizer_untrained_rag"
+
+    # Factual / logistics asks: never invent a teaching-bank checklist (e.g. TB007).
+    if factual:
+        return _factual_synthesizer_result(
+            similar_questions=similar_questions,
+            style=style,
+            backend=backend,
+        )
 
     # Prefer professor-approved KB hits when available (true RAG).
     if similar_questions:
@@ -204,6 +323,7 @@ def synthesize_with_model(
             ),
             "learning_style": style,
             "backend": backend + "_kb_rag",
+            "ask_kind": "conceptual",
         }
 
     # Otherwise retrieve from curated teaching bank with embedding similarity.
@@ -270,6 +390,52 @@ def synthesize_with_model(
         ),
         "learning_style": style,
         "backend": backend + "_bank_rag",
+        "ask_kind": "conceptual",
+    }
+
+
+def _factual_synthesizer_result(
+    *,
+    similar_questions: list[dict[str, Any]],
+    style: str,
+    backend: str,
+) -> dict[str, Any]:
+    """Logistics/policy: plain note + optional material reference. No bank HOW."""
+    plain = "This is a factual question. There's no teaching method to suggest."
+    if similar_questions:
+        best = similar_questions[0]
+        source = str(best.get("question_text") or "").strip()
+        preview = str(best.get("answer_draft") or "").strip()
+        lines = [
+            plain,
+            "",
+            "Reference (approved course material — for the TA only; "
+            "not a Help Coach answer):",
+        ]
+        if source:
+            lines.append(f"Source: {source}")
+        if preview:
+            lines.append(preview[:400])
+        teaching = "\n".join(lines).strip()
+        insight = (
+            f"Factual ask; approved material #{best.get('id')} shown as "
+            "TA-only reference (no teaching method)."
+        )
+    else:
+        teaching = (
+            f"{plain}\n\n"
+            "Course material doesn't cover this. Ask the professor."
+        )
+        insight = "Factual ask; no approved course material matched."
+    return {
+        "student_hint": "",
+        "teaching_approach": teaching,
+        "similar_count": len(similar_questions),
+        "similar_questions": similar_questions[:3],
+        "kb_insight": insight,
+        "learning_style": style,
+        "backend": backend + "_factual",
+        "ask_kind": "factual",
     }
 
 
@@ -353,6 +519,7 @@ def _seek_help_fallback(
         "learning_style": style,
         "backend": backend + "_seek_help",
         "should_seek_help": True,
+        "ask_kind": "conceptual",
     }
 
 

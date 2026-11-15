@@ -66,7 +66,16 @@ function studentLabel(req) {
 }
 
 function strategyBullets(coach, notes) {
-  const fromApproach = String(coach?.teaching_approach || notes || "")
+  const raw = String(coach?.teaching_approach || notes || "");
+  if (coach?.ask_kind === "factual") {
+    // Keep blank lines as paragraph breaks for the plain factual note + reference.
+    const parts = raw
+      .split(/\n+/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    if (parts.length) return parts.slice(0, 8);
+  }
+  const fromApproach = raw
     .split(/\n+/)
     .map((line) => line.replace(/^[-•*\d.)\s]+/, "").trim())
     .filter(Boolean);
@@ -165,7 +174,18 @@ export default function TaWorkspace() {
       });
       const data = await api(`/ta/queue/?${params.toString()}`, { token });
       const items = pageItems(data);
-      setQueue(items);
+      setQueue((prev) => {
+        const prior = new Map(
+          prev
+            .filter((row) => row.help_coach)
+            .map((row) => [row.request.id, row.help_coach]),
+        );
+        return items.map((row) =>
+          prior.has(row.request.id)
+            ? { ...row, help_coach: prior.get(row.request.id) }
+            : row,
+        );
+      });
       setQueuePage(pageMeta(data));
       setError("");
       return items;
@@ -194,38 +214,42 @@ export default function TaWorkspace() {
       if (selectedId != null) setSelectedId(null);
       return;
     }
-    if (selectedId != null && queue.some((item) => item.request.id === selectedId)) {
+    const selected =
+      selectedId != null
+        ? queue.find((item) => item.request.id === selectedId)
+        : null;
+    const target = selected || queue[0];
+    if (!selected) {
+      setSelectedId(target.request.id);
+    }
+    const existing = target.help_coach;
+    if (existing) {
+      setNotes(existing.teaching_approach || target.knowledge_entry?.answer_draft || "");
+      setHint(
+        existing.student_hint ||
+          target.knowledge_entry?.student_hint ||
+          target.request.student_hint ||
+          "",
+      );
+      setSocraticSteps(existing.socratic_steps || []);
       return;
     }
-    const first = queue[0];
-    setSelectedId(first.request.id);
-    const existing = first.help_coach;
-    setNotes(existing?.teaching_approach || first.knowledge_entry?.answer_draft || "");
-    setHint(
-      existing?.student_hint ||
-        first.knowledge_entry?.student_hint ||
-        first.request.student_hint ||
-        "",
-    );
-    setSocraticSteps(existing?.socratic_steps || []);
-    setDraft("");
-    if (existing) return;
     let cancelled = false;
     setCoachBusy(true);
-    api(`/ta/coach/?request_id=${first.request.id}`, { token })
+    api(`/ta/coach/?request_id=${target.request.id}`, { token })
       .then((packet) => {
         if (cancelled) return;
-        setNotes(packet.teaching_approach || first.knowledge_entry?.answer_draft || "");
+        setNotes(packet.teaching_approach || target.knowledge_entry?.answer_draft || "");
         setHint(
           packet.student_hint ||
-            first.knowledge_entry?.student_hint ||
-            first.request.student_hint ||
+            target.knowledge_entry?.student_hint ||
+            target.request.student_hint ||
             "",
         );
         setSocraticSteps(packet.socratic_steps || []);
         setQueue((prev) =>
           prev.map((row) =>
-            row.request.id === first.request.id ? { ...row, help_coach: packet } : row,
+            row.request.id === target.request.id ? { ...row, help_coach: packet } : row,
           ),
         );
       })
@@ -233,7 +257,8 @@ export default function TaWorkspace() {
         if (!cancelled) setError(err.message);
       })
       .finally(() => {
-        if (!cancelled) setCoachBusy(false);
+        // Always clear busy — a cancelled race must not leave the pane stuck.
+        setCoachBusy(false);
       });
     return () => {
       cancelled = true;
@@ -904,7 +929,13 @@ export default function TaWorkspace() {
             ) : (
               <>
                 <section>
-                  <h2 className="tar-section-label">TA Strategy</h2>
+                  <h2 className="tar-section-label">
+                    {coachBusy
+                      ? "Help Coach"
+                      : coach?.ask_kind === "factual"
+                        ? "Factual ask"
+                        : "Suggested approach"}
+                  </h2>
                   {coachBusy ? (
                     <p className="mt-2 text-[12.5px] text-[var(--tar-mute)]">Loading coach…</p>
                   ) : (
@@ -922,27 +953,27 @@ export default function TaWorkspace() {
                   )}
                 </section>
 
-                <section className="rounded-md border border-[var(--tar-line)] bg-[var(--tar-canvas)] p-3">
-                  <h2 className="tar-section-label">Socratic Prompt</h2>
-                  <p className="mt-2 text-[12.5px] leading-relaxed text-[var(--tar-ink)]">
-                    {prompt}
-                  </p>
-                  <button
-                    type="button"
-                    disabled={isHelped || !req}
-                    onClick={insertCoach}
-                    className="tar-btn-insert mt-3"
-                  >
-                    Insert into Reply
-                  </button>
-                </section>
+                {coach?.ask_kind === "factual" ? null : (
+                  <section className="rounded-md border border-[var(--tar-line)] bg-[var(--tar-canvas)] p-3">
+                    <h2 className="tar-section-label">Socratic Prompt</h2>
+                    <p className="mt-2 text-[12.5px] leading-relaxed text-[var(--tar-ink)]">
+                      {prompt}
+                    </p>
+                    <button
+                      type="button"
+                      disabled={isHelped || !req}
+                      onClick={insertCoach}
+                      className="tar-btn-insert mt-3"
+                    >
+                      Insert into Reply
+                    </button>
+                  </section>
+                )}
 
                 <p className="px-0.5 text-[11px] leading-snug text-[var(--tar-mute)]">
-                  Teaching bank: about 70 curated teaching tips written for this
-                  product (CSC and other departments), not live Canvas. Approved
-                  course material is tried first. A weak match says so or asks about
-                  this ask - never an unrelated tip. Coaching stays here; the
-                  composer starts empty.
+                  {coach?.ask_kind === "factual"
+                    ? "Factual / logistics asks get no teaching checklist. Approved course material may appear below the note as TA-only reference — not as Help Coach’s own answer. Study Agent answers the student."
+                    : "Suggested approach comes from the curated teaching bank (how to teach), not live Canvas. Approved course material is tried first for conceptual asks. Coaching stays here; the composer starts empty."}
                 </p>
               </>
             )}
