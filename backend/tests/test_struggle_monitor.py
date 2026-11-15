@@ -54,3 +54,24 @@ def test_struggle_monitor_seed_skipped_when_demo_false(monkeypatch):
         headers=headers,
     ).json()
     assert body["demo_seeded"] is False
+
+
+def test_struggle_monitor_demo_seed_on_csc_3374():
+    """Sophia's CSC 3374 seat must get a filled monitor in demo mode."""
+    headers, course_id = professor_auth(client, "CSC 3374")
+    body = client.get(
+        f"/analytics/struggle-monitor?course_id={course_id}&range=7d",
+        headers=headers,
+    ).json()
+    assert body["range"] == "7d"
+    asks_kpi = next(k for k in body["kpis"] if k["key"] == "asks")
+    assert int(asks_kpi["value"]) >= 8
+    assert body["enough_for_trend"] is True
+    assert body["topics"]
+    assert any(
+        (k.get("delta_label") or "").endswith("last week")
+        or "last week" in (k.get("delta_label") or "")
+        for k in body["kpis"]
+        if k.get("delta_label")
+    )
+    assert any("mpi" in (t["topic"] or "").lower() for t in body["topics"])

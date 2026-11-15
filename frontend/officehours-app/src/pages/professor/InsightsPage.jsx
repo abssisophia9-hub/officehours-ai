@@ -80,18 +80,18 @@ export default function InsightsPage() {
 
   return (
     <div className="pf-page pf-monitor">
-      <header className="pf-head pf-head-stack">
+      <header className="pf-head pf-desk-head">
         <div>
           <p className="pf-kicker">Early warning</p>
           <h1>Insights</h1>
-          <p className="pf-line">
-            What students are stuck on, whether it is getting worse, what is
-            waiting too long, and what to do next.
+          <p className="pf-line pf-monitor-lead">
+            Stuck topics, trend vs prior range, waits that need you — act from
+            here.
           </p>
         </div>
       </header>
 
-      {/* apple-design: Purpose; Simplicity — not minimalism; Feedback; Familiarity; Craft (8 principles cited for this screen). */}
+      {/* apple-design: Purpose; Simplicity — not minimalism; Feedback; Familiarity; Craft; Response — kill latency; Reduced motion & accessibility; Typography — optical sizing, tracking, leading (8). */}
       <p className="pf-monitor-a11y">
         Applied: Purpose; Simplicity — not minimalism; Feedback; Familiarity;
         Craft; Response — kill latency; Reduced motion &amp; accessibility;

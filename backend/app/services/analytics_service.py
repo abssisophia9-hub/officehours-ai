@@ -571,14 +571,59 @@ def _range_bounds(range_key: str, now: datetime) -> tuple[datetime, datetime, in
     return start, end, days
 
 
-def _delta_label(current: float | int, previous: float | int, *, suffix: str = "") -> str:
+def _delta_label(
+    current: float | int,
+    previous: float | int,
+    *,
+    suffix: str = "",
+    period: str = "prior",
+) -> str:
     diff = float(current) - float(previous)
-    if abs(diff) < 0.05:
-        return f"0 vs prior{suffix}"
-    sign = "+" if diff > 0 else ""
     if isinstance(current, int) and isinstance(previous, int):
-        return f"{sign}{int(diff)} vs prior{suffix}"
-    return f"{sign}{diff:.0f} vs prior{suffix}"
+        shown = int(diff)
+    else:
+        shown = int(round(diff))
+    if shown == 0:
+        return f"0 vs {period}{suffix}"
+    sign = "+" if shown > 0 else ""
+    return f"{sign}{shown} vs {period}{suffix}"
+
+
+def _demo_struggle_samples(course_code: str) -> list[tuple[str, str, str]]:
+    """Course-aware demo asks so Insights looks filled on any demo seat."""
+    code = (course_code or "").upper()
+    if "3374" in code:
+        return [
+            ("mpi", "Why does MPI_Send block when the matching receive is late?", "high"),
+            ("mpi", "When should I use MPI_Isend instead of a blocking send?", "medium"),
+            ("mpi", "How do I size the buffer for MPI_Bcast safely?", "medium"),
+            ("actors", "How do actor mailboxes avoid shared-memory races?", "high"),
+            ("actors", "What happens if an actor crashes mid-message?", "medium"),
+            ("csp", "How is CSP rendezvous different from async channels?", "medium"),
+            ("distributed", "Why does partial failure break my distributed counter?", "high"),
+            ("distributed", "How do I reason about exactly-once delivery here?", "medium"),
+        ]
+    if "3323" in code:
+        return [
+            ("complexity", "How do I tighten this Master Theorem case?", "high"),
+            ("complexity", "Is this recurrence O(n log n) or worse?", "medium"),
+            ("graphs", "Why is Dijkstra wrong on negative edges?", "high"),
+            ("graphs", "BFS vs DFS for shortest path on unweighted graphs?", "medium"),
+            ("dp", "How do I pick the DP state for this knapsack variant?", "medium"),
+            ("dp", "Where does the overlapping subproblem show up?", "low"),
+            ("greedy", "When does the greedy choice property fail?", "medium"),
+            ("sorting", "Why is heap-sort not stable in our notes?", "low"),
+        ]
+    return [
+        ("red_black_trees", "How do red-black tree rotations restore balance after insert?", "high"),
+        ("red_black_trees", "I still miss when to use left vs right rotation on delete.", "medium"),
+        ("hashing", "Why do hash collisions use chaining instead of probing here?", "medium"),
+        ("hashing", "Walk me through load factor and when to resize the table.", "medium"),
+        ("heaps", "Heapify from the middle of the array still confuses me.", "high"),
+        ("heaps", "Is decrease-key on a binary heap O(log n) the way we covered?", "low"),
+        ("amortized", "I need a clearer picture of amortized vs worst-case for dynamic arrays.", "medium"),
+        ("graphs", "BFS vs DFS for shortest path on unweighted graphs?", "medium"),
+    ]
 
 
 def seed_demo_struggle_volume(db: Session, *, course_id: int) -> bool:
@@ -595,42 +640,43 @@ def seed_demo_struggle_volume(db: Session, *, course_id: int) -> bool:
     course = db.query(Course).filter(Course.id == course_id).one_or_none()
     code = course.code if course else "CSC 2302"
     now = datetime.now(timezone.utc)
-    samples = [
-        ("red_black_trees", "How do red-black tree rotations restore balance after insert?", "high"),
-        ("red_black_trees", "I still miss when to use left vs right rotation on delete.", "medium"),
-        ("hashing", "Why do hash collisions use chaining instead of probing here?", "medium"),
-        ("hashing", "Walk me through load factor and when to resize the table.", "medium"),
-        ("heaps", "Heapify from the middle of the array still confuses me.", "high"),
-        ("heaps", "Is decrease-key on a binary heap O(log n) the way we covered?", "low"),
-        ("amortized", "I need a clearer picture of amortized vs worst-case for dynamic arrays.", "medium"),
-        ("graphs", "BFS vs DFS for shortest path on unweighted graphs?", "medium"),
-    ]
+    samples = _demo_struggle_samples(code)
     created = 0
-    for day_back in range(18, -1, -1):
+    # Dense recent window first so 7d / Needs you look like a live monitor.
+    schedule: list[tuple[int, int, bool, str]] = []
+    for day_back in range(0, 7):
         for idx, (category, text, urgency) in enumerate(samples):
+            if (day_back + idx) % 2 != 0 and day_back > 1:
+                continue
+            schedule.append((day_back, idx, day_back == 0 and idx < 2, urgency))
+    for day_back in range(7, 19):
+        for idx, (_category, _text, urgency) in enumerate(samples):
             if (day_back + idx) % 3 != 0:
                 continue
-            created_at = now - timedelta(days=day_back, hours=(idx * 3) % 20)
-            helped = (day_back + idx) % 4 != 0
-            replied = helped or (day_back + idx) % 5 == 0
-            row = Request(
-                text=f"{text} (demo seed)",
-                anonymous=True,
-                course=code,
-                course_id=course_id,
-                category=category,
-                urgency=urgency,
-                work_status="helped" if helped else "open",
-                created_at=created_at,
-                ta_replied_at=(created_at + timedelta(hours=2 + idx % 5)) if replied else None,
-                helped_at=(created_at + timedelta(hours=4 + idx % 3)) if helped else None,
-                sensitive=False,
-            )
-            db.add(row)
-            created += 1
-            if existing + created >= 40:
-                break
-        if existing + created >= 40:
+            schedule.append((day_back, idx, False, urgency))
+
+    for day_back, idx, force_open, urgency in schedule:
+        category, text, sample_urgency = samples[idx % len(samples)]
+        created_at = now - timedelta(days=day_back, hours=(idx * 3) % 20)
+        helped = False if force_open else (day_back + idx) % 4 != 0
+        open_urgent = force_open or (not helped and sample_urgency == "high")
+        replied = helped or ((day_back + idx) % 5 == 0 and not open_urgent)
+        row = Request(
+            text=f"{text} (demo seed)",
+            anonymous=True,
+            course=code,
+            course_id=course_id,
+            category=category,
+            urgency="high" if open_urgent else sample_urgency,
+            work_status="helped" if helped else "open",
+            created_at=created_at,
+            ta_replied_at=(created_at + timedelta(hours=2 + idx % 5)) if replied else None,
+            helped_at=(created_at + timedelta(hours=4 + idx % 3)) if helped else None,
+            sensitive=False,
+        )
+        db.add(row)
+        created += 1
+        if existing + created >= 42:
             break
     if created:
         db.commit()
@@ -750,26 +796,40 @@ def build_struggle_monitor(
     topic_counts = Counter((r.category or "uncategorized") for r in current)
     prev_topic_counts = Counter((r.category or "uncategorized") for r in previous)
     top_topic = topic_counts.most_common(1)[0][0] if topic_counts else None
+    period = (
+        "last week"
+        if days == 7
+        else "prior 30 days"
+        if days == 30
+        else "prior term"
+    )
 
     kpis = [
         StruggleKpiOut(
             key="asks",
             label="Asks",
             value=str(asks_n),
-            delta_label=_delta_label(asks_n, prev_asks),
+            delta_label=_delta_label(asks_n, prev_asks, period=period),
         ),
         StruggleKpiOut(
             key="resolved_pct",
             label="% resolved",
             value=f"{resolved_pct:.0f}%",
-            delta_label=_delta_label(resolved_pct, prev_resolved_pct, suffix=" pp"),
+            delta_label=_delta_label(
+                resolved_pct, prev_resolved_pct, suffix=" pp", period=period
+            ),
         ),
         StruggleKpiOut(
             key="median_first_reply",
             label="Median first reply",
             value=(f"{median_reply:.1f} h" if median_reply is not None else "—"),
             delta_label=(
-                _delta_label(median_reply, prev_median_reply or 0.0, suffix=" h")
+                _delta_label(
+                    median_reply,
+                    prev_median_reply or 0.0,
+                    suffix=" h",
+                    period=period,
+                )
                 if median_reply is not None and prev_median_reply is not None
                 else None
             ),
@@ -783,7 +843,9 @@ def build_struggle_monitor(
             key="waiting",
             label="Waiting too long",
             value=str(len(waiting)),
-            delta_label=_delta_label(len(waiting), len(prev_waiting)),
+            delta_label=_delta_label(
+                len(waiting), len(prev_waiting), period=period
+            ),
         ),
         StruggleKpiOut(
             key="top_topic",
@@ -793,6 +855,7 @@ def build_struggle_monitor(
                 _delta_label(
                     topic_counts.get(top_topic, 0),
                     prev_topic_counts.get(top_topic, 0),
+                    period=period,
                 )
                 if top_topic
                 else None

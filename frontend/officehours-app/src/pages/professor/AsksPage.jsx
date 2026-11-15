@@ -1,17 +1,12 @@
+import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { assignedToProfessor, useProfessorData } from "./ProfessorData.jsx";
 
 const OPEN_WORK = new Set(["open", "claimed", "in_progress"]);
 
-function helpLabel(mode) {
-  if (mode === "face_to_face") return "In person";
-  if (mode === "online_meeting") return "Online";
-  return "Message";
-}
-
 function personLabel(request) {
   if (request.anonymous) return "Anonymous";
-  return request.student_name || request.student_id || "-";
+  return request.student_name || request.student_id || "Anonymous";
 }
 
 function topicLabel(request) {
@@ -23,188 +18,175 @@ function ageLabel(createdAt) {
   const then = new Date(createdAt).getTime();
   if (!Number.isFinite(then)) return "—";
   const mins = Math.max(0, Math.round((Date.now() - then) / 60000));
-  if (mins < 60) return `${mins}m`;
-  if (mins < 60 * 48) return `${Math.round(mins / 60)}h`;
-  return `${Math.round(mins / (60 * 24))}d`;
+  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60 * 48) return `${Math.round(mins / 60)}h ago`;
+  return `${Math.round(mins / (60 * 24))}d ago`;
 }
 
-function statusChip(request) {
-  const work = String(request.work_status || "open").toLowerCase();
-  if (work === "helped") return "Resolved";
-  if (work === "in_progress") return "In progress";
-  if (work === "claimed") return "Claimed";
-  if (request.sensitive) return "Sensitive";
-  if ((request.urgency || "").toLowerCase() === "urgent") return "Urgent";
-  return "Waiting";
+function previewText(request) {
+  const text = (request.text || "").replace(/\s+/g, " ").trim();
+  if (!text) return "No question text";
+  return text.length > 110 ? `${text.slice(0, 109)}…` : text;
 }
 
-function AskTable({ rows, empty, action }) {
-  if (!rows.length) {
-    return <p className="pf-line">{empty}</p>;
-  }
-  return (
-    <table className="bh-table pf-stack-table pf-desk-table">
-      <thead>
-        <tr>
-          <th>Question</th>
-          <th>Topic</th>
-          <th>Age</th>
-          <th>Status</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((request) => (
-          <tr key={request.id}>
-            <td data-label="Question">
-              <p className="pf-desk-q">{request.text}</p>
-              <p className="pf-meta">
-                {personLabel(request)} · {helpLabel(request.help_mode)}
-              </p>
-            </td>
-            <td data-label="Topic">{topicLabel(request)}</td>
-            <td data-label="Age">{ageLabel(request.created_at)}</td>
-            <td data-label="Status">
-              <span className="pf-desk-chip">{statusChip(request)}</span>
-            </td>
-            <td data-label="Action">{action(request)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
+function laneFor(request, assignedIds, urgentIds) {
+  if (assignedIds.has(request.id)) return "assigned";
+  if (urgentIds.has(request.id)) return "urgent";
+  return null;
 }
 
 export default function AsksPage() {
-  const { requests, entries, commandCenter, noTa, ready, error } = useProfessorData();
+  const { requests, commandCenter, ready, error } = useProfessorData();
+  const [filter, setFilter] = useState("all");
 
   const assigned = assignedToProfessor(requests);
   const escalations = commandCenter?.escalations || [];
-  const urgentIds = new Set(escalations.map((item) => item.request_id));
-  const urgentRows = requests.filter(
-    (item) => urgentIds.has(item.id) && OPEN_WORK.has(item.work_status || "open"),
+  const urgentIds = useMemo(
+    () => new Set(escalations.map((item) => item.request_id)),
+    [escalations],
   );
-  const waitingApproval = (entries || []).filter(
-    (entry) => entry.status === "pending_review",
+  const assignedIds = useMemo(
+    () => new Set(assigned.map((item) => item.id)),
+    [assigned],
+  );
+  const urgentRows = useMemo(
+    () =>
+      (requests || []).filter(
+        (item) =>
+          urgentIds.has(item.id) && OPEN_WORK.has(item.work_status || "open"),
+      ),
+    [requests, urgentIds],
   );
 
-  // apple-design for this screen: Purpose; Agency; Simplicity — not minimalism;
-  // Feedback; Familiarity; Wayfinding (6).
+  const feed = useMemo(() => {
+    const open = (requests || []).filter((item) =>
+      OPEN_WORK.has(item.work_status || "open"),
+    );
+    const ranked = open
+      .map((item) => {
+        const lane = laneFor(item, assignedIds, urgentIds);
+        if (!lane) return null;
+        return { item, lane };
+      })
+      .filter(Boolean)
+      .sort((a, b) => {
+        const aTime = new Date(a.item.created_at || 0).getTime();
+        const bTime = new Date(b.item.created_at || 0).getTime();
+        return bTime - aTime;
+      });
+    if (filter === "assigned") {
+      return ranked.filter((row) => row.lane === "assigned");
+    }
+    if (filter === "urgent") {
+      return ranked.filter((row) => row.lane === "urgent");
+    }
+    return ranked;
+  }, [requests, assignedIds, urgentIds, filter]);
+
+  function toggleFilter(next) {
+    setFilter((prev) => (prev === next ? "all" : next));
+  }
+
+  // apple-design: Purpose; Agency; Simplicity — not minimalism; Feedback;
+  // Familiarity; Response — kill latency (6).
 
   return (
-    <div className="pf-page pf-desk">
-      <header className="pf-head pf-head-stack">
+    <div className="pf-page pf-desk pf-desk-feed">
+      <header className="pf-head pf-desk-head">
         <div>
           <p className="pf-kicker">Teaching desk</p>
           <h1>Your desk</h1>
-          <p className="pf-line">
-            Work queue for this course. Patterns stay on{" "}
-            <Link to="/professor/insights">Insights</Link>; files on{" "}
-            <Link to="/professor">Material</Link>.
-          </p>
         </div>
       </header>
-      {/* Applied: Purpose; Agency; Simplicity — not minimalism; Feedback; Familiarity; Wayfinding (6). */}
 
-      <div className="pf-desk-counts" aria-label="Desk counts">
-        <article>
-          <strong>{assigned.length}</strong>
-          <span>Assigned to you</span>
-        </article>
-        <article>
-          <strong>{urgentRows.length}</strong>
-          <span>Urgent</span>
-        </article>
-        <article>
-          <strong>{waitingApproval.length}</strong>
-          <span>Waiting for approval</span>
-        </article>
-      </div>
+      <div className="pf-desk-shell">
+        <div className="pf-desk-kpis" role="tablist" aria-label="Ask filters">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filter === "assigned"}
+            className={`pf-desk-kpi${filter === "assigned" ? " is-on" : ""}`}
+            onClick={() => toggleFilter("assigned")}
+          >
+            <strong>{assigned.length}</strong>
+            <span>Assigned</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filter === "urgent"}
+            className={`pf-desk-kpi pf-desk-kpi-urgent${
+              filter === "urgent" ? " is-on" : ""
+            }`}
+            onClick={() => toggleFilter("urgent")}
+          >
+            <strong>{urgentRows.length}</strong>
+            <span>Urgent</span>
+          </button>
+        </div>
 
-      {error ? (
-        <p className="pf-error" role="alert">
-          {error}
-        </p>
-      ) : null}
-
-      <section className="pf-block" aria-label="Assigned to you">
-        <h2>Assigned to you</h2>
-        {noTa ? (
-          <p className="pf-line">This course has no TA, so these asks come to you.</p>
-        ) : null}
-        {!ready ? <p className="pf-line">Loading asks…</p> : null}
-        {ready ? (
-          <AskTable
-            rows={assigned}
-            empty="Nothing assigned to you. Check Urgent or approve pending material."
-            action={() => (
-              <Link className="pf-desk-action" to="/professor/insights">
-                See pattern
-              </Link>
-            )}
-          />
-        ) : null}
-      </section>
-
-      <section className="pf-block" aria-label="Urgent">
-        <h2>Urgent</h2>
-        <AskTable
-          rows={urgentRows}
-          empty="No open urgent or sensitive asks. Keep the queue moving from Insights."
-          action={(request) =>
-            request.sensitive ? (
-              <span className="pf-meta">Keep private</span>
-            ) : (
-              <Link className="pf-desk-action" to="/professor/team">
-                Check team
-              </Link>
-            )
-          }
-        />
-      </section>
-
-      <section className="pf-block" aria-label="Waiting for approval">
-        <h2>Waiting for approval</h2>
-        {waitingApproval.length === 0 ? (
-          <p className="pf-line">
-            No drafts waiting.{" "}
-            <Link to="/professor">Open Material</Link> to approve uploads.
+        {error ? (
+          <p className="pf-error" role="alert">
+            {error}
           </p>
-        ) : (
-          <table className="bh-table pf-stack-table pf-desk-table">
-            <thead>
-              <tr>
-                <th>Question</th>
-                <th>Topic</th>
-                <th>Age</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {waitingApproval.slice(0, 20).map((entry) => (
-                <tr key={entry.id}>
-                  <td data-label="Question">
-                    <p className="pf-desk-q">{entry.question_text}</p>
-                  </td>
-                  <td data-label="Topic">
-                    {(entry.category || "—").replaceAll("_", " ")}
-                  </td>
-                  <td data-label="Age">{ageLabel(entry.created_at)}</td>
-                  <td data-label="Status">
-                    <span className="pf-desk-chip">Pending</span>
-                  </td>
-                  <td data-label="Action">
-                    <Link className="btn-primary pf-btn" to="/professor">
-                      Review on Material
+        ) : null}
+
+        <div className="pf-desk-feed-head">
+          <h2>Student asks</h2>
+          <div className="pf-desk-pills" role="group" aria-label="Feed filter">
+            {[
+              { id: "all", label: "All" },
+              { id: "urgent", label: "Urgent" },
+              { id: "assigned", label: "Assigned" },
+            ].map((pill) => (
+              <button
+                key={pill.id}
+                type="button"
+                className={`pf-desk-pill${filter === pill.id ? " is-on" : ""}`}
+                aria-pressed={filter === pill.id}
+                onClick={() => setFilter(pill.id)}
+              >
+                {pill.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="pf-desk-list" aria-live="polite">
+          {!ready ? <p className="pf-desk-empty">Loading asks…</p> : null}
+          {ready && feed.length === 0 ? (
+            <p className="pf-desk-empty">
+              All caught up — no pending student asks
+            </p>
+          ) : null}
+          {ready
+            ? feed.map(({ item, lane }) => (
+                <article key={item.id} className="pf-desk-row">
+                  <div className="pf-desk-row-main">
+                    <div className="pf-desk-row-tags">
+                      <span
+                        className={`pf-desk-status pf-desk-status-${lane}`}
+                      >
+                        {lane === "urgent" ? "Urgent" : "Assigned"}
+                      </span>
+                      <span className="pf-desk-topic">{topicLabel(item)}</span>
+                    </div>
+                    <p className="pf-desk-person">{personLabel(item)}</p>
+                    <p className="pf-desk-preview">{previewText(item)}</p>
+                  </div>
+                  <div className="pf-desk-row-side">
+                    <time className="pf-desk-age" dateTime={item.created_at}>
+                      {ageLabel(item.created_at)}
+                    </time>
+                    <Link className="pf-desk-reply" to="/professor/team">
+                      Reply
                     </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+                  </div>
+                </article>
+              ))
+            : null}
+        </div>
+      </div>
     </div>
   );
 }
