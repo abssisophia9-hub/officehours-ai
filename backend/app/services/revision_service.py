@@ -13,6 +13,7 @@ import os
 import re
 import time
 from typing import Any, Callable
+from urllib.parse import urlparse
 
 from sqlalchemy.orm import Session
 
@@ -137,9 +138,98 @@ REVISION_RANK_SYSTEM = (
     "You rank study resources for a campus revision plan. "
     "Reply with JSON only: picks is an array of {id, why}. "
     "Choose 3 to 5 ids from the candidate list only. Never invent ids or URLs. "
-    "Prefer educational channels and mixed sources (not all one channel). "
-    "Match the learning preference. why is one plain sentence. "
+    "Prefer educational channels and mixed sources (at most two from the same "
+    "channel or site; include an article or tutorial when one is in the list). "
+    "Match the learning preference. why is one plain sentence that only "
+    "restates facts from that candidate's title or snippet — no outside claims. "
     "Never use student names, scores, or grades."
+)
+
+# Display names for common article hosts (source label "Article · …").
+_KNOWN_SITE_NAMES = {
+    "wikipedia.org": "Wikipedia",
+    "khanacademy.org": "Khan Academy",
+    "ocw.mit.edu": "MIT OCW",
+}
+
+_WHY_STOPWORDS = frozenset(
+    {
+        "the",
+        "and",
+        "for",
+        "with",
+        "this",
+        "that",
+        "from",
+        "into",
+        "about",
+        "your",
+        "you",
+        "are",
+        "is",
+        "was",
+        "were",
+        "been",
+        "being",
+        "have",
+        "has",
+        "had",
+        "will",
+        "can",
+        "may",
+        "a",
+        "an",
+        "of",
+        "to",
+        "in",
+        "on",
+        "as",
+        "by",
+        "or",
+        "at",
+        "it",
+        "its",
+        "our",
+        "their",
+    }
+)
+
+# Glue / preference words allowed in a why-line even if absent from the snippet.
+_WHY_ALLOWED = frozenset(
+    {
+        "visual",
+        "structural",
+        "step",
+        "steps",
+        "example",
+        "examples",
+        "conceptual",
+        "overview",
+        "introduction",
+        "explains",
+        "explanation",
+        "covers",
+        "tutorial",
+        "diagram",
+        "diagrams",
+        "animation",
+        "animated",
+        "walkthrough",
+        "learner",
+        "learning",
+        "preference",
+        "clear",
+        "solid",
+        "worked",
+        "article",
+        "video",
+        "resource",
+        "topic",
+        "matches",
+        "listed",
+        "search",
+        "results",
+    }
 )
 
 # Final Resources payload cache: topic|preference → (expires, resources dicts).
@@ -367,13 +457,7 @@ def build_revision_plan(
                     continue
                 checked_ok += 1
                 live_resources.append(
-                    ResourceOut(
-                        title=str(hit.get("title") or "Resource"),
-                        url=url,
-                        source=_source_label(hit),
-                        why=_why(preference, primary_topic),
-                        kind=str(hit.get("kind") or "article"),
-                    )
+                    _resource_from_hit(hit, preference=preference)
                 )
 
             iterations.append(
@@ -841,20 +925,124 @@ def _hit_matches_topic(hit: dict[str, Any], topics: list[str]) -> bool:
 
 
 def _why(preference: str, topic: str) -> str:
+    """Legacy preference-flavored why (tests / fallbacks without a hit)."""
     base = STYLE_WHY.get(preference) or STYLE_WHY["unknown"]
     return f"{base} Topic: {topic}."
 
 
-def _source_label(hit: dict[str, Any]) -> str:
-    provider = str(hit.get("provider") or "web")
+def _host_from_url(url: str) -> str:
+    try:
+        host = (urlparse(url).hostname or "").lower()
+    except ValueError:
+        return ""
+    if host.startswith("www."):
+        host = host[4:]
+    return host
+
+
+def _site_display_name(hit: dict[str, Any]) -> str:
+    host = _host_from_url(str(hit.get("url") or ""))
+    if host:
+        for suffix, name in _KNOWN_SITE_NAMES.items():
+            if host == suffix or host.endswith("." + suffix):
+                return name
+        return host
     channel = str(hit.get("channel") or "").strip()
-    if provider == "youtube" and channel:
-        return f"YouTube · {channel}"
-    if provider == "wikipedia":
-        return "Wikipedia"
     if channel:
         return channel
-    return provider
+    provider = str(hit.get("provider") or "").strip()
+    return provider or "Web"
+
+
+def _source_label(hit: dict[str, Any]) -> str:
+    """Display source: 'Video · YouTube' or 'Article · <site>'."""
+    kind = str(hit.get("kind") or "article").lower()
+    provider = str(hit.get("provider") or "").lower()
+    if kind == "video" or provider == "youtube":
+        return "Video · YouTube"
+    return f"Article · {_site_display_name(hit)}"
+
+
+def _channel_for_hit(hit: dict[str, Any]) -> str | None:
+    """YouTube channel for secondary UI + mix; articles omit (mix uses host)."""
+    kind = str(hit.get("kind") or "article").lower()
+    provider = str(hit.get("provider") or "").lower()
+    if kind == "video" or provider == "youtube":
+        channel = str(hit.get("channel") or "").strip()
+        return channel or None
+    return None
+
+
+def _significant_why_tokens(text: str) -> set[str]:
+    return {
+        part
+        for part in re.split(r"[^a-z0-9]+", (text or "").lower())
+        if len(part) > 2 and part not in _WHY_STOPWORDS
+    }
+
+
+def _why_is_grounded(why: str, title: str, snippet: str) -> bool:
+    """Reject why-lines that invent facts beyond title/snippet (+ light glue)."""
+    why_tokens = _significant_why_tokens(why)
+    if not why_tokens:
+        return False
+    fact_tokens = _significant_why_tokens(f"{title} {snippet}") | _WHY_ALLOWED
+    novel = why_tokens - fact_tokens
+    if not novel:
+        return True
+    return (len(novel) / len(why_tokens)) <= 0.35
+
+
+def _grounded_why(hit: dict[str, Any]) -> str:
+    """Build a why-line only from title/snippet facts."""
+    title = str(hit.get("title") or "").strip()
+    snippet = str(hit.get("snippet") or "").strip()
+    if snippet:
+        sentence = re.split(r"(?<=[.!?])\s+", snippet)[0].strip()
+        if sentence:
+            return sentence[:200]
+    if title:
+        return f"Covers {title[:160]}."[:200]
+    return "Listed in search results for this topic."
+
+
+def _resource_from_hit(
+    hit: dict[str, Any],
+    *,
+    preference: str = "",
+    why: str | None = None,
+) -> ResourceOut:
+    title = str(hit.get("title") or "Resource")
+    snippet = str(hit.get("snippet") or "")
+    cleaned = (why or "").strip()
+    if (
+        not cleaned
+        or "http://" in cleaned
+        or "https://" in cleaned
+        or not _why_is_grounded(cleaned, title, snippet)
+    ):
+        cleaned = _grounded_why(hit)
+    return ResourceOut(
+        title=title,
+        url=str(hit.get("url") or "") or None,
+        source=_source_label(hit),
+        why=cleaned[:200],
+        kind=str(hit.get("kind") or "article"),
+        channel=_channel_for_hit(hit),
+    )
+
+
+def _publisher_key(resource: ResourceOut) -> str:
+    """Mix key: YouTube channel or article site host."""
+    if resource.channel and resource.channel.strip():
+        return resource.channel.strip().lower()
+    host = _host_from_url(resource.url or "")
+    if host:
+        for suffix in _KNOWN_SITE_NAMES:
+            if host == suffix or host.endswith("." + suffix):
+                return suffix
+        return host
+    return (resource.source or "web").lower()
 
 
 def _plan_cache_get(key: str) -> list[dict[str, Any]] | None:
@@ -1058,20 +1246,15 @@ def _apply_rank_picks(
         if not url or url in seen:
             continue
         seen.add(url)
-        why = str(row.get("why") or "").strip() or _why(preference, topic)
-        # Never accept a why that looks like it smuggled a URL.
-        if "http://" in why or "https://" in why:
-            why = _why(preference, topic)
         out.append(
-            ResourceOut(
-                title=str(hit.get("title") or "Resource"),
-                url=url,
-                source=_source_label(hit),
-                why=why[:200],
-                kind=str(hit.get("kind") or "article"),
+            _resource_from_hit(
+                hit,
+                preference=preference,
+                why=str(row.get("why") or "").strip() or None,
             )
         )
-        if len(out) >= MAX_RESOURCES:
+        # Collect extra picks so diversify can fill after channel/site caps.
+        if len(out) >= MAX_RESOURCES * 2:
             break
     return _diversify_resources(out)
 
@@ -1105,49 +1288,72 @@ def _rule_rank(
         url = str(hit.get("url") or "")
         if not url:
             continue
-        out.append(
-            ResourceOut(
-                title=str(hit.get("title") or "Resource"),
-                url=url,
-                source=_source_label(hit),
-                why=_why(preference, topic),
-                kind=str(hit.get("kind") or "article"),
-            )
-        )
-        if len(out) >= MAX_RESOURCES:
+        out.append(_resource_from_hit(hit, preference=preference))
+        if len(out) >= MAX_RESOURCES * 2:
             break
     return _diversify_resources(out)
 
 
+def _is_article_or_tutorial(resource: ResourceOut) -> bool:
+    if (resource.kind or "").lower() == "article":
+        return True
+    blob = f"{resource.title or ''} {resource.why or ''}".lower()
+    return "tutorial" in blob
+
+
 def _diversify_resources(resources: list[ResourceOut]) -> list[ResourceOut]:
-    """Prefer mixed sources/channels - avoid five from one channel."""
+    """Hard mix: ≤2 per channel/site; keep an article/tutorial when one exists."""
     if len(resources) <= 1:
         return resources
-    channel_counts: dict[str, int] = {}
-    preferred: list[ResourceOut] = []
-    deferred: list[ResourceOut] = []
+
+    selected: list[ResourceOut] = []
+    counts: dict[str, int] = {}
+
+    def try_add(resource: ResourceOut) -> bool:
+        if len(selected) >= MAX_RESOURCES:
+            return False
+        url = (resource.url or "").strip()
+        if url and any((s.url or "").strip() == url for s in selected):
+            return False
+        key = _publisher_key(resource)
+        if counts.get(key, 0) >= 2:
+            return False
+        selected.append(resource)
+        counts[key] = counts.get(key, 0) + 1
+        return True
+
     for resource in resources:
-        channel = (resource.source or "web").lower()
-        count = channel_counts.get(channel, 0)
-        if count >= 2 and len(preferred) + len(deferred) < MAX_RESOURCES:
-            deferred.append(resource)
-            continue
-        channel_counts[channel] = count + 1
-        preferred.append(resource)
-    mixed = preferred + deferred
-    # Also try to keep at least one video and one article when both exist.
-    kinds = {r.kind for r in mixed[:MAX_RESOURCES]}
-    if "video" in {r.kind for r in resources} and "article" in {r.kind for r in resources}:
-        if kinds == {"video"} or kinds == {"article"}:
-            want = "article" if "video" in kinds else "video"
-            for resource in resources:
-                if resource.kind == want and resource not in mixed[:MAX_RESOURCES]:
-                    if len(mixed) >= MAX_RESOURCES:
-                        mixed[-1] = resource
-                    else:
-                        mixed.append(resource)
-                    break
-    return mixed[:MAX_RESOURCES]
+        try_add(resource)
+        if len(selected) >= MAX_RESOURCES:
+            break
+
+    pool_has_article = any(_is_article_or_tutorial(r) for r in resources)
+    selected_has_article = any(_is_article_or_tutorial(r) for r in selected)
+    if pool_has_article and not selected_has_article:
+        for resource in resources:
+            if not _is_article_or_tutorial(resource):
+                continue
+            key = _publisher_key(resource)
+            url = (resource.url or "").strip()
+            if url and any((s.url or "").strip() == url for s in selected):
+                continue
+            if counts.get(key, 0) >= 2:
+                continue
+            if len(selected) < MAX_RESOURCES:
+                try_add(resource)
+                break
+            # Swap out the last non-article so mix still includes one.
+            for idx in range(len(selected) - 1, -1, -1):
+                if _is_article_or_tutorial(selected[idx]):
+                    continue
+                old_key = _publisher_key(selected[idx])
+                counts[old_key] = max(0, counts.get(old_key, 1) - 1)
+                selected[idx] = resource
+                counts[key] = counts.get(key, 0) + 1
+                break
+            break
+
+    return selected[:MAX_RESOURCES]
 
 
 def _dedupe_resources(resources: list[ResourceOut]) -> list[ResourceOut]:

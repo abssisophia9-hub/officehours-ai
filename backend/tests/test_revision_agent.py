@@ -23,11 +23,16 @@ from app.services.revision_search import (
     looks_like_short,
     youtube_search,
 )
+from app.models.revision import ResourceOut
 from app.services.revision_service import (
     MAX_CHECKED_LINKS,
     MAX_LLM_CALLS,
     MAX_RESOURCES,
     MAX_SEARCHES,
+    _diversify_resources,
+    _publisher_key,
+    _source_label,
+    _why_is_grounded,
     build_revision_plan,
     clear_plan_resource_cache,
 )
@@ -848,6 +853,158 @@ def test_preferences_drive_different_resource_results(monkeypatch):
     assert v_urls != s_urls
     assert any("visualpref" in (u or "") for u in v_urls)
     assert any("steppref" in (u or "") for u in s_urls)
+
+
+def test_source_label_video_youtube_and_article_site():
+    assert (
+        _source_label(
+            {
+                "kind": "video",
+                "provider": "youtube",
+                "channel": "CS Academy",
+                "url": "https://www.youtube.com/watch?v=abc",
+            }
+        )
+        == "Video · YouTube"
+    )
+    assert (
+        _source_label(
+            {
+                "kind": "article",
+                "provider": "wikipedia",
+                "channel": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Red-black_tree",
+            }
+        )
+        == "Article · Wikipedia"
+    )
+
+
+def test_why_fits_grounded_in_title_or_snippet():
+    title = "Red-black tree animation"
+    snippet = "animated diagram of red-black trees"
+    assert _why_is_grounded("animated diagram of red-black trees", title, snippet)
+    assert not _why_is_grounded(
+        "Professor Smith graded this as A+ last semester at Stanford exclusive bootcamp",
+        title,
+        snippet,
+    )
+
+
+def test_resource_mix_enforces_max_two_per_channel_and_includes_article():
+    """Mix: ≤2 per channel/site; keep an article when the pool has one."""
+    same_channel = [
+        ResourceOut(
+            title=f"Video {i}",
+            url=f"https://www.youtube.com/watch?v=same{i}",
+            source="Video · YouTube",
+            why=f"Covers Video {i}.",
+            kind="video",
+            channel="CS Academy",
+        )
+        for i in range(1, 5)
+    ]
+    other_videos = [
+        ResourceOut(
+            title="Other channel A",
+            url="https://www.youtube.com/watch?v=othera",
+            source="Video · YouTube",
+            why="Covers Other channel A.",
+            kind="video",
+            channel="Other CS",
+        ),
+        ResourceOut(
+            title="Other channel B",
+            url="https://www.youtube.com/watch?v=otherb",
+            source="Video · YouTube",
+            why="Covers Other channel B.",
+            kind="video",
+            channel="Third CS",
+        ),
+    ]
+    article = ResourceOut(
+        title="Red-black tree",
+        url="https://en.wikipedia.org/wiki/Red-black_tree",
+        source="Article · Wikipedia",
+        why="red-black tree data structure",
+        kind="article",
+        channel=None,
+    )
+    # Rank order: four from one channel first (would fill the list without mix).
+    pool = same_channel + other_videos + [article]
+    mixed = _diversify_resources(pool)
+
+    assert len(mixed) <= MAX_RESOURCES
+    by_pub: dict[str, int] = {}
+    for row in mixed:
+        key = _publisher_key(row)
+        by_pub[key] = by_pub.get(key, 0) + 1
+    assert all(count <= 2 for count in by_pub.values()), by_pub
+    assert by_pub.get("cs academy", 0) <= 2
+    assert any(r.kind == "article" for r in mixed)
+    assert any("wikipedia.org" in (r.url or "") for r in mixed)
+
+
+def test_resource_mix_enforced_through_plan(monkeypatch):
+    """End-to-end: plan resources obey ≤2/channel and keep an article."""
+    headers, course_id = student_auth(client, "CSC 3374")
+
+    def think_fn(_obs):
+        return {"action": "search", "query": "red-black tree worked tutorial"}
+
+    def fake_search(query, **_kwargs):
+        hits = [
+            {
+                "kind": "video",
+                "title": f"Red-black trees part {i}",
+                "url": f"https://www.youtube.com/watch?v=mixchan{i}",
+                "snippet": "red-black tree tutorial walkthrough",
+                "query": query,
+                "provider": "youtube",
+                "channel": "Mono Channel",
+            }
+            for i in range(1, 5)
+        ]
+        hits.append(
+            {
+                "kind": "article",
+                "title": "Red-black tree",
+                "url": "https://en.wikipedia.org/wiki/Red-black_tree",
+                "snippet": "red-black tree data structure",
+                "query": query,
+                "provider": "wikipedia",
+                "channel": "Wikipedia",
+            }
+        )
+        hits.append(
+            {
+                "kind": "video",
+                "title": "Red-black trees elsewhere",
+                "url": "https://www.youtube.com/watch?v=mixother1",
+                "snippet": "red-black tree animated diagram",
+                "query": query,
+                "provider": "youtube",
+                "channel": "Alt Channel",
+            }
+        )
+        return hits
+
+    monkeypatch.setattr("app.services.revision_service.resource_search", fake_search)
+    monkeypatch.setattr("app.services.revision_service.link_ok", lambda *_a, **_k: True)
+
+    body = client.post(
+        "/revision/plan",
+        headers=headers,
+        json=_plan_payload(course_id, preference="step_by_step"),
+    ).json()
+
+    resources = body["resources"]
+    assert resources
+    assert all(r.get("source") in {"Video · YouTube", "Article · Wikipedia"} or
+               str(r.get("source") or "").startswith("Article ·") for r in resources)
+    mono = sum(1 for r in resources if (r.get("channel") or "").lower() == "mono channel")
+    assert mono <= 2
+    assert any(r.get("kind") == "article" for r in resources)
 
 
 def test_policy_log_modes_omit_grades_and_names(monkeypatch, caplog):

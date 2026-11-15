@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ExternalLink } from "lucide-react";
 import { Navigate, useNavigate } from "react-router";
 import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
@@ -648,23 +649,42 @@ export default function StudentRevisionPage() {
           <div className="mt-4 rounded-lg border border-aui-forest/20 bg-[#f3faf5] p-3 text-xs">
             <p className="font-semibold text-aui-ink">Resources</p>
             {resources.filter((item) => item.url).length ? (
-              <ol className="mt-2 list-decimal space-y-2 pl-4 text-aui-deep/85">
+              <ol className="mt-2 list-decimal space-y-3 pl-4 text-aui-deep/85">
                 {resources
                   .filter((item) => item.url)
                   .map((item) => (
                     <li key={`${item.source}-${item.title}-${item.url}`}>
-                      <a
-                        className="font-semibold text-aui-forest underline"
-                        href={item.url}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {item.title}
-                      </a>
-                      <span className="mt-0.5 block">
+                      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                        <a
+                          className="font-semibold text-aui-forest underline underline-offset-2"
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {item.title}
+                        </a>
+                        <a
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-aui-forest/90 underline underline-offset-2"
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`Open ${item.title}`}
+                        >
+                          Open
+                          <ExternalLink className="size-3.5 shrink-0" aria-hidden="true" />
+                        </a>
+                      </div>
+                      <span className="mt-0.5 block text-xs text-aui-deep/75">
                         {item.source}
-                        {item.why ? `. ${item.why}` : ""}
+                        {item.channel ? (
+                          <span className="text-aui-deep/55"> · {item.channel}</span>
+                        ) : null}
                       </span>
+                      {item.why ? (
+                        <span className="mt-0.5 block text-xs text-aui-deep/70">
+                          {item.why}
+                        </span>
+                      ) : null}
                     </li>
                   ))}
               </ol>

@@ -54,6 +54,9 @@ class ResourceOut(BaseModel):
     source: str
     why: str
     kind: str = "article"
+    # YouTube channel (secondary UI text + mix key). Articles omit this;
+    # mix falls back to the URL host / site.
+    channel: str | None = None
 
 
 class TimeSlotOut(BaseModel):
