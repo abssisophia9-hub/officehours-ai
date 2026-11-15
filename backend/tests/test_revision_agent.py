@@ -17,11 +17,19 @@ from app.database.session import Base, SessionLocal, engine
 from app.main import app
 from app.models.revision import RevisionPlanRequest
 from app.services.demo_accounts import ensure_demo_accounts
+from app.services.revision_search import (
+    clear_resource_cache,
+    looks_like_clickbait,
+    looks_like_short,
+    youtube_search,
+)
 from app.services.revision_service import (
     MAX_CHECKED_LINKS,
     MAX_LLM_CALLS,
+    MAX_RESOURCES,
     MAX_SEARCHES,
     build_revision_plan,
+    clear_plan_resource_cache,
 )
 from tests.helpers import login, student_auth
 
@@ -37,6 +45,8 @@ def setup_function():
     finally:
         db.close()
     agent_policy.reset_policy_state()
+    clear_resource_cache()
+    clear_plan_resource_cache()
 
 
 def _plan_payload(course_id, **extra):
@@ -75,7 +85,7 @@ def _assert_no_scores(body: dict) -> None:
 def test_no_grades_still_returns_plan(monkeypatch):
     headers, course_id = student_auth(client, "CSC 3374")
     monkeypatch.setattr(
-        "app.services.revision_service.article_search",
+        "app.services.revision_service.resource_search",
         lambda *_a, **_k: [],
     )
     monkeypatch.setattr(
@@ -113,7 +123,7 @@ def test_synthetic_grades_rank_high_weakness_first(monkeypatch):
             }
         ]
 
-    monkeypatch.setattr("app.services.revision_service.article_search", fake_search)
+    monkeypatch.setattr("app.services.revision_service.resource_search", fake_search)
     monkeypatch.setattr("app.services.revision_service.link_ok", lambda *_a, **_k: True)
 
     response = client.post(
@@ -148,7 +158,7 @@ def test_failed_link_absent_from_resources(monkeypatch):
             }
         ]
 
-    monkeypatch.setattr("app.services.revision_service.article_search", fake_search)
+    monkeypatch.setattr("app.services.revision_service.resource_search", fake_search)
     monkeypatch.setattr("app.services.revision_service.link_ok", lambda *_a, **_k: False)
 
     body = client.post(
@@ -163,7 +173,7 @@ def test_failed_link_absent_from_resources(monkeypatch):
 def test_empty_search_does_not_invent_urls(monkeypatch):
     headers, course_id = student_auth(client, "CSC 3374")
     monkeypatch.setattr(
-        "app.services.revision_service.article_search",
+        "app.services.revision_service.resource_search",
         lambda *_a, **_k: [],
     )
     body = client.post(
@@ -181,7 +191,7 @@ def test_empty_search_does_not_invent_urls(monkeypatch):
 def test_resources_are_web_only_never_course_kb(monkeypatch):
     headers, course_id = student_auth(client, "CSC 3374")
     monkeypatch.setattr(
-        "app.services.revision_service.article_search",
+        "app.services.revision_service.resource_search",
         lambda *_a, **_k: [],
     )
     monkeypatch.setenv("OFFICEHOURS_DEMO", "true")
@@ -202,7 +212,7 @@ def test_preferences_drive_different_queries(monkeypatch):
     def fake_search(query, **_kwargs):
         return []
 
-    monkeypatch.setattr("app.services.revision_service.article_search", fake_search)
+    monkeypatch.setattr("app.services.revision_service.resource_search", fake_search)
 
     for pref in ("visual_structural", "step_by_step"):
         queries: list[str] = []
@@ -211,7 +221,7 @@ def test_preferences_drive_different_queries(monkeypatch):
             queries.append(query)
             return []
 
-        monkeypatch.setattr("app.services.revision_service.article_search", capture)
+        monkeypatch.setattr("app.services.revision_service.resource_search", capture)
         body = client.post(
             "/revision/plan",
             headers=headers,
@@ -232,7 +242,7 @@ def test_fallback_empty_state_copy(monkeypatch):
     headers, course_id = student_auth(client, "CSC 3374")
     monkeypatch.setenv("OFFICEHOURS_LLM_ENABLED", "false")
     monkeypatch.setattr(
-        "app.services.revision_service.article_search",
+        "app.services.revision_service.resource_search",
         lambda *_a, **_k: [],
     )
     body = client.post(
@@ -258,7 +268,7 @@ def test_llm_off_is_rule_based_and_skips_provider(monkeypatch):
     monkeypatch.setenv("OFFICEHOURS_LLM_ENABLED", "false")
     monkeypatch.setattr("app.services.revision_service.complete_gemini", boom)
     monkeypatch.setattr(
-        "app.services.revision_service.article_search",
+        "app.services.revision_service.resource_search",
         lambda *_a, **_k: [],
     )
     body = client.post(
@@ -320,7 +330,7 @@ def test_mocked_llm_search_again_then_resources(monkeypatch):
             }
         ]
 
-    monkeypatch.setattr("app.services.revision_service.article_search", fake_search)
+    monkeypatch.setattr("app.services.revision_service.resource_search", fake_search)
     monkeypatch.setattr("app.services.revision_service.link_ok", lambda *_a, **_k: True)
 
     db = SessionLocal()
@@ -349,7 +359,7 @@ def test_mocked_llm_stop_early(monkeypatch):
         return {"action": "stop", "query": None}
 
     monkeypatch.setattr(
-        "app.services.revision_service.article_search",
+        "app.services.revision_service.resource_search",
         lambda *_a, **_k: (_ for _ in ()).throw(AssertionError("search should not run")),
     )
 
@@ -375,7 +385,7 @@ def test_invalid_llm_output_falls_back_to_rules(monkeypatch):
         return {"action": "explode", "query": 123}
 
     monkeypatch.setattr(
-        "app.services.revision_service.article_search",
+        "app.services.revision_service.resource_search",
         lambda query, **_k: [
             {
                 "kind": "article",
@@ -446,7 +456,7 @@ def test_invented_url_dropped(monkeypatch):
     def fake_link(url: str) -> bool:
         return url == "https://en.wikipedia.org/wiki/Red-black_tree"
 
-    monkeypatch.setattr("app.services.revision_service.article_search", fake_search)
+    monkeypatch.setattr("app.services.revision_service.resource_search", fake_search)
     monkeypatch.setattr("app.services.revision_service.link_ok", fake_link)
 
     headers, course_id = student_auth(client, "CSC 3374")
@@ -482,7 +492,7 @@ def test_no_key_falls_back(monkeypatch):
 
     monkeypatch.setattr("app.services.revision_service.complete_gemini", boom)
     monkeypatch.setattr(
-        "app.services.revision_service.article_search",
+        "app.services.revision_service.resource_search",
         lambda *_a, **_k: [],
     )
 
@@ -525,7 +535,7 @@ def test_caps_hold_with_greedy_llm(monkeypatch):
         checks["n"] += 1
         return True
 
-    monkeypatch.setattr("app.services.revision_service.article_search", fake_search)
+    monkeypatch.setattr("app.services.revision_service.resource_search", fake_search)
     monkeypatch.setattr("app.services.revision_service.link_ok", fake_link)
 
     headers, course_id = student_auth(client, "CSC 3374")
@@ -579,7 +589,7 @@ def test_per_user_cap_falls_back_to_rules(monkeypatch):
 
     monkeypatch.setattr("app.services.revision_service.complete_gemini", boom)
     monkeypatch.setattr(
-        "app.services.revision_service.article_search",
+        "app.services.revision_service.resource_search",
         lambda *_a, **_k: [],
     )
 
@@ -628,7 +638,7 @@ def test_per_course_cap_falls_back_to_rules(monkeypatch):
 
     monkeypatch.setattr("app.services.revision_service.complete_gemini", boom)
     monkeypatch.setattr(
-        "app.services.revision_service.article_search",
+        "app.services.revision_service.resource_search",
         lambda *_a, **_k: [],
     )
 
@@ -652,10 +662,162 @@ def test_per_course_cap_falls_back_to_rules(monkeypatch):
     )
 
 
+def test_youtube_missing_key_returns_empty(monkeypatch):
+    monkeypatch.delenv("YOUTUBE_API_KEY", raising=False)
+    monkeypatch.setenv("OFFICEHOURS_REVISION_WEB", "true")
+    assert youtube_search("red-black tree tutorial") == []
+
+
+def test_shorts_and_clickbait_filters():
+    assert looks_like_short("Cool tip #shorts", "https://www.youtube.com/watch?v=abc")
+    assert looks_like_short("Normal", "https://youtu.be/abc", duration_seconds=45)
+    assert not looks_like_short(
+        "Red-black trees explained",
+        "https://www.youtube.com/watch?v=abc",
+        duration_seconds=600,
+    )
+    assert looks_like_clickbait("YOU WONT BELIEVE THIS TREE HACK!!!")
+    assert not looks_like_clickbait("Red-black tree insertion tutorial")
+
+
+def test_rank_fn_only_picks_search_urls(monkeypatch):
+    headers, course_id = student_auth(client, "CSC 3374")
+
+    def think_fn(_obs):
+        return {"action": "search", "query": "red-black tree worked tutorial"}
+
+    def fake_search(query, **_kwargs):
+        return [
+            {
+                "kind": "video",
+                "title": "Red-black tree animation",
+                "url": "https://www.youtube.com/watch?v=realvideo1",
+                "snippet": "animated diagram of red-black trees",
+                "query": query,
+                "provider": "youtube",
+                "channel": "CS Academy",
+            },
+            {
+                "kind": "article",
+                "title": "Red-black tree",
+                "url": "https://en.wikipedia.org/wiki/Red-black_tree",
+                "snippet": "red-black tree data structure",
+                "query": query,
+                "provider": "wikipedia",
+                "channel": "Wikipedia",
+            },
+        ]
+
+    def rank_fn(payload):
+        # Invent an id that does not exist - must be ignored.
+        return {
+            "picks": [
+                {"id": "2", "why": "Clear article overview for this topic."},
+                {"id": "99", "why": "https://evil.example/fake"},
+                {"id": "1", "why": "Animated walkthrough for a visual learner."},
+            ]
+        }
+
+    monkeypatch.setattr("app.services.revision_service.resource_search", fake_search)
+    monkeypatch.setattr("app.services.revision_service.link_ok", lambda *_a, **_k: True)
+
+    db = SessionLocal()
+    try:
+        plan = build_revision_plan(
+            db,
+            RevisionPlanRequest(**_plan_payload(course_id, preference="visual_structural")),
+            user_id=1,
+            think_fn=think_fn,
+            rank_fn=rank_fn,
+        )
+    finally:
+        db.close()
+
+    urls = [r.url for r in plan.resources if r.url]
+    assert "https://evil.example/fake" not in urls
+    assert "https://en.wikipedia.org/wiki/Red-black_tree" in urls
+    assert "https://www.youtube.com/watch?v=realvideo1" in urls
+    assert all(u in {
+        "https://en.wikipedia.org/wiki/Red-black_tree",
+        "https://www.youtube.com/watch?v=realvideo1",
+    } for u in urls)
+    assert len(plan.resources) <= MAX_RESOURCES
+    assert all("http" not in (r.why or "").lower() or "https://evil" not in (r.why or "") for r in plan.resources)
+
+
+def test_missing_youtube_and_empty_search_empty_state(monkeypatch):
+    headers, course_id = student_auth(client, "CSC 3374")
+    monkeypatch.delenv("YOUTUBE_API_KEY", raising=False)
+    monkeypatch.setattr(
+        "app.services.revision_service.resource_search",
+        lambda *_a, **_k: [],
+    )
+    body = client.post(
+        "/revision/plan",
+        headers=headers,
+        json=_plan_payload(course_id),
+    ).json()
+    assert body["resources"] == []
+    assert (
+        "We couldn't find resources right now. Try again later." in body["notes"]
+    )
+
+
+def test_preferences_drive_different_resource_results(monkeypatch):
+    headers, course_id = student_auth(client, "CSC 3374")
+
+    def fake_search(query, **_kwargs):
+        q = query.lower()
+        if "animated" in q or "diagram" in q or "visualization" in q:
+            return [
+                {
+                    "kind": "video",
+                    "title": "Red-black tree animated diagram",
+                    "url": "https://www.youtube.com/watch?v=visualpref",
+                    "snippet": "animated diagram red-black",
+                    "query": query,
+                    "provider": "youtube",
+                    "channel": "Visual CS",
+                }
+            ]
+        return [
+            {
+                "kind": "video",
+                "title": "Red-black tree worked tutorial step by step",
+                "url": "https://www.youtube.com/watch?v=steppref",
+                "snippet": "worked tutorial step by step red-black",
+                "query": query,
+                "provider": "youtube",
+                "channel": "Tutor CS",
+            }
+        ]
+
+    monkeypatch.setattr("app.services.revision_service.resource_search", fake_search)
+    monkeypatch.setattr("app.services.revision_service.link_ok", lambda *_a, **_k: True)
+
+    visual = client.post(
+        "/revision/plan",
+        headers=headers,
+        json=_plan_payload(course_id, preference="visual_structural"),
+    ).json()
+    clear_plan_resource_cache()
+    steps = client.post(
+        "/revision/plan",
+        headers=headers,
+        json=_plan_payload(course_id, preference="step_by_step"),
+    ).json()
+
+    v_urls = [r["url"] for r in visual["resources"] if r.get("url")]
+    s_urls = [r["url"] for r in steps["resources"] if r.get("url")]
+    assert v_urls != s_urls
+    assert any("visualpref" in (u or "") for u in v_urls)
+    assert any("steppref" in (u or "") for u in s_urls)
+
+
 def test_policy_log_modes_omit_grades_and_names(monkeypatch, caplog):
     headers, course_id = student_auth(client, "CSC 3374")
     monkeypatch.setattr(
-        "app.services.revision_service.article_search",
+        "app.services.revision_service.resource_search",
         lambda *_a, **_k: [],
     )
     monkeypatch.setattr(

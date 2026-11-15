@@ -1,9 +1,9 @@
 """Load ``backend/.env`` into the process environment once at import time.
 
-Most runtime flags (``OFFICEHOURS_*``, ``GEMINI_API_KEY``, …) are read via
-``os.getenv``. Pydantic Settings alone only maps Canvas fields. Call
-``load_dotenv`` with ``override=False`` so CDN / process-manager env always
-wins over a local file.
+Most runtime flags (``OFFICEHOURS_*``, ``GEMINI_API_KEY``,
+``YOUTUBE_API_KEY``, …) are read via ``os.getenv``. Pydantic Settings alone
+only maps Canvas fields. Call ``load_dotenv`` with ``override=False`` so CDN /
+process-manager env always wins over a local file.
 """
 
 from __future__ import annotations

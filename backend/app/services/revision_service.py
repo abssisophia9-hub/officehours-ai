@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import re
+import time
 from typing import Any, Callable
 
 from sqlalchemy.orm import Session
@@ -32,7 +33,7 @@ from app.models.revision import (
     RevisionPlanRequest,
     TimeSlotOut,
 )
-from app.services.revision_search import article_search, link_ok
+from app.services.revision_search import link_ok, resource_search
 
 logger = logging.getLogger("officehours.revision")
 
@@ -42,12 +43,16 @@ MAX_SEARCHES = 6
 MAX_CHECKED_LINKS = 5
 SEARCHES_PER_ITERATION = 2
 MIN_LIVE_LINKS_TO_STOP = 3
+MIN_RESOURCES = 3
+MAX_RESOURCES = 5
 
 WEAKNESS_RANK = {"high": 3, "med": 2, "low": 1}
 
+# Preference → search phrasing (YouTube + articles). Visual favors diagrams /
+# animation; step-by-step favors worked tutorials; examples favor worked examples.
 STYLE_QUERY_HINTS = {
-    "visual_structural": "diagram visualization",
-    "step_by_step": "step by step tutorial",
+    "visual_structural": "animated diagram visualization",
+    "step_by_step": "worked tutorial step by step",
     "example_driven": "worked example",
     "conceptual": "intuition explained",
     "unknown": "introduction",
@@ -60,6 +65,29 @@ STYLE_LABELS = {
     "conceptual": "conceptual",
     "unknown": "general",
 }
+
+STYLE_WHY = {
+    "visual_structural": "Matches a visual preference with diagrams or animation.",
+    "step_by_step": "Matches a step-by-step preference with a worked tutorial.",
+    "example_driven": "Matches an example-based preference with a worked example.",
+    "conceptual": "Matches a conceptual preference with a clear explanation.",
+    "unknown": "Solid overview for this weak topic.",
+}
+
+EDU_CHANNEL_HINTS = (
+    "khan",
+    "mit",
+    "ocw",
+    "university",
+    "crash course",
+    "crashcourse",
+    "freecodecamp",
+    "computerphile",
+    "numberphile",
+    "3blue1brown",
+    "wikipedia",
+    "academy",
+)
 
 REVISION_THINK_SCHEMA = {
     "type": "object",
@@ -79,7 +107,54 @@ REVISION_THINK_SYSTEM = (
     "Never ask for or use student names, scores, or grades."
 )
 
+REVISION_RANK_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "picks": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "why": {"type": "string"},
+                },
+                "required": ["id", "why"],
+            },
+        }
+    },
+    "required": ["picks"],
+}
+
+REVISION_RANK_SYSTEM = (
+    "You rank study resources for a campus revision plan. "
+    "Reply with JSON only: picks is an array of {id, why}. "
+    "Choose 3 to 5 ids from the candidate list only. Never invent ids or URLs. "
+    "Prefer educational channels and mixed sources (not all one channel). "
+    "Match the learning preference. why is one plain sentence. "
+    "Never use student names, scores, or grades."
+)
+
+# Final Resources payload cache: topic|preference → (expires, resources dicts).
+_PLAN_RESOURCE_CACHE: dict[str, tuple[float, list[dict[str, Any]]]] = {}
+_PLAN_CACHE_TTL_DEFAULT = 1800
+
 ThinkFn = Callable[[dict[str, Any]], dict[str, Any]]
+RankFn = Callable[[dict[str, Any]], dict[str, Any]]
+
+
+def clear_plan_resource_cache() -> None:
+    _PLAN_RESOURCE_CACHE.clear()
+
+
+def plan_cache_ttl_seconds() -> int:
+    raw = os.getenv(
+        "OFFICEHOURS_RESOURCES_CACHE_TTL_SECONDS",
+        str(_PLAN_CACHE_TTL_DEFAULT),
+    )
+    try:
+        return max(0, int(raw))
+    except (TypeError, ValueError):
+        return _PLAN_CACHE_TTL_DEFAULT
 
 
 def build_revision_plan(
@@ -88,6 +163,7 @@ def build_revision_plan(
     *,
     user_id: int | None = None,
     think_fn: ThinkFn | None = None,
+    rank_fn: RankFn | None = None,
     search_fn: Callable[..., list[dict[str, Any]]] | None = None,
     link_check_fn: Callable[[str], bool] | None = None,
 ) -> RevisionPlanOut:
@@ -100,7 +176,11 @@ def build_revision_plan(
         focus_topics = []
 
     # Pedagogy Resources are live web only - never course KB / demo outlines.
-    search_impl = search_fn or article_search
+    primary_topic = focus_topics[0] if focus_topics else "course revision"
+    cache_key = f"{primary_topic.strip().lower()}|{preference}"
+    cached_resources = _plan_cache_get(cache_key)
+
+    search_impl = search_fn or resource_search
     check_impl = link_check_fn or link_ok
 
     allowed_urls: set[str] = set()
@@ -115,180 +195,253 @@ def build_revision_plan(
     model_name: str | None = None
     last_raw_hits: list[dict[str, Any]] = []
 
-    for iteration in range(1, MAX_ITERATIONS + 1):
-        observation = _observe(
-            focus_rows=focus_rows,
-            preference=preference,
-            kb_titles=[],
-            live_count=len([r for r in live_resources if r.url]),
-            search_count=search_count,
-            checked_count=checked_count,
-            last_hits=_public_hit_summaries(last_raw_hits),
-            remaining_searches=MAX_SEARCHES - search_count,
-            remaining_checks=MAX_CHECKED_LINKS - checked_count,
-            iteration=iteration,
+    if cached_resources is not None:
+        live_resources = [
+            ResourceOut(**row) for row in cached_resources if row.get("url")
+        ]
+        allowed_urls = {r.url for r in live_resources if r.url}
+        iterations.append(
+            IterationTraceOut(
+                iteration=1,
+                action="stop",
+                query=None,
+                thinker="rules",
+                note="Used cached resources for this topic and preference.",
+            )
         )
-
-        decision, thinker, think_note, llm_meta = _think(
-            observation,
-            user_id=user_id,
-            course_id=payload.course_id,
-            llm_calls=llm_calls,
-            think_fn=think_fn,
-            force_rules=fallback_reason is not None and thinker_locked_to_rules(fallback_reason),
-        )
-        if llm_meta.get("called"):
-            llm_calls += 1
-            used_llm = True
-            model_name = llm_meta.get("model") or gemini_model()
-        if llm_meta.get("fallback_reason") and fallback_reason is None:
-            fallback_reason = llm_meta["fallback_reason"]
-            # Keep operator reason in logs only - never surface gate/LLM codes to students.
-            notes.append(
-                "Built from your scores and study preference while the full agent was unavailable."
+    else:
+        for iteration in range(1, MAX_ITERATIONS + 1):
+            observation = _observe(
+                focus_rows=focus_rows,
+                preference=preference,
+                kb_titles=[],
+                live_count=len([r for r in live_resources if r.url]),
+                search_count=search_count,
+                checked_count=checked_count,
+                last_hits=_public_hit_summaries(last_raw_hits),
+                remaining_searches=MAX_SEARCHES - search_count,
+                remaining_checks=MAX_CHECKED_LINKS - checked_count,
+                iteration=iteration,
             )
 
-        action = decision["action"]
-        query = decision.get("query")
-        hit_count = 0
-        checked_ok = 0
-        act_note = think_note
-
-        if action == "stop":
-            iterations.append(
-                IterationTraceOut(
-                    iteration=iteration,
-                    action="stop",
-                    query=None,
-                    thinker=thinker,
-                    note=act_note or "Stop - enough live links or no useful search left.",
+            decision, thinker, think_note, llm_meta = _think(
+                observation,
+                user_id=user_id,
+                course_id=payload.course_id,
+                llm_calls=llm_calls,
+                think_fn=think_fn,
+                force_rules=fallback_reason is not None
+                and thinker_locked_to_rules(fallback_reason),
+            )
+            if llm_meta.get("called"):
+                llm_calls += 1
+                used_llm = True
+                model_name = llm_meta.get("model") or gemini_model()
+            if llm_meta.get("fallback_reason") and fallback_reason is None:
+                fallback_reason = llm_meta["fallback_reason"]
+                # Keep operator reason in logs only - never surface gate/LLM codes.
+                notes.append(
+                    "Built from your scores and study preference while the full agent was unavailable."
                 )
-            )
-            break
 
-        if action == "drop":
-            dropped = _drop_weak_candidates(candidates, live_resources)
-            act_note = act_note or f"Dropped {dropped} weak candidate link(s)."
-            iterations.append(
-                IterationTraceOut(
-                    iteration=iteration,
-                    action="drop",
-                    query=None,
-                    thinker=thinker,
-                    note=act_note,
+            action = decision["action"]
+            query = decision.get("query")
+            hit_count = 0
+            checked_ok = 0
+            act_note = think_note
+
+            if action == "stop":
+                iterations.append(
+                    IterationTraceOut(
+                        iteration=iteration,
+                        action="stop",
+                        query=None,
+                        thinker=thinker,
+                        note=act_note or "Stop - enough live links or no useful search left.",
+                    )
                 )
-            )
-            if len([r for r in live_resources if r.url]) >= MIN_LIVE_LINKS_TO_STOP:
                 break
-            continue
 
-        # action == search
-        if search_count >= MAX_SEARCHES:
-            iterations.append(
-                IterationTraceOut(
-                    iteration=iteration,
-                    action="stop",
-                    query=query,
-                    thinker=thinker,
-                    note="Search cap reached.",
+            if action == "drop":
+                dropped = _drop_weak_candidates(candidates, live_resources)
+                act_note = act_note or f"Dropped {dropped} weak candidate link(s)."
+                iterations.append(
+                    IterationTraceOut(
+                        iteration=iteration,
+                        action="drop",
+                        query=None,
+                        thinker=thinker,
+                        note=act_note,
+                    )
                 )
-            )
-            break
+                if len([r for r in live_resources if r.url]) >= MIN_LIVE_LINKS_TO_STOP:
+                    break
+                continue
 
-        q = (query or "").strip()
-        if not q:
-            q = _rule_query(focus_rows, preference, search_count)
-        # Never treat a bare URL as a search invent - require a text query.
-        if q.startswith("http://") or q.startswith("https://"):
-            act_note = "Rejected URL-shaped query; not searched."
+            # action == search
+            if search_count >= MAX_SEARCHES:
+                iterations.append(
+                    IterationTraceOut(
+                        iteration=iteration,
+                        action="stop",
+                        query=query,
+                        thinker=thinker,
+                        note="Search cap reached.",
+                    )
+                )
+                break
+
+            q = (query or "").strip()
+            if not q:
+                q = _rule_query(focus_rows, preference, search_count)
+            # Never treat a bare URL as a search invent - require a text query.
+            if q.startswith("http://") or q.startswith("https://"):
+                act_note = "Rejected URL-shaped query; not searched."
+                iterations.append(
+                    IterationTraceOut(
+                        iteration=iteration,
+                        action="search",
+                        query=q[:160],
+                        thinker=thinker,
+                        note=act_note,
+                        search_hits=0,
+                        checked_ok=0,
+                    )
+                )
+                continue
+
+            per_iter_budget = min(SEARCHES_PER_ITERATION, MAX_SEARCHES - search_count)
+            raw_hits: list[dict[str, Any]] = []
+            for _ in range(max(1, min(1, per_iter_budget))):
+                if search_count >= MAX_SEARCHES:
+                    break
+                found = (
+                    search_impl(
+                        q,
+                        max_results=6,
+                        preference=preference,
+                        topic=primary_topic,
+                    )
+                    or []
+                )
+                search_count += 1
+                raw_hits.extend(found)
+                # One logical search call per think; YouTube+articles inside resource_search.
+                break
+            last_raw_hits = raw_hits
+            hit_count = len(raw_hits)
+
+            for hit in raw_hits:
+                url = str(hit.get("url") or "").strip()
+                if not url.startswith("http"):
+                    continue
+                allowed_urls.add(url)
+                candidates.append(hit)
+
+            # Check new candidates that are not yet live.
+            pending = [
+                hit
+                for hit in candidates
+                if str(hit.get("url") or "") not in {r.url for r in live_resources if r.url}
+            ]
+            for hit in pending:
+                if checked_count >= MAX_CHECKED_LINKS:
+                    break
+                if len([r for r in live_resources if r.url]) >= MAX_CHECKED_LINKS:
+                    break
+                url = str(hit.get("url") or "")
+                if url not in allowed_urls:
+                    continue
+                checked_count += 1
+                if not check_impl(url):
+                    continue
+                if not _hit_matches_topic(hit, focus_topics):
+                    continue
+                checked_ok += 1
+                live_resources.append(
+                    ResourceOut(
+                        title=str(hit.get("title") or "Resource"),
+                        url=url,
+                        source=_source_label(hit),
+                        why=_why(preference, primary_topic),
+                        kind=str(hit.get("kind") or "article"),
+                    )
+                )
+
             iterations.append(
                 IterationTraceOut(
                     iteration=iteration,
                     action="search",
-                    query=q[:160],
+                    query=q[:200],
                     thinker=thinker,
                     note=act_note,
-                    search_hits=0,
-                    checked_ok=0,
-                )
-            )
-            continue
-
-        per_iter_budget = min(SEARCHES_PER_ITERATION, MAX_SEARCHES - search_count)
-        raw_hits: list[dict[str, Any]] = []
-        for _ in range(max(1, min(1, per_iter_budget))):
-            if search_count >= MAX_SEARCHES:
-                break
-            found = search_impl(q, max_results=4) or []
-            search_count += 1
-            raw_hits.extend(found)
-            # One logical search call per think; Wikipedia+DDG happen inside article_search.
-            break
-        last_raw_hits = raw_hits
-        hit_count = len(raw_hits)
-
-        for hit in raw_hits:
-            url = str(hit.get("url") or "").strip()
-            if not url.startswith("http"):
-                continue
-            allowed_urls.add(url)
-            candidates.append(hit)
-
-        # Check new candidates that are not yet live.
-        pending = [
-            hit
-            for hit in candidates
-            if str(hit.get("url") or "") not in {r.url for r in live_resources if r.url}
-        ]
-        for hit in pending:
-            if checked_count >= MAX_CHECKED_LINKS:
-                break
-            if len([r for r in live_resources if r.url]) >= MAX_CHECKED_LINKS:
-                break
-            url = str(hit.get("url") or "")
-            if url not in allowed_urls:
-                continue
-            checked_count += 1
-            if not check_impl(url):
-                continue
-            if not _hit_matches_topic(hit, focus_topics):
-                continue
-            checked_ok += 1
-            live_resources.append(
-                ResourceOut(
-                    title=str(hit.get("title") or "Article"),
-                    url=url,
-                    source=str(hit.get("provider") or "web"),
-                    why=_why(preference, focus_topics[0] if focus_topics else "revision"),
-                    kind=str(hit.get("kind") or "article"),
+                    search_hits=hit_count,
+                    checked_ok=checked_ok,
                 )
             )
 
-        iterations.append(
-            IterationTraceOut(
-                iteration=iteration,
-                action="search",
-                query=q[:200],
-                thinker=thinker,
-                note=act_note,
-                search_hits=hit_count,
-                checked_ok=checked_ok,
-            )
+            if len([r for r in live_resources if r.url]) >= MIN_LIVE_LINKS_TO_STOP:
+                if iteration == MAX_ITERATIONS:
+                    break
+                continue
+
+        # Rank / pick among search hits only (Gemini when armed; else rules).
+        # Injected think_fn without rank_fn → rule rank (tests / offline).
+        ranked, rank_meta = _rank_resources(
+            candidates=candidates,
+            live_urls={r.url for r in live_resources if r.url},
+            preference=preference,
+            topic=primary_topic,
+            user_id=user_id,
+            course_id=payload.course_id,
+            llm_calls=llm_calls,
+            rank_fn=rank_fn,
+            force_rules=(
+                (fallback_reason is not None and thinker_locked_to_rules(fallback_reason))
+                or (think_fn is not None and rank_fn is None)
+            ),
         )
-
-        if len([r for r in live_resources if r.url]) >= MIN_LIVE_LINKS_TO_STOP:
-            # Next iteration may stop; if this was last, exit.
-            if iteration == MAX_ITERATIONS:
-                break
-            # Prefer an early stop on the next think when enough links exist.
-            continue
+        if rank_meta.get("called"):
+            llm_calls += 1
+            used_llm = True
+            model_name = rank_meta.get("model") or model_name or gemini_model()
+        # Rule-rank after a successful think must not flip the plan to fallback.
+        if (
+            rank_meta.get("fallback_reason")
+            and fallback_reason is None
+            and not used_llm
+        ):
+            fallback_reason = rank_meta["fallback_reason"]
+            notes.append(
+                "Built from your scores and study preference while the full agent was unavailable."
+            )
+        if ranked:
+            live_resources = ranked
 
     # Strip any resource whose URL was not returned by search (no invented / KB URLs).
-    safe_resources: list[ResourceOut] = []
-    for resource in live_resources:
-        if resource.url and resource.url in allowed_urls:
+    # Cached rows already came from prior search-only picks.
+    if cached_resources is None:
+        by_url = {str(h.get("url") or ""): h for h in candidates}
+        safe_resources: list[ResourceOut] = []
+        for resource in live_resources:
+            if not resource.url or resource.url not in allowed_urls:
+                continue
+            hit = by_url.get(resource.url) or {}
+            if hit and not _hit_matches_topic(hit, focus_topics):
+                continue
             safe_resources.append(resource)
-    safe_resources = _dedupe_resources(safe_resources)[:MAX_CHECKED_LINKS]
+        safe_resources = _diversify_resources(
+            _dedupe_resources(safe_resources)
+        )[:MAX_RESOURCES]
+        if safe_resources:
+            _plan_cache_set(
+                cache_key,
+                [r.model_dump() for r in safe_resources],
+            )
+    else:
+        safe_resources = _dedupe_resources(
+            [r for r in live_resources if r.url]
+        )[:MAX_RESOURCES]
 
     web_live = [r for r in safe_resources if r.url]
     if not web_live:
@@ -334,7 +487,7 @@ def build_revision_plan(
         mode_label=mode_label,
         focus_topics=focus_topics,
         preference=preference,  # type: ignore[arg-type]
-        resources=safe_resources[:8],
+        resources=safe_resources[:MAX_RESOURCES],
         time_slots=slots,
         ask_draft=ask_draft,
         iterations=clean_iterations,
@@ -676,8 +829,312 @@ def _hit_matches_topic(hit: dict[str, Any], topics: list[str]) -> bool:
 
 
 def _why(preference: str, topic: str) -> str:
-    label = STYLE_LABELS.get(preference, "general")
-    return f"Article for {topic}, ranked for a {label} learner."
+    base = STYLE_WHY.get(preference) or STYLE_WHY["unknown"]
+    return f"{base} Topic: {topic}."
+
+
+def _source_label(hit: dict[str, Any]) -> str:
+    provider = str(hit.get("provider") or "web")
+    channel = str(hit.get("channel") or "").strip()
+    if provider == "youtube" and channel:
+        return f"YouTube · {channel}"
+    if provider == "wikipedia":
+        return "Wikipedia"
+    if channel:
+        return channel
+    return provider
+
+
+def _plan_cache_get(key: str) -> list[dict[str, Any]] | None:
+    ttl = plan_cache_ttl_seconds()
+    if ttl <= 0:
+        return None
+    row = _PLAN_RESOURCE_CACHE.get(key)
+    if not row:
+        return None
+    expires, resources = row
+    if time.monotonic() > expires:
+        _PLAN_RESOURCE_CACHE.pop(key, None)
+        return None
+    return [dict(r) for r in resources]
+
+
+def _plan_cache_set(key: str, resources: list[dict[str, Any]]) -> None:
+    ttl = plan_cache_ttl_seconds()
+    if ttl <= 0 or not resources:
+        return
+    _PLAN_RESOURCE_CACHE[key] = (
+        time.monotonic() + ttl,
+        [dict(r) for r in resources],
+    )
+
+
+def _rank_resources(
+    *,
+    candidates: list[dict[str, Any]],
+    live_urls: set[str],
+    preference: str,
+    topic: str,
+    user_id: int | None,
+    course_id: int,
+    llm_calls: int,
+    rank_fn: RankFn | None,
+    force_rules: bool,
+) -> tuple[list[ResourceOut], dict[str, Any]]:
+    """Gemini (or rules) picks among search hits that already passed link checks."""
+    pool = [
+        hit
+        for hit in candidates
+        if str(hit.get("url") or "") in live_urls
+    ]
+    if not pool:
+        return [], {"called": False}
+
+    indexed = []
+    for idx, hit in enumerate(pool, start=1):
+        indexed.append({**hit, "_id": str(idx)})
+
+    if force_rules:
+        return _rule_rank(indexed, preference, topic), {"called": False}
+
+    if rank_fn is not None:
+        raw = rank_fn(
+            {
+                "preference": preference,
+                "topic": topic,
+                "candidates": [
+                    {
+                        "id": h["_id"],
+                        "title": str(h.get("title") or "")[:160],
+                        "source": _source_label(h),
+                        "kind": str(h.get("kind") or "article"),
+                        "snippet": str(h.get("snippet") or "")[:200],
+                    }
+                    for h in indexed
+                ],
+            }
+        )
+        picked = _apply_rank_picks(raw, indexed, preference, topic)
+        if picked:
+            return picked, {"called": True, "model": "mock"}
+        return _rule_rank(indexed, preference, topic), {
+            "called": True,
+            "fallback_reason": "invalid_output",
+        }
+
+    gate = _llm_gate(user_id=user_id, course_id=course_id, llm_calls=llm_calls)
+    if gate is not None:
+        return _rule_rank(indexed, preference, topic), {
+            "called": False,
+            "fallback_reason": gate,
+        }
+
+    spent = policy._WINDOWS.allow_all(policy._window_checks(user_id, course_id))
+    if spent is not None:
+        return _rule_rank(indexed, preference, topic), {
+            "called": False,
+            "fallback_reason": f"budget:{spent}",
+        }
+
+    try:
+        user_payload = json.dumps(
+            {
+                "preference": preference,
+                "topic": topic,
+                "candidates": [
+                    {
+                        "id": h["_id"],
+                        "title": str(h.get("title") or "")[:160],
+                        "source": _source_label(h),
+                        "kind": str(h.get("kind") or "article"),
+                        "snippet": str(h.get("snippet") or "")[:200],
+                    }
+                    for h in indexed
+                ],
+            },
+            ensure_ascii=False,
+        )
+        # Privacy: payload is topic + preference + public titles/snippets only.
+        completion = complete_gemini(
+            REVISION_RANK_SYSTEM,
+            user_payload,
+            max_tokens=min(400, policy.max_output_tokens()),
+            temperature=0,
+            timeout=policy.timeout_seconds(),
+            schema=REVISION_RANK_SCHEMA,
+        )
+        policy._note_spend(completion.input_tokens, completion.output_tokens)
+        policy._note_success()
+        picks = _validate_rank_text(completion.text)
+        picked = _apply_rank_picks(picks, indexed, preference, topic) if picks else []
+        if not picked:
+            return _rule_rank(indexed, preference, topic), {
+                "called": True,
+                "fallback_reason": "invalid_output",
+                "model": completion.model,
+            }
+        return picked, {"called": True, "model": completion.model}
+    except DailyQuotaError:
+        policy._note_failure()
+        return _rule_rank(indexed, preference, topic), {
+            "called": False,
+            "fallback_reason": "daily_quota",
+        }
+    except RateLimitExhausted:
+        policy._note_failure()
+        return _rule_rank(indexed, preference, topic), {
+            "called": False,
+            "fallback_reason": "rate_limit",
+        }
+    except Exception as exc:
+        policy._note_failure()
+        reason = "no_key" if "GEMINI_API_KEY" in str(exc) else "llm_error"
+        logger.info("revision rank fallback reason=%s type=%s", reason, type(exc).__name__)
+        return _rule_rank(indexed, preference, topic), {
+            "called": False,
+            "fallback_reason": reason,
+        }
+
+
+def _validate_rank_text(text: str) -> dict[str, Any] | None:
+    raw = (text or "").strip()
+    if not raw:
+        return None
+    try:
+        if raw.startswith("```"):
+            raw = re.sub(r"^```(?:json)?\s*", "", raw)
+            raw = re.sub(r"\s*```$", "", raw)
+        data = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    picks = data.get("picks")
+    if not isinstance(picks, list):
+        return None
+    cleaned = []
+    for row in picks:
+        if not isinstance(row, dict):
+            continue
+        pick_id = str(row.get("id") or "").strip()
+        why = str(row.get("why") or "").strip()
+        if not pick_id:
+            continue
+        cleaned.append({"id": pick_id, "why": why[:200] if why else ""})
+    if not cleaned:
+        return None
+    return {"picks": cleaned}
+
+
+def _apply_rank_picks(
+    raw: dict[str, Any] | None,
+    indexed: list[dict[str, Any]],
+    preference: str,
+    topic: str,
+) -> list[ResourceOut]:
+    if not raw:
+        return []
+    by_id = {str(h["_id"]): h for h in indexed}
+    out: list[ResourceOut] = []
+    seen: set[str] = set()
+    for row in raw.get("picks") or []:
+        hit = by_id.get(str(row.get("id") or ""))
+        if not hit:
+            continue
+        url = str(hit.get("url") or "")
+        if not url or url in seen:
+            continue
+        seen.add(url)
+        why = str(row.get("why") or "").strip() or _why(preference, topic)
+        # Never accept a why that looks like it smuggled a URL.
+        if "http://" in why or "https://" in why:
+            why = _why(preference, topic)
+        out.append(
+            ResourceOut(
+                title=str(hit.get("title") or "Resource"),
+                url=url,
+                source=_source_label(hit),
+                why=why[:200],
+                kind=str(hit.get("kind") or "article"),
+            )
+        )
+        if len(out) >= MAX_RESOURCES:
+            break
+    return _diversify_resources(out)
+
+
+def _rule_rank(
+    indexed: list[dict[str, Any]],
+    preference: str,
+    topic: str,
+) -> list[ResourceOut]:
+    hint = STYLE_QUERY_HINTS.get(preference, "")
+    hint_tokens = [t for t in re.split(r"[^a-z0-9]+", hint.lower()) if len(t) > 2]
+
+    def score(hit: dict[str, Any]) -> tuple[int, int, str]:
+        blob = f"{hit.get('title') or ''} {hit.get('snippet') or ''} {hit.get('channel') or ''}".lower()
+        pref_hits = sum(1 for t in hint_tokens if t in blob)
+        edu = 1 if any(h in blob for h in EDU_CHANNEL_HINTS) else 0
+        # Prefer videos for visual; articles still allowed.
+        kind_bonus = 0
+        kind = str(hit.get("kind") or "")
+        if preference == "visual_structural" and kind == "video":
+            kind_bonus = 2
+        elif preference == "step_by_step" and ("tutorial" in blob or "step" in blob):
+            kind_bonus = 2
+        elif preference == "example_driven" and "example" in blob:
+            kind_bonus = 2
+        return (pref_hits + edu + kind_bonus, edu, str(hit.get("title") or ""))
+
+    ordered = sorted(indexed, key=score, reverse=True)
+    out: list[ResourceOut] = []
+    for hit in ordered:
+        url = str(hit.get("url") or "")
+        if not url:
+            continue
+        out.append(
+            ResourceOut(
+                title=str(hit.get("title") or "Resource"),
+                url=url,
+                source=_source_label(hit),
+                why=_why(preference, topic),
+                kind=str(hit.get("kind") or "article"),
+            )
+        )
+        if len(out) >= MAX_RESOURCES:
+            break
+    return _diversify_resources(out)
+
+
+def _diversify_resources(resources: list[ResourceOut]) -> list[ResourceOut]:
+    """Prefer mixed sources/channels - avoid five from one channel."""
+    if len(resources) <= 1:
+        return resources
+    channel_counts: dict[str, int] = {}
+    preferred: list[ResourceOut] = []
+    deferred: list[ResourceOut] = []
+    for resource in resources:
+        channel = (resource.source or "web").lower()
+        count = channel_counts.get(channel, 0)
+        if count >= 2 and len(preferred) + len(deferred) < MAX_RESOURCES:
+            deferred.append(resource)
+            continue
+        channel_counts[channel] = count + 1
+        preferred.append(resource)
+    mixed = preferred + deferred
+    # Also try to keep at least one video and one article when both exist.
+    kinds = {r.kind for r in mixed[:MAX_RESOURCES]}
+    if "video" in {r.kind for r in resources} and "article" in {r.kind for r in resources}:
+        if kinds == {"video"} or kinds == {"article"}:
+            want = "article" if "video" in kinds else "video"
+            for resource in resources:
+                if resource.kind == want and resource not in mixed[:MAX_RESOURCES]:
+                    if len(mixed) >= MAX_RESOURCES:
+                        mixed[-1] = resource
+                    else:
+                        mixed.append(resource)
+                    break
+    return mixed[:MAX_RESOURCES]
 
 
 def _dedupe_resources(resources: list[ResourceOut]) -> list[ResourceOut]:
