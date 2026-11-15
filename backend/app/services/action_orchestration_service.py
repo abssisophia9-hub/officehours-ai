@@ -205,7 +205,7 @@ def _student_update(
         return (
             f"A shared group meeting was scheduled for your topic: {title}. "
             f"When: {when}. Where: {place}. "
-            "Bring your request code — classmates with the same stuck point are invited too."
+            "Bring your request code - classmates with the same stuck point are invited too."
         )
 
     return strategy["student_update"]

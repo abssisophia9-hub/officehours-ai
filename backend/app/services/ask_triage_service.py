@@ -212,7 +212,7 @@ def apply_triage_to_request(
     ):
         request.sensitive = True
         request.recommended_action = (
-            "Private 1:1 / admin route — do not discuss in a public group review"
+            "Private 1:1 / admin route - do not discuss in a public group review"
         )
     request.triage_category = str(analyzer.get("category") or "")
     request.triage_difficulty = str(analyzer.get("difficulty") or "MEDIUM")

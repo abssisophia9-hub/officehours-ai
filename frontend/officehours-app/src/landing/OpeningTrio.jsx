@@ -12,13 +12,13 @@ const COURSES = [
       {
         name: "Hashing",
         ask: "Why do hash collisions happen?",
-        room: "Hash collisions on insert — anyone?",
+        room: "Hash collisions on insert - anyone?",
         agent: "A hash table maps a key to a bucket. Collisions are normal; we chain or probe. Approved FAQ + Canvas Module 4.",
       },
       {
         name: "Trees",
-        ask: "BST vs heap — which one for Dijkstra?",
-        room: "BST vs heap — which one for Dijkstra?",
+        ask: "BST vs heap - which one for Dijkstra?",
+        room: "BST vs heap - which one for Dijkstra?",
         agent: "A BST orders by key. A heap is a priority queue. The course agent only says this because the professor stamped it.",
       },
     ],
@@ -30,7 +30,7 @@ const COURSES = [
       {
         name: "Divide & Conquer",
         ask: "How do I unwind the merge-sort recurrence?",
-        room: "Merge sort recurrence — how to unwind it?",
+        room: "Merge sort recurrence - how to unwind it?",
         agent: "T(n) = 2T(n/2) + Θ(n) solves to Θ(n log n). Pulled from the approved FAQ for this course only.",
       },
     ],
@@ -119,7 +119,7 @@ export default function OpeningTrio({ variant = "live" }) {
               <mark>help or ignore</mark>.
             </p>
             <p>
-              <em>Study Rooms</em> first — peer help rated Stack Overflow-style
+              <em>Study Rooms</em> first - peer help rated Stack Overflow-style
               on the Rooms board. The course agent is one door. The community is the
               building. Scroll the chapters.
             </p>
@@ -129,7 +129,7 @@ export default function OpeningTrio({ variant = "live" }) {
           <figure className="oh-panel is-dim">
             <SceneAlone />
             <figcaption>
-              <strong>2:13 AM — alone with it</strong>
+              <strong>2:13 AM - alone with it</strong>
               <span>Same bug for three hours. Closed door. Nobody awake to ask.</span>
             </figcaption>
           </figure>
@@ -139,7 +139,7 @@ export default function OpeningTrio({ variant = "live" }) {
           <figure className="oh-panel is-lit">
             <SceneTogether />
             <figcaption>
-              <strong>2:31 AM — shared</strong>
+              <strong>2:31 AM - shared</strong>
               <span>She opened a Room. Two classmates were stuck on it too.</span>
             </figcaption>
           </figure>
@@ -155,7 +155,7 @@ export default function OpeningTrio({ variant = "live" }) {
           <p>
             Mutual support only works if walking past is allowed. Collective
             learning only works if the room is optional. The product removes
-            the performance — not the decision.
+            the performance - not the decision.
           </p>
         </div>
         <ul className="oh-choice-grid">
@@ -163,7 +163,7 @@ export default function OpeningTrio({ variant = "live" }) {
             <SceneAnon />
             <h3>Quiet or named</h3>
             <p>
-              Ask staff as a request code — no name on any board. Or put your
+              Ask staff as a request code - no name on any board. Or put your
               name on it so help can find you. Same person, her call.
             </p>
           </li>
@@ -211,7 +211,7 @@ export default function OpeningTrio({ variant = "live" }) {
               <h3>{module.room}</h3>
               <p>
                 {stance === "help"
-                  ? "You expressed interest. Your name is on this thread — help can find you."
+                  ? "You expressed interest. Your name is on this thread - help can find you."
                   : stance === "ignore"
                     ? "You kept walking. The room stays open for someone else."
                     : "Share the stuck point, not the write-up. Help is named. Walking past is allowed."}
@@ -262,7 +262,7 @@ export default function OpeningTrio({ variant = "live" }) {
           <p className="oh-open-kicker">Student · TA · Professor</p>
           <h2 className="font-display">Three seats. One login. One role per course.</h2>
           <p>
-            Students ask. TAs are assigned to a course they already took — they
+            Students ask. TAs are assigned to a course they already took - they
             are staff, not classmates in that section. Professors stamp what the
             agent may say. Click a person to jump to their chapter.
           </p>
@@ -307,7 +307,7 @@ export default function OpeningTrio({ variant = "live" }) {
             <p>
               {quiet
                 ? "No name on a public board. The private path when the question is sensitive, or you are not ready to be seen."
-                : "You want a meeting — message, face-to-face, or online. Staff can find you."}
+                : "You want a meeting - message, face-to-face, or online. Staff can find you."}
             </p>
           </article>
           <article className="oh-open-pane">
@@ -354,7 +354,7 @@ export default function OpeningTrio({ variant = "live" }) {
                 <strong>Matcher</strong> Alice primary · Karim backup
               </li>
               <li>
-                <strong>Synthesizer</strong> Hint drafted — you still own the reply
+                <strong>Synthesizer</strong> Hint drafted - you still own the reply
               </li>
             </ul>
           </article>
@@ -409,7 +409,7 @@ export default function OpeningTrio({ variant = "live" }) {
           <p>
             Launch from Canvas or sign in with your AUI email. A synced module
             becomes a Rooms chapter. The Course Study Agent only speaks what
-            this professor stamped — never another syllabus, never classmate notes.
+            this professor stamped - never another syllabus, never classmate notes.
           </p>
           <div className="oh-open-course-switch" role="tablist" aria-label="Demo courses">
             {COURSES.map((item, index) => (
@@ -475,7 +475,7 @@ export default function OpeningTrio({ variant = "live" }) {
           <h2 className="font-display">The room is already open. Walk in.</h2>
           <p>
             Shared stress. Collective learning. Mutual support. Sign in as
-            yourself — a TA on campus is also a student. One AUI email. The
+            yourself - a TA on campus is also a student. One AUI email. The
             workspace switches when the course does.
           </p>
         </div>

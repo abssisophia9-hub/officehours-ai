@@ -91,7 +91,7 @@ function planModeLabel(plan) {
 function publicPlanNotes(notes) {
   const blocked =
     /llm_|fallback|gate:|budget:|quota|rule-based|invalid model|api key|gemini|orchestrat/i;
-  // Resources box already shows the empty-state sentence — don't repeat it under notes.
+  // Resources box already shows the empty-state sentence - don't repeat it under notes.
   const emptyResources =
     /^we couldn't find resources right now\. try again later\.?$/i;
   return (notes || [])
@@ -416,7 +416,7 @@ export default function StudentRevisionPage() {
             <h2>Practice scores</h2>
           </div>
           <p className="bh-card-note">
-            These are demo practice scores for a typical quiz and assignment mix —
+            These are demo practice scores for a typical quiz and assignment mix  - 
             not live Canvas grades. Use Fix this grade to set your own score before
             you build; only the priority level (needs work / getting there / on track)
             is sent when the plan is built.
@@ -484,7 +484,7 @@ export default function StudentRevisionPage() {
             ))}
           </ul>
           <p className="soft-stat mt-4 text-sm">
-            Priority: <strong>{focus.topic}</strong> — highest exam weight among
+            Priority: <strong>{focus.topic}</strong> - highest exam weight among
             topics below 85%.
           </p>
         </section>
@@ -583,7 +583,7 @@ export default function StudentRevisionPage() {
                 </strong>
                 {horizonMode === "exam" && examDate
                   ? ` until your exam on ${examDate}`
-                  : " — the length you chose above"}
+                  : " - the length you chose above"}
                 {planWindowDays > 0 && planWindowDays !== horizonDays
                   ? ` (through day ${planWindowDays})`
                   : ""}
@@ -599,7 +599,7 @@ export default function StudentRevisionPage() {
                       Day {slot.day_offset} · {slot.minutes} min · {slot.label}
                     </strong>
                     <span className="mt-0.5 block text-xs text-aui-deep/70">
-                      {slot.topic} — {slot.focus}
+                      {slot.topic} - {slot.focus}
                     </span>
                   </li>
                 ))}

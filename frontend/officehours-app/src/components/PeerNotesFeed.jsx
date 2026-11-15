@@ -212,7 +212,7 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
       </div>
       <p className="bh-card-note">
         Share study notes with classmates in {courseCode}. Describe what they
-        cover, then upload — like, comment, and download for your own use. These
+        cover, then upload - like, comment, and download for your own use. These
         do not train the study agent (that stays professor-approved).
       </p>
 
@@ -305,7 +305,7 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
       <div className="mt-5 space-y-4">
         {notes.length === 0 ? (
           <p className="bh-card-note">
-            No classmate notes yet — be the first to share for {courseCode}.
+            No classmate notes yet - be the first to share for {courseCode}.
           </p>
         ) : (
           notes.map((note) => (
@@ -413,7 +413,7 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
                           <span className="font-semibold text-aui-ink">
                             {row.author_display}
                           </span>
-                          <span className="text-aui-deep/80"> — {row.body}</span>
+                          <span className="text-aui-deep/80"> - {row.body}</span>
                         </div>
                       ))
                     )}

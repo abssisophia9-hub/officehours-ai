@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 
-/** Advanced UX prototype — feedback only. Live student workspace unchanged. */
+/** Advanced UX prototype - feedback only. Live student workspace unchanged. */
 
 const NAV = [
   { id: "dashboard", label: "Dashboard", icon: "dashboard" },
@@ -73,7 +73,7 @@ const ICONS = {
 const SEED_ASKS = [
   {
     id: "1842",
-    title: "Red-black delete — why black-height breaks after transplant?",
+    title: "Red-black delete - why black-height breaks after transplant?",
     mode: "Quiet ask",
     status: "answered",
     unread: true,
@@ -84,7 +84,7 @@ const SEED_ASKS = [
       { label: "Answered", done: true, detail: "Reply posted · 12 min ago" },
     ],
     reply:
-      "After transplant, if the deleted node was black, black-height drops by one. Fix with rotations + recolor from the replacement upward — same cases as CLRS delete-fixup.",
+      "After transplant, if the deleted node was black, black-height drops by one. Fix with rotations + recolor from the replacement upward - same cases as CLRS delete-fixup.",
   },
   {
     id: "1831",
@@ -97,7 +97,7 @@ const SEED_ASKS = [
       { label: "Queued", done: true, detail: "In TA desk" },
       { label: "Claimed", done: true, detail: "Sam Ortiz · face-to-face" },
       { label: "In progress", done: false, detail: "Waiting on meeting" },
-      { label: "Answered", done: false, detail: "—" },
+      { label: "Answered", done: false, detail: "-" },
     ],
     reply: null,
   },
@@ -109,9 +109,9 @@ const SEED_ASKS = [
     unread: false,
     stages: [
       { label: "Queued", done: true, detail: "Waiting for a free TA" },
-      { label: "Claimed", done: false, detail: "—" },
-      { label: "In progress", done: false, detail: "—" },
-      { label: "Answered", done: false, detail: "—" },
+      { label: "Claimed", done: false, detail: "-" },
+      { label: "In progress", done: false, detail: "-" },
+      { label: "Answered", done: false, detail: "-" },
     ],
     reply: null,
   },
@@ -179,9 +179,9 @@ export default function StudentVisionPrototype() {
       optimistic: true,
       stages: [
         { label: "Queued", done: true, detail: "Just now · Ask Triage routing" },
-        { label: "Claimed", done: false, detail: "—" },
-        { label: "In progress", done: false, detail: "—" },
-        { label: "Answered", done: false, detail: "—" },
+        { label: "Claimed", done: false, detail: "-" },
+        { label: "In progress", done: false, detail: "-" },
+        { label: "Answered", done: false, detail: "-" },
       ],
       reply: null,
     };
@@ -317,7 +317,7 @@ export default function StudentVisionPrototype() {
             <h1 className="bh-page-title">Student Dashboard</h1>
             <p className="bh-page-subtitle">
               Ask staff quietly, study from professor-approved knowledge · CSC 2302
-              — Data Structures
+              - Data Structures
             </p>
 
             <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-aui-forest/25 bg-[#f3faf5] px-4 py-3 text-sm">
@@ -328,7 +328,7 @@ export default function StudentVisionPrototype() {
                   className="rounded-full bg-rose-600 px-3 py-1 text-xs font-bold text-white"
                   onClick={() => openAsk("1842")}
                 >
-                  {unreadReplies} reply waiting — open
+                  {unreadReplies} reply waiting - open
                 </button>
               ) : (
                 <span className="text-xs text-aui-deep/70">{openCount} open asks</span>
@@ -347,12 +347,12 @@ export default function StudentVisionPrototype() {
               <article className="bh-stat-card">
                 <div className="bh-stat-head">My asks {ICONS.clock}</div>
                 <p className="bh-stat-value">{asks.length}</p>
-                <p className="bh-stat-note">Your asks in CSC 2302 — not the class queue</p>
+                <p className="bh-stat-note">Your asks in CSC 2302 - not the class queue</p>
               </article>
               <article className="bh-stat-card">
                 <div className="bh-stat-head">My Quiet asks {ICONS.check}</div>
                 <p className="bh-stat-value">{quietCount}</p>
-                <p className="bh-stat-note">Name hidden — you still track status</p>
+                <p className="bh-stat-note">Name hidden - you still track status</p>
               </article>
               <article className="bh-stat-card">
                 <div className="bh-stat-head">Needs reply</div>
@@ -404,7 +404,7 @@ export default function StudentVisionPrototype() {
                   <p className="text-sm font-semibold text-aui-ink">Who should staff see?</p>
                   <div className="mt-3 grid gap-2 sm:grid-cols-2">
                     {[
-                      { value: true, title: "Quiet ask", note: "Anonymous — no name or student ID stored." },
+                      { value: true, title: "Quiet ask", note: "Anonymous - no name or student ID stored." },
                       { value: false, title: "Identify me", note: "Share Sara El Idrissi · ID 117400." },
                     ].map((opt) => (
                       <label
@@ -448,7 +448,7 @@ export default function StudentVisionPrototype() {
                         How do you want help?
                       </legend>
                       {[
-                        { value: "message", title: "Message / async", note: "Answer in the queue — no live meeting." },
+                        { value: "message", title: "Message / async", note: "Answer in the queue - no live meeting." },
                         { value: "face_to_face", title: "Face-to-face meeting", note: "In-person office-hours on campus." },
                         { value: "online_meeting", title: "Online meeting", note: "Zoom / Teams with a TA or professor." },
                       ].map((option) => (
@@ -551,7 +551,7 @@ export default function StudentVisionPrototype() {
                   </button>
                 </div>
                 <p className="soft-stat mt-4 text-sm text-aui-deep/70">
-                  Rooms and Classmate Notes stay in the sidebar — not under this
+                  Rooms and Classmate Notes stay in the sidebar - not under this
                   dashboard.
                 </p>
               </section>
@@ -563,7 +563,7 @@ export default function StudentVisionPrototype() {
           <div className="fade-up">
             <h1 className="bh-page-title">My asks</h1>
             <p className="bh-page-subtitle">
-              Status and replies live here. New replies badge the sidebar — no
+              Status and replies live here. New replies badge the sidebar - no
               receipt-code hunting.
             </p>
             <div className="grid gap-5 lg:grid-cols-[minmax(240px,0.9fr)_minmax(0,1.2fr)]">
@@ -637,7 +637,7 @@ export default function StudentVisionPrototype() {
                   </div>
                 ) : (
                   <p className="mt-4 text-xs text-aui-deep/60">
-                    No reply yet — status above is the source of truth.
+                    No reply yet - status above is the source of truth.
                   </p>
                 )}
               </section>
@@ -682,7 +682,7 @@ export default function StudentVisionPrototype() {
               ) : null}
               {agentState === "miss" ? (
                 <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
-                  <p className="font-semibold">No approved answer yet — seek help.</p>
+                  <p className="font-semibold">No approved answer yet - seek help.</p>
                   <p className="mt-1 text-xs leading-5">
                     Don&apos;t keep spinning on the agent. Turn this into a Quiet ask.
                   </p>
@@ -699,7 +699,7 @@ export default function StudentVisionPrototype() {
           <div className="fade-up">
             <h1 className="bh-page-title">Pedagogy Agent</h1>
             <p className="bh-page-subtitle">
-              Canvas grades + syllabus weights → clear priority. Firm, not harsh —
+              Canvas grades + syllabus weights → clear priority. Firm, not harsh  - 
               and you can correct a wrong grade.
             </p>
             <div className="grid gap-5 lg:grid-cols-2">
@@ -755,7 +755,7 @@ export default function StudentVisionPrototype() {
                   ))}
                 </ul>
                 <p className="soft-stat mt-4 text-sm">
-                  Priority: <strong>{focus.topic}</strong> — lowest score among high
+                  Priority: <strong>{focus.topic}</strong> - lowest score among high
                   exam weight.
                 </p>
               </section>
@@ -766,7 +766,7 @@ export default function StudentVisionPrototype() {
                 </div>
                 <p className="bh-card-note">
                   Why: {focus.source} shows {focus.score}%, and it is {focus.weight}%
-                  of the final. 18 days left — close the biggest gap first.
+                  of the final. 18 days left - close the biggest gap first.
                 </p>
                 <p className="mt-3 text-sm font-semibold text-aui-ink">2 h 15 min · finish by 22:30</p>
                 <ol className="mt-3 space-y-2 text-sm">
@@ -786,14 +786,14 @@ export default function StudentVisionPrototype() {
                 <div className="mt-4 rounded-lg border border-aui-forest/20 bg-[#f3faf5] p-3 text-xs">
                   <p className="font-semibold text-aui-ink">Resources (3 max)</p>
                   <ol className="mt-2 list-decimal space-y-1 pl-4 text-aui-deep/85">
-                    <li><strong>Start here:</strong> 3Blue1Brown — red-black intuition</li>
-                    <li><strong>Course:</strong> Stamped slides — Week 5</li>
-                    <li><strong>If stuck:</strong> PatrickJMT — step-by-step</li>
+                    <li><strong>Start here:</strong> 3Blue1Brown - red-black intuition</li>
+                    <li><strong>Course:</strong> Stamped slides - Week 5</li>
+                    <li><strong>If stuck:</strong> PatrickJMT - step-by-step</li>
                   </ol>
                 </div>
                 <div className="mt-4 rounded-lg border border-[#d7e0d9] bg-white p-3">
                   <p className="text-sm font-semibold text-aui-ink">Log today&apos;s check-in</p>
-                  <p className="mt-1 text-xs text-aui-deep/70">After Block 3, log your score — next week recalculates.</p>
+                  <p className="mt-1 text-xs text-aui-deep/70">After Block 3, log your score - next week recalculates.</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <input
                       className="field-glass w-24 px-2 py-1.5 text-sm"
@@ -820,7 +820,7 @@ export default function StudentVisionPrototype() {
               <div className="bh-card-title">
                 <h2>This week</h2>
               </div>
-              <p className="bh-card-note">Secondary to Today — glance only.</p>
+              <p className="bh-card-note">Secondary to Today - glance only.</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-7">
                 {[
                   ["Mon", "Trees · fixup", "2.5h"],
@@ -829,7 +829,7 @@ export default function StudentVisionPrototype() {
                   ["Thu", "Hashing keep", "2h"],
                   ["Fri", "Hashing project", "1.5h"],
                   ["Sat", "Heaps light", "1h"],
-                  ["Sun", "Rest", "—"],
+                  ["Sun", "Rest", "-"],
                 ].map(([day, topic, dur]) => (
                   <div key={day} className="rounded-lg border border-[#d7e0d9] bg-white p-2 text-xs">
                     <p className="font-bold text-aui-forest">{day}</p>
@@ -845,7 +845,7 @@ export default function StudentVisionPrototype() {
         {section === "rooms" ? (
           <div className="fade-up">
             <h1 className="bh-page-title">Rooms</h1>
-            <p className="bh-page-subtitle">Classmates only — not on the Dashboard.</p>
+            <p className="bh-page-subtitle">Classmates only - not on the Dashboard.</p>
             <section className="bh-card max-w-3xl">
               <div className="bh-card-title">
                 <h2>r/CSC2302</h2>
@@ -853,7 +853,7 @@ export default function StudentVisionPrototype() {
               <div className="mt-4 rounded-xl border border-dashed border-[#c5d0c8] bg-[#fafcfa] px-4 py-8 text-center">
                 <p className="text-sm font-semibold text-aui-ink">No stuck threads yet</p>
                 <p className="mt-1 text-xs text-aui-deep/70">
-                  Be the first — classmates often unblock what a stamped FAQ cannot.
+                  Be the first - classmates often unblock what a stamped FAQ cannot.
                 </p>
                 <button type="button" className="btn-primary mt-4 px-5 py-2.5 text-sm">
                   Start a stuck thread
@@ -866,7 +866,7 @@ export default function StudentVisionPrototype() {
         {section === "notes" ? (
           <div className="fade-up">
             <h1 className="bh-page-title">Classmate Notes</h1>
-            <p className="bh-page-subtitle">Share and browse here — removed from Dashboard.</p>
+            <p className="bh-page-subtitle">Share and browse here - removed from Dashboard.</p>
             <section className="bh-card max-w-3xl">
               <div className="bh-card-title">
                 <h2>Share with classmates</h2>
@@ -883,7 +883,7 @@ export default function StudentVisionPrototype() {
         ) : null}
 
         <div className="mt-6 rounded-xl border border-dashed border-[#c5d0c8] bg-white/70 px-4 py-3 text-xs text-aui-deep/70 lg:hidden">
-          On phone: Dashboard · Asks · Agent · More as bottom tabs — same encapsulation.
+          On phone: Dashboard · Asks · Agent · More as bottom tabs - same encapsulation.
         </div>
       </main>
     </div>

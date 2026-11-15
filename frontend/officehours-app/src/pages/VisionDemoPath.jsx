@@ -12,13 +12,13 @@ const BEATS = [
     id: "ta",
     kicker: "02 · TA",
     title: "The same card enters a queue.",
-    body: "Ask Triage classifies it. You claim it. Help Coach sits with you — not twenty 1:1s of the same thing.",
+    body: "Ask Triage classifies it. You claim it. Help Coach sits with you - not twenty 1:1s of the same thing.",
   },
   {
     id: "professor",
     kicker: "03 · Professor",
     title: "Then it meets the gate.",
-    body: "Clusters and review insights. Approve a FAQ and the Study Agent may say it next time — only after you stamp it.",
+    body: "Clusters and review insights. Approve a FAQ and the Study Agent may say it next time - only after you stamp it.",
   },
 ];
 
@@ -50,13 +50,13 @@ export default function VisionDemoPath() {
   const t = progress;
 
   return (
-    <VisionChrome kicker="Option 2 · One question travels — scroll the path · click a person">
+    <VisionChrome kicker="Option 2 · One question travels - scroll the path · click a person">
       <div className="vd-path-hero">
         <VisionCopy option="2" title="One ask. Three people. Same card.">
           <p>
             <span className="vd-drop">S</span>
             croll and the question moves. Click a person to pin that beat. Sign
-            in stays up top — the story is optional.
+            in stays up top - the story is optional.
           </p>
         </VisionCopy>
       </div>

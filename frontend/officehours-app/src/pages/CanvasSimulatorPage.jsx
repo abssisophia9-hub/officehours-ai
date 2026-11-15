@@ -6,7 +6,7 @@ import { useNavigate } from "react-router";
  *
  * Models reality: you are signed in to Canvas as ONE person, you see the
  * courses you are enrolled in, and each course has ONE "Open OfficeHours AI"
- * tool button. Your role in the launch comes from your Canvas enrollment —
+ * tool button. Your role in the launch comes from your Canvas enrollment  - 
  * never from a choice on the page. The account switcher below stands in for
  * logging into Canvas as someone else.
  */
@@ -60,22 +60,22 @@ const COURSES = {
   2101: {
     code: "CSC 3351",
     title: "Operating Systems",
-    modules: ["Module 1 — Processes", "Module 2 — Scheduling"],
+    modules: ["Module 1 - Processes", "Module 2 - Scheduling"],
   },
   4001: {
     code: "CSC 2302",
     title: "Data Structures",
-    modules: ["Module 4 — Hashing", "Module 5 — Trees"],
+    modules: ["Module 4 - Hashing", "Module 5 - Trees"],
   },
   3301: {
     code: "CSC 3323",
     title: "Analysis of Algorithms",
-    modules: ["Module 2 — Divide & Conquer"],
+    modules: ["Module 2 - Divide & Conquer"],
   },
   3374: {
     code: "CSC 3374",
     title: "Adv. Distributed Programming Paradigms",
-    modules: ["Module 1 — Message Passing"],
+    modules: ["Module 1 - Message Passing"],
   },
 };
 
@@ -132,7 +132,7 @@ export default function CanvasSimulatorPage() {
           <p className="font-semibold">Unsigned demo simulator</p>
           <p className="mt-1 text-amber-900/80">
             This page stands in for Canvas LMS. Launch provisioning is{" "}
-            <strong>not</strong> LTI-signed — anyone who can hit{" "}
+            <strong>not</strong> LTI-signed - anyone who can hit{" "}
             <code className="rounded bg-amber-100 px-1">POST /canvas/launch</code>{" "}
             can impersonate a user in local demos. Production needs Canvas LTI
             1.3. Optional lock: set{" "}
@@ -144,7 +144,7 @@ export default function CanvasSimulatorPage() {
         </div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="mt-1 text-sm text-[#2d3b45]/70">
-          In real Canvas you are already signed in — the switcher above stands
+          In real Canvas you are already signed in - the switcher above stands
           in for that. You only see courses you are enrolled in. Role is per
           course. A TA is staff on a course they already took.
         </p>
@@ -158,7 +158,7 @@ export default function CanvasSimulatorPage() {
             >
               <div className="border-b border-[#c7cdd1] px-5 py-4">
                 <h2 className="text-xl font-bold text-[#0374b5]">
-                  {course.code} — {course.title}
+                  {course.code} - {course.title}
                 </h2>
                 <p className="mt-1 text-xs text-[#2d3b45]/60">
                   Enrolled as{" "}

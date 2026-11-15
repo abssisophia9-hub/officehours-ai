@@ -10,7 +10,7 @@ function helpLabel(mode) {
 
 function personLabel(request) {
   if (request.anonymous) return "Anonymous";
-  return request.student_name || request.student_id || "—";
+  return request.student_name || request.student_id || "-";
 }
 
 export default function AsksPage() {
@@ -110,9 +110,9 @@ export default function AsksPage() {
                       <td data-label="Question">{request.text}</td>
                       <td data-label="From">{personLabel(request)}</td>
                       <td data-label="Help">{helpLabel(request.help_mode)}</td>
-                      <td data-label="Topic">{(request.category || "—").replaceAll("_", " ")}</td>
+                      <td data-label="Topic">{(request.category || "-").replaceAll("_", " ")}</td>
                       <td data-label="Flags">
-                        {request.sensitive ? "Sensitive" : request.anonymous ? "Anonymous" : "—"}
+                        {request.sensitive ? "Sensitive" : request.anonymous ? "Anonymous" : "-"}
                       </td>
                     </tr>
                   ))}

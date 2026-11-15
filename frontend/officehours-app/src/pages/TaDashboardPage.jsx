@@ -22,7 +22,7 @@ function avgWaitLabel(items) {
   const waits = items
     .map((req) => Number(req.estimated_wait_minutes))
     .filter((n) => Number.isFinite(n) && n >= 0);
-  if (!waits.length) return "—";
+  if (!waits.length) return "-";
   const avg = Math.round(waits.reduce((a, b) => a + b, 0) / waits.length);
   if (avg < 1) return "<1 min";
   if (avg < 60) return `~${avg} min`;
@@ -97,7 +97,7 @@ export default function TaDashboardPage() {
     return <Navigate to="/student" replace />;
   }
 
-  // Prefer live queue rows over /ta/load aggregates — load may still count helped.
+  // Prefer live queue rows over /ta/load aggregates - load may still count helped.
   const openCount = openRows.length;
   const unassigned =
     Number(load?.unassigned_open) >= 0 && openRows.length
@@ -116,7 +116,7 @@ export default function TaDashboardPage() {
           <p className="td-dash-kicker">{activeCourse.code}</p>
           <h1 className="bh-page-title">Dashboard</h1>
           <p className="bh-page-subtitle">
-            Your desk for this course — open asks, what you claimed, and recent
+            Your desk for this course - open asks, what you claimed, and recent
             replies.
           </p>
         </div>

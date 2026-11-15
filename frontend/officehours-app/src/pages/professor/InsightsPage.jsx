@@ -235,7 +235,7 @@ export default function InsightsPage() {
           <p className="pf-kicker">Class patterns</p>
           <h1>Insights</h1>
           <p className="pf-line">
-            Repeated topics and share of asks — even a couple of related asks show
+            Repeated topics and share of asks - even a couple of related asks show
             up as bars. Individual desk work stays on{" "}
             <Link to="/professor/asks">Your desk</Link>.
           </p>

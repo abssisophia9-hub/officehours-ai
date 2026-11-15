@@ -23,7 +23,7 @@ const SLIPS = [
     cls: "rooms",
     pin: "lime",
     kicker: "Rooms",
-    title: "Heap vs stack — anyone?",
+    title: "Heap vs stack - anyone?",
     body: "Named classmate help. Helpers can show on the Rooms board.",
   },
   {
@@ -49,7 +49,7 @@ export default function VisionDemoBoard() {
   const active = SLIPS.find((s) => s.id === open) || SLIPS[0];
 
   return (
-    <VisionChrome kicker="Option 1 · The Ask Board — click a slip · scroll for the path">
+    <VisionChrome kicker="Option 1 · The Ask Board - click a slip · scroll for the path">
       <main className="vd-split">
         <VisionCopy option="1" title="Pins and lines, not job postings.">
           <p>

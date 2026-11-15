@@ -1,4 +1,4 @@
-"""Stuck Room — course-scoped peer community with ranks, not likes."""
+"""Stuck Room - course-scoped peer community with ranks, not likes."""
 
 from __future__ import annotations
 
@@ -284,7 +284,7 @@ def create_post(
     if not body_clean:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Describe the room — markdown is fine, homework answers are not.",
+            detail="Describe the room - markdown is fine, homework answers are not.",
         )
     _reject_sensitive(f"{title_clean}\n{body_clean}")
     resolved_type = normalize_room_type(room_type, flair)
@@ -644,7 +644,7 @@ def add_reply(
     if not text:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Share a perspective or approach — empty replies are not allowed.",
+            detail="Share a perspective or approach - empty replies are not allowed.",
         )
     _reject_sensitive(text)
     parent_id = parent_reply_id
@@ -879,7 +879,7 @@ def create_reach_out(
     if marked is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Mark “this unlocked it” first — reach-out is for a real aha, not cold DMs.",
+            detail="Mark “this unlocked it” first - reach-out is for a real aha, not cold DMs.",
         )
     existing = (
         db.query(HelpReachOut)

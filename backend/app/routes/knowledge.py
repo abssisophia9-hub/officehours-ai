@@ -384,7 +384,7 @@ async def upload_course_material_file(
         upload_id=entries[0].upload_id,
         message=(
             f"Extracted {file.filename} ({material_source}) into {len(entries)} "
-            f"KB chunk(s) for {course.code} — the course agent can use it "
+            f"KB chunk(s) for {course.code} - the course agent can use it "
             f"{'now' if auto_approve else 'after your approval'}."
         ),
     )

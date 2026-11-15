@@ -22,7 +22,7 @@ export default function StudentNotesPage() {
       <h1 className="sa-course">{courseLine}</h1>
       <h2 className="bh-page-title">Classmate Notes</h2>
       <p className="bh-page-subtitle">
-        Share and browse study notes with classmates · {activeCourse.code} — not
+        Share and browse study notes with classmates · {activeCourse.code} - not
         on the Dashboard.
       </p>
       <PeerNotesFeed

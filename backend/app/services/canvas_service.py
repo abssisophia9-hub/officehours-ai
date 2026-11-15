@@ -2,20 +2,20 @@
 
 Two modes:
 
-1. **Live Canvas** — set ``CANVAS_BASE_URL`` + ``CANVAS_API_TOKEN``.
+1. **Live Canvas** - set ``CANVAS_BASE_URL`` + ``CANVAS_API_TOKEN``.
    Sync pulls course **modules** (then pages/files) from the course's
    ``canvas_course_id``.
 
-2. **Local AUI mirror (default)** — when live credentials are absent, sync
+2. **Local AUI mirror (default)** - when live credentials are absent, sync
    uses a seeded module-structured Canvas mirror so the exact same launch /
    sync path works in demos without AUI credentials.
 
 Entry points:
 
-- ``POST /canvas/launch`` — one click inside a Canvas course: auto-provision
+- ``POST /canvas/launch`` - one click inside a Canvas course: auto-provision
   user + course + membership, ingest module slides, spawn the course agent.
-- ``POST /knowledge/canvas/sync`` — professor-triggered re-sync.
-- ``POST /knowledge/materials`` — manual paste; same ingest, same KB.
+- ``POST /knowledge/canvas/sync`` - professor-triggered re-sync.
+- ``POST /knowledge/materials`` - manual paste; same ingest, same KB.
 """
 
 from __future__ import annotations
@@ -54,11 +54,11 @@ LOCAL_CANVAS_COURSES: dict[str, dict[str, Any]] = {
         "term": "Spring 2026",
         "modules": [
             {
-                "name": "Module 4 — Hashing",
+                "name": "Module 4 - Hashing",
                 "items": [
                     {
                         "external_id": "csc2302-week4-hashing",
-                        "title": "Week 4 — Hash tables (slides)",
+                        "title": "Week 4 - Hash tables (slides)",
                         "content": (
                             "Hash tables map keys to buckets using a hash function.\n\n"
                             "Collisions are handled with chaining or open addressing.\n\n"
@@ -71,11 +71,11 @@ LOCAL_CANVAS_COURSES: dict[str, dict[str, Any]] = {
                 ],
             },
             {
-                "name": "Module 5 — Trees",
+                "name": "Module 5 - Trees",
                 "items": [
                     {
                         "external_id": "csc2302-week5-bst",
-                        "title": "Week 5 — Binary search trees (slides)",
+                        "title": "Week 5 - Binary search trees (slides)",
                         "content": (
                             "A binary search tree keeps left children smaller and right children larger.\n\n"
                             "Search, insert, and delete depend on balanced shape.\n\n"
@@ -92,11 +92,11 @@ LOCAL_CANVAS_COURSES: dict[str, dict[str, Any]] = {
         "term": "Spring 2026",
         "modules": [
             {
-                "name": "Module 2 — Divide & Conquer",
+                "name": "Module 2 - Divide & Conquer",
                 "items": [
                     {
                         "external_id": "csc3323-week2-dc",
-                        "title": "Week 2 — Divide and conquer (slides)",
+                        "title": "Week 2 - Divide and conquer (slides)",
                         "content": (
                             "Divide and conquer splits a problem, solves subproblems, then combines.\n\n"
                             "Mergesort is the classic example: split, sort halves, merge.\n\n"
@@ -113,11 +113,11 @@ LOCAL_CANVAS_COURSES: dict[str, dict[str, Any]] = {
         "term": "Spring 2026",
         "modules": [
             {
-                "name": "Module 1 — Processes",
+                "name": "Module 1 - Processes",
                 "items": [
                     {
                         "external_id": "csc3351-week1-processes",
-                        "title": "Week 1 — Processes and threads (slides)",
+                        "title": "Week 1 - Processes and threads (slides)",
                         "content": (
                             "A process is a running program with its own address space.\n\n"
                             "Threads share the process address space but have their own stacks.\n\n"
@@ -128,11 +128,11 @@ LOCAL_CANVAS_COURSES: dict[str, dict[str, Any]] = {
                 ],
             },
             {
-                "name": "Module 2 — Scheduling",
+                "name": "Module 2 - Scheduling",
                 "items": [
                     {
                         "external_id": "csc3351-week2-scheduling",
-                        "title": "Week 2 — CPU scheduling (slides)",
+                        "title": "Week 2 - CPU scheduling (slides)",
                         "content": (
                             "First-come first-served runs jobs in arrival order and suffers convoy effects.\n\n"
                             "Shortest job first minimizes average waiting time but needs burst estimates.\n\n"
@@ -150,11 +150,11 @@ LOCAL_CANVAS_COURSES: dict[str, dict[str, Any]] = {
         "term": "Spring 2026",
         "modules": [
             {
-                "name": "Module 1 — Message Passing",
+                "name": "Module 1 - Message Passing",
                 "items": [
                     {
                         "external_id": "csc3374-week1-mpi",
-                        "title": "Week 1 — Message-passing and RPC (slides)",
+                        "title": "Week 1 - Message-passing and RPC (slides)",
                         "content": (
                             "Distributed programs coordinate across machines with message passing or RPC.\n\n"
                             "Synchronous RPC blocks until a reply; asynchronous messaging decouples senders.\n\n"

@@ -1,7 +1,7 @@
-"""Revision Agent — observe → think → act(search) → check (max 3).
+"""Revision Agent - observe → think → act(search) → check (max 3).
 
 LLM think uses Gemini when gates allow; otherwise rule-based fallback.
-Payloads never include names, scores, or grades — topic labels, weakness
+Payloads never include names, scores, or grades - topic labels, weakness
 level, preference, and public search titles/snippets only.
 """
 
@@ -96,10 +96,10 @@ def build_revision_plan(
     focus_topics = [row["topic"] for row in focus_rows]
     notes: list[str] = []
     if not focus_topics:
-        notes.append("No weak text topics yet — preference still shapes the plan.")
+        notes.append("No weak text topics yet - preference still shapes the plan.")
         focus_topics = []
 
-    # Pedagogy Resources are live web only — never course KB / demo outlines.
+    # Pedagogy Resources are live web only - never course KB / demo outlines.
     search_impl = search_fn or article_search
     check_impl = link_check_fn or link_ok
 
@@ -143,7 +143,7 @@ def build_revision_plan(
             model_name = llm_meta.get("model") or gemini_model()
         if llm_meta.get("fallback_reason") and fallback_reason is None:
             fallback_reason = llm_meta["fallback_reason"]
-            # Keep operator reason in logs only — never surface gate/LLM codes to students.
+            # Keep operator reason in logs only - never surface gate/LLM codes to students.
             notes.append(
                 "Built from your scores and study preference while the full agent was unavailable."
             )
@@ -161,7 +161,7 @@ def build_revision_plan(
                     action="stop",
                     query=None,
                     thinker=thinker,
-                    note=act_note or "Stop — enough live links or no useful search left.",
+                    note=act_note or "Stop - enough live links or no useful search left.",
                 )
             )
             break
@@ -198,7 +198,7 @@ def build_revision_plan(
         q = (query or "").strip()
         if not q:
             q = _rule_query(focus_rows, preference, search_count)
-        # Never treat a bare URL as a search invent — require a text query.
+        # Never treat a bare URL as a search invent - require a text query.
         if q.startswith("http://") or q.startswith("https://"):
             act_note = "Rejected URL-shaped query; not searched."
             iterations.append(
@@ -436,7 +436,7 @@ def _think(
         return (
             {"action": "stop", "query": None},
             "rules",
-            "Enough live links — stop without another model call.",
+            "Enough live links - stop without another model call.",
             {"called": False},
         )
     if observation["remaining_searches"] <= 0:
@@ -454,7 +454,7 @@ def _think(
             return (
                 _rule_think(observation),
                 "rules",
-                "Invalid model output — rule-based fallback.",
+                "Invalid model output - rule-based fallback.",
                 {"called": True, "fallback_reason": "invalid_output"},
             )
         return decision, "llm", None, {"called": True, "model": "mock"}
@@ -495,7 +495,7 @@ def _think(
             return (
                 _rule_think(observation),
                 "rules",
-                "Invalid model JSON — rule-based fallback.",
+                "Invalid model JSON - rule-based fallback.",
                 {
                     "called": True,
                     "fallback_reason": "invalid_output",
@@ -513,7 +513,7 @@ def _think(
         return (
             _rule_think(observation),
             "rules",
-            "Daily quota — rule-based fallback.",
+            "Daily quota - rule-based fallback.",
             {"called": False, "fallback_reason": "daily_quota"},
         )
     except RateLimitExhausted:
@@ -521,7 +521,7 @@ def _think(
         return (
             _rule_think(observation),
             "rules",
-            "Rate limited — rule-based fallback.",
+            "Rate limited - rule-based fallback.",
             {"called": False, "fallback_reason": "rate_limit"},
         )
     except Exception as exc:
@@ -531,7 +531,7 @@ def _think(
         return (
             _rule_think(observation),
             "rules",
-            f"LLM error ({type(exc).__name__}) — rule-based fallback.",
+            f"LLM error ({type(exc).__name__}) - rule-based fallback.",
             {"called": False, "fallback_reason": reason},
         )
 
@@ -615,7 +615,7 @@ def _rule_think(observation: dict[str, Any]) -> dict[str, Any]:
         return {"action": "stop", "query": None}
     recent = observation.get("recent_search_hits") or []
     if recent and observation["live_link_count"] == 0 and observation["iteration"] > 1:
-        # Prior hits failed checks — try a tighter query rather than drop forever.
+        # Prior hits failed checks - try a tighter query rather than drop forever.
         pass
     preference = str(observation.get("preference") or "unknown")
     topics = observation.get("topics") or []
@@ -653,7 +653,7 @@ def _token_in_blob(token: str, blob: str) -> bool:
 
 
 def _hit_matches_topic(hit: dict[str, Any], topics: list[str]) -> bool:
-    """Require real topic overlap — one short token is not enough when the topic has several."""
+    """Require real topic overlap - one short token is not enough when the topic has several."""
     if not topics:
         return True
     blob = f"{hit.get('title') or ''} {hit.get('snippet') or ''}".lower()

@@ -13,17 +13,17 @@ function dayKey(iso) {
 }
 
 function fmtWhen(iso) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleString();
 }
 
 function timeTaken(askedIso, answeredIso) {
-  if (!askedIso || !answeredIso) return "—";
+  if (!askedIso || !answeredIso) return "-";
   const a = new Date(askedIso).getTime();
   const b = new Date(answeredIso).getTime();
-  if (Number.isNaN(a) || Number.isNaN(b) || b < a) return "—";
+  if (Number.isNaN(a) || Number.isNaN(b) || b < a) return "-";
   const mins = Math.round((b - a) / 60000);
   if (mins < 1) return "<1 min";
   if (mins < 60) return `${mins} min`;
@@ -97,7 +97,7 @@ export default function TaPastAsksPage() {
     <div className="fade-up ta-past">
       <h1 className="bh-page-title">Past asks</h1>
       <p className="bh-page-subtitle">
-        Resolved asks you can review — question, reply, course, and timing only.
+        Resolved asks you can review - question, reply, course, and timing only.
       </p>
 
       <div className="bh-card ta-past-filters mb-4 flex flex-wrap items-end gap-3">
@@ -159,13 +159,13 @@ export default function TaPastAsksPage() {
                 <div className="ta-past-reply mt-3 rounded-lg p-3">
                   <p className="ta-past-reply-label">TA response</p>
                   <p className="ta-past-reply-body mt-1 whitespace-pre-wrap">
-                    {req.ta_reply?.trim() || "— (no written reply on file)"}
+                    {req.ta_reply?.trim() || " -  (no written reply on file)"}
                   </p>
                 </div>
                 <dl className="ta-past-meta mt-3 grid gap-1 sm:grid-cols-2">
                   <div>
                     <dt>Course</dt>
-                    <dd>{req.course || "—"}</dd>
+                    <dd>{req.course || "-"}</dd>
                   </div>
                   <div>
                     <dt>Time asked</dt>

@@ -1,5 +1,5 @@
 """
-Help Coach — TA-facing AI co-pilot while helping a student.
+Help Coach - TA-facing AI co-pilot while helping a student.
 
 Ask Triage (Analyzer → Matcher → Synthesizer) runs once at intake.
 Help Coach runs later while a TA is helping (`POST /ta/assist/`).
@@ -118,7 +118,7 @@ def run_help_coach_assist(
             steps = [f"Focus on: {focus.strip()}", *steps]
         return {
             "mode": mode,
-            "message": "Socratic teaching steps ready — ask these while helping.",
+            "message": "Socratic teaching steps ready - ask these while helping.",
             "draft_reply": None,
             "teaching_approach": coach["teaching_approach"],
             "student_hint": coach["student_hint"],
@@ -198,7 +198,7 @@ def _synthesizer_blob(request: Request) -> dict[str, Any]:
 
 
 def _similar_kb(db: Session, request: Request) -> list[dict[str, Any]]:
-    """Approved KB neighbors — live re-search so coach stays current."""
+    """Approved KB neighbors - live re-search so coach stays current."""
     matches = search_approved_entries(
         db,
         request.text,
@@ -328,7 +328,7 @@ def _socratic_steps(
         steps.append(f"Can you restate the rule for {topic} in your own words?")
 
     if style and style != "unknown":
-        steps.append(f"Prefer a {style} explanation — sketch or example first?")
+        steps.append(f"Prefer a {style} explanation - sketch or example first?")
 
     seen: set[str] = set()
     unique: list[str] = []
@@ -393,7 +393,7 @@ def _compose_draft_reply(
     parts.extend(
         [
             "",
-            "Reply with what you tried and where it still fails — happy to continue.",
+            "Reply with what you tried and where it still fails - happy to continue.",
         ]
     )
     return "\n".join(parts).strip()

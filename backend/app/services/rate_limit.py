@@ -61,7 +61,7 @@ class RateLimiter:
             if len(bucket) >= limit:
                 raise HTTPException(
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail="Too many requests — wait a moment and try again.",
+                    detail="Too many requests - wait a moment and try again.",
                 )
             bucket.append(now)
 

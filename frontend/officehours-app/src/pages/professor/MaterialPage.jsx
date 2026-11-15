@@ -286,7 +286,7 @@ export default function MaterialPage() {
           <h1>Material</h1>
           <p className="pf-line">
             Approve files so the Study Agent can quote them for students.
-            Waiting uploads stay at the top until you act — each row shows how long
+            Waiting uploads stay at the top until you act - each row shows how long
             it has been waiting.
           </p>
         </div>
@@ -647,7 +647,7 @@ function FileRow({
           {chunks.map((entry) => (
             <li key={entry.id}>
               <p className="pf-chunk-page">
-                {entry.page_number != null ? `Page ${entry.page_number}` : "Page —"}
+                {entry.page_number != null ? `Page ${entry.page_number}` : "Page  - "}
               </p>
               <p className="pf-chunk-text">{entry.answer_draft}</p>
               {entry.status === "approved" ? (

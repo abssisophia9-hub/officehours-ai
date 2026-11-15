@@ -63,7 +63,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/sso" element={<SsoCompletePage />} />
-      {/* Prototype always reachable for feedback — not behind demo race */}
+      {/* Prototype always reachable for feedback - not behind demo race */}
       <Route path="/demo/student-vision" element={<StudentVisionPrototype />} />
       {showDemos ? (
         <>

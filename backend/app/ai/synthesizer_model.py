@@ -185,7 +185,7 @@ def synthesize_with_model(
             f"Similar question: {best.get('question_text', '')}"
         )
         hint = (
-            "Compare your case to a similar past question your course already solved — "
+            "Compare your case to a similar past question your course already solved - "
             "what is the one difference that still confuses you?"
         )
         if code_snippet:
@@ -330,11 +330,11 @@ def _seek_help_fallback(
     code_snippet: str | None,
     backend: str,
 ) -> dict[str, Any]:
-    """When RAG has nothing solid, steer the student to humans — don't stall."""
+    """When RAG has nothing solid, steer the student to humans - don't stall."""
     focus = tags[0] if tags else topic
     teaching = (
         f"No strong approved FAQ or teaching-bank match for {topic}.\n"
-        "1. Do not keep rephrasing into the study agent — materials may not cover this yet.\n"
+        "1. Do not keep rephrasing into the study agent - materials may not cover this yet.\n"
         "2. Use Quiet ask (anonymous) or reach out to the assigned TA / professor.\n"
         f"3. Bring one minimal example around `{focus}` that shows the stuck point.\n"
         f"Original question: {question_text.strip()}"
@@ -343,7 +343,7 @@ def _seek_help_fallback(
         teaching += "\n\nInclude the failing snippet so office hours can start immediately."
     return {
         "student_hint": (
-            "Seek help now via Quiet ask — waiting on incomplete course materials "
+            "Seek help now via Quiet ask - waiting on incomplete course materials "
             "wastes time. Staff will unblock you faster than guessing."
         ),
         "teaching_approach": teaching,

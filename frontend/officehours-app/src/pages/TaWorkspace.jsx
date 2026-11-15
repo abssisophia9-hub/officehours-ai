@@ -19,7 +19,7 @@ import { pageItems, pageMeta } from "../api/page.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 function fmtWait(minutes) {
-  if (minutes == null || Number.isNaN(Number(minutes))) return "—";
+  if (minutes == null || Number.isNaN(Number(minutes))) return "-";
   const min = Math.max(0, Math.round(Number(minutes)));
   if (min < 1) return "<1m";
   if (min < 60) return `${min}m`;
@@ -74,7 +74,7 @@ function strategyBullets(coach, notes) {
   return [
     "Ask for a concrete drawing or example before naming a textbook case.",
     "Separate the broken invariant from the fixup steps.",
-    "Stop once the student can state the next move — do not hand the full solution.",
+    "Stop once the student can state the next move - do not hand the full solution.",
   ];
 }
 
@@ -319,7 +319,7 @@ export default function TaWorkspace() {
         "",
     );
     setSocraticSteps(existing?.socratic_steps || []);
-    // Composer stays empty — never dump coaching into the reply box.
+    // Composer stays empty - never dump coaching into the reply box.
     setDraft("");
     if (existing) return;
     setCoachBusy(true);
@@ -402,7 +402,7 @@ export default function TaWorkspace() {
     if (fromCoach.length >= 3) return fromCoach;
     const joined = bullets.join(" ").trim();
     if (joined.length >= 3) return joined.slice(0, 8000);
-    return `Resolved ask #${req.id} — ${activeCourse.code}`;
+    return `Resolved ask #${req.id} - ${activeCourse.code}`;
   }
 
   async function advanceAfterResolve(fromId, items) {
@@ -823,7 +823,7 @@ export default function TaWorkspace() {
                   disabled={isHelped || busy}
                   placeholder={
                     isHelped
-                      ? "Ask resolved — select another from the queue"
+                      ? "Ask resolved - select another from the queue"
                       : "Write a reply to the student…"
                   }
                   rows={4}
@@ -941,7 +941,7 @@ export default function TaWorkspace() {
                   Teaching bank: about 70 curated teaching tips written for this
                   product (CSC and other departments), not live Canvas. Approved
                   course material is tried first. A weak match says so or asks about
-                  this ask — never an unrelated tip. Coaching stays here; the
+                  this ask - never an unrelated tip. Coaching stays here; the
                   composer starts empty.
                 </p>
               </>

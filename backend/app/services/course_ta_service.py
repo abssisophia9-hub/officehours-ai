@@ -17,7 +17,7 @@ from app.models.request import Request
 from app.models.ta_roster import DEFAULT_TA_ROSTER, TaRoster
 from app.services.demo_mode import demo_mode
 
-# Product policy for typical AUI sections — soft cap for UX copy; matching
+# Product policy for typical AUI sections - soft cap for UX copy; matching
 # still uses every TA membership on the course.
 TYPICAL_TA_CAP = 2
 
@@ -53,7 +53,7 @@ def build_course_matcher_roster(
     *,
     course_id: int | None,
 ) -> list[dict[str, Any]]:
-    """Roster dicts for ``match_ta`` — course TAs when available, else global."""
+    """Roster dicts for ``match_ta`` - course TAs when available, else global."""
     roster_by_name = {row.name: row for row in db.query(TaRoster).all()}
 
     if course_id is not None:
@@ -101,7 +101,7 @@ def build_course_matcher_roster(
                 )
             if roster:
                 return roster
-        # Course is known but has no TA memberships — do not invent demo names.
+        # Course is known but has no TA memberships - do not invent demo names.
         return []
 
     if not demo_mode():
@@ -283,7 +283,7 @@ def build_course_ta_load(
             + (
                 f" (typical AUI section uses up to {TYPICAL_TA_CAP})."
                 if len(tas) <= TYPICAL_TA_CAP
-                else f" — above the typical cap of {TYPICAL_TA_CAP}; Matcher still load-balances."
+                else f" - above the typical cap of {TYPICAL_TA_CAP}; Matcher still load-balances."
             )
         ),
     }

@@ -185,7 +185,7 @@ def create_faq_from_insight(
         cluster_id=topic.cluster_id,
         course_id=course_id,
         professor_note=(
-            f"Auto-drafted from review insight “{topic.label}” — tighten this "
+            f"Auto-drafted from review insight “{topic.label}” - tighten this "
             "explanation for coming students / related chapters."
         ),
     )
@@ -230,7 +230,7 @@ def ingest_course_material(
     source_filename = (filename or title).strip() or None
     upload_id = uuid.uuid4().hex
     for index, (page_number, chunk) in enumerate(chunks, start=1):
-        question = f"{title} — part {index}"
+        question = f"{title} - part {index}"
         entry = KnowledgeEntry(
             question_text=question,
             answer_draft=chunk,
@@ -276,7 +276,7 @@ def list_entries(
     if status_filter:
         query = query.filter(KnowledgeEntry.status == status_filter)
     if course_id is not None:
-        # Strict course scope — do not leak other courses' materials.
+        # Strict course scope - do not leak other courses' materials.
         query = query.filter(KnowledgeEntry.course_id == course_id)
     return query.order_by(KnowledgeEntry.id.desc()).all()
 
