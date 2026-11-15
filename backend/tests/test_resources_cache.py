@@ -260,11 +260,15 @@ def test_quota_guard_blocks_near_limit(monkeypatch, tmp_path):
 
 def test_repeat_plan_build_costs_zero_youtube_units(monkeypatch, tmp_path):
     """MEASURED: cold plan burns search+videos units; warm repeat burns 0."""
+    # Import app.main so all ORM models register on Base before create_all
+    # (isolated runs of this file otherwise miss agent_gold_labels, etc.).
+    from app.main import app as _app  # noqa: F401
     from app.database.session import SessionLocal
     from app.services.demo_accounts import ensure_demo_accounts
     from app.database.session import Base, engine
 
     _prep(monkeypatch, tmp_path)
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
@@ -368,14 +372,10 @@ def test_repeat_plan_build_costs_zero_youtube_units(monkeypatch, tmp_path):
         "http_search_calls_total": calls["search"],
         "note": "Official units: search.list=1/call (100/day bucket); videos.list=1/call.",
     }
-    out = Path(
-        "/cursor/stores/bc-dc51837a-fa18-4db3-a65f-0e58caaf18ec/media/resources-round2"
-    )
-    out.mkdir(parents=True, exist_ok=True)
-    (out / "repeat-plan-units-measured.json").write_text(
-        json.dumps(evidence, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    # Write under pytest tmp_path only — never hardcode /cursor/stores (CI has no write access).
+    out = tmp_path / "repeat-plan-units-measured.json"
+    out.write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf-8")
+    assert json.loads(out.read_text(encoding="utf-8"))["cold_search_list"] == cold_search
 
 
 def test_longer_youtube_ttl_default():
