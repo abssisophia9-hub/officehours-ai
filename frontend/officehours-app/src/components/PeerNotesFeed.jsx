@@ -23,13 +23,44 @@ async function fetchAuthedBlobUrl(path, token) {
   return URL.createObjectURL(blob);
 }
 
+const COURSE_TOPICS = [
+  "Trees & red-black",
+  "Hashing",
+  "Heaps",
+  "Amortized analysis",
+  "Graphs",
+  "Main ideas from class",
+  "Other",
+];
+
+const PAGE_SIZE = 8;
+
+function parseAbout(about) {
+  const text = String(about || "");
+  const week = (text.match(/Week\s+(\d+)/i) || [])[1] || "";
+  const lecture = (text.match(/Lecture\s+(\d+)/i) || [])[1] || "";
+  const topicMatch = text.match(/Topic:\s*([^·|]+)/i);
+  const topic = (topicMatch?.[1] || "").trim();
+  return { week, lecture, topic, raw: text };
+}
+
+function fileTypeOf(note) {
+  const name = String(note.original_filename || "").toLowerCase();
+  if (note.is_image || /\.(png|jpe?g|webp|gif)$/.test(name)) return "image";
+  if (/\.pdf$/.test(name)) return "pdf";
+  if (/\.(docx?|txt|md)$/.test(name)) return "doc";
+  return "other";
+}
+
 export default function PeerNotesFeed({ token, courseId, courseCode }) {
   const [notes, setNotes] = useState([]);
   const [previews, setPreviews] = useState({});
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [title, setTitle] = useState("");
-  const [about, setAbout] = useState("");
+  const [week, setWeek] = useState("");
+  const [lecture, setLecture] = useState("");
+  const [topic, setTopic] = useState(COURSE_TOPICS[0]);
   const [caption, setCaption] = useState("");
   const [anonymous, setAnonymous] = useState(false);
   const [file, setFile] = useState(null);
@@ -40,6 +71,14 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
   const [commentBody, setCommentBody] = useState("");
   const [commentAnon, setCommentAnon] = useState(false);
   const [commentBusy, setCommentBusy] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterWeek, setFilterWeek] = useState("");
+  const [filterLecture, setFilterLecture] = useState("");
+  const [filterTopic, setFilterTopic] = useState("");
+  const [filterType, setFilterType] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [mineOnly, setMineOnly] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const loadFeed = useCallback(async () => {
     if (!courseId || !token) return;
@@ -87,23 +126,26 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
       setError("Choose a file to share.");
       return;
     }
-    if (!about.trim()) {
-      setError("Say what your notes are about before uploading.");
+    if (!week.trim() || !lecture.trim() || !topic.trim()) {
+      setError("Add week, lecture number, and topic before uploading.");
       return;
     }
+    const about = `Week ${week.trim()} · Lecture ${lecture.trim()} · Topic: ${topic.trim()}`;
     setBusy(true);
     setError("");
     try {
       const formData = new FormData();
       formData.append("course_id", String(courseId));
       formData.append("title", title.trim());
-      formData.append("about", about.trim());
+      formData.append("about", about);
       if (caption.trim()) formData.append("caption", caption.trim());
       formData.append("anonymous", anonymous ? "true" : "false");
       formData.append("file", file);
       await apiUpload("/peer-notes/", { token, formData });
       setTitle("");
-      setAbout("");
+      setWeek("");
+      setLecture("");
+      setTopic(COURSE_TOPICS[0]);
       setCaption("");
       setAnonymous(false);
       setFile(null);
@@ -216,6 +258,7 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
         do not train the study agent (that stays professor-approved).
       </p>
 
+      {/* Applied: Purpose; Agency; Familiarity; Simplicity — not minimalism; Feedback (5). */}
       <form
         onSubmit={shareNote}
         className="mt-4 space-y-3 rounded-xl border border-aui-forest/20 bg-[#f3faf5] p-3 sm:p-4"
@@ -228,13 +271,43 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
           onChange={(event) => setTitle(event.target.value)}
           required
         />
-        <textarea
-          className="field-glass min-h-20 w-full px-4 py-2.5 text-sm"
-          placeholder="What are these notes about? (week, lecture, topic…)"
-          value={about}
-          onChange={(event) => setAbout(event.target.value)}
-          required
-        />
+        <div className="grid gap-2 sm:grid-cols-3">
+          <label className="text-xs font-semibold text-aui-ink">
+            Week #
+            <input
+              className="field-glass mt-1 w-full px-3 py-2 text-sm"
+              inputMode="numeric"
+              value={week}
+              onChange={(event) => setWeek(event.target.value)}
+              required
+            />
+          </label>
+          <label className="text-xs font-semibold text-aui-ink">
+            Lecture #
+            <input
+              className="field-glass mt-1 w-full px-3 py-2 text-sm"
+              inputMode="numeric"
+              value={lecture}
+              onChange={(event) => setLecture(event.target.value)}
+              required
+            />
+          </label>
+          <label className="text-xs font-semibold text-aui-ink">
+            Topic
+            <select
+              className="field-glass mt-1 w-full px-3 py-2 text-sm"
+              value={topic}
+              onChange={(event) => setTopic(event.target.value)}
+              required
+            >
+              {COURSE_TOPICS.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
         <textarea
           className="field-glass min-h-16 w-full px-4 py-2.5 text-sm"
           placeholder="Optional caption for classmates"
@@ -302,13 +375,148 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
         </button>
       </form>
 
-      <div className="mt-5 space-y-4">
+      <div className="mt-5 space-y-3">
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="text-xs font-semibold text-aui-ink">
+            Search
+            <input
+              className="field-glass mt-1 block w-44 px-3 py-2 text-sm"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setVisibleCount(PAGE_SIZE);
+              }}
+              placeholder="Title or topic"
+            />
+          </label>
+          <label className="text-xs font-semibold text-aui-ink">
+            Week
+            <input
+              className="field-glass mt-1 block w-20 px-3 py-2 text-sm"
+              value={filterWeek}
+              onChange={(event) => {
+                setFilterWeek(event.target.value);
+                setVisibleCount(PAGE_SIZE);
+              }}
+            />
+          </label>
+          <label className="text-xs font-semibold text-aui-ink">
+            Lecture
+            <input
+              className="field-glass mt-1 block w-20 px-3 py-2 text-sm"
+              value={filterLecture}
+              onChange={(event) => {
+                setFilterLecture(event.target.value);
+                setVisibleCount(PAGE_SIZE);
+              }}
+            />
+          </label>
+          <label className="text-xs font-semibold text-aui-ink">
+            Topic
+            <select
+              className="field-glass mt-1 block w-40 px-3 py-2 text-sm"
+              value={filterTopic}
+              onChange={(event) => {
+                setFilterTopic(event.target.value);
+                setVisibleCount(PAGE_SIZE);
+              }}
+            >
+              <option value="">All</option>
+              {COURSE_TOPICS.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs font-semibold text-aui-ink">
+            File type
+            <select
+              className="field-glass mt-1 block w-28 px-3 py-2 text-sm"
+              value={filterType}
+              onChange={(event) => {
+                setFilterType(event.target.value);
+                setVisibleCount(PAGE_SIZE);
+              }}
+            >
+              <option value="">All</option>
+              <option value="pdf">PDF</option>
+              <option value="image">Image</option>
+              <option value="doc">Doc / text</option>
+            </select>
+          </label>
+          <label className="text-xs font-semibold text-aui-ink">
+            Sort
+            <select
+              className="field-glass mt-1 block w-32 px-3 py-2 text-sm"
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value)}
+            >
+              <option value="newest">Newest</option>
+              <option value="liked">Most liked</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-sm text-aui-ink">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-aui-forest"
+              checked={mineOnly}
+              onChange={(event) => {
+                setMineOnly(event.target.checked);
+                setVisibleCount(PAGE_SIZE);
+              }}
+            />
+            My notes
+          </label>
+        </div>
+        {(() => {
+          const filtered = notes
+            .filter((note) => {
+              const meta = parseAbout(note.about);
+              if (mineOnly && !note.is_mine) return false;
+              if (filterWeek && meta.week !== String(filterWeek).trim()) return false;
+              if (filterLecture && meta.lecture !== String(filterLecture).trim()) {
+                return false;
+              }
+              if (
+                filterTopic &&
+                !meta.topic.toLowerCase().includes(filterTopic.toLowerCase()) &&
+                !(note.about || "").toLowerCase().includes(filterTopic.toLowerCase())
+              ) {
+                return false;
+              }
+              if (filterType && fileTypeOf(note) !== filterType) return false;
+              if (search.trim()) {
+                const q = search.trim().toLowerCase();
+                const blob = `${note.title} ${note.about} ${note.caption || ""}`.toLowerCase();
+                if (!blob.includes(q)) return false;
+              }
+              return true;
+            })
+            .sort((a, b) => {
+              if (sortBy === "liked") {
+                return (b.like_count || 0) - (a.like_count || 0) || b.id - a.id;
+              }
+              return (
+                new Date(b.created_at).getTime() - new Date(a.created_at).getTime() ||
+                b.id - a.id
+              );
+            });
+          const shown = filtered.slice(0, visibleCount);
+          return (
+            <>
+              <p className="text-sm text-aui-deep/80">
+                {filtered.length} result{filtered.length === 1 ? "" : "s"}
+              </p>
+              <div className="space-y-4">
         {notes.length === 0 ? (
           <p className="bh-card-note">
             No classmate notes yet - be the first to share for {courseCode}.
           </p>
+        ) : filtered.length === 0 ? (
+          <p className="bh-card-note">No notes match these filters.</p>
         ) : (
-          notes.map((note) => (
+          shown.map((note) => (
             <article
               key={note.id}
               className="overflow-hidden rounded-2xl border border-[#d7e0d9] bg-white"
@@ -450,6 +658,19 @@ export default function PeerNotesFeed({ token, courseId, courseCode }) {
             </article>
           ))
         )}
+              </div>
+              {filtered.length > visibleCount ? (
+                <button
+                  type="button"
+                  className="btn-ghost px-4 py-2 text-sm"
+                  onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
+                >
+                  Load more
+                </button>
+              ) : null}
+            </>
+          );
+        })()}
       </div>
     </section>
   );

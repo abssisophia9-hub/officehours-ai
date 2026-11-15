@@ -327,6 +327,45 @@ export default function MaterialPage() {
         </p>
       ) : null}
 
+      {/* Applied: Purpose; Agency; Feedback; Familiarity; Simplicity — not minimalism; Craft (6). */}
+      <div className="pf-desk-counts" aria-label="Material counts">
+        <article>
+          <strong>{pendingFiles.length}</strong>
+          <span>Pending</span>
+        </article>
+        <article>
+          <strong>{approvedFiles.length}</strong>
+          <span>Approved</span>
+        </article>
+        <article>
+          <strong>{partlyFiles.length + rejectedFiles.length}</strong>
+          <span>Other</span>
+        </article>
+      </div>
+
+      <div
+        className={`pf-dropzone${uploading ? " is-busy" : ""}`}
+        onDragOver={(event) => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "copy";
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          uploadChosen(event.dataTransfer.files);
+        }}
+      >
+        <p className="pf-dropzone-title">Drop files here</p>
+        <p className="pf-line">PDF, DOCX, TXT, Markdown, or captions. Or use Upload file.</p>
+        <button
+          type="button"
+          className="btn-ghost pf-btn"
+          disabled={uploading}
+          onClick={() => fileRef.current?.click()}
+        >
+          {uploading ? "Uploading…" : "Choose files"}
+        </button>
+      </div>
+
       {ready && rows.length === 0 ? <p className="pf-line">No files yet.</p> : null}
 
       {rows.length > 0 ? (
@@ -372,10 +411,10 @@ export default function MaterialPage() {
         </div>
       ) : null}
 
-      <div className="pf-secondary">
+      <div className="pf-secondary pf-material-actions">
         <button
           type="button"
-          className="pf-quiet"
+          className="btn-primary pf-btn"
           aria-expanded={canvasOpen}
           onClick={() => setCanvasOpen((open) => !open)}
         >
@@ -383,7 +422,7 @@ export default function MaterialPage() {
         </button>
         <button
           type="button"
-          className="pf-quiet"
+          className="btn-ghost pf-btn"
           aria-expanded={pasteOpen}
           onClick={() => setPasteOpen((open) => !open)}
         >
