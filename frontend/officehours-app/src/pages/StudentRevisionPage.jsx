@@ -347,11 +347,22 @@ export default function StudentRevisionPage() {
     setBusy(true);
     setError("");
     try {
+      // Read duration from the live control so the plan length always matches
+      // the picker, even if a state update is still flushing.
+      const selectEl = document.getElementById("rev-duration");
+      const customEl = document.getElementById("rev-duration-custom");
+      const selected = selectEl?.value || durationMode;
+      const liveDays = clampPlanDays(
+        selected === "custom"
+          ? customEl?.value || customDaysDraft || planDays
+          : selected || planDays,
+      );
+      if (liveDays !== planDays) setPlanDays(liveDays);
       const body = {
         course_id: activeCourse.id,
         preference,
         available_minutes_today: 120,
-        deadlines: planDeadlines(grades, planDays),
+        deadlines: planDeadlines(grades, liveDays),
         grades: grades
           .filter((row) => (row.assignment_kind || "text") === "text")
           .map((row) => ({
