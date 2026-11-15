@@ -131,6 +131,99 @@ def test_claim_in_progress_helped_and_reply():
     assert all(item["request"]["id"] != rid for item in queue)
 
 
+def test_status_consistent_create_claim_reply_resolve():
+    """One ask keeps one work_status across student, TA queue, and professor desk."""
+    student = _login("s.elidrissi@aui.ma")
+    alice = _login("a.chen@aui.ma")
+    professor = _login("a.benali@aui.ma")
+    course_id = _csc2302(student)
+
+    created = client.post(
+        "/requests/",
+        headers=_auth(student),
+        json={
+            "text": "Cross-role status check for binary heapify order.",
+            "anonymous": True,
+            "course": "CSC 2302",
+            "course_id": course_id,
+            "help_mode": "message",
+        },
+    ).json()
+    rid = created["id"]
+
+    def student_work():
+        return client.get(f"/requests/{rid}/status", headers=_auth(student)).json()
+
+    def ta_row(*, include_helped: bool):
+        queue = client.get(
+            f"/ta/queue/?course_id={course_id}&assignment=all"
+            f"&include_helped={'true' if include_helped else 'false'}",
+            headers=_auth(alice),
+        ).json()
+        items = queue if isinstance(queue, list) else queue.get("items") or queue
+        for item in items:
+            req = item.get("request") or item
+            if req.get("id") == rid:
+                return req
+        return None
+
+    def prof_work():
+        body = client.get(
+            f"/requests/?course_id={course_id}&limit=50",
+            headers=_auth(professor),
+        ).json()
+        items = body if isinstance(body, list) else body.get("items") or []
+        return next((row for row in items if row.get("id") == rid), None)
+
+    assert student_work()["work_status"] == "open"
+    assert ta_row(include_helped=False)["work_status"] == "open"
+    assert prof_work()["work_status"] == "open"
+
+    assert client.post(
+        "/ta/claim/", headers=_auth(alice), json={"request_id": rid}
+    ).status_code == 200
+    assert student_work()["work_status"] == "claimed"
+    assert ta_row(include_helped=False)["work_status"] == "claimed"
+    assert prof_work()["work_status"] == "claimed"
+
+    assert (
+        client.post(
+            "/ta/reply/",
+            headers=_auth(alice),
+            json={"request_id": rid, "reply": "Start heapify at index n//2 - 1."},
+        ).status_code
+        == 200
+    )
+    assert student_work()["work_status"] == "in_progress"
+    assert student_work()["headline"] == "TA reply ready"
+    assert ta_row(include_helped=False)["work_status"] == "in_progress"
+    assert prof_work()["work_status"] == "in_progress"
+
+    assert (
+        client.post(
+            "/ta/resolve/",
+            headers=_auth(alice),
+            json={
+                "request_id": rid,
+                "teaching_notes": "Walked heapify order.",
+                "resolution_status": "resolved",
+            },
+        ).status_code
+        == 200
+    )
+    status = student_work()
+    assert status["work_status"] == "helped"
+    assert status["headline"] == "Resolved"
+    assert ta_row(include_helped=False) is None
+    assert ta_row(include_helped=True)["work_status"] == "helped"
+    assert prof_work()["work_status"] == "helped"
+    escalations = client.get(
+        f"/analytics/escalations?course_id={course_id}",
+        headers=_auth(professor),
+    ).json()
+    assert all(item.get("request_id") != rid for item in escalations)
+
+
 def test_resolve_without_reply_rejected_with_reply_ok():
     """New resolves require ta_reply (422); resolve after /ta/reply succeeds."""
     student = _login("s.elidrissi@aui.ma")

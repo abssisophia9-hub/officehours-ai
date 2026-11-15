@@ -144,15 +144,21 @@ def _status_copy(
     request: Request,
     decision: RecommendationDecision | None,
 ) -> tuple[str, str, str]:
-    if getattr(request, "ta_reply", None):
-        return (
-            STATUS_TA_REPLIED,
-            "TA reply ready",
-            str(request.ta_reply),
-        )
-
     work = str(getattr(request, "work_status", None) or "open")
+    # Resolved wins over reply text so My asks / TA Past asks / desk agree.
+    if work == "helped":
+        return (
+            STATUS_HELPED,
+            "Resolved",
+            "A TA finished helping with this ask. Come to office hours if you need more.",
+        )
     if work == "in_progress":
+        if getattr(request, "ta_reply", None):
+            return (
+                STATUS_TA_REPLIED,
+                "TA reply ready",
+                str(request.ta_reply),
+            )
         who = getattr(request, "claimed_by", None) or request.assigned_ta or "A TA"
         return (
             STATUS_TA_HELPING,
@@ -166,11 +172,11 @@ def _status_copy(
             "Claimed by a TA",
             f"{who} claimed your ask and will follow up soon.",
         )
-    if work == "helped":
+    if getattr(request, "ta_reply", None):
         return (
-            STATUS_HELPED,
-            "Marked helped",
-            "A TA finished helping with this ask. Come to office hours if you need more.",
+            STATUS_TA_REPLIED,
+            "TA reply ready",
+            str(request.ta_reply),
         )
 
     if decision is None:
