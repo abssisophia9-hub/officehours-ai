@@ -67,6 +67,9 @@ def build_struggle_heatmap(
     return StruggleHeatmapOut(cells=cells, total_requests=len(requests))
 
 
+OPEN_WORK_STATUSES = frozenset({"open", "claimed", "in_progress"})
+
+
 def build_escalation_feed(
     db: Session,
     *,
@@ -75,6 +78,12 @@ def build_escalation_feed(
     course_id: int | None = None,
     course_ids: list[int] | None = None,
 ) -> list[EscalationItem]:
+    """Open asks that need staff attention (urgent, sensitive, or waiting too long).
+
+    "Urgent and sensitive" is only for unresolved asks (work_status open /
+    claimed / in_progress). Helped / resolved rows never appear — age is wait
+    time since created_at while still open, not age of a finished ask.
+    """
     now = datetime.now(timezone.utc)
     query = db.query(Request)
     if course_id is not None:
@@ -84,12 +93,18 @@ def build_escalation_feed(
     elif course:
         query = query.filter(Request.course == course)
     requests = query.order_by(Request.created_at.desc()).all()
+    # Recurring counts include all asks in the course (context), but only open
+    # rows can enter the feed itself.
     category_counts: dict[str, int] = defaultdict(int)
     for request in requests:
         category_counts[request.category or "uncategorized"] += 1
 
     items: list[EscalationItem] = []
     for request in requests:
+        work = str(getattr(request, "work_status", None) or "open").lower()
+        if work not in OPEN_WORK_STATUSES:
+            continue
+
         age_minutes = _age_minutes(request.created_at, now)
         urgency = (request.urgency or "").lower()
         category = request.category or "uncategorized"
@@ -97,7 +112,7 @@ def build_escalation_feed(
         reasons: list[str] = []
 
         if age_minutes >= age_threshold_minutes:
-            reasons.append(f"Unresolved for {int(age_minutes)}+ minutes")
+            reasons.append(f"Waiting {int(age_minutes)}+ minutes with no resolve")
         if urgency in HARD_URGENCIES:
             reasons.append(f"Marked {urgency} urgency")
         if category_counts[category] >= 3 and category != "uncategorized":

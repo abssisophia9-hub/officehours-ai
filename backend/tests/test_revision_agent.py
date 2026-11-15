@@ -1,5 +1,6 @@
 """Revision Agent: LLM-in-loop (mocked) + rule-based fallback."""
 
+import json
 import os
 import re
 
@@ -263,13 +264,13 @@ def test_fallback_empty_state_copy(monkeypatch):
 
 
 def test_plan_slots_follow_deadline_horizon(monkeypatch):
-    """Slot day_offsets follow chosen deadlines — not a hardcoded 7-day window."""
+    """N-day plan → exactly N days; Day 1 today; self-check on last day."""
     headers, course_id = student_auth(client, "CSC 3374")
     monkeypatch.setattr(
         "app.services.revision_service.resource_search",
         lambda *_a, **_k: [],
     )
-    for horizon in (1, 3, 7, 14, 30):
+    for horizon in (1, 2, 3, 7, 14, 30):
         body = client.post(
             "/revision/plan",
             headers=headers,
@@ -289,12 +290,15 @@ def test_plan_slots_follow_deadline_horizon(monkeypatch):
                 ],
             ),
         ).json()
-        offsets = [int(s["day_offset"]) for s in body["time_slots"]]
-        assert offsets, f"expected slots for horizon={horizon}"
-        assert max(offsets) == horizon, (
-            f"horizon={horizon} produced max day_offset={max(offsets)}"
+        slots = body["time_slots"]
+        offsets = [int(s["day_offset"]) for s in slots]
+        assert offsets == list(range(1, horizon + 1)), (
+            f"horizon={horizon} produced offsets={offsets}"
         )
-        assert all(0 <= d <= horizon for d in offsets)
+        assert "Self-check" in (slots[-1].get("label") or "")
+        assert "Light pass after the primary deadline risk drops" not in json.dumps(
+            body
+        )
 
 
 def test_llm_off_is_rule_based_and_skips_provider(monkeypatch):

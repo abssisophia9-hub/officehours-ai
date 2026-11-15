@@ -12,10 +12,10 @@ const CSC_SEED = [
 ];
 
 const GENERIC_SEED = [
-  { topic: "Core concepts", weight: 30, score: 68, source: "Demo sample · Quiz", assignment_kind: "text" },
-  { topic: "Problem sets", weight: 30, score: 74, source: "Demo sample · Assignment", assignment_kind: "text" },
-  { topic: "Midterm topics", weight: 25, score: 71, source: "Demo sample · Midterm prep", assignment_kind: "text" },
-  { topic: "Project / labs", weight: 15, score: 80, source: "Demo sample · Lab", assignment_kind: "project" },
+  { topic: "Main ideas from class", weight: 30, score: 68, source: "Demo sample · Quiz", assignment_kind: "text" },
+  { topic: "Homework problems", weight: 30, score: 74, source: "Demo sample · Assignment", assignment_kind: "text" },
+  { topic: "Exam review topics", weight: 25, score: 71, source: "Demo sample · Midterm prep", assignment_kind: "text" },
+  { topic: "Labs and project work", weight: 15, score: 80, source: "Demo sample · Lab", assignment_kind: "project" },
 ];
 
 /** Plan duration bounds (days). Custom values clamp to this range. */
@@ -618,11 +618,11 @@ export default function StudentRevisionPage() {
                   {focusDays} day
                   {focusDays === 1 ? "" : "s"}
                 </strong>{" "}
-                - the length you chose above
+                — Day 1 is today
                 {planWindowDays > 0 && planWindowDays !== focusDays
-                  ? ` (sessions through day ${planWindowDays})`
+                  ? ` (plan lists ${planWindowDays} days)`
                   : ""}
-                . Days count from today.
+                . Self-check sits on the last day.
               </p>
               <ol className="mt-2 space-y-2 text-sm">
                 {slots.map((slot) => (
@@ -634,7 +634,7 @@ export default function StudentRevisionPage() {
                       Day {slot.day_offset} · {slot.minutes} min · {slot.label}
                     </strong>
                     <span className="mt-0.5 block text-xs text-aui-deep/70">
-                      {slot.topic} - {slot.focus}
+                      {slot.topic}: {slot.focus}
                     </span>
                   </li>
                 ))}

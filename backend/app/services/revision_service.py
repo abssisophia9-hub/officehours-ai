@@ -12,6 +12,7 @@ import logging
 import os
 import re
 import time
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, Callable
 from urllib.parse import urlparse
 
@@ -1378,57 +1379,60 @@ def _backwards_schedule(
     deadlines: list[DeadlineIn],
     available_minutes: int,
     preference: str,
+    today: date | None = None,
 ) -> list[TimeSlotOut]:
-    """Thin backwards packer from synthetic deadlines."""
-    if not focus_rows:
-        return [
-            TimeSlotOut(
-                day_offset=0,
-                label="Today · foundations",
-                minutes=min(45, available_minutes),
-                topic="General review",
-                focus="Open stamped course notes, then one practice pass.",
-            )
-        ]
+    """Build exactly N day slots for an N-day plan.
 
-    primary = focus_rows[0]
-    due = int(primary.get("due_in_days") or 3)
-    topic = str(primary["topic"])
+    Day 1 is today; day_offset is 1..N. Self-check is always the last day.
+    Calendar dates go in the label so the UI can show a real date, not Day 0.
+    """
+    horizon = 0
+    for row in focus_rows:
+        horizon = max(horizon, int(row.get("due_in_days") or 0))
+    for item in deadlines or []:
+        horizon = max(horizon, int(item.due_in_days or 0))
+    horizon = max(1, min(60, horizon or 1))
+
+    start = today or datetime.now(timezone.utc).date()
     style = STYLE_LABELS.get(preference, "general")
-    blocks = [
-        (max(due - 2, 0), "Foundations", min(45, available_minutes), "Build the base for this topic."),
-        (max(due - 1, 0), "Practice", min(60, max(30, available_minutes // 2)), f"Work problems for a {style} learner."),
-        (due, "Self-check", min(30, available_minutes // 3 or 30), "Self-quiz the day before the deadline."),
-    ]
-    # Unique day offsets, keep order.
+    primary = focus_rows[0] if focus_rows else {"topic": "General review"}
+    secondary = focus_rows[1] if len(focus_rows) > 1 else None
+    primary_topic = str(primary.get("topic") or "General review")
+    secondary_topic = str(secondary["topic"]) if secondary else None
+
     slots: list[TimeSlotOut] = []
-    seen_days: set[int] = set()
-    for day_offset, label, minutes, focus in blocks:
-        if day_offset in seen_days:
-            day_offset = max(0, day_offset - 1)
-        seen_days.add(day_offset)
+    for day in range(1, horizon + 1):
+        cal = start + timedelta(days=day - 1)
+        date_bit = cal.strftime("%d %b")
+        if day == horizon:
+            label = f"{date_bit} · Self-check"
+            minutes = min(30, max(20, available_minutes // 3 or 30))
+            topic = primary_topic
+            focus = "Quiz yourself on what you covered in this plan."
+        elif day == 1:
+            label = f"{date_bit} · Foundations"
+            minutes = min(45, available_minutes)
+            topic = primary_topic
+            focus = "Open your course notes and rebuild the basics for this topic."
+        elif secondary_topic and day == max(2, horizon // 2):
+            label = f"{date_bit} · Second topic"
+            minutes = min(40, max(25, available_minutes // 2))
+            topic = secondary_topic
+            focus = "Once the main topic feels steadier, spend a short session on this one."
+        else:
+            label = f"{date_bit} · Practice"
+            minutes = min(60, max(30, available_minutes // 2))
+            topic = primary_topic
+            focus = f"Work a few practice problems in a {style} way."
         slots.append(
             TimeSlotOut(
-                day_offset=day_offset,
+                day_offset=day,
                 label=label,
                 minutes=minutes,
                 topic=topic,
                 focus=focus,
             )
         )
-    if len(focus_rows) > 1:
-        secondary = focus_rows[1]
-        secondary_due = int(secondary.get("due_in_days") or due)
-        slots.append(
-            TimeSlotOut(
-                day_offset=secondary_due,
-                label="Secondary topic",
-                minutes=30,
-                topic=str(secondary["topic"]),
-                focus="Light pass after the primary deadline risk drops.",
-            )
-        )
-    slots.sort(key=lambda s: s.day_offset)
     return slots
 
 
