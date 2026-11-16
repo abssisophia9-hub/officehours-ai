@@ -5,7 +5,8 @@ Professor analytics: struggle heatmap, escalation feed, and cluster command cent
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from statistics import median
 
 from sqlalchemy.orm import Session
 
@@ -23,10 +24,17 @@ from app.models.knowledge import (
     ClusterTopicOut,
     EscalationItem,
     KnowledgeEntry,
+    StruggleAskOut,
+    StruggleDayPointOut,
     StruggleHeatmapCell,
     StruggleHeatmapOut,
+    StruggleKpiOut,
+    StruggleMonitorOut,
+    StruggleNeedOut,
+    StruggleTopicBarOut,
 )
 from app.models.request import Request
+from app.services.demo_mode import demo_mode
 
 ESCALATION_AGE_MINUTES = 30
 HARD_URGENCIES = {"urgent", "high"}
@@ -67,6 +75,9 @@ def build_struggle_heatmap(
     return StruggleHeatmapOut(cells=cells, total_requests=len(requests))
 
 
+OPEN_WORK_STATUSES = frozenset({"open", "claimed", "in_progress"})
+
+
 def build_escalation_feed(
     db: Session,
     *,
@@ -75,6 +86,12 @@ def build_escalation_feed(
     course_id: int | None = None,
     course_ids: list[int] | None = None,
 ) -> list[EscalationItem]:
+    """Open asks that need staff attention (urgent, sensitive, or waiting too long).
+
+    "Urgent and sensitive" is only for unresolved asks (work_status open /
+    claimed / in_progress). Helped / resolved rows never appear — age is wait
+    time since created_at while still open, not age of a finished ask.
+    """
     now = datetime.now(timezone.utc)
     query = db.query(Request)
     if course_id is not None:
@@ -84,12 +101,18 @@ def build_escalation_feed(
     elif course:
         query = query.filter(Request.course == course)
     requests = query.order_by(Request.created_at.desc()).all()
+    # Recurring counts include all asks in the course (context), but only open
+    # rows can enter the feed itself.
     category_counts: dict[str, int] = defaultdict(int)
     for request in requests:
         category_counts[request.category or "uncategorized"] += 1
 
     items: list[EscalationItem] = []
     for request in requests:
+        work = str(getattr(request, "work_status", None) or "open").lower()
+        if work not in OPEN_WORK_STATUSES:
+            continue
+
         age_minutes = _age_minutes(request.created_at, now)
         urgency = (request.urgency or "").lower()
         category = request.category or "uncategorized"
@@ -97,7 +120,7 @@ def build_escalation_feed(
         reasons: list[str] = []
 
         if age_minutes >= age_threshold_minutes:
-            reasons.append(f"Unresolved for {int(age_minutes)}+ minutes")
+            reasons.append(f"Waiting {int(age_minutes)}+ minutes with no resolve")
         if urgency in HARD_URGENCIES:
             reasons.append(f"Marked {urgency} urgency")
         if category_counts[category] >= 3 and category != "uncategorized":
@@ -524,3 +547,453 @@ def _age_minutes(created_at: datetime | None, now: datetime) -> float:
         else created_at.replace(tzinfo=timezone.utc)
     )
     return max(0.0, (now - aware).total_seconds() / 60.0)
+
+
+def _aware(value: datetime | None) -> datetime | None:
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value
+
+
+def _range_bounds(range_key: str, now: datetime) -> tuple[datetime, datetime, int]:
+    key = (range_key or "7d").lower()
+    if key == "30d":
+        days = 30
+    elif key == "term":
+        days = 90
+    else:
+        key = "7d"
+        days = 7
+    end = now
+    start = now - timedelta(days=days)
+    return start, end, days
+
+
+def _delta_label(
+    current: float | int,
+    previous: float | int,
+    *,
+    suffix: str = "",
+    period: str = "prior",
+) -> str:
+    diff = float(current) - float(previous)
+    if isinstance(current, int) and isinstance(previous, int):
+        shown = int(diff)
+    else:
+        shown = int(round(diff))
+    if shown == 0:
+        return f"0 vs {period}{suffix}"
+    sign = "+" if shown > 0 else ""
+    return f"{sign}{shown} vs {period}{suffix}"
+
+
+def _demo_struggle_samples(course_code: str) -> list[tuple[str, str, str]]:
+    """Course-aware demo asks so Insights looks filled on any demo seat."""
+    code = (course_code or "").upper()
+    if "3374" in code:
+        return [
+            ("mpi", "Why does MPI_Send block when the matching receive is late?", "high"),
+            ("mpi", "When should I use MPI_Isend instead of a blocking send?", "medium"),
+            ("mpi", "How do I size the buffer for MPI_Bcast safely?", "medium"),
+            ("actors", "How do actor mailboxes avoid shared-memory races?", "high"),
+            ("actors", "What happens if an actor crashes mid-message?", "medium"),
+            ("csp", "How is CSP rendezvous different from async channels?", "medium"),
+            ("distributed", "Why does partial failure break my distributed counter?", "high"),
+            ("distributed", "How do I reason about exactly-once delivery here?", "medium"),
+        ]
+    if "3323" in code:
+        return [
+            ("complexity", "How do I tighten this Master Theorem case?", "high"),
+            ("complexity", "Is this recurrence O(n log n) or worse?", "medium"),
+            ("graphs", "Why is Dijkstra wrong on negative edges?", "high"),
+            ("graphs", "BFS vs DFS for shortest path on unweighted graphs?", "medium"),
+            ("dp", "How do I pick the DP state for this knapsack variant?", "medium"),
+            ("dp", "Where does the overlapping subproblem show up?", "low"),
+            ("greedy", "When does the greedy choice property fail?", "medium"),
+            ("sorting", "Why is heap-sort not stable in our notes?", "low"),
+        ]
+    return [
+        ("red_black_trees", "How do red-black tree rotations restore balance after insert?", "high"),
+        ("red_black_trees", "I still miss when to use left vs right rotation on delete.", "medium"),
+        ("hashing", "Why do hash collisions use chaining instead of probing here?", "medium"),
+        ("hashing", "Walk me through load factor and when to resize the table.", "medium"),
+        ("heaps", "Heapify from the middle of the array still confuses me.", "high"),
+        ("heaps", "Is decrease-key on a binary heap O(log n) the way we covered?", "low"),
+        ("amortized", "I need a clearer picture of amortized vs worst-case for dynamic arrays.", "medium"),
+        ("graphs", "BFS vs DFS for shortest path on unweighted graphs?", "medium"),
+    ]
+
+
+def seed_demo_struggle_volume(db: Session, *, course_id: int) -> bool:
+    """Demo-only realistic ask volume for Insights video. Never when DEMO=false."""
+    if not demo_mode():
+        return False
+    existing = (
+        db.query(Request)
+        .filter(Request.course_id == course_id)
+        .count()
+    )
+    if existing >= 24:
+        return False
+    course = db.query(Course).filter(Course.id == course_id).one_or_none()
+    code = course.code if course else "CSC 2302"
+    now = datetime.now(timezone.utc)
+    samples = _demo_struggle_samples(code)
+    created = 0
+    # Dense recent window first so 7d / Needs you look like a live monitor.
+    schedule: list[tuple[int, int, bool, str]] = []
+    for day_back in range(0, 7):
+        for idx, (category, text, urgency) in enumerate(samples):
+            if (day_back + idx) % 2 != 0 and day_back > 1:
+                continue
+            schedule.append((day_back, idx, day_back == 0 and idx < 2, urgency))
+    for day_back in range(7, 19):
+        for idx, (_category, _text, urgency) in enumerate(samples):
+            if (day_back + idx) % 3 != 0:
+                continue
+            schedule.append((day_back, idx, False, urgency))
+
+    for day_back, idx, force_open, urgency in schedule:
+        category, text, sample_urgency = samples[idx % len(samples)]
+        created_at = now - timedelta(days=day_back, hours=(idx * 3) % 20)
+        helped = False if force_open else (day_back + idx) % 4 != 0
+        open_urgent = force_open or (not helped and sample_urgency == "high")
+        replied = helped or ((day_back + idx) % 5 == 0 and not open_urgent)
+        row = Request(
+            text=f"{text} (demo seed)",
+            anonymous=True,
+            course=code,
+            course_id=course_id,
+            category=category,
+            urgency="high" if open_urgent else sample_urgency,
+            work_status="helped" if helped else "open",
+            created_at=created_at,
+            ta_replied_at=(created_at + timedelta(hours=2 + idx % 5)) if replied else None,
+            helped_at=(created_at + timedelta(hours=4 + idx % 3)) if helped else None,
+            sensitive=False,
+        )
+        db.add(row)
+        created += 1
+        if existing + created >= 42:
+            break
+    if created:
+        db.commit()
+        return True
+    return False
+
+
+def build_struggle_monitor(
+    db: Session,
+    *,
+    course_id: int,
+    range_key: str = "7d",
+    topic: str | None = None,
+) -> StruggleMonitorOut:
+    """Early-warning monitor from real Request / KnowledgeEntry fields only."""
+    now = datetime.now(timezone.utc)
+    demo_seeded = False
+    if demo_mode():
+        demo_seeded = seed_demo_struggle_volume(db, course_id=course_id)
+
+    start, end, days = _range_bounds(range_key, now)
+    prev_start = start - timedelta(days=days)
+    topic_filter = (topic or "").strip() or None
+
+    all_requests = (
+        db.query(Request)
+        .filter(Request.course_id == course_id)
+        .order_by(Request.created_at.desc())
+        .all()
+    )
+
+    def in_window(row: Request, lo: datetime, hi: datetime) -> bool:
+        created = _aware(row.created_at)
+        return bool(created and lo <= created < hi)
+
+    current = [r for r in all_requests if in_window(r, start, end)]
+    previous = [r for r in all_requests if in_window(r, prev_start, start)]
+    if topic_filter:
+        current = [
+            r
+            for r in current
+            if (r.category or "uncategorized").lower() == topic_filter.lower()
+        ]
+        previous = [
+            r
+            for r in previous
+            if (r.category or "uncategorized").lower() == topic_filter.lower()
+        ]
+
+    topic_options = sorted(
+        {
+            (r.category or "uncategorized")
+            for r in all_requests
+            if (r.category or "").strip()
+        }
+    )
+
+    approved_cats = {
+        (entry.category or "").strip().lower()
+        for entry in db.query(KnowledgeEntry)
+        .filter(
+            KnowledgeEntry.course_id == course_id,
+            KnowledgeEntry.status == "approved",
+        )
+        .all()
+        if (entry.category or "").strip()
+    }
+
+    asks_n = len(current)
+    prev_asks = len(previous)
+    resolved_n = sum(
+        1 for r in current if str(r.work_status or "").lower() == "helped"
+    )
+    prev_resolved = sum(
+        1 for r in previous if str(r.work_status or "").lower() == "helped"
+    )
+    resolved_pct = round(100.0 * resolved_n / asks_n, 1) if asks_n else 0.0
+    prev_resolved_pct = (
+        round(100.0 * prev_resolved / prev_asks, 1) if prev_asks else 0.0
+    )
+
+    reply_hours: list[float] = []
+    for r in current:
+        created = _aware(r.created_at)
+        replied = _aware(getattr(r, "ta_replied_at", None))
+        if created and replied and replied >= created:
+            reply_hours.append((replied - created).total_seconds() / 3600.0)
+    prev_reply_hours: list[float] = []
+    for r in previous:
+        created = _aware(r.created_at)
+        replied = _aware(getattr(r, "ta_replied_at", None))
+        if created and replied and replied >= created:
+            prev_reply_hours.append((replied - created).total_seconds() / 3600.0)
+
+    missing_fields: list[str] = []
+    if not any(getattr(r, "ta_replied_at", None) for r in current):
+        missing_fields.append(
+            "median first-reply uses ta_replied_at; none set in this range"
+        )
+
+    median_reply = median(reply_hours) if reply_hours else None
+    prev_median_reply = median(prev_reply_hours) if prev_reply_hours else None
+
+    waiting = [
+        r
+        for r in current
+        if str(r.work_status or "open").lower() in OPEN_WORK_STATUSES
+        and _age_minutes(r.created_at, now) >= ESCALATION_AGE_MINUTES
+    ]
+    prev_waiting = [
+        r
+        for r in previous
+        if str(r.work_status or "open").lower() in OPEN_WORK_STATUSES
+        and _age_minutes(r.created_at, now) >= ESCALATION_AGE_MINUTES
+    ]
+
+    topic_counts = Counter((r.category or "uncategorized") for r in current)
+    prev_topic_counts = Counter((r.category or "uncategorized") for r in previous)
+    top_topic = topic_counts.most_common(1)[0][0] if topic_counts else None
+    period = (
+        "last week"
+        if days == 7
+        else "prior 30 days"
+        if days == 30
+        else "prior term"
+    )
+
+    kpis = [
+        StruggleKpiOut(
+            key="asks",
+            label="Asks",
+            value=str(asks_n),
+            delta_label=_delta_label(asks_n, prev_asks, period=period),
+        ),
+        StruggleKpiOut(
+            key="resolved_pct",
+            label="% resolved",
+            value=f"{resolved_pct:.0f}%",
+            delta_label=_delta_label(
+                resolved_pct, prev_resolved_pct, suffix=" pp", period=period
+            ),
+        ),
+        StruggleKpiOut(
+            key="median_first_reply",
+            label="Median first reply",
+            value=(f"{median_reply:.1f} h" if median_reply is not None else "—"),
+            delta_label=(
+                _delta_label(
+                    median_reply,
+                    prev_median_reply or 0.0,
+                    suffix=" h",
+                    period=period,
+                )
+                if median_reply is not None and prev_median_reply is not None
+                else None
+            ),
+            missing=(
+                "No ta_replied_at in this range"
+                if median_reply is None
+                else None
+            ),
+        ),
+        StruggleKpiOut(
+            key="waiting",
+            label="Waiting too long",
+            value=str(len(waiting)),
+            delta_label=_delta_label(
+                len(waiting), len(prev_waiting), period=period
+            ),
+        ),
+        StruggleKpiOut(
+            key="top_topic",
+            label="Top topic",
+            value=(top_topic or "—").replace("_", " "),
+            delta_label=(
+                _delta_label(
+                    topic_counts.get(top_topic, 0),
+                    prev_topic_counts.get(top_topic, 0),
+                    period=period,
+                )
+                if top_topic
+                else None
+            ),
+        ),
+    ]
+
+    day_counts: dict[str, int] = defaultdict(int)
+    cursor = start.date()
+    end_day = end.date()
+    while cursor <= end_day:
+        day_counts[cursor.isoformat()] = 0
+        cursor += timedelta(days=1)
+    for r in current:
+        created = _aware(r.created_at)
+        if created:
+            day_counts[created.date().isoformat()] += 1
+    asks_per_day = [
+        StruggleDayPointOut(day=day, count=count)
+        for day, count in sorted(day_counts.items())
+    ]
+
+    topics: list[StruggleTopicBarOut] = []
+    for name, count in topic_counts.most_common():
+        prev = prev_topic_counts.get(name, 0)
+        if count > prev:
+            trend = "up"
+        elif count < prev:
+            trend = "down"
+        else:
+            trend = "flat"
+        ids = [r.id for r in current if (r.category or "uncategorized") == name]
+        topics.append(
+            StruggleTopicBarOut(
+                topic=name,
+                count=count,
+                pct=round(100.0 * count / asks_n, 1) if asks_n else 0.0,
+                trend=trend,
+                has_approved_material=name.lower() in approved_cats,
+                request_ids=ids,
+            )
+        )
+
+    needs: list[StruggleNeedOut] = []
+    for bar in topics:
+        if bar.count >= 3 and not bar.has_approved_material:
+            needs.append(
+                StruggleNeedOut(
+                    kind="add_material",
+                    title=bar.topic.replace("_", " "),
+                    detail=f"{bar.count} asks and no approved material for this topic.",
+                    action_label="Add material",
+                    action_href="/professor",
+                    topic=bar.topic,
+                    ask_count=bar.count,
+                )
+            )
+    # Struggle Radar overdue lane: open asks waiting more than 24 hours.
+    overdue_cut = 24 * 60
+    for r in waiting:
+        age = float(_age_minutes(r.created_at, now))
+        if age < overdue_cut:
+            continue
+        text = (r.text or "").strip()
+        if bool(getattr(r, "anonymous", False)):
+            preview = "Anonymous ask waiting too long"
+        else:
+            preview = text[:120] or f"Ask #{r.id}"
+        needs.append(
+            StruggleNeedOut(
+                kind="overdue_ask",
+                title=preview,
+                detail=f"Waiting {int(age)} minutes · {(r.category or 'topic').replace('_', ' ')}",
+                action_label="Open Your desk",
+                action_href="/professor/asks",
+                request_id=r.id,
+                topic=r.category,
+                age_minutes=age,
+            )
+        )
+
+    enough = asks_n >= 8
+    message = (
+        "Early warning from live asks in this range."
+        if enough
+        else "Not enough asks yet for a trend"
+    )
+
+    return StruggleMonitorOut(
+        range=("30d" if days == 30 else "term" if days == 90 else "7d"),
+        topic_filter=topic_filter,
+        topic_options=topic_options,
+        kpis=kpis,
+        asks_per_day=asks_per_day,
+        topics=topics,
+        needs_you=needs[:24],
+        selected_asks=[],
+        enough_for_trend=enough,
+        missing_fields=missing_fields,
+        demo_seeded=demo_seeded,
+        message=message,
+    )
+
+
+def struggle_monitor_asks(
+    db: Session,
+    *,
+    course_id: int,
+    range_key: str,
+    topic: str,
+) -> list[StruggleAskOut]:
+    """Ask list for a topic bar click — never reveals anonymous identity."""
+    now = datetime.now(timezone.utc)
+    start, end, _ = _range_bounds(range_key, now)
+    topic_key = (topic or "").strip().lower()
+    rows = (
+        db.query(Request)
+        .filter(Request.course_id == course_id)
+        .order_by(Request.created_at.desc())
+        .all()
+    )
+    out: list[StruggleAskOut] = []
+    for r in rows:
+        created = _aware(r.created_at)
+        if not created or not (start <= created < end):
+            continue
+        if (r.category or "uncategorized").lower() != topic_key:
+            continue
+        anonymous = bool(getattr(r, "anonymous", False))
+        text = "Anonymous ask" if anonymous else ((r.text or "").strip()[:220] or f"Ask #{r.id}")
+        out.append(
+            StruggleAskOut(
+                request_id=r.id,
+                text=text,
+                topic=r.category,
+                work_status=str(r.work_status or "open"),
+                created_at=created,
+                anonymous=anonymous,
+            )
+        )
+    return out[:40]

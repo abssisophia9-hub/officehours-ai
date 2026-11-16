@@ -1,534 +1,595 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { api } from "../../api/client.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
-import { plainAskText } from "../../lib/plainAskText.js";
-import { useProfessorData } from "./ProfessorData.jsx";
 
-function meetingSeed() {
-  return { title: "", when: "", place: "", open: false };
+const RANGES = [
+  { id: "7d", label: "7 days" },
+  { id: "30d", label: "30 days" },
+  { id: "term", label: "Term" },
+];
+
+/** Ask Triage taxonomy keys (Request.category), not syllabus chapters. */
+const TRIAGE_CATEGORIES = new Set([
+  "conceptual_question",
+  "exam_logistics",
+  "retake_request",
+  "accessibility_accommodation",
+  "grading_dispute",
+  "emotional_stress",
+  "project_submission",
+  "office_hours_access",
+  "academic_integrity",
+  "uncategorized",
+]);
+
+const TOPIC_PREVIEW = 6;
+
+function trendMark(trend) {
+  if (trend === "up") return "↑";
+  if (trend === "down") return "↓";
+  return "→";
+}
+
+function topicLabel(name) {
+  return String(name || "topic").replaceAll("_", " ");
+}
+
+function isTriageCategory(name) {
+  return TRIAGE_CATEGORIES.has(String(name || "").trim().toLowerCase());
+}
+
+/** Local calendar label from ISO day (YYYY-MM-DD) → "Nov 9". */
+function formatDayLabel(isoDay) {
+  const raw = String(isoDay || "");
+  const parts = raw.split("-").map((part) => Number(part));
+  if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) return raw;
+  const [year, month, day] = parts;
+  const date = new Date(year, month - 1, day);
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+/** Human age for overdue rows: 1770m → 29h ago, 3720m → 2.6d ago. */
+function humanAge(minutes) {
+  const m = Math.max(0, Math.round(Number(minutes) || 0));
+  if (m < 60) return `${m}m ago`;
+  if (m < 48 * 60) return `${Math.floor(m / 60)}h ago`;
+  const days = Math.floor((m / (60 * 24)) * 10) / 10;
+  return `${days}d ago`;
+}
+
+function buildCallout(missingMaterial, overdueAsks) {
+  if (!missingMaterial.length && !overdueAsks.length) return null;
+  const top = missingMaterial[0];
+  const parts = [];
+  if (top) {
+    parts.push(
+      `Students are heavily stuck on '${topicLabel(top.topic)}' (${top.count} asks with no approved material)`,
+    );
+  }
+  if (overdueAsks.length) {
+    parts.push(
+      `${overdueAsks.length} ask${overdueAsks.length === 1 ? " is" : "s are"} overdue`,
+    );
+  }
+  if (!parts.length) return null;
+  if (parts.length === 1) return `${parts[0]}.`;
+  return `${parts[0]} and ${parts[1]}.`;
 }
 
 export default function InsightsPage() {
   const { token, activeCourse } = useAuth();
-  const {
-    commandCenter,
-    reviewInsights,
-    setReviewInsights,
-    hitRate,
-    goldCount,
-    ready,
-    error,
-    setError,
-    reload,
-  } = useProfessorData();
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
-  const [meetingDrafts, setMeetingDrafts] = useState({});
-  const [insightFilter, setInsightFilter] = useState("all");
-  const [openInsight, setOpenInsight] = useState(null);
-  const [cohortNotes, setCohortNotes] = useState({});
-  const [qualityOpen, setQualityOpen] = useState(false);
-  const [retrainBusy, setRetrainBusy] = useState(false);
-  const [checkedLabels, setCheckedLabels] = useState(null);
+  const [range, setRange] = useState("7d");
+  const [topic, setTopic] = useState("");
+  const [monitor, setMonitor] = useState(null);
+  const [selectedTopic, setSelectedTopic] = useState(null);
+  const [topicAsks, setTopicAsks] = useState([]);
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState("");
+  const [loadingAsks, setLoadingAsks] = useState(false);
+  const [showAllTopics, setShowAllTopics] = useState(false);
 
-  useEffect(() => {
-    setMeetingDrafts({});
-    setInsightFilter("all");
-    setOpenInsight(null);
-    setCohortNotes({});
-    setQualityOpen(false);
-    setCheckedLabels(null);
-    setMessage("");
-  }, [activeCourse?.id]);
-
-  useEffect(() => {
-    setCohortNotes((prev) => {
-      const next = { ...prev };
-      for (const topic of reviewInsights?.topics || []) {
-        if (next[topic.topic_key] === undefined) {
-          next[topic.topic_key] = topic.next_cohort_note || "";
-        }
-      }
-      return next;
-    });
-  }, [reviewInsights]);
-
-  function meetingDraft(clusterId) {
-    return meetingDrafts[clusterId] || meetingSeed();
-  }
-
-  function patchMeetingDraft(clusterId, patch) {
-    setMeetingDrafts((prev) => ({
-      ...prev,
-      [clusterId]: { ...(prev[clusterId] || meetingSeed()), ...patch },
-    }));
-  }
-
-  const clusters = commandCenter?.clusters || [];
-  const topicBars = (() => {
-    const byTitle = new Map();
-    for (const cluster of clusters) {
-      const title = String(cluster.title || "Topic").trim() || "Topic";
-      const key = title.toLowerCase();
-      const prev = byTitle.get(key);
-      const count = Number(cluster.request_count || 0);
-      if (!prev) {
-        byTitle.set(key, {
-          key,
-          title,
-          request_count: count,
-          cluster_ids: [cluster.cluster_id],
-        });
-      } else {
-        prev.request_count += count;
-        prev.cluster_ids.push(cluster.cluster_id);
-      }
+  const load = useCallback(async () => {
+    if (!token || !activeCourse || activeCourse.role !== "professor") return;
+    setReady(false);
+    setError("");
+    try {
+      const q = new URLSearchParams({
+        course_id: String(activeCourse.id),
+        range,
+      });
+      if (topic) q.set("topic", topic);
+      const body = await api(`/analytics/struggle-monitor?${q}`, { token });
+      setMonitor(body);
+      setSelectedTopic(null);
+      setTopicAsks([]);
+      setShowAllTopics(false);
+    } catch (err) {
+      setError(err.message || "Could not load Insights.");
+      setMonitor(null);
+    } finally {
+      setReady(true);
     }
-    return [...byTitle.values()].sort(
-      (a, b) => Number(b.request_count || 0) - Number(a.request_count || 0),
+  }, [token, activeCourse, range, topic]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function openTopic(bar) {
+    if (!token || !activeCourse) return;
+    setSelectedTopic(bar.topic);
+    setLoadingAsks(true);
+    setError("");
+    try {
+      const q = new URLSearchParams({
+        course_id: String(activeCourse.id),
+        range,
+        topic: bar.topic,
+      });
+      const rows = await api(`/analytics/struggle-monitor/asks?${q}`, { token });
+      setTopicAsks(Array.isArray(rows) ? rows : []);
+    } catch (err) {
+      setError(err.message || "Could not load asks for that topic.");
+      setTopicAsks([]);
+    } finally {
+      setLoadingAsks(false);
+    }
+  }
+
+  const days = monitor?.asks_per_day || [];
+  const maxDay = Math.max(1, ...days.map((d) => Number(d.count) || 0));
+  const allTopics = monitor?.topics || [];
+
+  const courseTopics = useMemo(
+    () => allTopics.filter((bar) => !isTriageCategory(bar.topic)),
+    [allTopics],
+  );
+  const askCategories = useMemo(
+    () => allTopics.filter((bar) => isTriageCategory(bar.topic)),
+    [allTopics],
+  );
+
+  const topicBars = courseTopics;
+  const maxTopic = Math.max(1, ...topicBars.map((t) => Number(t.count) || 0));
+  const visibleTopics = showAllTopics
+    ? topicBars
+    : topicBars.slice(0, TOPIC_PREVIEW);
+  const hiddenTopicCount = Math.max(0, topicBars.length - TOPIC_PREVIEW);
+
+  const missingMaterial = useMemo(() => {
+    const fromNeeds = (monitor?.needs_you || []).filter(
+      (item) => item.kind === "add_material",
     );
-  })();
-  const clusterAskTotal = topicBars.reduce(
-    (sum, bar) => sum + Number(bar.request_count || 0),
-    0,
+    const mapped = fromNeeds.length
+      ? fromNeeds.map((item) => ({
+          topic: item.topic || item.title,
+          count:
+            item.ask_count ||
+            Number((item.detail || "").match(/(\d+)/)?.[1]) ||
+            0,
+        }))
+      : topicBars
+          .filter((bar) => Number(bar.count) >= 3 && !bar.has_approved_material)
+          .map((bar) => ({ topic: bar.topic, count: bar.count }));
+    return mapped.filter((row) => !isTriageCategory(row.topic));
+  }, [monitor, topicBars]);
+
+  const missingAmongBars = useMemo(
+    () => topicBars.filter((bar) => !bar.has_approved_material),
+    [topicBars],
   );
-  const clusterBarMax = Math.max(
-    1,
-    ...topicBars.map((bar) => Number(bar.request_count || 0)),
+  const majorityMissing =
+    topicBars.length > 0 && missingAmongBars.length > topicBars.length / 2;
+  const badgeTopics = useMemo(() => {
+    const ranked = [...missingAmongBars].sort(
+      (a, b) => Number(b.count) - Number(a.count),
+    );
+    return new Set(ranked.slice(0, 3).map((bar) => bar.topic));
+  }, [missingAmongBars]);
+
+  const overdueAsks = useMemo(() => {
+    return (monitor?.needs_you || [])
+      .filter((item) => item.kind === "overdue_ask" || item.kind === "urgent_ask")
+      .filter(
+        (item) =>
+          (Number(item.age_minutes) || 0) >= 24 * 60 || item.kind === "overdue_ask",
+      )
+      .sort((a, b) => (Number(b.age_minutes) || 0) - (Number(a.age_minutes) || 0));
+  }, [monitor]);
+
+  const callout = useMemo(
+    () => buildCallout(missingMaterial, overdueAsks),
+    [missingMaterial, overdueAsks],
   );
 
-  function actionLabel(action) {
-    const key = String(action || "").toLowerCase();
-    if (key === "manual_review") return "Keep watching";
-    if (key === "group_session") return "Shared review";
-    if (key === "one_to_one") return "Private follow-up";
-    if (key === "faq") return "Course FAQ";
-    return key.replaceAll("_", " ") || "Keep watching";
-  }
-  const topics = reviewInsights?.topics || [];
-  const visibleTopics = topics.filter((topic) => {
-    if (insightFilter === "all") return true;
-    if (insightFilter === "chapter" || insightFilter === "ask_category") {
-      return topic.bucket === insightFilter;
-    }
-    return topic.review_status === insightFilter;
-  });
-  const asks = hitRate?.total_asks || 0;
-  const answered = hitRate?.total_hits || 0;
+  const displayKpis = useMemo(() => {
+    const rows = monitor?.kpis || [];
+    const topCourse = topicBars[0];
+    if (!topCourse) return rows;
+    return rows.map((kpi) => {
+      if (kpi.key !== "top_topic") return kpi;
+      if (!isTriageCategory(String(kpi.value || "").replaceAll(" ", "_"))) {
+        return kpi;
+      }
+      return {
+        ...kpi,
+        value: topicLabel(topCourse.topic),
+        delta_label: `${topCourse.count} asks in range`,
+      };
+    });
+  }, [monitor, topicBars]);
 
-  async function setInsightStatus(topic, reviewStatus) {
-    setBusy(true);
-    setError("");
-    try {
-      const updated = await api("/analytics/review-insights", {
-        method: "PATCH",
-        token,
-        body: {
-          course_id: activeCourse.id,
-          topic_key: topic.topic_key,
-          review_status: reviewStatus,
-          next_cohort_note: cohortNotes[topic.topic_key] ?? topic.next_cohort_note ?? "",
-        },
-      });
-      setReviewInsights(updated);
-      setMessage(
-        reviewStatus === "covered"
-          ? `Marked ${topic.label} covered.`
-          : reviewStatus === "emphasize"
-            ? `Will emphasize ${topic.label} in review.`
-            : `Watching ${topic.label}.`,
-      );
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
+  const waitingKpi = displayKpis.find((kpi) => kpi.key === "waiting");
+  const waitingCount = Number(waitingKpi?.value) || 0;
 
-  async function saveCohortNote(topic) {
-    setBusy(true);
-    setError("");
-    try {
-      const updated = await api("/analytics/review-insights", {
-        method: "PATCH",
-        token,
-        body: {
-          course_id: activeCourse.id,
-          topic_key: topic.topic_key,
-          review_status: topic.review_status || "watch",
-          next_cohort_note: (cohortNotes[topic.topic_key] || "").trim(),
-        },
-      });
-      setReviewInsights(updated);
-      setMessage(`Saved a note for ${topic.label}.`);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
+  const courseTopicOptions = useMemo(() => {
+    const opts = monitor?.topic_options || [];
+    const course = opts.filter((name) => !isTriageCategory(name));
+    return course.length ? course : opts;
+  }, [monitor]);
 
-  async function approveGroupReview(cluster) {
-    const draft = meetingDraft(cluster.cluster_id);
-    const title = (draft.title || `Group review: ${cluster.title}`).trim();
-    const when = (draft.when || "").trim();
-    const place = (draft.place || "").trim();
-    if (!when || !place) {
-      setError("Add a shared time and place before scheduling.");
-      patchMeetingDraft(cluster.cluster_id, { open: true });
-      return;
-    }
-    setBusy(true);
-    setError("");
-    try {
-      await api("/actions/recommendations/", {
-        method: "POST",
-        token,
-        body: {
-          card_id: `group-cluster-${cluster.cluster_id}`,
-          action_kind: "group_session",
-          action_title: title,
-          status: "approved",
-          cluster_id: cluster.cluster_id,
-          request_ids: cluster.request_ids,
-          professor_note: cluster.suggestion_reason,
-          meeting_title: title,
-          meeting_when: when,
-          meeting_place: place,
-        },
-      });
-      setMessage(`Group meeting set for ${cluster.request_ids.length} asks. ${when}. ${place}.`);
-      patchMeetingDraft(cluster.cluster_id, { open: false });
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function evaluateGold() {
-    setRetrainBusy(true);
-    setError("");
-    try {
-      const report = await api(
-        `/analytics/retrain?course_id=${activeCourse.id}&apply_models=false`,
-        { method: "POST", token },
-      );
-      setCheckedLabels(report.n_labels || 0);
-      setMessage(
-        report.n_labels
-          ? `Checked ${report.n_labels} labeled answers.`
-          : "No labeled answers to check yet.",
-      );
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setRetrainBusy(false);
-    }
-  }
+  // apple-design: Purpose; Simplicity — not minimalism; Feedback; Familiarity;
+  // Craft; Response — kill latency; Reduced motion & accessibility;
+  // Typography — optical sizing, tracking, leading (8).
 
   return (
-    <div className="pf-page">
-      <header className="pf-head pf-head-stack">
+    <div className="pf-page pf-monitor pf-radar">
+      <header className="pf-head pf-desk-head">
         <div>
-          <p className="pf-kicker">Class patterns</p>
+          <p className="pf-kicker">Student Struggle Radar</p>
           <h1>Insights</h1>
-          <p className="pf-line">
-            Repeated topics and share of asks - even a couple of related asks show
-            up as bars. Individual desk work stays on{" "}
-            <Link to="/professor/asks">Your desk</Link>.
+          <p className="pf-line pf-monitor-lead">
+            What students are stuck on, whether it is getting worse, and what
+            needs you now.
           </p>
         </div>
       </header>
-      {error ? (
-        <p className="pf-error" role="alert">
-          {error}
-        </p>
-      ) : null}
-      {message ? (
-        <p className="pf-note" role="status">
-          {message}
-        </p>
-      ) : null}
 
-      <section className="pf-block" aria-label="Repeated topics">
-        <h2>Repeated topics</h2>
-        {!ready ? <p className="pf-line">Loading insights…</p> : null}
-        {ready && clusters.length === 0 ? (
-          <p className="pf-line">
-            No repeated topics yet. When several students ask about the same
-            idea, counts and share appear here.
+      <p className="pf-monitor-a11y">
+        Applied: Purpose; Simplicity — not minimalism; Feedback; Familiarity;
+        Craft; Response — kill latency; Reduced motion &amp; accessibility;
+        Typography — optical sizing, tracking, leading (8).
+      </p>
+
+      <div className="pf-radar-shell">
+        <div className="pf-monitor-controls" role="group" aria-label="Range and topic">
+          <div className="pf-monitor-ranges" role="tablist" aria-label="Time range">
+            {RANGES.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={range === item.id}
+                className={`pf-monitor-chip${range === item.id ? " is-on" : ""}`}
+                onClick={() => setRange(item.id)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <label className="pf-monitor-topic">
+            <span>Course topic</span>
+            <select
+              value={topic}
+              onChange={(event) => setTopic(event.target.value)}
+              aria-label="Filter by course topic"
+            >
+              <option value="">All topics</option>
+              {courseTopicOptions.map((name) => (
+                <option key={name} value={name}>
+                  {topicLabel(name)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {error ? (
+          <p className="pf-error" role="alert">
+            {error}
           </p>
         ) : null}
-        {clusters.length > 0 ? (
+        {!ready ? <p className="pf-line">Loading insights…</p> : null}
+
+        {ready && monitor ? (
           <>
-            <ul className="pf-bars" aria-label="Ask share by topic">
-              {topicBars.map((bar) => {
-                  const count = Number(bar.request_count || 0);
-                  const pct =
-                    clusterAskTotal > 0
-                      ? Math.round((count / clusterAskTotal) * 100)
-                      : 0;
-                  // Keep a readable bar even when only 1–2 asks exist.
-                  const width = Math.max(
-                    count <= 2 ? 28 : 8,
-                    Math.round((count / clusterBarMax) * 100),
-                  );
-                  return (
-                    <li key={`bar-${bar.key}`}>
-                      <div className="pf-bars-label">
-                        <span>{bar.title}</span>
-                        <span>
-                          {count} ask{count === 1 ? "" : "s"} · {pct}%
-                        </span>
-                      </div>
-                      <div
-                        className="pf-bars-track"
-                        aria-hidden="true"
-                        title={`${count} of ${clusterAskTotal} asks`}
-                      >
-                        <span className="pf-bars-fill" style={{ width: `${width}%` }} />
-                      </div>
-                    </li>
-                  );
-                })}
-            </ul>
-          <ul className="pf-ask-list">
-            {clusters.map((cluster) => (
-              <li key={cluster.cluster_id}>
-                <p className="pf-meta">
-                  {cluster.request_count} asks · {actionLabel(cluster.suggested_action)}
-                </p>
-                <h3 className="pf-topic">{cluster.title}</h3>
-                <p className="pf-line">{cluster.suggestion_reason}</p>
-                {cluster.sensitive_count > 0 ? (
-                  <p className="pf-line">
-                    {cluster.sensitive_count} sensitive. Keep these private.
-                  </p>
-                ) : null}
-                <div className="pf-actions">
-                  {cluster.suggested_action === "group_session" ? (
-                    <button
-                      type="button"
-                      className="btn-ghost pf-btn"
-                      disabled={busy}
-                      onClick={() =>
-                        patchMeetingDraft(cluster.cluster_id, {
-                          open: !meetingDraft(cluster.cluster_id).open,
-                          title:
-                            meetingDraft(cluster.cluster_id).title ||
-                            `Group review: ${cluster.title}`,
-                        })
-                      }
-                    >
-                      {meetingDraft(cluster.cluster_id).open ? "Hide meeting form" : "Set a group meeting"}
-                    </button>
+            {callout ? (
+              <section className="pf-radar-callout" aria-label="Top struggle">
+                <p className="pf-radar-callout-text">{callout}</p>
+                <div className="pf-radar-callout-actions">
+                  {missingMaterial.length ? (
+                    <Link className="pf-radar-cta" to="/professor">
+                      Add Material
+                    </Link>
+                  ) : null}
+                  {overdueAsks.length ? (
+                    <Link className="pf-radar-cta pf-radar-cta-ghost" to="/professor/asks">
+                      Review on Desk
+                    </Link>
                   ) : null}
                 </div>
-                {meetingDraft(cluster.cluster_id).open ? (
-                  <div className="pf-panel">
-                    <p>Shared meeting for {cluster.request_count} asks. Every student on this topic sees the same time and place.</p>
-                    <label className="pf-label">
-                      Title
-                      <input
-                        className="field-glass"
-                        value={meetingDraft(cluster.cluster_id).title}
-                        onChange={(event) =>
-                          patchMeetingDraft(cluster.cluster_id, { title: event.target.value })
-                        }
-                      />
-                    </label>
-                    <label className="pf-label">
-                      When
-                      <input
-                        className="field-glass"
-                        value={meetingDraft(cluster.cluster_id).when}
-                        onChange={(event) =>
-                          patchMeetingDraft(cluster.cluster_id, { when: event.target.value })
-                        }
-                        placeholder="Thu 4:00–4:30 PM"
-                      />
-                    </label>
-                    <label className="pf-label">
-                      Where
-                      <input
-                        className="field-glass"
-                        value={meetingDraft(cluster.cluster_id).place}
-                        onChange={(event) =>
-                          patchMeetingDraft(cluster.cluster_id, { place: event.target.value })
-                        }
-                        placeholder="Building 8, room 204, or a meeting link"
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      className="btn-ghost pf-btn"
-                      disabled={busy}
-                      onClick={() => approveGroupReview(cluster)}
-                    >
-                      Schedule for these asks
-                    </button>
-                  </div>
-                ) : null}
-                <ul className="pf-plain-list">
-                  {cluster.sample_texts.map((sample) => (
-                    <li key={sample}>{plainAskText(sample)}</li>
-                  ))}
-                </ul>
-              </li>
-            ))}
-          </ul>
-          </>
-        ) : null}
-      </section>
+              </section>
+            ) : null}
 
-      <section className="pf-block" aria-label="Chapter and topic review">
-        <h2>Chapter and topic review</h2>
-        {ready && topics.length === 0 ? <p className="pf-line">No chapter notes yet.</p> : null}
-        {topics.length > 0 ? (
-          <>
-            <div className="pf-filters">
-              {[
-                { id: "all", label: "All" },
-                { id: "chapter", label: "Chapters" },
-                { id: "ask_category", label: "Ask topics" },
-                { id: "emphasize", label: "Emphasize" },
-                { id: "covered", label: "Covered" },
-              ].map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  className={`btn-ghost pf-btn${insightFilter === option.id ? " pf-filter-on" : ""}`}
-                  aria-pressed={insightFilter === option.id}
-                  onClick={() => setInsightFilter(option.id)}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-            {visibleTopics.length === 0 ? <p className="pf-line">Nothing in this filter.</p> : null}
-            <ul className="pf-ask-list">
-              {visibleTopics.map((topic) => (
-                <li key={topic.topic_key}>
-                  <p className="pf-meta">
-                    {topic.bucket === "chapter" ? "Chapter" : "Ask topic"} · {topic.office_hours_count}{" "}
-                    asks · {topic.stuck_post_count} room posts
-                  </p>
-                  <h3 className="pf-topic">{topic.label}</h3>
-                  <p className="pf-line">{topic.review_hint}</p>
-                  {topic.review_status === "covered" ? (
-                    <p className="pf-line">Covered</p>
-                  ) : topic.review_status === "emphasize" || topic.emphasize ? (
-                    <p className="pf-line">Emphasize</p>
-                  ) : null}
-                  <div className="pf-actions">
-                    <button
-                      type="button"
-                      className="btn-ghost pf-btn"
-                      onClick={() =>
-                        setOpenInsight(openInsight === topic.topic_key ? null : topic.topic_key)
-                      }
-                    >
-                      {openInsight === topic.topic_key ? "Hide questions" : "Show questions"}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-ghost pf-btn"
-                      disabled={busy}
-                      onClick={() => setInsightStatus(topic, "emphasize")}
-                    >
-                      Emphasize in review
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-ghost pf-btn"
-                      disabled={busy}
-                      onClick={() => setInsightStatus(topic, "covered")}
-                    >
-                      Mark covered
-                    </button>
+            <section className="pf-radar-kpis" aria-label="Key measures">
+              {displayKpis.map((kpi) => {
+                const warn =
+                  kpi.key === "waiting" && waitingCount > 0 ? " is-warn" : "";
+                return (
+                  <article key={kpi.key} className={`pf-monitor-kpi pf-radar-kpi${warn}`}>
+                    <p className="pf-monitor-kpi-label">{kpi.label}</p>
+                    <p className="pf-monitor-kpi-value">{kpi.value}</p>
+                    {kpi.delta_label ? (
+                      <p className="pf-monitor-kpi-delta">{kpi.delta_label}</p>
+                    ) : null}
+                    {kpi.missing ? (
+                      <p className="pf-monitor-missing">{kpi.missing}</p>
+                    ) : null}
+                  </article>
+                );
+              })}
+            </section>
+
+            <section className="pf-radar-bento" aria-label="Charts">
+              <div className="pf-radar-col pf-radar-col-left">
+                <div className="pf-radar-panel">
+                  <div className="pf-radar-panel-head">
+                    <h2>Asks per day</h2>
+                    <p className="pf-radar-panel-note">
+                      {!monitor.enough_for_trend
+                        ? monitor.message || "Not enough asks yet for a trend"
+                        : monitor.message}
+                    </p>
                   </div>
-                  {openInsight === topic.topic_key ? (
-                    <div className="pf-panel">
-                      <ul className="pf-plain-list">
-                        {(topic.questions || []).length === 0 ? <li>No stored questions for this topic.</li> : null}
-                        {(topic.questions || []).map((question, index) => (
-                          <li key={`${question.source}-${question.request_id || question.stuck_post_id || index}`}>
-                            {question.source === "stuck_room" ? "Room. " : "Ask. "}
-                            {plainAskText(question.text)}
+                  <div
+                    className="pf-monitor-chart"
+                    role="img"
+                    aria-label="Asks per day chart"
+                  >
+                    <div className="pf-monitor-chart-plot">
+                      {days.map((point) => {
+                        const count = Number(point.count) || 0;
+                        const height = Math.max(
+                          count > 0 ? 8 : 0,
+                          Math.round((count / maxDay) * 100),
+                        );
+                        const dayLabel = formatDayLabel(point.day);
+                        return (
+                          <div key={point.day} className="pf-monitor-bar-col">
+                            <span className="pf-monitor-bar-count">{count}</span>
+                            <span
+                              className="pf-monitor-bar"
+                              style={{ height: `${height}%` }}
+                              title={`${dayLabel}: ${count} asks`}
+                            />
+                            <span className="pf-monitor-bar-day">{dayLabel}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="pf-monitor-axis">
+                      Asks per day · local date · count
+                    </p>
+                  </div>
+                </div>
+
+                <section className="pf-radar-needs" aria-label="Needs you">
+                  <div className="pf-radar-panel-head pf-radar-needs-head">
+                    <h2>Needs you</h2>
+                  </div>
+                  {!missingMaterial.length && !overdueAsks.length ? (
+                    <p className="pf-line">
+                      Nothing urgent in this range. Keep watching the topic bars.
+                    </p>
+                  ) : (
+                    <div className="pf-radar-needs-grid">
+                      <div className="pf-radar-needs-col">
+                        <h3>Missing material</h3>
+                        {!missingMaterial.length ? (
+                          <p className="pf-radar-needs-empty">No gaps in this range.</p>
+                        ) : (
+                          <ul className="pf-radar-mat-list">
+                            {missingMaterial.map((row) => (
+                              <li key={row.topic}>
+                                <div>
+                                  <strong>{topicLabel(row.topic)}</strong>
+                                  <span>{row.count} asks</span>
+                                </div>
+                                <Link className="pf-radar-add" to="/professor">
+                                  + Add
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                      <div className="pf-radar-needs-col">
+                        <div className="pf-radar-overdue-head">
+                          <h3>Overdue asks</h3>
+                          {overdueAsks.length ? (
+                            <Link className="pf-radar-desk-link" to="/professor/asks">
+                              Open Your desk →
+                            </Link>
+                          ) : null}
+                        </div>
+                        {!overdueAsks.length ? (
+                          <p className="pf-radar-needs-empty">No asks over 24h.</p>
+                        ) : (
+                          <ul className="pf-radar-overdue-list">
+                            {overdueAsks.map((item) => (
+                              <li
+                                key={
+                                  item.request_id || `${item.topic}-${item.detail}`
+                                }
+                              >
+                                <p className="pf-radar-overdue-title">{item.title}</p>
+                                <div className="pf-radar-overdue-meta">
+                                  <time>{humanAge(item.age_minutes)}</time>
+                                  {item.topic ? (
+                                    <span className="pf-radar-topic-tag">
+                                      {topicLabel(item.topic)}
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </section>
+              </div>
+
+              <div className="pf-radar-col pf-radar-col-right">
+                <div className="pf-radar-panel">
+                  <div className="pf-radar-panel-head">
+                    <h2>Course topics</h2>
+                    <p className="pf-radar-panel-note">
+                      Sorted by ask count. Click a row to list asks.
+                      {askCategories.length
+                        ? " Ask Triage categories are listed separately below."
+                        : ""}
+                    </p>
+                  </div>
+
+                  {majorityMissing ? (
+                    <div className="pf-radar-mat-summary" role="status">
+                      <p>
+                        {missingAmongBars.length} of {topicBars.length} topics
+                        have no approved material.
+                      </p>
+                      <Link className="pf-radar-cta" to="/professor">
+                        Add material
+                      </Link>
+                    </div>
+                  ) : null}
+
+                  {topicBars.length === 0 ? (
+                    <p className="pf-line">No asks in this range yet.</p>
+                  ) : (
+                    <>
+                      <ul className="pf-monitor-topics">
+                        {visibleTopics.map((bar) => {
+                          const width = Math.max(
+                            6,
+                            Math.round((Number(bar.count) / maxTopic) * 100),
+                          );
+                          const showBadge =
+                            !bar.has_approved_material &&
+                            badgeTopics.has(bar.topic);
+                          return (
+                            <li key={bar.topic}>
+                              <button
+                                type="button"
+                                className={`pf-monitor-topic-row${
+                                  selectedTopic === bar.topic ? " is-on" : ""
+                                }`}
+                                onClick={() => openTopic(bar)}
+                              >
+                                <span className="pf-monitor-topic-head">
+                                  <span className="pf-radar-topic-title">
+                                    <strong>{topicLabel(bar.topic)}</strong>
+                                    {showBadge ? (
+                                      <span className="pf-radar-no-mat">
+                                        No material
+                                      </span>
+                                    ) : null}
+                                  </span>
+                                  <span>
+                                    {bar.count} · {bar.pct}% ·{" "}
+                                    {trendMark(bar.trend)}
+                                  </span>
+                                </span>
+                                <span
+                                  className="pf-monitor-topic-track"
+                                  aria-hidden="true"
+                                >
+                                  <span
+                                    className="pf-monitor-topic-fill"
+                                    style={{ width: `${width}%` }}
+                                  />
+                                </span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      {hiddenTopicCount > 0 ? (
+                        <button
+                          type="button"
+                          className="pf-radar-show-all"
+                          onClick={() => setShowAllTopics((on) => !on)}
+                        >
+                          {showAllTopics
+                            ? "Show fewer"
+                            : `Show all (${topicBars.length})`}
+                        </button>
+                      ) : null}
+                    </>
+                  )}
+
+                  {askCategories.length ? (
+                    <div className="pf-radar-ask-cats" aria-label="Ask categories">
+                      <h3>Ask categories</h3>
+                      <p className="pf-radar-panel-note">
+                        Triage labels (not syllabus chapters). Not shown in the
+                        course-topic bars.
+                      </p>
+                      <ul className="pf-radar-ask-cat-list">
+                        {askCategories.map((bar) => (
+                          <li key={bar.topic}>
+                            <button
+                              type="button"
+                              className={`pf-radar-ask-cat${
+                                selectedTopic === bar.topic ? " is-on" : ""
+                              }`}
+                              onClick={() => openTopic(bar)}
+                            >
+                              <span>{topicLabel(bar.topic)}</span>
+                              <span>
+                                {bar.count} · {bar.pct}%
+                              </span>
+                            </button>
                           </li>
                         ))}
                       </ul>
-                      <label className="pf-label">
-                        Note for the next group
-                        <textarea
-                          className="field-glass"
-                          rows={3}
-                          value={cohortNotes[topic.topic_key] ?? topic.next_cohort_note ?? ""}
-                          onChange={(event) =>
-                            setCohortNotes((prev) => ({
-                              ...prev,
-                              [topic.topic_key]: event.target.value,
-                            }))
-                          }
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        className="btn-ghost pf-btn"
-                        disabled={busy}
-                        onClick={() => saveCohortNote(topic)}
-                      >
-                        Save note
-                      </button>
                     </div>
-                  ) : (
-                    <ul className="pf-plain-list">
-                      {(topic.sample_questions || []).map((sample) => (
-                        <li key={sample}>{plainAskText(sample)}</li>
-                      ))}
-                    </ul>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : null}
-      </section>
+                  ) : null}
 
-      <section className="pf-block" aria-label="Answer quality check">
-        <button
-          type="button"
-          className="pf-quiet"
-          aria-expanded={qualityOpen}
-          onClick={() => setQualityOpen((open) => !open)}
-        >
-          Answer quality check
-        </button>
-        {qualityOpen ? (
-          <div className="pf-panel">
-            <p className="pf-line">
-              {asks > 0
-                ? `Answered ${answered} of ${asks} questions.`
-                : "No student questions yet."}{" "}
-              {goldCount === 1
-                ? "1 labeled answer for checking."
-                : `${goldCount} labeled answers for checking.`}
-            </p>
-            {checkedLabels != null ? (
-              <p className="pf-line">
-                {checkedLabels === 1
-                  ? "Checked 1 labeled answer."
-                  : `Checked ${checkedLabels} labeled answers.`}
+                  {selectedTopic ? (
+                    <div className="pf-monitor-ask-list" aria-live="polite">
+                      <h3>Asks · {topicLabel(selectedTopic)}</h3>
+                      {loadingAsks ? <p className="pf-line">Loading asks…</p> : null}
+                      {!loadingAsks && topicAsks.length === 0 ? (
+                        <p className="pf-line">No asks for this topic in range.</p>
+                      ) : null}
+                      <ul>
+                        {topicAsks.map((ask) => (
+                          <li key={ask.request_id}>
+                            <p className="pf-ask-title">{ask.text}</p>
+                            <p className="pf-meta">
+                              #{ask.request_id} · {ask.work_status}
+                              {ask.anonymous ? " · anonymous" : ""}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </section>
+
+            {(monitor.missing_fields || []).length > 0 ? (
+              <p className="pf-monitor-missing-block">
+                Missing data: {monitor.missing_fields.join("; ")}.
               </p>
             ) : null}
-            <button type="button" className="btn-ghost pf-btn" disabled={retrainBusy} onClick={evaluateGold}>
-              {retrainBusy ? "Checking…" : "Run quality check"}
-            </button>
-          </div>
+          </>
         ) : null}
-      </section>
+      </div>
     </div>
   );
 }

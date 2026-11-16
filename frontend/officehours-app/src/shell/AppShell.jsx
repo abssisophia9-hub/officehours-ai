@@ -8,6 +8,7 @@ import { api } from "../api/client.js";
 import { pageItems, pageMeta } from "../api/page.js";
 import { ProfessorProvider, useProfessorData } from "../pages/professor/ProfessorData.jsx";
 import { askHasReply, seenReplyIds, subscribeReplySeen } from "../student/replySeen.js";
+import { assertMainScrollContract } from "./scrollContract.js";
 
 const ICONS = {
   dashboard: (
@@ -319,6 +320,10 @@ export default function AppShell() {
   const replyCount = useStudentReplyCount(token, user?.id, activeCourse, location.pathname);
   const taLiveCount = useTaLiveCount(token, activeCourse);
 
+  useEffect(() => {
+    assertMainScrollContract();
+  }, [location.pathname, activeCourse?.role]);
+
   const role = activeCourse?.role;
   const roleHome =
     role === "professor" ? "/professor" : role === "ta" ? "/ta" : "/student";
@@ -584,7 +589,12 @@ function ProfessorFrame() {
   const { user, activeCourse, setActiveCourse } = useAuth();
   const { waitingFiles, assignedAsks } = useProfessorData();
   const navigate = useNavigate();
+  const location = useLocation();
   const counts = { waitingFiles, assignedAsks };
+
+  useEffect(() => {
+    assertMainScrollContract();
+  }, [location.pathname]);
 
   return (
     <div className="bh-frame bh-frame-professor">

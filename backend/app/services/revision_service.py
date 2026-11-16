@@ -12,6 +12,7 @@ import logging
 import os
 import re
 import time
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, Callable
 from urllib.parse import urlparse
 
@@ -57,14 +58,14 @@ def _pedagogy_gemini_api_key() -> str:
         return pedagogy
     return (os.getenv("GEMINI_API_KEY") or "").strip()
 
-# Preference → search phrasing (YouTube + articles). Visual favors diagrams /
-# animation; step-by-step favors worked tutorials; examples favor worked examples.
+# Preference → short search hints. Keep them Wikipedia/DDG-friendly: long
+# preference phrases ("worked tutorial step by step") return zero trusted hits.
 STYLE_QUERY_HINTS = {
-    "visual_structural": "animated diagram visualization",
-    "step_by_step": "worked tutorial step by step",
-    "example_driven": "worked example",
-    "conceptual": "intuition explained",
-    "unknown": "introduction",
+    "visual_structural": "diagram",
+    "step_by_step": "steps",
+    "example_driven": "example",
+    "conceptual": "explained",
+    "unknown": "overview",
 }
 
 STYLE_LABELS = {
@@ -538,6 +539,12 @@ def build_revision_plan(
     web_live = [r for r in safe_resources if r.url]
     if not web_live:
         notes.append("We couldn't find resources right now. Try again later.")
+        _log_empty_resources(
+            search_count=search_count,
+            checked_count=checked_count,
+            candidate_count=len(candidates),
+            iterations=iterations,
+        )
 
     mode: str
     mode_label: str
@@ -599,6 +606,47 @@ def build_revision_plan(
 
 def thinker_locked_to_rules(reason: str | None) -> bool:
     return bool(reason)
+
+
+def _log_empty_resources(
+    *,
+    search_count: int,
+    checked_count: int,
+    candidate_count: int,
+    iterations: list[IterationTraceOut],
+) -> None:
+    """Log empty Resources with error class + HTTP status only (never keys)."""
+    from app.services.ai_call_log import log_ai_call
+    from app.services.revision_search import (
+        last_search_reason,
+        youtube_key_configured,
+    )
+
+    reason = last_search_reason()
+    error_class = str(reason.get("error_class") or "search_empty")
+    http_status = reason.get("http_status")
+    if not youtube_key_configured() and error_class in {"search_empty", "article_empty"}:
+        error_class = "youtube_key_missing_and_articles_empty"
+    elif candidate_count > 0 and checked_count > 0:
+        error_class = "topic_filter_or_link_check_dropped_all"
+    elif search_count == 0:
+        error_class = "web_disabled_or_no_search"
+    hit_total = sum(int(step.search_hits or 0) for step in iterations)
+    if hit_total == 0 and error_class == "search_empty":
+        error_class = str(reason.get("error_class") or "article_search_empty")
+    log_ai_call(
+        agent="pedagogy",
+        tool="resource_search",
+        status="empty",
+        error_type=error_class[:96],
+        provider="wikipedia_ddg_youtube",
+        extra={
+            "http_status": int(http_status) if http_status is not None else None,
+            "youtube_configured": bool(youtube_key_configured()),
+            "search_count": int(search_count),
+            "candidate_count": int(candidate_count),
+        },
+    )
 
 
 def _rank_topics(
@@ -871,17 +919,26 @@ def _rule_think(observation: dict[str, Any]) -> dict[str, Any]:
     preference = str(observation.get("preference") or "unknown")
     topics = observation.get("topics") or []
     topic = topics[0]["topic"] if topics else "course revision"
+    cleaned = re.sub(r"[&/,]+", " ", str(topic))
+    cleaned = re.sub(r"\s+", " ", cleaned).strip() or "course revision"
     hint = STYLE_QUERY_HINTS.get(preference, STYLE_QUERY_HINTS["unknown"])
-    # Vary query slightly across iterations.
-    suffix = "" if observation["search_count"] == 0 else " overview"
-    return {"action": "search", "query": f"{topic} {hint}{suffix}".strip()[:200]}
+    if int(observation.get("search_count") or 0) == 0:
+        query = f"{cleaned} {hint}".strip()
+    else:
+        query = cleaned
+    return {"action": "search", "query": query[:200]}
 
 
 def _rule_query(focus_rows: list[dict[str, Any]], preference: str, search_count: int) -> str:
+    """Topic-first query; short preference word only (ranking applies preference)."""
     topic = focus_rows[0]["topic"] if focus_rows else "course revision"
+    cleaned = re.sub(r"[&/,]+", " ", str(topic))
+    cleaned = re.sub(r"\s+", " ", cleaned).strip() or "course revision"
     hint = STYLE_QUERY_HINTS.get(preference, STYLE_QUERY_HINTS["unknown"])
-    suffix = "" if search_count == 0 else " overview"
-    return f"{topic} {hint}{suffix}".strip()[:200]
+    if search_count == 0:
+        return f"{cleaned} {hint}".strip()[:200]
+    # Second pass: topic alone so OpenSearch can match the page title.
+    return cleaned[:200]
 
 
 def _drop_weak_candidates(
@@ -897,6 +954,13 @@ def _drop_weak_candidates(
 def _token_in_blob(token: str, blob: str) -> bool:
     if token in blob:
         return True
+    # Hyphenated compounds: "red-black" also matches "red black" / "red_black".
+    if "-" in token:
+        parts = [p for p in token.split("-") if len(p) > 1]
+        if parts and all(p in blob for p in parts):
+            return True
+        if token.replace("-", " ") in blob or token.replace("-", "_") in blob:
+            return True
     # light plural: trees ↔ tree
     if token.endswith("s") and len(token) > 4 and token[:-1] in blob:
         return True
@@ -904,14 +968,15 @@ def _token_in_blob(token: str, blob: str) -> bool:
 
 
 def _hit_matches_topic(hit: dict[str, Any], topics: list[str]) -> bool:
-    """Require real topic overlap - one short token is not enough when the topic has several."""
+    """Require real topic overlap - keep hyphenated compounds; avoid color false hits."""
     if not topics:
         return True
     blob = f"{hit.get('title') or ''} {hit.get('snippet') or ''}".lower()
     for topic in topics:
+        # Keep "red-black" as one token so "red"+"black" alone cannot match music pages.
         tokens = [
             part
-            for part in re.split(r"[^a-z0-9]+", topic.lower())
+            for part in re.split(r"[^a-z0-9\-]+", topic.lower())
             if len(part) > 2
         ]
         if not tokens:
@@ -920,7 +985,8 @@ def _hit_matches_topic(hit: dict[str, Any], topics: list[str]) -> bool:
                 return True
             continue
         matches = sum(1 for part in tokens if _token_in_blob(part, blob))
-        need = 2 if len(tokens) >= 2 else 1
+        # Require all tokens when there are only one or two; majority otherwise.
+        need = len(tokens) if len(tokens) <= 2 else max(2, (len(tokens) + 1) // 2)
         if matches >= need:
             return True
     return False
@@ -1378,57 +1444,60 @@ def _backwards_schedule(
     deadlines: list[DeadlineIn],
     available_minutes: int,
     preference: str,
+    today: date | None = None,
 ) -> list[TimeSlotOut]:
-    """Thin backwards packer from synthetic deadlines."""
-    if not focus_rows:
-        return [
-            TimeSlotOut(
-                day_offset=0,
-                label="Today · foundations",
-                minutes=min(45, available_minutes),
-                topic="General review",
-                focus="Open stamped course notes, then one practice pass.",
-            )
-        ]
+    """Build exactly N day slots for an N-day plan.
 
-    primary = focus_rows[0]
-    due = int(primary.get("due_in_days") or 3)
-    topic = str(primary["topic"])
+    Day 1 is today; day_offset is 1..N. Self-check is always the last day.
+    Calendar dates go in the label so the UI can show a real date, not Day 0.
+    """
+    horizon = 0
+    for row in focus_rows:
+        horizon = max(horizon, int(row.get("due_in_days") or 0))
+    for item in deadlines or []:
+        horizon = max(horizon, int(item.due_in_days or 0))
+    horizon = max(1, min(60, horizon or 1))
+
+    start = today or datetime.now(timezone.utc).date()
     style = STYLE_LABELS.get(preference, "general")
-    blocks = [
-        (max(due - 2, 0), "Foundations", min(45, available_minutes), "Build the base for this topic."),
-        (max(due - 1, 0), "Practice", min(60, max(30, available_minutes // 2)), f"Work problems for a {style} learner."),
-        (due, "Self-check", min(30, available_minutes // 3 or 30), "Self-quiz the day before the deadline."),
-    ]
-    # Unique day offsets, keep order.
+    primary = focus_rows[0] if focus_rows else {"topic": "General review"}
+    secondary = focus_rows[1] if len(focus_rows) > 1 else None
+    primary_topic = str(primary.get("topic") or "General review")
+    secondary_topic = str(secondary["topic"]) if secondary else None
+
     slots: list[TimeSlotOut] = []
-    seen_days: set[int] = set()
-    for day_offset, label, minutes, focus in blocks:
-        if day_offset in seen_days:
-            day_offset = max(0, day_offset - 1)
-        seen_days.add(day_offset)
+    for day in range(1, horizon + 1):
+        cal = start + timedelta(days=day - 1)
+        date_bit = cal.strftime("%d %b")
+        if day == horizon:
+            label = f"{date_bit} · Self-check"
+            minutes = min(30, max(20, available_minutes // 3 or 30))
+            topic = primary_topic
+            focus = "Quiz yourself on what you covered in this plan."
+        elif day == 1:
+            label = f"{date_bit} · Foundations"
+            minutes = min(45, available_minutes)
+            topic = primary_topic
+            focus = "Open your course notes and rebuild the basics for this topic."
+        elif secondary_topic and day == max(2, horizon // 2):
+            label = f"{date_bit} · Second topic"
+            minutes = min(40, max(25, available_minutes // 2))
+            topic = secondary_topic
+            focus = "Once the main topic feels steadier, spend a short session on this one."
+        else:
+            label = f"{date_bit} · Practice"
+            minutes = min(60, max(30, available_minutes // 2))
+            topic = primary_topic
+            focus = f"Work a few practice problems in a {style} way."
         slots.append(
             TimeSlotOut(
-                day_offset=day_offset,
+                day_offset=day,
                 label=label,
                 minutes=minutes,
                 topic=topic,
                 focus=focus,
             )
         )
-    if len(focus_rows) > 1:
-        secondary = focus_rows[1]
-        secondary_due = int(secondary.get("due_in_days") or due)
-        slots.append(
-            TimeSlotOut(
-                day_offset=secondary_due,
-                label="Secondary topic",
-                minutes=30,
-                topic=str(secondary["topic"]),
-                focus="Light pass after the primary deadline risk drops.",
-            )
-        )
-    slots.sort(key=lambda s: s.day_offset)
     return slots
 
 

@@ -240,3 +240,61 @@ class StruggleHeatmapCell(BaseModel):
 class StruggleHeatmapOut(BaseModel):
     cells: list[StruggleHeatmapCell]
     total_requests: int
+
+
+class StruggleKpiOut(BaseModel):
+    key: str
+    label: str
+    value: str
+    delta_label: str | None = None
+    missing: str | None = None
+
+
+class StruggleDayPointOut(BaseModel):
+    day: str
+    count: int
+
+
+class StruggleTopicBarOut(BaseModel):
+    topic: str
+    count: int
+    pct: float
+    trend: str
+    has_approved_material: bool
+    request_ids: list[int] = Field(default_factory=list)
+
+
+class StruggleNeedOut(BaseModel):
+    kind: str
+    title: str
+    detail: str
+    action_label: str | None = None
+    action_href: str | None = None
+    request_id: int | None = None
+    topic: str | None = None
+    age_minutes: float | None = None
+    ask_count: int | None = None
+
+
+class StruggleAskOut(BaseModel):
+    request_id: int
+    text: str
+    topic: str | None = None
+    work_status: str
+    created_at: datetime
+    anonymous: bool = False
+
+
+class StruggleMonitorOut(BaseModel):
+    range: str
+    topic_filter: str | None = None
+    topic_options: list[str] = Field(default_factory=list)
+    kpis: list[StruggleKpiOut] = Field(default_factory=list)
+    asks_per_day: list[StruggleDayPointOut] = Field(default_factory=list)
+    topics: list[StruggleTopicBarOut] = Field(default_factory=list)
+    needs_you: list[StruggleNeedOut] = Field(default_factory=list)
+    selected_asks: list[StruggleAskOut] = Field(default_factory=list)
+    enough_for_trend: bool = False
+    missing_fields: list[str] = Field(default_factory=list)
+    demo_seeded: bool = False
+    message: str

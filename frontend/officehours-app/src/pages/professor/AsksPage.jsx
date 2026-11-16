@@ -1,127 +1,192 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { assignedToProfessor, useProfessorData } from "./ProfessorData.jsx";
 
-function helpLabel(mode) {
-  if (mode === "face_to_face") return "In person";
-  if (mode === "online_meeting") return "Online";
-  return "Message";
-}
+const OPEN_WORK = new Set(["open", "claimed", "in_progress"]);
 
 function personLabel(request) {
   if (request.anonymous) return "Anonymous";
-  return request.student_name || request.student_id || "-";
+  return request.student_name || request.student_id || "Anonymous";
+}
+
+function topicLabel(request) {
+  return (request.category || "uncategorized").replaceAll("_", " ");
+}
+
+function ageLabel(createdAt) {
+  if (!createdAt) return "—";
+  const then = new Date(createdAt).getTime();
+  if (!Number.isFinite(then)) return "—";
+  const mins = Math.max(0, Math.round((Date.now() - then) / 60000));
+  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60 * 48) return `${Math.round(mins / 60)}h ago`;
+  return `${Math.round(mins / (60 * 24))}d ago`;
+}
+
+function previewText(request) {
+  const text = (request.text || "").replace(/\s+/g, " ").trim();
+  if (!text) return "No question text";
+  return text.length > 110 ? `${text.slice(0, 109)}…` : text;
+}
+
+function laneFor(request, assignedIds, urgentIds) {
+  if (assignedIds.has(request.id)) return "assigned";
+  if (urgentIds.has(request.id)) return "urgent";
+  return null;
 }
 
 export default function AsksPage() {
-  const { requests, commandCenter, noTa, ready, error } = useProfessorData();
-  const [showRecent, setShowRecent] = useState(false);
+  const { requests, commandCenter, ready, error } = useProfessorData();
+  const [filter, setFilter] = useState("all");
 
   const assigned = assignedToProfessor(requests);
   const escalations = commandCenter?.escalations || [];
-  const recent = requests.slice(0, 12);
+  const urgentIds = useMemo(
+    () => new Set(escalations.map((item) => item.request_id)),
+    [escalations],
+  );
+  const assignedIds = useMemo(
+    () => new Set(assigned.map((item) => item.id)),
+    [assigned],
+  );
+  const urgentRows = useMemo(
+    () =>
+      (requests || []).filter(
+        (item) =>
+          urgentIds.has(item.id) && OPEN_WORK.has(item.work_status || "open"),
+      ),
+    [requests, urgentIds],
+  );
+
+  const feed = useMemo(() => {
+    const open = (requests || []).filter((item) =>
+      OPEN_WORK.has(item.work_status || "open"),
+    );
+    const ranked = open
+      .map((item) => {
+        const lane = laneFor(item, assignedIds, urgentIds);
+        if (!lane) return null;
+        return { item, lane };
+      })
+      .filter(Boolean)
+      .sort((a, b) => {
+        const aTime = new Date(a.item.created_at || 0).getTime();
+        const bTime = new Date(b.item.created_at || 0).getTime();
+        return bTime - aTime;
+      });
+    if (filter === "assigned") {
+      return ranked.filter((row) => row.lane === "assigned");
+    }
+    if (filter === "urgent") {
+      return ranked.filter((row) => row.lane === "urgent");
+    }
+    return ranked;
+  }, [requests, assignedIds, urgentIds, filter]);
+
+  function toggleFilter(next) {
+    setFilter((prev) => (prev === next ? "all" : next));
+  }
+
+  // apple-design: Purpose; Agency; Simplicity — not minimalism; Feedback;
+  // Familiarity; Response — kill latency (6).
 
   return (
-    <div className="pf-page">
-      <header className="pf-head pf-head-stack">
+    <div className="pf-page pf-desk pf-desk-feed">
+      <header className="pf-head pf-desk-head">
         <div>
           <p className="pf-kicker">Teaching desk</p>
           <h1>Your desk</h1>
-          <p className="pf-line">
-            Assigned and urgent asks first. Patterns across the class live on{" "}
-            <Link to="/professor/insights">Insights</Link>; file approvals live on{" "}
-            <Link to="/professor">Material</Link>.
-          </p>
         </div>
       </header>
-      {error ? (
-        <p className="pf-error" role="alert">
-          {error}
-        </p>
-      ) : null}
 
-      <section className="pf-block" aria-label="Assigned to you">
-        <h2>Assigned to you</h2>
-        {noTa ? <p className="pf-line">This course has no TA, so these asks come to you.</p> : null}
-        {!ready ? <p className="pf-line">Loading asks…</p> : null}
-        {ready && !error && assigned.length === 0 ? (
-          <p className="pf-line">Nothing needs you right now.</p>
+      <div className="pf-desk-shell">
+        <div className="pf-desk-kpis" role="tablist" aria-label="Ask filters">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filter === "assigned"}
+            className={`pf-desk-kpi${filter === "assigned" ? " is-on" : ""}`}
+            onClick={() => toggleFilter("assigned")}
+          >
+            <strong>{assigned.length}</strong>
+            <span>Assigned</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filter === "urgent"}
+            className={`pf-desk-kpi pf-desk-kpi-urgent${
+              filter === "urgent" ? " is-on" : ""
+            }`}
+            onClick={() => toggleFilter("urgent")}
+          >
+            <strong>{urgentRows.length}</strong>
+            <span>Urgent</span>
+          </button>
+        </div>
+
+        {error ? (
+          <p className="pf-error" role="alert">
+            {error}
+          </p>
         ) : null}
-        {assigned.length > 0 ? (
-          <ul className="pf-ask-list">
-            {assigned.map((request) => (
-              <li key={request.id}>
-                <p className="pf-ask-title">{request.text}</p>
-                <p className="pf-meta">
-                  {personLabel(request)}
-                  {request.sensitive ? " · Sensitive" : ""}
-                  {request.urgency ? ` · ${request.urgency}` : ""}
-                </p>
-              </li>
+
+        <div className="pf-desk-feed-head">
+          <h2>Student asks</h2>
+          <div className="pf-desk-pills" role="group" aria-label="Feed filter">
+            {[
+              { id: "all", label: "All" },
+              { id: "urgent", label: "Urgent" },
+              { id: "assigned", label: "Assigned" },
+            ].map((pill) => (
+              <button
+                key={pill.id}
+                type="button"
+                className={`pf-desk-pill${filter === pill.id ? " is-on" : ""}`}
+                aria-pressed={filter === pill.id}
+                onClick={() => setFilter(pill.id)}
+              >
+                {pill.label}
+              </button>
             ))}
-          </ul>
-        ) : null}
-      </section>
+          </div>
+        </div>
 
-      {escalations.length > 0 ? (
-        <section className="pf-block" aria-label="Urgent and sensitive">
-          <h2>Urgent and sensitive</h2>
-          <ul className="pf-ask-list">
-            {escalations.map((item) => (
-              <li key={item.request_id}>
-                <p className="pf-ask-title">{item.text}</p>
-                <p className="pf-meta">
-                  {item.sensitive ? "Sensitive" : "Urgent"}
-                  {item.urgency ? ` · ${item.urgency}` : ""}
-                  {item.reason ? ` · ${item.reason}` : ""}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      <section className="pf-block" aria-label="Recent asks">
-        <button
-          type="button"
-          className="pf-quiet"
-          aria-expanded={showRecent}
-          onClick={() => setShowRecent((open) => !open)}
-        >
-          {showRecent ? "Hide recent asks" : "Show recent asks"}
-        </button>
-        {showRecent ? (
-          <>
-            {ready && recent.length === 0 ? <p className="pf-line">No asks yet.</p> : null}
-            {recent.length > 0 ? (
-              <table className="bh-table pf-stack-table">
-                <thead>
-                  <tr>
-                    <th>Question</th>
-                    <th>From</th>
-                    <th>Help</th>
-                    <th>Topic</th>
-                    <th>Flags</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recent.map((request) => (
-                    <tr key={request.id}>
-                      <td data-label="Question">{request.text}</td>
-                      <td data-label="From">{personLabel(request)}</td>
-                      <td data-label="Help">{helpLabel(request.help_mode)}</td>
-                      <td data-label="Topic">{(request.category || "-").replaceAll("_", " ")}</td>
-                      <td data-label="Flags">
-                        {request.sensitive ? "Sensitive" : request.anonymous ? "Anonymous" : "-"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : null}
-          </>
-        ) : null}
-      </section>
+        <div className="pf-desk-list" aria-live="polite">
+          {!ready ? <p className="pf-desk-empty">Loading asks…</p> : null}
+          {ready && feed.length === 0 ? (
+            <p className="pf-desk-empty">
+              All caught up — no pending student asks
+            </p>
+          ) : null}
+          {ready
+            ? feed.map(({ item, lane }) => (
+                <article key={item.id} className="pf-desk-row">
+                  <div className="pf-desk-row-main">
+                    <div className="pf-desk-row-tags">
+                      <span
+                        className={`pf-desk-status pf-desk-status-${lane}`}
+                      >
+                        {lane === "urgent" ? "Urgent" : "Assigned"}
+                      </span>
+                      <span className="pf-desk-topic">{topicLabel(item)}</span>
+                    </div>
+                    <p className="pf-desk-person">{personLabel(item)}</p>
+                    <p className="pf-desk-preview">{previewText(item)}</p>
+                  </div>
+                  <div className="pf-desk-row-side">
+                    <time className="pf-desk-age" dateTime={item.created_at}>
+                      {ageLabel(item.created_at)}
+                    </time>
+                    <Link className="pf-desk-reply" to="/professor/team">
+                      Reply
+                    </Link>
+                  </div>
+                </article>
+              ))
+            : null}
+        </div>
+      </div>
     </div>
   );
 }

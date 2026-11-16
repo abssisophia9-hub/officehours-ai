@@ -154,3 +154,56 @@ def test_anonymous_strips_identity_and_sensitive_flags():
         headers=_staff(),
     ).json()
     assert any(item["sensitive"] for item in escalations)
+
+
+def test_escalations_exclude_helped_asks():
+    """Resolved asks must not appear as 'Unresolved for N+ minutes' on Your desk."""
+    from datetime import datetime, timedelta, timezone
+
+    from app.database.session import SessionLocal
+    from app.models.request import Request
+    from tests.helpers import alice_auth
+
+    created = _post("Need a walkthrough of AVL rotations before the quiz.")
+    rid = created["id"]
+    course_id = created["course_id"]
+    ta, _ = alice_auth(client, "CSC 2302")
+    assert client.post("/ta/claim/", headers=ta, json={"request_id": rid}).status_code == 200
+    assert (
+        client.post(
+            "/ta/reply/",
+            headers=ta,
+            json={"request_id": rid, "reply": "Start with a small unbalanced tree."},
+        ).status_code
+        == 200
+    )
+    assert (
+        client.post(
+            "/ta/resolve/",
+            headers=ta,
+            json={
+                "request_id": rid,
+                "resolution_status": "resolved",
+                "teaching_notes": "Walked through rotations.",
+            },
+        ).status_code
+        == 200
+    )
+
+    with SessionLocal() as db:
+        row = db.query(Request).filter(Request.id == rid).one()
+        row.created_at = datetime.now(timezone.utc) - timedelta(days=3)
+        db.commit()
+
+    open_sensitive = _post(
+        "I am overwhelmed and panicking about failing, need private help.",
+        anonymous=True,
+    )
+    escalations = client.get(
+        f"/analytics/escalations?course=CSC%202302&course_id={course_id}",
+        headers=_staff(),
+    ).json()
+    ids = {item["request_id"] for item in escalations}
+    assert rid not in ids
+    assert open_sensitive["id"] in ids
+    assert all("Unresolved for" not in (item.get("reason") or "") for item in escalations)

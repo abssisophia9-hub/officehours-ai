@@ -40,6 +40,40 @@ Start here:
 # Community deploy: OFFICEHOURS_DEMO=false + live Canvas credentials
 ```
 
+### How to run on Windows (PowerShell)
+
+Use **two** PowerShell windows from the **repo root**. Do not paste `uvicorn` or
+`npm` flags by hand — the scripts set demo defaults.
+
+**One-time setup** (if `backend\venv` or frontend `node_modules` are missing):
+
+```powershell
+cd backend
+py -3.12 -m venv venv
+.\venv\Scripts\pip install torch --index-url https://download.pytorch.org/whl/cpu
+.\venv\Scripts\pip install -r requirements.txt
+cd ..\frontend\officehours-app
+npm ci
+cd ..\..
+```
+
+**Every time you run the product:**
+
+```powershell
+# Terminal 1 — API  →  http://127.0.0.1:8000
+.\scripts\start-backend.ps1
+
+# Terminal 2 — product app  →  http://127.0.0.1:5180
+.\scripts\start-frontend.ps1
+```
+
+`start-backend.ps1` sets `OFFICEHOURS_DEMO=true` and lexical clustering when
+unset, then runs `backend\venv\Scripts\uvicorn.exe`. `start-frontend.ps1` only
+`Set-Location`s to `frontend\officehours-app` and runs `npm run dev` (Vite
+port **5180**). Open http://127.0.0.1:5180 — demo login password **`aui-demo`**.
+`tzdata` is in `backend/requirements.txt` so `ZoneInfo("America/Los_Angeles")`
+works on Windows after a fresh `pip install -r requirements.txt`.
+
 ## Agents (custom-trained)
 
 | Surface | When it runs | Agents / modes |

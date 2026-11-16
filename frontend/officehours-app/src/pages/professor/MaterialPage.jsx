@@ -3,6 +3,16 @@ import { api, apiUpload } from "../../api/client.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
 import { useProfessorData } from "./ProfessorData.jsx";
 
+/** Matches backend `SUPPORTED_EXTENSIONS` in material_extract.py */
+const SUPPORTS_LINE =
+  "Supports PDF, DOCX, TXT, Markdown, VTT, and SRT captions.";
+
+const TABS = [
+  { id: "pending", label: "Pending" },
+  { id: "approved", label: "Approved" },
+  { id: "other", label: "Other" },
+];
+
 const STATUS_LABEL = {
   pending: "Pending",
   approved: "Approved",
@@ -20,6 +30,19 @@ function byRecent(a, b) {
   return bTime - aTime;
 }
 
+function formatWhen(iso) {
+  if (!iso) return null;
+  const t = new Date(iso);
+  if (Number.isNaN(t.getTime())) return null;
+  return t.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 function waitingFor(iso) {
   if (!iso) return null;
   const t = new Date(iso).getTime();
@@ -33,25 +56,20 @@ function waitingFor(iso) {
   return d === 1 ? "waiting 1 day" : `waiting ${d} days`;
 }
 
-function materialStatusLine({ ready, error, uploads, pendingCount, partlyCount }) {
-  if (!ready) return "Loading material…";
-  if (error && uploads.length === 0) return "Files could not be loaded.";
-  const parts = [];
-  if (pendingCount === 1) {
-    parts.push("1 file waits for your approval. Students can't see it yet.");
-  } else if (pendingCount > 1) {
-    parts.push(
-      `${pendingCount} files wait for your approval. Students can't see them yet.`,
-    );
-  }
-  if (partlyCount === 1) {
-    parts.push("1 file is partly approved. Students can see some of it.");
-  } else if (partlyCount > 1) {
-    parts.push(
-      `${partlyCount} files are partly approved. Students can see some of them.`,
-    );
-  }
-  return parts.length ? parts.join(" ") : "Everything is approved.";
+function uploadMeta(upload, entries) {
+  const chunks = (entries || []).filter(
+    (entry) => entry.upload_id === upload.upload_id,
+  );
+  const source =
+    chunks.find((entry) => entry.material_source)?.material_source || null;
+  const reviewed = chunks
+    .filter((entry) => entry.status === "approved" && entry.reviewed_at)
+    .map((entry) => entry.reviewed_at)
+    .sort();
+  return {
+    source,
+    approvedAt: reviewed.length ? reviewed[reviewed.length - 1] : null,
+  };
 }
 
 function canvasStatusLine(info) {
@@ -65,8 +83,10 @@ function canvasStatusLine(info) {
 
 export default function MaterialPage() {
   const { token, activeCourse } = useAuth();
-  const { uploads, entries, canvasInfo, error, setError, ready, reload } = useProfessorData();
+  const { uploads, entries, canvasInfo, error, setError, ready, reload } =
+    useProfessorData();
   const fileRef = useRef(null);
+  const [tab, setTab] = useState("pending");
   const [uploading, setUploading] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState("");
   const [rowNotes, setRowNotes] = useState({});
@@ -81,7 +101,7 @@ export default function MaterialPage() {
   const [materialTitle, setMaterialTitle] = useState("");
   const [materialContent, setMaterialContent] = useState("");
   const [pasting, setPasting] = useState(false);
-  const [showAllApproved, setShowAllApproved] = useState(false);
+  const [dropFocus, setDropFocus] = useState(false);
 
   useEffect(() => {
     setDuplicateWarning("");
@@ -94,25 +114,34 @@ export default function MaterialPage() {
     setImportNote("");
     setMaterialTitle("");
     setMaterialContent("");
-    setShowAllApproved(false);
+    setTab("pending");
   }, [activeCourse?.id]);
 
-  const pendingFiles = uploads.filter((item) => item.status === "pending").sort(byRecent);
+  const pendingFiles = uploads
+    .filter((item) => item.status === "pending")
+    .sort(byRecent);
   const partlyFiles = uploads
     .filter((item) => item.status === "partly_approved")
     .sort(byRecent);
-  const approvedFiles = uploads.filter((item) => item.status === "approved").sort(byRecent);
-  const rejectedFiles = uploads.filter((item) => item.status === "rejected").sort(byRecent);
-  const shownApproved = showAllApproved ? approvedFiles : approvedFiles.slice(0, 5);
-  const rows = [...pendingFiles, ...partlyFiles, ...shownApproved, ...rejectedFiles];
-  const statusLine = materialStatusLine({
-    ready,
-    error,
-    uploads,
-    pendingCount: pendingFiles.length,
-    partlyCount: partlyFiles.length,
-  });
-  const needsAttention = pendingFiles.length + partlyFiles.length > 0;
+  const approvedFiles = uploads
+    .filter((item) => item.status === "approved")
+    .sort(byRecent);
+  const rejectedFiles = uploads
+    .filter((item) => item.status === "rejected")
+    .sort(byRecent);
+  const otherFiles = [...partlyFiles, ...rejectedFiles].sort(byRecent);
+
+  const tabCounts = {
+    pending: pendingFiles.length,
+    approved: approvedFiles.length,
+    other: otherFiles.length,
+  };
+  const tabFiles =
+    tab === "approved"
+      ? approvedFiles
+      : tab === "other"
+        ? otherFiles
+        : pendingFiles;
 
   function note(uploadId, text) {
     setRowNotes((prev) => ({ ...prev, [uploadId]: text }));
@@ -142,7 +171,10 @@ export default function MaterialPage() {
         formData.append("course_id", String(activeCourse.id));
         formData.append("auto_approve", "false");
         formData.append("file", file);
-        const result = await apiUpload("/knowledge/materials/upload", { token, formData });
+        const result = await apiUpload("/knowledge/materials/upload", {
+          token,
+          formData,
+        });
         if (result.upload_id) {
           note(
             result.upload_id,
@@ -150,6 +182,7 @@ export default function MaterialPage() {
           );
         }
       }
+      setTab("pending");
       await reload();
     } catch (err) {
       setError(err.message || "The upload failed. Try again.");
@@ -234,8 +267,11 @@ export default function MaterialPage() {
         setImportNote(
           "Imported. These files are pending. Students can't see them until you approve each one.",
         );
+        setTab("pending");
       } else {
-        setImportNote("No new Canvas files. Students only see what you already approved.");
+        setImportNote(
+          "No new Canvas files. Students only see what you already approved.",
+        );
       }
       await reload();
     } catch (err) {
@@ -268,6 +304,7 @@ export default function MaterialPage() {
       setMaterialTitle("");
       setMaterialContent("");
       setPasteOpen(false);
+      setTab("pending");
       await reload();
     } catch (err) {
       setError(err.message || "Could not save that text.");
@@ -276,23 +313,42 @@ export default function MaterialPage() {
     }
   }
 
+  function onTabKey(event) {
+    const order = TABS.map((item) => item.id);
+    const index = order.indexOf(tab);
+    if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+      event.preventDefault();
+      const delta = event.key === "ArrowRight" ? 1 : -1;
+      const next = order[(index + delta + order.length) % order.length];
+      setTab(next);
+      requestAnimationFrame(() => {
+        document.getElementById(`pf-mat-tab-${next}`)?.focus();
+      });
+    }
+  }
+
   const canvasFiles = canvasInfo?.available_files || [];
+  const emptyCopy =
+    tab === "approved"
+      ? "No approved files yet."
+      : tab === "other"
+        ? "No rejected or partly approved files."
+        : "No pending files. Upload or import to review.";
 
   return (
-    <div className="pf-page">
+    <div className="pf-page pf-material">
       <header className="pf-head pf-head-stack">
         <div>
           <p className="pf-kicker">Study Agent source</p>
           <h1>Material</h1>
           <p className="pf-line">
-            Approve files so the Study Agent can quote them for students.
-            Waiting uploads stay at the top until you act - each row shows how long
-            it has been waiting.
+            Approve files so the Study Agent can quote them for students. Only
+            approved files are used to answer students.
           </p>
         </div>
         <button
           type="button"
-          className="btn-primary pf-primary"
+          className="btn-ghost pf-btn pf-primary"
           disabled={uploading}
           onClick={() => fileRef.current?.click()}
         >
@@ -313,9 +369,6 @@ export default function MaterialPage() {
         />
       </header>
 
-      <p className={`pf-status${needsAttention ? " pf-status-wait" : ""}`} role="status">
-        {statusLine}
-      </p>
       {error ? (
         <p className="pf-error" role="alert">
           {error}
@@ -327,12 +380,79 @@ export default function MaterialPage() {
         </p>
       ) : null}
 
-      {ready && rows.length === 0 ? <p className="pf-line">No files yet.</p> : null}
+      <div
+        className={`pf-dropzone${uploading ? " is-busy" : ""}${
+          dropFocus ? " is-focus" : ""
+        }`}
+        role="button"
+        tabIndex={0}
+        aria-label="Upload course material. Press Enter to choose files, or drop files here."
+        onFocus={() => setDropFocus(true)}
+        onBlur={() => setDropFocus(false)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            fileRef.current?.click();
+          }
+        }}
+        onDragOver={(event) => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "copy";
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          uploadChosen(event.dataTransfer.files);
+        }}
+      >
+        <p className="pf-dropzone-title">Drop files here</p>
+        <p className="pf-line">{SUPPORTS_LINE}</p>
+        <button
+          type="button"
+          className="btn-ghost pf-btn"
+          disabled={uploading}
+          onClick={() => fileRef.current?.click()}
+        >
+          {uploading ? "Uploading…" : "Choose files"}
+        </button>
+      </div>
 
-      {rows.length > 0 ? (
-        <div className="pf-files">
+      <div
+        className="pf-mat-tabs"
+        role="tablist"
+        aria-label="Material status"
+        onKeyDown={onTabKey}
+      >
+        {TABS.map((item) => (
+          <button
+            key={item.id}
+            id={`pf-mat-tab-${item.id}`}
+            type="button"
+            role="tab"
+            aria-selected={tab === item.id}
+            aria-controls={`pf-mat-panel-${item.id}`}
+            tabIndex={tab === item.id ? 0 : -1}
+            className={`pf-mat-tab${tab === item.id ? " is-on" : ""}`}
+            onClick={() => setTab(item.id)}
+          >
+            {item.label}
+            <span className="pf-mat-tab-count">{tabCounts[item.id]}</span>
+          </button>
+        ))}
+      </div>
+
+      <div
+        id={`pf-mat-panel-${tab}`}
+        role="tabpanel"
+        aria-labelledby={`pf-mat-tab-${tab}`}
+        className="pf-mat-panel"
+      >
+        {!ready ? <p className="pf-line">Loading material…</p> : null}
+        {ready && tabFiles.length === 0 ? (
+          <p className="pf-line">{emptyCopy}</p>
+        ) : null}
+        {tabFiles.length > 0 ? (
           <FileTable
-            uploads={[...pendingFiles, ...partlyFiles, ...shownApproved]}
+            uploads={tabFiles}
             entries={entries}
             rowNotes={rowNotes}
             openMenu={openMenu}
@@ -346,36 +466,13 @@ export default function MaterialPage() {
             rejectUpload={rejectUpload}
             approveChunk={approveChunk}
           />
-          {approvedFiles.length > 5 && !showAllApproved ? (
-            <button type="button" className="pf-quiet pf-show-all" onClick={() => setShowAllApproved(true)}>
-              Show all {approvedFiles.length} approved files
-            </button>
-          ) : null}
-          {rejectedFiles.length > 0 ? (
-            <FileTable
-              uploads={rejectedFiles}
-              entries={entries}
-              rowNotes={rowNotes}
-              openMenu={openMenu}
-              reviewId={reviewId}
-              rejectId={rejectId}
-              busyId={busyId}
-              setOpenMenu={setOpenMenu}
-              setReviewId={setReviewId}
-              setRejectId={setRejectId}
-              approveUpload={approveUpload}
-              rejectUpload={rejectUpload}
-              approveChunk={approveChunk}
-              hideHead
-            />
-          ) : null}
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
-      <div className="pf-secondary">
+      <div className="pf-secondary pf-material-actions">
         <button
           type="button"
-          className="pf-quiet"
+          className="btn-ghost pf-btn"
           aria-expanded={canvasOpen}
           onClick={() => setCanvasOpen((open) => !open)}
         >
@@ -383,7 +480,7 @@ export default function MaterialPage() {
         </button>
         <button
           type="button"
-          className="pf-quiet"
+          className="btn-ghost pf-btn"
           aria-expanded={pasteOpen}
           onClick={() => setPasteOpen((open) => !open)}
         >
@@ -396,7 +493,9 @@ export default function MaterialPage() {
           <p>{canvasStatusLine(canvasInfo)}</p>
           {canvasFiles.length > 0 ? (
             <p className="pf-line">
-              {canvasFiles.length === 1 ? "1 Canvas file" : `${canvasFiles.length} Canvas files`}
+              {canvasFiles.length === 1
+                ? "1 Canvas file"
+                : `${canvasFiles.length} Canvas files`}
             </p>
           ) : null}
           {canvasFiles.length > 0 ? (
@@ -409,7 +508,12 @@ export default function MaterialPage() {
               ))}
             </ul>
           ) : null}
-          <button type="button" className="btn-ghost pf-btn" disabled={importing} onClick={importCanvas}>
+          <button
+            type="button"
+            className="btn-ghost pf-btn"
+            disabled={importing}
+            onClick={importCanvas}
+          >
             {importing ? "Importing…" : "Import"}
           </button>
           {importNote ? (
@@ -466,12 +570,11 @@ function FileTable({
   approveUpload,
   rejectUpload,
   approveChunk,
-  hideHead = false,
 }) {
   if (!uploads.length) return null;
   return (
     <div className="pf-file-table" role="table" aria-label="Course material">
-      <div className={`pf-file pf-file-head${hideHead ? " pf-file-head-sr" : ""}`} role="row">
+      <div className="pf-file pf-file-head" role="row">
         <span role="columnheader">File</span>
         <span role="columnheader">Status</span>
         <span role="columnheader">Students see</span>
@@ -481,6 +584,7 @@ function FileTable({
         <FileRow
           key={upload.upload_id}
           upload={upload}
+          meta={uploadMeta(upload, entries)}
           entries={entries.filter((entry) => entry.upload_id === upload.upload_id)}
           noteText={rowNotes[upload.upload_id] || ""}
           menuOpen={openMenu === upload.upload_id}
@@ -490,11 +594,15 @@ function FileTable({
           chunkBusyId={busyId}
           onToggleMenu={() => {
             setRejectId(null);
-            setOpenMenu((current) => (current === upload.upload_id ? null : upload.upload_id));
+            setOpenMenu((current) =>
+              current === upload.upload_id ? null : upload.upload_id,
+            );
           }}
           onCloseMenu={() => setOpenMenu(null)}
           onReview={() => {
-            setReviewId((current) => (current === upload.upload_id ? null : upload.upload_id));
+            setReviewId((current) =>
+              current === upload.upload_id ? null : upload.upload_id,
+            );
             setOpenMenu(null);
           }}
           onAskReject={() => {
@@ -513,6 +621,7 @@ function FileTable({
 
 function FileRow({
   upload,
+  meta,
   entries,
   noteText,
   menuOpen,
@@ -536,14 +645,23 @@ function FileRow({
   const label = STATUS_LABEL[upload.status] || "Pending";
   const waiting = needsApproval(upload);
   const chunks = [...entries].sort(
-    (a, b) => (a.page_number || 0) - (b.page_number || 0) || (a.chunk_index || 0) - (b.chunk_index || 0),
+    (a, b) =>
+      (a.page_number || 0) - (b.page_number || 0) ||
+      (a.chunk_index || 0) - (b.chunk_index || 0),
   );
+  const uploadedLabel = formatWhen(upload.uploaded_at);
+  const approvedLabel = formatWhen(meta.approvedAt);
 
   useEffect(() => {
     if (!menuOpen) return undefined;
     menuRef.current?.querySelector("[role='menuitem']")?.focus();
     function onDoc(event) {
-      if (menuRef.current?.contains(event.target) || moreRef.current?.contains(event.target)) return;
+      if (
+        menuRef.current?.contains(event.target) ||
+        moreRef.current?.contains(event.target)
+      ) {
+        return;
+      }
       onCloseMenu();
     }
     function onKey(event) {
@@ -579,11 +697,22 @@ function FileRow({
   return (
     <article className="pf-file-block">
       <div className="pf-file" role="row">
-        <p className="pf-filename" role="cell">
-          {upload.filename}
-        </p>
+        <div className="pf-filename" role="cell">
+          <p className="pf-filename-name">{upload.filename}</p>
+          <p className="pf-file-meta">
+            {[
+              uploadedLabel ? `Uploaded ${uploadedLabel}` : null,
+              meta.source ? `Source · ${meta.source}` : null,
+              approvedLabel ? `Approved ${approvedLabel}` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        </div>
         <p className="pf-cell" role="cell">
-          <span className={`pf-state${waiting ? " pf-state-wait" : ""}`}>{label}</span>
+          <span className={`pf-state${waiting ? " pf-state-wait" : ""}`}>
+            {label}
+          </span>
           {waiting && waitingFor(upload.uploaded_at) ? (
             <span className="pf-wait-age">{waitingFor(upload.uploaded_at)}</span>
           ) : null}
@@ -594,7 +723,12 @@ function FileRow({
         </p>
         <div className="pf-actions" role="cell">
           {waiting ? (
-            <button type="button" className="pf-approve" disabled={busy} onClick={onApprove}>
+            <button
+              type="button"
+              className="btn-ghost pf-btn"
+              disabled={busy}
+              onClick={onApprove}
+            >
               Approve
             </button>
           ) : null}
@@ -610,12 +744,28 @@ function FileRow({
             More
           </button>
           {menuOpen ? (
-            <div ref={menuRef} id={menuId} className="pf-menu" role="menu" onKeyDown={onMenuKey}>
-              <button type="button" className="pf-menu-item" role="menuitem" onClick={onReview}>
+            <div
+              ref={menuRef}
+              id={menuId}
+              className="pf-menu"
+              role="menu"
+              onKeyDown={onMenuKey}
+            >
+              <button
+                type="button"
+                className="pf-menu-item"
+                role="menuitem"
+                onClick={onReview}
+              >
                 {reviewOpen ? "Hide sections" : "Review sections"}
               </button>
               {upload.status !== "rejected" ? (
-                <button type="button" className="pf-menu-item" role="menuitem" onClick={onAskReject}>
+                <button
+                  type="button"
+                  className="pf-menu-item"
+                  role="menuitem"
+                  onClick={onAskReject}
+                >
                   Reject
                 </button>
               ) : null}
@@ -629,13 +779,27 @@ function FileRow({
         </p>
       ) : null}
       {rejectOpen ? (
-        <div className="pf-confirm" role="alertdialog" aria-label={`Reject ${upload.filename}`}>
+        <div
+          className="pf-confirm"
+          role="alertdialog"
+          aria-label={`Reject ${upload.filename}`}
+        >
           <p>Reject {upload.filename}? Students won't see it.</p>
           <div className="pf-actions">
-            <button ref={rejectRef} type="button" className="pf-approve" disabled={busy} onClick={onReject}>
+            <button
+              ref={rejectRef}
+              type="button"
+              className="btn-primary pf-btn"
+              disabled={busy}
+              onClick={onReject}
+            >
               Reject
             </button>
-            <button type="button" className="btn-ghost pf-btn" onClick={onCancelReject}>
+            <button
+              type="button"
+              className="btn-ghost pf-btn"
+              onClick={onCancelReject}
+            >
               Cancel
             </button>
           </div>
@@ -647,7 +811,7 @@ function FileRow({
           {chunks.map((entry) => (
             <li key={entry.id}>
               <p className="pf-chunk-page">
-                {entry.page_number != null ? `Page ${entry.page_number}` : "Page  - "}
+                {entry.page_number != null ? `Page ${entry.page_number}` : "Page —"}
               </p>
               <p className="pf-chunk-text">{entry.answer_draft}</p>
               {entry.status === "approved" ? (
@@ -655,7 +819,7 @@ function FileRow({
               ) : (
                 <button
                   type="button"
-                  className="pf-approve"
+                  className="btn-ghost pf-btn"
                   disabled={chunkBusyId === `chunk-${entry.id}`}
                   onClick={() => onApproveChunk(entry)}
                 >

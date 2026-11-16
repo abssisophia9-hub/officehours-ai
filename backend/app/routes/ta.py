@@ -497,7 +497,10 @@ async def reply_to_student(
     request.ta_replied_at = _utcnow()
     if payload.update_student_hint:
         request.student_hint = reply
-    if str(getattr(request, "work_status", None) or "open") == "open":
+    work = str(getattr(request, "work_status", None) or "open")
+    # Reply means help is underway — keep claimed/open in sync as in_progress
+    # so student My asks, TA Live Queue, and professor desk share one status.
+    if work in {"open", "claimed"}:
         request.work_status = "in_progress"
         request.claimed_by = request.claimed_by or ta_name
         if not getattr(request, "claimed_by_user_id", None):

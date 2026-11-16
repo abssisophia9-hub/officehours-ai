@@ -38,7 +38,9 @@ from app.models.knowledge import (
     KnowledgeEntry,
     KnowledgeEntryOut,
     KnowledgeEntryUpdate,
+    StruggleAskOut,
     StruggleHeatmapOut,
+    StruggleMonitorOut,
 )
 from app.realtime.hub import hub
 from app.routes.auth import get_current_user
@@ -58,9 +60,11 @@ from app.services.agent_metrics_service import (
 from app.services.analytics_service import (
     build_cluster_command_center,
     build_escalation_feed,
+    build_struggle_monitor,
     build_triage_metrics,
     build_review_insights,
     build_struggle_heatmap,
+    struggle_monitor_asks,
     upsert_review_topic_note,
 )
 from app.services.canvas_service import canvas_status, sync_course_materials
@@ -538,6 +542,38 @@ def struggle_heatmap(
         require_course_role(db, user, course_id, roles={"professor", "ta"})
         return build_struggle_heatmap(db, course_ids=[course_id])
     return build_struggle_heatmap(db, course_ids=allowed)
+
+
+@router.get("/analytics/struggle-monitor", response_model=StruggleMonitorOut)
+def struggle_monitor(
+    course_id: int = Query(...),
+    range: str = Query(default="7d"),
+    topic: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Professor early-warning monitor (range + KPIs + asks/day + Needs you)."""
+    require_course_role(db, user, course_id, roles={"professor", "ta"})
+    return build_struggle_monitor(
+        db, course_id=course_id, range_key=range, topic=topic
+    )
+
+
+@router.get(
+    "/analytics/struggle-monitor/asks",
+    response_model=list[StruggleAskOut],
+)
+def struggle_monitor_topic_asks(
+    course_id: int = Query(...),
+    range: str = Query(default="7d"),
+    topic: str = Query(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    require_course_role(db, user, course_id, roles={"professor", "ta"})
+    return struggle_monitor_asks(
+        db, course_id=course_id, range_key=range, topic=topic
+    )
 
 
 @router.get("/analytics/escalations", response_model=list[EscalationItem])

@@ -91,6 +91,26 @@ _quota_day: str | None = None
 _quota_search_list: int = 0
 _quota_other_units: int = 0
 _persist_loaded = False
+# Last resource_search outcome for Pedagogy empty-state diagnostics (no keys).
+_last_search_reason: dict[str, Any] = {
+    "error_class": "ok",
+    "http_status": None,
+}
+
+
+def last_search_reason() -> dict[str, Any]:
+    """Return last search error_class + optional HTTP status (never keys)."""
+    with _lock:
+        return {
+            "error_class": str(_last_search_reason.get("error_class") or "ok"),
+            "http_status": _last_search_reason.get("http_status"),
+        }
+
+
+def _set_search_reason(error_class: str, http_status: int | None = None) -> None:
+    with _lock:
+        _last_search_reason["error_class"] = str(error_class or "ok")[:96]
+        _last_search_reason["http_status"] = http_status
 
 
 def _web_enabled() -> bool:
@@ -419,20 +439,58 @@ def topic_youtube_query(topic: str) -> str:
     return f"{t} data structures tutorial"[:200]
 
 
-def article_search(query: str, *, max_results: int = 4) -> list[dict[str, Any]]:
+def _query_variants(query: str, topic: str | None = None) -> list[str]:
+    """Topic-friendly OpenSearch variants (strip &, preference fluff leftovers)."""
+    out: list[str] = []
+    for raw in (query, topic or ""):
+        text = re.sub(r"[&/,]+", " ", (raw or "").strip())
+        text = re.sub(r"\s+", " ", text).strip()
+        if text and text.lower() not in {v.lower() for v in out}:
+            out.append(text)
+        # Prefer "red-black trees" shape when the label is "Trees & red-black".
+        parts = [p for p in re.split(r"[^a-zA-Z0-9-]+", text) if p]
+        if len(parts) >= 2:
+            flipped = " ".join(reversed(parts))
+            if flipped.lower() not in {v.lower() for v in out}:
+                out.append(flipped)
+    return out
+
+
+def article_search(
+    query: str, *, max_results: int = 4, topic: str | None = None
+) -> list[dict[str, Any]]:
     """Wikipedia first, DuckDuckGo fill on trusted hosts only."""
-    q = (query or "").strip()
-    if not q or not _web_enabled():
+    if not _web_enabled():
+        _set_search_reason("web_disabled")
         return []
-    hits = _wikipedia_opensearch(q, max_results=max_results)
-    if len(hits) < max_results:
-        extra = _duckduckgo_related(q, max_results=max_results - len(hits))
-        seen = {h["url"] for h in hits}
-        for row in extra:
-            if row["url"] not in seen and is_trusted_article_url(row["url"]):
+    variants = _query_variants(query, topic)
+    if not variants:
+        _set_search_reason("empty_query")
+        return []
+    hits: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for q in variants:
+        for row in _wikipedia_opensearch(q, max_results=max_results):
+            url = str(row.get("url") or "")
+            if url and url not in seen and is_trusted_article_url(url):
                 hits.append(row)
-                seen.add(row["url"])
-    return [h for h in hits if is_trusted_article_url(h["url"])][:max_results]
+                seen.add(url)
+            if len(hits) >= max_results:
+                break
+        if len(hits) >= max_results:
+            break
+        for row in _duckduckgo_related(q, max_results=max_results - len(hits)):
+            url = str(row.get("url") or "")
+            if url and url not in seen and is_trusted_article_url(url):
+                hits.append(row)
+                seen.add(url)
+            if len(hits) >= max_results:
+                break
+        if hits:
+            break
+    if not hits:
+        _set_search_reason("article_search_empty")
+    return hits[:max_results]
 
 
 def youtube_search(query: str, *, max_results: int = 4) -> list[dict[str, Any]]:
@@ -635,11 +693,20 @@ def _youtube_topic_pool_fetch(
             _record_quota(search_list=1)
             if response.status_code in {403, 429}:
                 logger.info("youtube search unavailable status=%s", response.status_code)
+                _set_search_reason("youtube_http_error", response.status_code)
+                _log_youtube_http(response.status_code)
+                return [], False
+            if response.status_code >= 400:
+                _set_search_reason("youtube_http_error", response.status_code)
+                _log_youtube_http(response.status_code)
                 return [], False
             response.raise_for_status()
             payload = response.json()
-    except (httpx.HTTPError, ValueError, TypeError):
+    except (httpx.HTTPError, ValueError, TypeError) as exc:
+        status = getattr(getattr(exc, "response", None), "status_code", None)
         logger.info("youtube search failed")
+        _set_search_reason("youtube_transport_error", status)
+        _log_youtube_http(status, error_class="youtube_transport_error")
         return [], False
 
     items = payload.get("items") if isinstance(payload, dict) else None
@@ -691,6 +758,24 @@ def _youtube_topic_pool_fetch(
     return hits, True
 
 
+def _log_youtube_http(
+    http_status: int | None, *, error_class: str = "youtube_http_error"
+) -> None:
+    try:
+        from app.services.ai_call_log import log_ai_call
+
+        log_ai_call(
+            agent="pedagogy",
+            tool="youtube_search",
+            status="error",
+            error_type=error_class[:96],
+            provider="youtube",
+            extra={"http_status": int(http_status) if http_status is not None else None},
+        )
+    except Exception:
+        logger.debug("ai_call_log youtube http emit skipped", exc_info=True)
+
+
 def resource_search(
     query: str,
     *,
@@ -704,8 +789,14 @@ def resource_search(
     applies learning preference over the shared topic pool afterwards.
     """
     q = (query or "").strip()
-    if not q or not _web_enabled():
+    if not _web_enabled():
+        _set_search_reason("web_disabled")
         return []
+    if not q and not (topic or "").strip():
+        _set_search_reason("empty_query")
+        return []
+
+    _set_search_reason("ok")
 
     # Article hits still keyed by query (+ optional preference label) so
     # preference-shaped article phrasing can differ; YouTube does not.
@@ -713,6 +804,7 @@ def resource_search(
         [
             "articles",
             (preference or "").strip().lower(),
+            (topic or "").strip().lower(),
             q.lower(),
         ]
     )
@@ -721,7 +813,8 @@ def resource_search(
     hits: list[dict[str, Any]] = []
     seen: set[str] = set()
 
-    video_budget = max(1, max_results // 2) if youtube_key_configured() else 0
+    yt_configured = youtube_key_configured()
+    video_budget = max(1, max_results // 2) if yt_configured else 0
     article_budget = max_results - video_budget if video_budget else max_results
 
     if video_budget:
@@ -733,11 +826,20 @@ def resource_search(
                 seen.add(url)
             if len(hits) >= video_budget:
                 break
+    elif not yt_configured:
+        # Articles-only path; note missing key without printing it.
+        _set_search_reason("youtube_key_missing")
 
     if cached_articles is not None:
         article_hits = cached_articles
     else:
-        article_hits = article_search(q, max_results=max(article_budget, 2))
+        article_hits = article_search(
+            q or (topic or ""),
+            max_results=max(article_budget, 2),
+            topic=topic,
+        )
+        if not article_hits and topic and topic.strip().lower() != q.lower():
+            article_hits = article_search(topic, max_results=max(article_budget, 2))
         _cache_set(article_key, article_hits)
 
     for row in article_hits:
@@ -747,7 +849,7 @@ def resource_search(
             seen.add(url)
 
     # Top-up from the same topic pool if articles were thin (no second search.list).
-    if len(hits) < max_results and youtube_key_configured():
+    if len(hits) < max_results and yt_configured:
         pool_topic = (topic or "").strip() or q
         for row in youtube_topic_pool(pool_topic, max_results=max_results):
             url = str(row.get("url") or "")
@@ -756,6 +858,14 @@ def resource_search(
                 seen.add(url)
             if len(hits) >= max_results:
                 break
+
+    if not hits:
+        if not yt_configured:
+            _set_search_reason("youtube_key_missing_and_articles_empty")
+        elif _last_search_reason.get("error_class") in {"ok", "youtube_key_missing"}:
+            _set_search_reason("search_empty")
+    elif hits and not yt_configured:
+        _set_search_reason("ok_articles_only")
 
     return hits[:max_results]
 
