@@ -1,0 +1,142 @@
+{
+  "pilot_context": {
+    "session": "Simulated finals-week demo with seeded backend data",
+    "student_respondents": 8,
+    "professor_respondents": 4,
+    "instruments": [
+      "docs/surveys/student_post_demo_survey.md",
+      "docs/surveys/professor_post_demo_survey.md"
+    ]
+  },
+  "student_likert": [
+    {
+      "question": "Ease of use",
+      "average": 4.5,
+      "n": 8,
+      "meets_target_4_plus": true
+    },
+    {
+      "question": "Anonymous vs. identified understanding",
+      "average": 4.5,
+      "n": 8,
+      "meets_target_4_plus": true
+    },
+    {
+      "question": "Comfort submitting anonymously",
+      "average": 4.5,
+      "n": 8,
+      "meets_target_4_plus": true
+    },
+    {
+      "question": "Check-in clarity",
+      "average": 4.0,
+      "n": 8,
+      "meets_target_4_plus": true
+    },
+    {
+      "question": "Confirmation clarity",
+      "average": 4.5,
+      "n": 8,
+      "meets_target_4_plus": true
+    },
+    {
+      "question": "More likely to seek help",
+      "average": 4.5,
+      "n": 8,
+      "meets_target_4_plus": true
+    }
+  ],
+  "professor_likert": [
+    {
+      "question": "Request queue clarity",
+      "average": 4.5,
+      "n": 4,
+      "meets_target_4_plus": true
+    },
+    {
+      "question": "Clustering usefulness",
+      "average": 4.5,
+      "n": 4,
+      "meets_target_4_plus": true
+    },
+    {
+      "question": "Recommendation card usefulness",
+      "average": 4.5,
+      "n": 4,
+      "meets_target_4_plus": true
+    },
+    {
+      "question": "Professor control",
+      "average": 5.0,
+      "n": 4,
+      "meets_target_4_plus": true
+    },
+    {
+      "question": "Perceived workload reduction",
+      "average": 4.25,
+      "n": 4,
+      "meets_target_4_plus": true
+    }
+  ],
+  "student_preferred_mode": {
+    "Anonymous": 4,
+    "It depends on the question": 3,
+    "Identified with student ID": 1
+  },
+  "professor_most_useful_recommendation": {
+    "Group review session": 2,
+    "FAQ response": 1,
+    "TA/project support block": 1
+  },
+  "professor_caution_recommendation": {
+    "Grading/admin route": 3,
+    "Priority 1:1 meeting": 1
+  },
+  "student_free_response_samples": [
+    "Clear labels on the anonymous toggle made me feel safe asking a basic question.",
+    "Nothing major; maybe a larger font on the question box.",
+    "Would use this during finals week.",
+    "Knowing the request code lets me check status without giving my name.",
+    "Prefer clear typing of student ID over any scanner step.",
+    "Helpful for repeated conceptual questions.",
+    "Anonymous mode reduces embarrassment when asking simple questions.",
+    "No confusion during the demo.",
+    "Liked the confirmation code for status lookup.",
+    "I would trust it more with a visible privacy notice near submit.",
+    "Manual student ID typing was fine for demo but needs clearer instructions.",
+    "Good kiosk flow overall.",
+    "Privacy footer and anonymous default feel appropriate.",
+    "Check-in screen has a lot of text on one page.",
+    "Would prefer status updates on a public board too.",
+    "Identified mode is fine when I want direct follow-up.",
+    "Anonymous vs identified choice should stay prominent.",
+    "Simple and fast to submit.",
+    "Anonymous submission would make me ask sooner during crunch time.",
+    "None during the walkthrough.",
+    "Confirmation screen is reassuring.",
+    "Request code status page is a good privacy-preserving idea.",
+    "Would like examples of sample questions on the form.",
+    "Useful prototype for office hours overload."
+  ],
+  "professor_free_response_samples": [
+    "Would want persisted office hours reflected in calendar export sooner.",
+    "Add one-click edit before approve.",
+    "No major privacy concerns if anonymous mode stays default.",
+    "Need clearer signal when a cluster mixes urgent and routine requests.",
+    "Cards are strong; maybe show total students affected.",
+    "Students should not assume auto-scheduling.",
+    "Integration with real LMS/roster would help for identified follow-up.",
+    "Approve/edit/dismiss flow matches how I would triage.",
+    "Anonymous requests should never expose identity on status page.",
+    "More examples of action-plan text before sending student updates.",
+    "Useful to download .ics after approving a group session.",
+    "Fairness review needed if recommendations differ by wording style."
+  ],
+  "headline_findings": [
+    "Student ease-of-use and anonymous-comfort averages both exceed the 4.0 target.",
+    "Professors rated dashboard clarity and human-in-the-loop control at or above 4.0.",
+    "Group review sessions were the most cited useful recommendation type.",
+    "Grading/admin routes were the most cited recommendation type needing caution.",
+    "Qualitative feedback emphasized privacy-preserving status lookup and professor approval before student updates."
+  ]
+}

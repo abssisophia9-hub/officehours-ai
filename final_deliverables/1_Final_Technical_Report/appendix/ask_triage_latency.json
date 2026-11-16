@@ -1,0 +1,41 @@
+{
+  "n": 5,
+  "clustering_backend": "lexical",
+  "mean_ms": 640.57,
+  "p50_ms": 62.57,
+  "p95_ms": 2378.86,
+  "max_ms": 2957.87,
+  "samples": [
+    {
+      "status_code": 201,
+      "elapsed_ms": 2957.87,
+      "category": "Red-Black Tree Deletion",
+      "assigned_ta": "Alice Chen"
+    },
+    {
+      "status_code": 201,
+      "elapsed_ms": 62.46,
+      "category": "Exam Logistics",
+      "assigned_ta": "Priya Nair"
+    },
+    {
+      "status_code": 201,
+      "elapsed_ms": 57.13,
+      "category": "Hash Tables",
+      "assigned_ta": "Priya Nair"
+    },
+    {
+      "status_code": 201,
+      "elapsed_ms": 62.83,
+      "category": "Conceptual Question",
+      "assigned_ta": "Bob Martinez"
+    },
+    {
+      "status_code": 201,
+      "elapsed_ms": 62.57,
+      "category": "Conceptual Question",
+      "assigned_ta": "Alice Chen"
+    }
+  ],
+  "note": "In-process TestClient latency with lexical clustering by default. Not a production load test; use for FYP evidence tables."
+}
