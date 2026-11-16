@@ -62,3 +62,14 @@ production-fix/
 **/screenshots/
 *.screenshot.png
 evidence/
+
+# Capstone demo video local tooling / renders (keys never here)
+final_deliverables/4_Demo_Video/.venv/
+final_deliverables/4_Demo_Video/raw/
+final_deliverables/4_Demo_Video/*.webm
+final_deliverables/4_Demo_Video/*.mp4
+final_deliverables/4_Demo_Video/audit/
+final_deliverables/4_Demo_Video/.env
+final_deliverables/4_Demo_Video/audit/
+final_deliverables/4_Demo_Video/cards/
+final_deliverables/4_Demo_Video/*.png
