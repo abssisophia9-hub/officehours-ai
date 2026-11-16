@@ -1,3 +1,5 @@
+Historical document, written for an earlier version of the product (the Revision Strategist is now the Pedagogy Agent)
+
 # OfficeHours AI — project journey (day 1 → this upgrade)
 
 Living history of the FYP product for Al Akhawayn University (AUI).

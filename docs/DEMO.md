@@ -128,10 +128,10 @@ Password for every demo account: `aui-demo`
 The study agent from the student side, in this order:
 
 1. Sign in as `a.benali@aui.ma`. On the opening page, choose **Sign in**. On **My Courses**, click the **CSC 2302** card whose pill says professor.
-2. Scroll to **Upload files directly**. Choose `backend/demo_data/demo_kettle_notes.pdf`. Click **Upload to course KB**. The message should mention 4 chunks.
-3. In **Knowledge Review**, click **Approve for student KB** on each of the four pending rows. The student agent sees nothing until those stamps exist. The terminal script approves all four in one call; the screen does it one row at a time.
+2. Open **Material**. Use **Upload file**. Choose `backend/demo_data/demo_kettle_notes.pdf`. The message should mention 4 chunks.
+3. On each pending row, click **Approve**. The student Study Agent sees nothing until those stamps exist. The terminal script approves all four in one call; the screen does it one row at a time.
 4. Sign out. Sign in as `s.elidrissi@aui.ma`. Click the **CSC 2302** card whose pill says student.
-5. Dismiss the “New here?” note if it appears. Click **Study Agent** (or scroll to **Ask stamped materials**).
+5. Dismiss the “New here?” note if it appears. Open **Study Agent** on the student home (`/student`).
 6. Ask `How many mugs can the circular queue hold?` and click **Ask agent**. Expect eight mugs, and a citation of `demo_kettle_notes.pdf, p. 2`.
 7. Ask `What is the chemical formula of sodium chloride?`. Expect the not-found text and the button **Turn this into a Quiet ask**.
 
@@ -165,7 +165,7 @@ Say this while the output appears. Do not read the failure list line by line.
 
 **The eval “fails” because it lists many questions.** That list is expected. Success is exit code 0, `separates=False`, and the hidden-page counts above.
 
-**The browser agent says it has no approved material.** The PDF was not stamped. Approve the four Knowledge Review rows, then ask again as Sara on CSC 2302. Asking before approval is the right “not yet” moment if you want to show the gate.
+**The browser agent says it has no approved material.** The PDF was not stamped. Approve the four Material rows, then ask again as Sara on CSC 2302. Asking before approval is the right “not yet” moment if you want to show the gate.
 
 ## Morning checklist
 
@@ -176,4 +176,4 @@ Say this while the output appears. Do not read the failure list line by line.
 5. From the project root: `backend/venv/bin/python scripts/run_study_slice.py`. Look for `3/3 answered, 3/3 not found` twice.
 6. `backend/venv/bin/python scripts/run_study_eval.py`. Look for `separates=False` and the approval/course sentences.
 7. If http://127.0.0.1:5180 is not already open, run `./scripts/run_product.sh`.
-8. Browser: professor stamps `demo_kettle_notes.pdf` on CSC 2302, then Sara asks the mug question and the salt question.
+8. Browser: professor stamps `demo_kettle_notes.pdf` on CSC 2302 under **Material**, then Sara asks the mug question and the salt question on **Study Agent**.

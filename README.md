@@ -1,126 +1,146 @@
 # OfficeHours AI
 
-Campus office-hours triage system for **Al Akhawayn University** (FYP).
+Campus office-hours help for **Al Akhawayn University** (FYP).
 
-Students, TAs, and professors use **one packaged web app**. Custom-trained
-**Ask Triage** agents (Analyzer → Matcher → Synthesizer) classify each ask at
-intake; **Help Coach** assists TAs while helping; the professor remains the
-gate for what students can retrieve from the knowledge base.
+During finals week, the same questions flood faculty while some students never
+ask. OfficeHours AI is one login for students, TAs, and professors. Role is
+**per course**. Custom **Ask Triage** classifies each ask at intake; TAs get
+**Help Coach** while helping; professors stamp what the Study Agent may quote.
 
-> **Naming:** product docs say **Ask Triage**. Some API fields, DB columns, and
-> the service module still use the historical prefix `oracle_*` /
-> `oracle_service.py` — same pipeline.
-
-## What is the final product?
-
-A **multi-role campus application** with login (or Canvas launch):
-
-- role is **per course** (a TA is staff on a course they already took)
-- Quiet ask or Identify me; message / face-to-face / online meeting
-- one workspace: `frontend/officehours-app` (port **5180**)
-
-**Community deploy path:** Canvas LTI (not AUI portal scraping, not manual
-enrollment as the main model). Physical kiosk / barcode / NFC hardware is
-**out of scope**.
-
-Start here:
-
-- [`docs/product_overview.md`](docs/product_overview.md) — how to demo **and** how to deploy
-- [`docs/glossary.md`](docs/glossary.md) — Ask Triage · Help Coach · **Rooms** · roles · status
-- [`docs/fyp_evidence.md`](docs/fyp_evidence.md) — what to claim in a defense
-- [`docs/README.md`](docs/README.md) — full documentation index
-- [`docs/project_journey.md`](docs/project_journey.md) — day 1 → current product
-- [`docs/system_architecture.md`](docs/system_architecture.md) — components + diagrams
-- [`diagrams/`](diagrams/) — architecture / workflow / Canvas / journey PNGs
+Start here: [`docs/product_overview.md`](docs/product_overview.md) ·
+[`docs/glossary.md`](docs/glossary.md) · [`docs/README.md`](docs/README.md) ·
+[`docs/SECURITY.md`](docs/SECURITY.md)
 
 ```bash
 ./scripts/run_product.sh
-# → http://127.0.0.1:5180
-# Demo walkthrough: OFFICEHOURS_DEMO=true (default in that script), password aui-demo
-# Community deploy: OFFICEHOURS_DEMO=false + live Canvas credentials
+# → http://127.0.0.1:5180  (API on :8000)
+# Local default: OFFICEHOURS_DEMO=true, password aui-demo
+# Hosted / community: OFFICEHOURS_DEMO=false + live Canvas
 ```
 
-### How to run on Windows (PowerShell)
+## Roles (what each does today)
 
-Use **two** PowerShell windows from the **repo root**. Do not paste `uvicorn` or
-`npm` flags by hand — the scripts set demo defaults.
+| Role | Surfaces |
+| --- | --- |
+| **Student** | Ask for help · My asks · Study Agent · Pedagogy Agent (with web Resources) · Rooms · Classmate notes · Inbox |
+| **TA** | Dashboard · Live Queue with Help Coach · Past asks · reply required before resolving |
+| **Professor** | Material approval · Your desk · Insights · Team |
 
-**One-time setup** (if `backend\venv` or frontend `node_modules` are missing):
+## Agents
+
+| Agent | What it does | How it is built | Sees | Must not | Enforced |
+| --- | --- | --- | --- | --- | --- |
+| **Ask Triage** | At ask submit: Analyzer → Matcher → Synthesizer | Trained local models (`backend/models/*.joblib`: embeddings + logistic regression; Synthesizer also RAG over the teaching bank). Default path is local — not a prompted Claude chat. Legacy Claude helpers remain in-tree for gated/optional paths only. | Ask text, course, roster context | Invent grades or publish KB answers | `ask_triage_service.py`; see [`docs/training_data.md`](docs/training_data.md), [`docs/fyp_evidence.md`](docs/fyp_evidence.md) |
+| **Help Coach** | While a TA is helping: similar opens, KB neighbors, teaching script, Socratic steps, draft/rewrite reply | **Retrieval** over a **68-row** curated teaching bank (+ approved KB). **Not trained.** A separate style classifier (`synthesizer_ranker.joblib`) may cue learning style upstream; coach suggestions themselves are bank/KB retrieval and templates — no LLM. | Claimed ask, triage fields, approved KB | Answer the student as course truth; publish without the TA | `help_coach_service.py` / `synthesizer_model.py`; [`docs/training_data.md`](docs/training_data.md) |
+| **Study Agent** | Answers from stamped course material | Retrieval over professor-approved KB; optional external **Gemini** (or Claude) quote/entailment check only when demo + LLM flags allow | Approved chunks + question | Quote unstamped material; invent answers when weak | Professor Material stamp; `agent_policy.py` / Orchestration Layer; [`docs/AGENT_POLICY.md`](docs/AGENT_POLICY.md), [`docs/fyp_evidence.md`](docs/fyp_evidence.md) |
+| **Pedagogy Agent** | Short focus plan from practice scores; web Resources | Rule plan + optional **Gemini** think/rank when allowed; Resources use Wikipedia / trusted search + **YouTube** when keyed | Practice scores, preferences, syllabus-ish topics — not real grades or names | Store or send real grades/names | `revision_service.py` / `revision_search.py`; demo/LLM gates |
+
+## Run locally
+
+**Product app only:** `frontend/officehours-app` (port **5180**).  
+Folders `frontend/student-kiosk/`, `frontend/professor-dashboard/`, and
+`frontend/ta-dashboard/` are **legacy** milestone shells — not the product CI
+target.
+
+### Windows (PowerShell), from repo root
 
 ```powershell
-cd backend
-py -3.12 -m venv venv
-.\venv\Scripts\pip install torch --index-url https://download.pytorch.org/whl/cpu
-.\venv\Scripts\pip install -r requirements.txt
-cd ..\frontend\officehours-app
-npm ci
-cd ..\..
-```
-
-**Every time you run the product:**
-
-```powershell
-# Terminal 1 — API  →  http://127.0.0.1:8000
+# Terminal 1 — API → http://127.0.0.1:8000
 .\scripts\start-backend.ps1
 
-# Terminal 2 — product app  →  http://127.0.0.1:5180
-.\scripts\start-frontend.ps1
+# Terminal 2 — app → http://127.0.0.1:5180
+cd frontend\officehours-app
+npm run dev
 ```
 
-`start-backend.ps1` sets `OFFICEHOURS_DEMO=true` and lexical clustering when
-unset, then runs `backend\venv\Scripts\uvicorn.exe`. `start-frontend.ps1` only
-`Set-Location`s to `frontend\officehours-app` and runs `npm run dev` (Vite
-port **5180**). Open http://127.0.0.1:5180 — demo login password **`aui-demo`**.
-`tzdata` is in `backend/requirements.txt` so `ZoneInfo("America/Los_Angeles")`
-works on Windows after a fresh `pip install -r requirements.txt`.
+(`.\scripts\start-frontend.ps1` also only runs `npm run dev` from that folder.)
 
-## Agents (custom-trained)
+One-time: create `backend\venv`, install CPU PyTorch then `requirements.txt`,
+`npm ci` in `frontend\officehours-app`. See [`docs/DEMO.md`](docs/DEMO.md).
 
-| Surface | When it runs | Agents / modes |
+### Demo accounts (`OFFICEHOURS_DEMO=true`)
+
+Password for all: **`aui-demo`**
+
+| Who | Email |
+| --- | --- |
+| Student (Sara) | `s.elidrissi@aui.ma` |
+| TA (Alice) | `a.chen@aui.ma` |
+| Professor (Benali) | `a.benali@aui.ma` |
+
+Full table: [`docs/product_overview.md`](docs/product_overview.md).
+
+### Backend `.env` (names only)
+
+Copy `backend/.env.example` → `backend/.env`. Common names:
+
+- `OFFICEHOURS_DEMO`, `OFFICEHOURS_CLUSTERING_BACKEND`
+- `CANVAS_BASE_URL`, `CANVAS_API_TOKEN` (never commit real values)
+- `GEMINI_API_KEY`, optional `PEDAGOGY_GEMINI_API_KEY`, `YOUTUBE_API_KEY`
+- LLM gates: `OFFICEHOURS_LLM_ENABLED`, `OFFICEHOURS_ALLOW_EXTERNAL_LLM`,
+  `OFFICEHOURS_LLM_PROVIDER`, `OFFICEHOURS_GEMINI_FREE_TIER_ACK`
+
+Frontend: `VITE_API_BASE` (see `frontend/officehours-app/.env.example`).
+
+**Without API keys:** Ask Triage / Help Coach stay local. Study Agent uses
+retrieval-only (no external check). Pedagogy falls back to the rule plan;
+Resources may be empty (or keyless Wikipedia/trusted articles only).
+
+## Modes
+
+| | Local FYP (`OFFICEHOURS_DEMO=true`) | Hosted / community (`false`) |
 | --- | --- | --- |
-| **Ask Triage** | `POST /requests/` (intake) | Analyzer → Matcher → Synthesizer |
-| **Help Coach** | `POST /ta/assist/` (while helping) | draft reply · Socratic · refresh script · rewrite |
-| **Study Agent** | `POST /agent/ask` | Approved KB only (professor gate) |
+| Default | `./scripts/run_product.sh` and `.env.example` | Host injects `OFFICEHOURS_DEMO=false` |
+| People / chapters | Demo seed + sample syllabus | Canvas / LTI provision; no hardcoded catalog |
+| External Gemini | Allowed only when LLM flags + key + free-tier ack are set | **Blocked** (`ALLOW_EXTERNAL_LLM` requires demo) |
+| Canvas | Optional local mirror if live token absent | Live `CANVAS_BASE_URL` + `CANVAS_API_TOKEN` |
 
-| Ask Triage agent | Model | Training data |
-| --- | --- | --- |
-| Analyzer | embeddings + LogReg | Labeled synthetic + CSC / multi-dept rows |
-| Matcher | embeddings + LogReg | Silver TA labels + supplements |
-| Synthesizer | RAG + style ranker | Teaching-bank + supplements |
+**Canvas LTI 1.3** code is in (`/lti/login`, `/lti/launch`). Production needs a
+Canvas developer key + API token from IT — unsigned `/canvas-demo` is demo-only.
+See [`docs/canvas_live_test.md`](docs/canvas_live_test.md).
 
-No prompted Claude / no `USE_MOCK_CLAUDE` on the assessed path. Details:
-[`docs/training_data.md`](docs/training_data.md),
-[`docs/agent_performance.md`](docs/agent_performance.md).
+Outbound hosts when enabled: Gemini
+(`generativelanguage.googleapis.com`), YouTube Data API
+(`googleapis.com/youtube`), Wikipedia, DuckDuckGo Instant Answer, Canvas REST,
+optional Anthropic / Microsoft login.
 
-## Problem
+## Limits
 
-Finals week floods faculty with repeated questions while some students hesitate
-to ask for help.
+- Not load-tested at real campus scale.
+- YouTube and Gemini quotas are the first ceilings.
+- Course sections follow Canvas courses.
+- Help Coach suggests teaching approaches; it does **not** answer course
+  questions for the student.
 
-## Solution highlights
+Measured notes: Project evidence pack `docs/evidence/README.md` and
+`docs/evidence/scaling-design.md` · in-repo
+[`docs/fyp_evidence.md`](docs/fyp_evidence.md) ·
+[`docs/ops_scale.md`](docs/ops_scale.md).
 
-- Anonymous or identified asks; message / face-to-face / online preference
-- Live WebSocket queues (signed in + subscribed to one course)
-- Ask Triage at intake + Help Coach while TAs help
-- TA staffing loop (claim → help → reply / group meeting → curation)
-- Shared **group meetings** for repeated clusters (same time/place on every
-  student’s request status)
-- Professor-approved knowledge base + student Study Agent
-- **Rooms** — course-scoped classmate forum (Problem / Discussion / Article),
-  Canvas-module chapters, named helpers on a Hilbert-weighted leaderboard
-- Classmate peer notes (study feed — does not train the agent)
-- Account menu: tour, report bug/issue (`POST /feedback/bugs`), log out
-- Canvas materials sync + launch provisioning (LTI hardening next)
+## Repo map
 
-## Tech stack
+| Path | Role |
+| --- | --- |
+| `backend/` | FastAPI API, models, Ask Triage / Help Coach / Study / Pedagogy |
+| `frontend/officehours-app/` | Product UI (React + Vite; Tailwind CSS v4 via Vite plugin) |
+| `frontend/student-kiosk/`, `professor-dashboard/`, `ta-dashboard/` | Legacy shells |
+| `docs/` | Product + defense docs |
+| `scripts/run_product.sh` | One-command local demo |
+| `data/` | Training CSVs / teaching bank (68 synthesizer rows) |
 
-- React + Tailwind — **product app `5180`** (legacy web shells: kiosk `5173`,
-  professor `5174`, TA `5175`)
-- FastAPI + SQLAlchemy + SQLite
-- sentence-transformers + scikit-learn
-- WebSockets for live push
+Classic `tailwind.config.js` exists only under legacy `student-kiosk`; the
+product app uses `@tailwindcss/vite`.
 
-## Cloud / agent operators
+## Tests
 
-See [`AGENTS.md`](AGENTS.md) for how to run backend tests and frontends in this
-environment (`OFFICEHOURS_CLUSTERING_BACKEND=lexical` for tests).
+```bash
+# Backend (from backend/)
+OFFICEHOURS_CLUSTERING_BACKEND=lexical DATABASE_URL=sqlite:///:memory: \
+  venv/bin/python -m pytest
+
+# Product app (from frontend/officehours-app/)
+npm ci && npm run build
+```
+
+CI builds **only** the backend and `officehours-app`. Cloud operators:
+[`AGENTS.md`](AGENTS.md). Security checklist: [`docs/SECURITY.md`](docs/SECURITY.md).

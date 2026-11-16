@@ -1,3 +1,5 @@
+Historical document, written for an earlier version of the product (the Revision Strategist is now the Pedagogy Agent)
+
 # Revision Agent — design (approved — LLM-in-loop)
 
 **Status:** shipped on `revision-agent` — Gemini-in-the-loop with rule fallback.  
