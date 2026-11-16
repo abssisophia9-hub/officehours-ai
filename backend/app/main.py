@@ -20,6 +20,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.database.migrate import ensure_schema
@@ -201,15 +202,53 @@ def read_root():
     return {"status": "ok", "service": "OfficeHours AI API"}
 
 
+# Env keys reported by /health as presence-only (never values).
+_HEALTH_ENV_KEYS = (
+    "GEMINI_API_KEY",
+    "PEDAGOGY_GEMINI_API_KEY",
+    "YOUTUBE_API_KEY",
+    "DATABASE_URL",
+    "CANVAS_BASE_URL",
+    "CANVAS_API_TOKEN",
+    "ANTHROPIC_API_KEY",
+)
+
+
+def _env_key_present(name: str) -> bool:
+    """True when the named env var is set and non-empty after strip."""
+    return bool((os.getenv(name) or "").strip())
+
+
+def _database_ok() -> bool:
+    """Probe DB connectivity with SELECT 1. No external network calls."""
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return True
+    except Exception:
+        return False
+
+
 @app.get("/health")
 def health_check():
-    return {
-        "status": "healthy",
+    """Liveness + DB probe + secret key presence (boolean only).
+
+    Never calls Gemini, YouTube, Canvas, or any other external API.
+    Never returns secret values — only whether each key is present.
+    """
+    db_ok = _database_ok()
+    payload = {
+        "status": "healthy" if db_ok else "unhealthy",
         "demo": demo_mode(),
         "database": engine.dialect.name,
+        "database_ok": db_ok,
         "rate_limit": os.getenv("OFFICEHOURS_RATE_LIMIT", "true").strip().lower()
         not in {"0", "false", "no", "off"},
+        "keys": {name: _env_key_present(name) for name in _HEALTH_ENV_KEYS},
     }
+    if not db_ok:
+        return JSONResponse(status_code=503, content=payload)
+    return payload
 
 
 app.include_router(auth_router)

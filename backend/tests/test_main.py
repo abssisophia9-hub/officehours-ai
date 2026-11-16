@@ -30,8 +30,28 @@ def test_read_root():
 def test_health_check():
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json()["status"] == "healthy"
-    assert "demo" in response.json()
+    body = response.json()
+    assert body["status"] == "healthy"
+    assert "demo" in body
+    assert body["database_ok"] is True
+    assert body["database"] == "sqlite"
+    assert isinstance(body["keys"], dict)
+    assert set(body["keys"]) == {
+        "GEMINI_API_KEY",
+        "PEDAGOGY_GEMINI_API_KEY",
+        "YOUTUBE_API_KEY",
+        "DATABASE_URL",
+        "CANVAS_BASE_URL",
+        "CANVAS_API_TOKEN",
+        "ANTHROPIC_API_KEY",
+    }
+    assert all(isinstance(v, bool) for v in body["keys"].values())
+    # DATABASE_URL is set by this module for in-memory tests.
+    assert body["keys"]["DATABASE_URL"] is True
+    # Never leak secret values into the health payload.
+    blob = response.text
+    for secretish in ("aui-demo", "sk-", "AIza"):
+        assert secretish not in blob
 
 
 def test_create_request():
