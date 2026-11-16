@@ -1,0 +1,77 @@
+OfficeHours AI: Multi-Role Campus Office-Hours Triage with Local NLP and Canvas Integration
+Student Name(s): Sophia Abssi   |   Degree: B.Sc. Computer Science (SSE)   |   Project Type:  ☑ Software Development   ☐ Research-Based
+Supervisor: TBD (Supervisor)   |   Co-Supervisor / Client: AUI Canvas LMS   |   Stage: Early Proposal   |   Date: Sep 2026
+Repositorygithub.com/abssisophia9-hub/officehours-ai
+SCHOOL OF SCIENCE & ENGINEERINGCAPSTONE PROJECT PROPOSAL / POSTER
+PROJECT OVERVIEW
+Finals-week ask overload. OfficeHours AI triages asks, staffs TAs, and stamps Study Agent answers—local NLP, Canvas-first.
+• Context / application area: AUI courses; students, TAs, professors at peak support demand
+• Proposed idea: React + FastAPI: Ask Triage, Help Coach, stamped Study Agent, Rooms, Canvas LTI
+• Expected contribution: Course-scoped triage, dual-TA staffing, KB stamp, demo→live Canvas path
+PROBLEM DEFINITION & RELEVANCE
+Lower ask barriers and repeat load while faculty stay the gate on AI answers.
+• Problem statement / research question: How can office hours cut repeat load without unconstrained AI?
+• Stakeholders / intended users: Students (Quiet ask, Rooms); TAs (queue, Help Coach); Professors (KB stamp)
+• Evidence, scope & constraints: Silver/synthetic labels; local ML; live Canvas needs IT + HTTPS; no scraping
+RELATED WORK, GAP & PROPOSED INNOVATION
+LMS inboxes and Piazza/Ed lack local triage, dual-TA match, and a stamp gate.
+• Existing work / alternatives: LMS inbox; Piazza/Ed; tutoring chatbots; FAQ bots without a stamp or dual-TA queue
+• Gap / unmet need: No Quiet ask + MiniLM triage + dual-TA staffing + professor stamp before student AI
+• Proposed innovation: Ask Triage + Help Coach + stamped Study Agent in one Canvas-linked app
+OBJECTIVES & PROPOSED SUCCESS CRITERIA
+Three objectives mapped to demo acceptance and one live Canvas checklist.
+Objective
+Planned Metric / Evidence
+Target / Criterion
+Objective 1: Triage and route asks to the right TA / help mode
+Routing quality (holdout + demo)
+Usable demo triage; cite holdouts carefully
+Objective 2: Keep Study Agent answers professor-gated
+Refuse unapproved / missing KB
+0 unauthorized Study Agent quotes
+Objective 3: Enable a Canvas-first campus deploy path
+LTI + module sync on one test course
+Live checklist pass on one AUI course
+PROPOSED SYSTEM / RESEARCH DESIGN
+Clients → FastAPI → Ask Triage / Help Coach / stamped Study Agent → SQL + Canvas LTI.
+• Software: React SPA; FastAPI; SQLite→Postgres; WebSockets; Quiet-ask privacy.
+• Models: MiniLM + LogReg + RAG joblibs; Strategist client-side until live grades.
+REQUIREMENTS & INITIAL WORK PLAN
+Demo path is implemented; live Canvas is gated on IT credentials.
+• Key requirements: Multi-role auth; Ask Triage; TA queue + Help Coach; KB stamp; Rooms; LTI/REST
+• Planned phases: (1) triage+roles (2) TA/KB gate (3) Rooms+demo (4) LTI live (5) Postgres/grades
+• Dependencies: Canvas LTI key + API token; optional Entra; HTTPS; one AUI test course
+METHODOLOGY / PROPOSED TECHNICAL APPROACH
+Local NLP + professor gate fits campus integrity better than open LLM tutoring.
+• Proposed methodology: Iterative prototyping with CI (backend + officehours-app)
+• Technologies / methods: FastAPI, React/Vite/Tailwind, SQLAlchemy, MiniLM, scikit-learn, WebSockets, LTI 1.3
+• Data / resources: Silver/synthetic asks; gold-label TA lab; demo Canvas mirror; live modules when enabled
+• Reproducibility / management: GitHub CI; docs/; train scripts; reports/; OFFICEHOURS_DEMO toggle
+PLANNED EVALUATION & VALIDATION
+Tests, holdouts, gold-label lab, role walkthroughs, live Canvas checklist — no final campus claims.
+• Validation approach: pytest; holdouts; gold-label TA lab; role walkthroughs; live Canvas checklist
+• Comparison / reference: LMS inbox/forum baseline; demo triage + 0 unauthorized quotes + one live course
+• Planned metrics: Routing quality (cite carefully); KB refusal; LTI success; latency; task completion
+PLANNED DELIVERABLES & PROJECT TIMELINE
+• Planned deliverables: Prototype; Ask Triage joblibs; diagrams; demo script; live checklist; Capstone report
+• Milestone 1: Problem / requirements / literature   →   Sep 2026
+• Milestone 2: Design / development / experimentation   →   Fall 2026
+• Milestone 3: Evaluation / refinement / finalization   →   Capstone deadline
+FEASIBILITY, RESOURCES & RISKS
+Feasible as staged demo→live. Main risk is campus credential latency.
+• Required resources: Laptop; GitHub; SQLite→Postgres; Canvas LTI/token; optional Entra; no GPU for MiniLM
+• Main feasibility concern / risk: IT delay on LTI/API/Entra; Strategist grades blocked until a live grade token
+• Mitigation / fallback: Demo Canvas mirror; one-course live stage; Postgres at go-live; Strategist stays client-side
+ETHICS, PRIVACY, SECURITY & RESPONSIBLE AI
+Privacy, security, and responsible AI are in scope for campus help.
+• Privacy / human participants: Quiet asks; course-scoped data; minimize PII; role auth; term retention
+• Cybersecurity / legal / standards: Auth+CORS; HTTPS; no scraping; Canvas LTI 1.3; least-privilege tokens
+• AI use plan: Local Ask Triage + Help Coach; Study Agent quotes stamped KB only; external LLM off
+• AI system risks if applicable: Label bias; triage miss→TA; stamp gate vs hallucination; course-auth limits misuse
+EXPECTED CONTRIBUTION & POTENTIAL IMPACT
+Expected contribution if successful — no unverified campus performance claims.
+• Expected technical / research contribution: Gated local-NLP office-hours triage with dual-TA staffing and stamped Study Agent
+• Potential value / impact: Safer faculty-controlled AI help; transferable to other LMS schools
+• Expected limitations / boundaries: Not SIS; not live-grade Strategist yet; not multilingual ChatGPT tutoring
+KEY REFERENCES
+[1] AUI finals-week office-hours need.   [2] Piazza / Ed Q&A.   [3] Canvas LTI 1.3; MiniLM; scikit-learn.

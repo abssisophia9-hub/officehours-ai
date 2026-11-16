@@ -50,3 +50,23 @@ https://github.com/abssisophia9-hub/officehours-ai/raw/cursor/supervisor-pitch-d
 | Professor | `a.benali@aui.ma` | Clusters · stamp KB · Canvas sync · agent after stamp |
 
 Full script: [`demo/demo_script.md`](../../demo/demo_script.md)
+
+
+
+
+
+---
+
+## Capstone proposal poster (SSE template)
+
+**Visuals first:** [`poster_visuals/`](poster_visuals/) — print-size PNGs. Open [`poster_visuals/index.html`](poster_visuals/index.html).
+
+| File | Use |
+| --- | --- |
+| [`poster_visuals/V01`–`V10`](poster_visuals/) | Walk-up figures (architecture, agents, pipeline, gap, roles, stamp gate, roadmap, evaluation, demo vs live, QR) |
+| [`poster_visuals/V11`–`V16`](poster_visuals/) | Full repo diagrams if a judge wants more detail |
+| [`poster_visuals/walkup_board.html`](poster_visuals/walkup_board.html) | All figures on one board |
+| [`OfficeHours_AI_Capstone_Poster.pdf`](OfficeHours_AI_Capstone_Poster.pdf) | One-page SSE poster with those figures |
+| [`OfficeHours_AI_Capstone_Poster.docx`](OfficeHours_AI_Capstone_Poster.docx) | Word / print |
+
+**Before print:** replace supervisor name. QR already links the GitHub repository.

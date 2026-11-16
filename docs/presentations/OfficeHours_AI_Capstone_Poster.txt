@@ -1,0 +1,11 @@
+OfficeHours AI Capstone Poster
+==============================
+Filled official SSE template. Figure boxes contain:
+  - Gap map (LMS/Piazza/chatbot vs OfficeHours)
+  - Architecture (app / FastAPI / Canvas / Ask Triage / professor gate)
+  - 5-phase roadmap
+  - Ask pipeline (Analyzer → Matcher → Synthesizer → TA → stamp → Study Agent)
+  - Evaluation framework
+  - Repository QR
+
+Open OfficeHours_AI_Capstone_Poster.pdf if Cursor cannot preview .docx.
