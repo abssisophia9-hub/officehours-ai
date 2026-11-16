@@ -251,8 +251,9 @@ async def wait_gone(page: Page, text: str, timeout: int = 120000) -> None:
 def write_card_svg(path: Path, kind: str) -> None:
     if kind == "intro":
         body = """
-        <text x="960" y="340" text-anchor="middle" font-family="Georgia, serif" font-size="64" fill="#F8F7F4">OfficeHours AI</text>
-        <text x="960" y="410" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="26" fill="#C9D5CC">Campus help rooms · Study Agent · Ask Triage · Help Coach</text>
+        <text x="960" y="280" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="18" letter-spacing="4" fill="#A8B5AC">DEMO VIDEO</text>
+        <text x="960" y="360" text-anchor="middle" font-family="Georgia, serif" font-size="64" fill="#F8F7F4">OfficeHours AI</text>
+        <text x="960" y="425" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="24" fill="#C9D5CC">Multi-Pathway Campus Helpdesk &amp; Pedagogical Intelligence</text>
         <text x="960" y="560" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="22" fill="#E2E0D8">Presented by Sophia Abssi</text>
         <text x="960" y="600" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" fill="#A8B5AC">Supervised by Dr. Oumaima Hourrane</text>
         <text x="960" y="660" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" fill="#A8B5AC">Al Akhawayn University (AUI)</text>
@@ -570,26 +571,172 @@ async def part_student(page: Page, marks: dict) -> None:
         await smooth_scroll(page, delta=240)
     await wait_idle(page, 1400)
 
-    # Rooms
+    # Rooms — browse filters, open a room, publish a classmate question
     await nav(page, "Rooms")
     await wait_idle(page, 1200)
-    await smooth_scroll(page, delta=320)
-    create = page.get_by_role("button", name=re.compile(r"New|Start|Post|Open", re.I))
-    if await create.count():
-        await click_locator(page, create.first)
-        await wait_idle(page, 1000)
-        # cancel / back if form opened
-        back = page.get_by_role("button", name=re.compile(r"Cancel|Back", re.I))
-        if await back.count():
+    # Tab filters
+    for tab_name in ("Unanswered", "Solved", "Newest"):
+        tab = page.get_by_role("tab", name=tab_name)
+        if await tab.count():
+            await click_locator(page, tab.first)
+            await wait_idle(page, 700)
+    # Chapter filter (Hashing when available)
+    chapter_filter = page.locator("label.rooms-chapter select, .rooms-filters select").first
+    if await chapter_filter.count():
+        options = await chapter_filter.locator("option").all_text_contents()
+        hashing = next((o for o in options if "Hash" in o), None)
+        if hashing:
+            await chapter_filter.select_option(label=hashing)
             await wait_idle(page, 900)
+            # reset to all chapters so the new post is visible
+            await chapter_filter.select_option(label="All chapters")
+            await wait_idle(page, 500)
+    # Top helpers glance
+    helpers = page.get_by_role("button", name=re.compile(r"Top helpers", re.I))
+    if await helpers.count():
+        await click_locator(page, helpers.first)
+        await wait_idle(page, 1400)
+        back = page.get_by_role("button", name=re.compile(r"Back", re.I))
+        if await back.count():
             await click_locator(page, back.first)
-    await wait_idle(page, 1000)
-
-    # Classmate notes
-    await nav(page, "Classmate notes")
-    await wait_idle(page, 1400)
+            await wait_idle(page, 700)
+    # Initiate a Room / Ask a question
+    ask_btn = page.get_by_role("button", name=re.compile(r"Ask a question", re.I))
+    await click_locator(page, ask_btn.first)
+    await wait_idle(page, 900)
+    form = page.locator("form.rooms-form")
+    await form.wait_for(state="visible", timeout=15000)
+    title_input = form.locator('label.rooms-field:has-text("Title") input, input').first
+    await human_type(
+        page,
+        title_input,
+        "Open addressing: why do probe sequences still collide under high load?",
+    )
+    details = form.locator('label.rooms-field:has-text("Details") textarea, textarea').first
+    await human_type(
+        page,
+        details,
+        "I understand the home bucket idea, but after a few inserts my linear probe "
+        "keeps landing on occupied slots. Looking for a classmate sketch of the sequence.",
+    )
+    tried = form.locator('label.rooms-field:has-text("What I tried") textarea').first
+    if await tried.count():
+        await human_type(
+            page,
+            tried,
+            "Drew a small table with load factor ~0.7 and stepped +1 — still stuck.",
+        )
+    chapter_sel = form.locator('label.rooms-field:has-text("Chapter") select, select').first
+    if await chapter_sel.count():
+        opts = await chapter_sel.locator("option").all_text_contents()
+        hashing = next((o for o in opts if "Hash" in o), None)
+        if hashing:
+            await chapter_sel.select_option(label=hashing)
+            await wait_idle(page, 400)
+    await click_locator(page, form.get_by_role("button", name=re.compile(r"^Post$")))
+    # Wait for thread or list with the new question
+    try:
+        await page.get_by_text(re.compile(r"probe sequences|Open addressing", re.I)).first.wait_for(
+            state="visible", timeout=30000
+        )
+    except Exception:
+        log("warn: rooms post not confirmed in UI")
+    await wait_idle(page, 1800)
     await smooth_scroll(page, delta=280)
     await wait_idle(page, 1200)
+    # If on thread, return to list to show the room in the feed
+    back_q = page.get_by_role("button", name=re.compile(r"Back to questions|Back", re.I))
+    if await back_q.count():
+        await click_locator(page, back_q.first)
+        await wait_idle(page, 1000)
+    await wait_idle(page, 1200)
+
+    # Classmate notes — share a note, then exercise filters
+    await nav(page, "Classmate notes")
+    await wait_idle(page, 1200)
+    await smooth_scroll(page, delta=200)
+    # Share form
+    share = page.locator("#peer-notes form, form").filter(has_text="Share your notes").first
+    if await share.count() == 0:
+        share = page.locator("#peer-notes").first
+    notes_root = page.locator("#peer-notes")
+    title_n = notes_root.locator('input[placeholder*="Title"]').first
+    await human_type(page, title_n, "Hashing open-addressing cheatsheet")
+    week = notes_root.locator('label:has-text("Week #") input').first
+    lecture = notes_root.locator('label:has-text("Lecture #") input').first
+    if await week.count():
+        await human_type(page, week, "4")
+    if await lecture.count():
+        await human_type(page, lecture, "2")
+    topic_sel = notes_root.locator("form label:has-text('Topic') select, form select").first
+    if await topic_sel.count():
+        await topic_sel.select_option(label="Hashing")
+    caption = notes_root.locator('textarea[placeholder*="caption" i]').first
+    if await caption.count():
+        await human_type(
+            page,
+            caption,
+            "One-page probe sequence + load-factor tips for CSC 2302.",
+        )
+    # Attach a small text note file
+    note_path = RAW_DIR / "hashing-cheatsheet.txt"
+    note_path.parent.mkdir(parents=True, exist_ok=True)
+    note_path.write_text(
+        "CSC 2302 — Open addressing\n"
+        "1. Home bucket from hash(key).\n"
+        "2. Linear probe steps +1; clustering rises with load factor.\n"
+        "3. Quadratic probe reduces primary clustering.\n",
+        encoding="utf-8",
+    )
+    file_input = notes_root.locator('input[type="file"]').first
+    if await file_input.count():
+        await file_input.set_input_files(str(note_path))
+        await wait_idle(page, 600)
+    await click_locator(
+        page, notes_root.get_by_role("button", name=re.compile(r"Share with classmates"))
+    )
+    try:
+        await page.get_by_text(re.compile(r"Hashing open-addressing|cheatsheet", re.I)).first.wait_for(
+            state="visible", timeout=30000
+        )
+    except Exception:
+        log("warn: shared note not visible yet")
+    await wait_idle(page, 1600)
+    await smooth_scroll(page, delta=420)
+    await wait_idle(page, 1000)
+
+    # Filters: search → topic → week → sort → my notes
+    search = notes_root.locator('input[placeholder*="Title or topic"]')
+    if await search.count():
+        await human_type(page, search.first, "Hashing")
+        await wait_idle(page, 1100)
+    # Browse filter Topic select (outside the share form)
+    topic_filters = notes_root.locator('label:has-text("Topic") select')
+    if await topic_filters.count() >= 2:
+        await topic_filters.nth(1).select_option(label="Hashing")
+        await wait_idle(page, 1000)
+    filter_week = notes_root.locator('label:has-text("Week") input').last
+    if await filter_week.count():
+        await filter_week.fill("")
+        await human_type(page, filter_week, "4")
+        await wait_idle(page, 900)
+    sort_sel = notes_root.locator('label:has-text("Sort") select')
+    if await sort_sel.count():
+        await sort_sel.select_option(label="Most liked")
+        await wait_idle(page, 800)
+        await sort_sel.select_option(label="Newest")
+        await wait_idle(page, 800)
+    box = notes_root.locator('label:has-text("My notes") input[type="checkbox"]')
+    if await box.count():
+        await click_locator(page, box.first)
+        await wait_idle(page, 1100)
+        await click_locator(page, box.first)
+        await wait_idle(page, 700)
+    if await search.count():
+        await search.first.fill("")
+        await wait_idle(page, 700)
+    await smooth_scroll(page, delta=260)
+    await wait_idle(page, 1400)
 
     await logout(page)
 
