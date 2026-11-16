@@ -269,6 +269,10 @@ export default function MaterialPage() {
     <div className="pf-page">
       <header className="pf-head">
         <h1>Material</h1>
+        <p className="pf-line">
+          Approve files so the Study Agent can use them through the Orchestration Layer.
+          Waiting uploads stay at the top until you act.
+        </p>
         <button
           type="button"
           className="btn-primary pf-primary"

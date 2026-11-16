@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { api } from "../../api/client.js";
-import { useAuth } from "../../auth/AuthContext.jsx";
+import { Link } from "react-router";
 import { assignedToProfessor, useProfessorData } from "./ProfessorData.jsx";
 
 function helpLabel(mode) {
@@ -15,46 +14,21 @@ function personLabel(request) {
 }
 
 export default function AsksPage() {
-  const { token } = useAuth();
-  const { requests, entries, commandCenter, noTa, ready, error, setError, reload } = useProfessorData();
-  const [busyId, setBusyId] = useState("");
-  const [approvedNotes, setApprovedNotes] = useState([]);
+  const { requests, commandCenter, noTa, ready, error } = useProfessorData();
+  const [showRecent, setShowRecent] = useState(false);
 
   const assigned = assignedToProfessor(requests);
   const escalations = commandCenter?.escalations || [];
-  const drafts = entries.filter(
-    (entry) => entry.status === "pending_review" && entry.entry_kind !== "course_material",
-  );
   const recent = requests.slice(0, 12);
-
-  async function approveDraft(entry) {
-    setBusyId(String(entry.id));
-    setError("");
-    try {
-      await api(`/knowledge/${entry.id}`, {
-        method: "PATCH",
-        token,
-        body: { status: "approved" },
-      });
-      setApprovedNotes((prev) => [
-        ...prev,
-        {
-          id: entry.id,
-          text: entry.question_text,
-        },
-      ]);
-      await reload();
-    } catch (err) {
-      setError(err.message || "Could not approve that answer.");
-    } finally {
-      setBusyId("");
-    }
-  }
 
   return (
     <div className="pf-page">
       <header className="pf-head">
-        <h1>Asks</h1>
+        <h1>Your desk</h1>
+        <p className="pf-line">
+          Asks assigned to you and urgent items first. Repeated topics live on{" "}
+          <Link to="/professor/insights">Insights</Link>.
+        </p>
       </header>
       {error ? (
         <p className="pf-error" role="alert">
@@ -104,68 +78,46 @@ export default function AsksPage() {
       ) : null}
 
       <section className="pf-block" aria-label="Recent asks">
-        <h2>Recent asks</h2>
-        {ready && recent.length === 0 ? <p className="pf-line">No asks yet.</p> : null}
-        {recent.length > 0 ? (
-          <table className="bh-table pf-stack-table">
-            <thead>
-              <tr>
-                <th>Question</th>
-                <th>From</th>
-                <th>Help</th>
-                <th>Topic</th>
-                <th>Flags</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recent.map((request) => (
-                <tr key={request.id}>
-                  <td data-label="Question">{request.text}</td>
-                  <td data-label="From">{personLabel(request)}</td>
-                  <td data-label="Help">{helpLabel(request.help_mode)}</td>
-                  <td data-label="Topic">{(request.category || "—").replaceAll("_", " ")}</td>
-                  <td data-label="Flags">
-                    {request.sensitive ? "Sensitive" : request.anonymous ? "Anonymous" : "—"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <button
+          type="button"
+          className="pf-quiet"
+          aria-expanded={showRecent}
+          onClick={() => setShowRecent((open) => !open)}
+        >
+          {showRecent ? "Hide recent asks" : "Show recent asks"}
+        </button>
+        {showRecent ? (
+          <>
+            {ready && recent.length === 0 ? <p className="pf-line">No asks yet.</p> : null}
+            {recent.length > 0 ? (
+              <table className="bh-table pf-stack-table">
+                <thead>
+                  <tr>
+                    <th>Question</th>
+                    <th>From</th>
+                    <th>Help</th>
+                    <th>Topic</th>
+                    <th>Flags</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recent.map((request) => (
+                    <tr key={request.id}>
+                      <td data-label="Question">{request.text}</td>
+                      <td data-label="From">{personLabel(request)}</td>
+                      <td data-label="Help">{helpLabel(request.help_mode)}</td>
+                      <td data-label="Topic">{(request.category || "—").replaceAll("_", " ")}</td>
+                      <td data-label="Flags">
+                        {request.sensitive ? "Sensitive" : request.anonymous ? "Anonymous" : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : null}
+          </>
         ) : null}
       </section>
-
-      {drafts.length > 0 || approvedNotes.length > 0 ? (
-        <section className="pf-block" aria-label="Suggested answers">
-          <h2>Suggested answers</h2>
-          <p className="pf-line">The study agent does not use these.</p>
-          <ul className="pf-ask-list">
-            {drafts.map((entry) => (
-              <li key={entry.id}>
-                <p className="pf-ask-title">{entry.question_text}</p>
-                <p className="pf-chunk-text">{entry.answer_draft}</p>
-                <button
-                  type="button"
-                  className="pf-approve"
-                  disabled={busyId === String(entry.id)}
-                  onClick={() => approveDraft(entry)}
-                >
-                  Approve
-                </button>
-              </li>
-            ))}
-            {approvedNotes
-              .filter((item) => !drafts.some((entry) => entry.id === item.id))
-              .map((item) => (
-                <li key={`done-${item.id}`}>
-                  <p className="pf-ask-title">{item.text}</p>
-                  <p className="pf-note" role="status">
-                    Approved. The study agent does not use these.
-                  </p>
-                </li>
-              ))}
-          </ul>
-        </section>
-      ) : null}
     </div>
   );
 }

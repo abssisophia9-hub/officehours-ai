@@ -64,6 +64,14 @@ export default function InsightsPage() {
   }
 
   const clusters = commandCenter?.clusters || [];
+  const clusterAskTotal = clusters.reduce(
+    (sum, cluster) => sum + Number(cluster.request_count || 0),
+    0,
+  );
+  const clusterBarMax = Math.max(
+    1,
+    ...clusters.map((cluster) => Number(cluster.request_count || 0)),
+  );
   const topics = reviewInsights?.topics || [];
   const visibleTopics = topics.filter((topic) => {
     if (insightFilter === "all") return true;
@@ -74,28 +82,6 @@ export default function InsightsPage() {
   });
   const asks = hitRate?.total_asks || 0;
   const answered = hitRate?.total_hits || 0;
-
-  async function draftFaq(cluster) {
-    setBusy(true);
-    setError("");
-    try {
-      await api("/knowledge/from-cluster", {
-        method: "POST",
-        token,
-        body: {
-          cluster_id: cluster.cluster_id,
-          course_id: activeCourse.id,
-          course: activeCourse.code,
-        },
-      });
-      setMessage("Suggested answer saved. The study agent does not use these.");
-      await reload();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function setInsightStatus(topic, reviewStatus) {
     setBusy(true);
@@ -142,24 +128,6 @@ export default function InsightsPage() {
       });
       setReviewInsights(updated);
       setMessage(`Saved a note for ${topic.label}.`);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function draftInsightFaq(topic) {
-    setBusy(true);
-    setError("");
-    try {
-      await api("/knowledge/from-insight", {
-        method: "POST",
-        token,
-        body: { course_id: activeCourse.id, topic_key: topic.topic_key },
-      });
-      setMessage("Suggested answer saved. The study agent does not use these.");
-      await reload();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -245,8 +213,42 @@ export default function InsightsPage() {
       <section className="pf-block" aria-label="Repeated topics">
         <h2>Repeated topics</h2>
         {!ready ? <p className="pf-line">Loading insights…</p> : null}
-        {ready && clusters.length === 0 ? <p className="pf-line">No repeated topics yet.</p> : null}
+        {ready && clusters.length === 0 ? (
+          <p className="pf-line">
+            No repeated topics yet. When several students ask about the same
+            idea, counts and share appear here.
+          </p>
+        ) : null}
         {clusters.length > 0 ? (
+          <>
+            <ul className="pf-bars" aria-label="Ask share by topic">
+              {[...clusters]
+                .sort(
+                  (a, b) =>
+                    Number(b.request_count || 0) - Number(a.request_count || 0),
+                )
+                .map((cluster) => {
+                  const count = Number(cluster.request_count || 0);
+                  const pct =
+                    clusterAskTotal > 0
+                      ? Math.round((count / clusterAskTotal) * 100)
+                      : 0;
+                  const width = Math.max(4, Math.round((count / clusterBarMax) * 100));
+                  return (
+                    <li key={`bar-${cluster.cluster_id}`}>
+                      <div className="pf-bars-label">
+                        <span>{cluster.title}</span>
+                        <span>
+                          {count} ask{count === 1 ? "" : "s"} · {pct}%
+                        </span>
+                      </div>
+                      <div className="pf-bars-track" aria-hidden="true">
+                        <span className="pf-bars-fill" style={{ width: `${width}%` }} />
+                      </div>
+                    </li>
+                  );
+                })}
+            </ul>
           <ul className="pf-ask-list">
             {clusters.map((cluster) => (
               <li key={cluster.cluster_id}>
@@ -278,14 +280,6 @@ export default function InsightsPage() {
                       {meetingDraft(cluster.cluster_id).open ? "Hide meeting form" : "Set a group meeting"}
                     </button>
                   ) : null}
-                  <button
-                    type="button"
-                    className="btn-ghost pf-btn"
-                    disabled={busy}
-                    onClick={() => draftFaq(cluster)}
-                  >
-                    Draft a suggested answer
-                  </button>
                 </div>
                 {meetingDraft(cluster.cluster_id).open ? (
                   <div className="pf-panel">
@@ -340,6 +334,7 @@ export default function InsightsPage() {
               </li>
             ))}
           </ul>
+          </>
         ) : null}
       </section>
 
@@ -407,14 +402,6 @@ export default function InsightsPage() {
                       onClick={() => setInsightStatus(topic, "covered")}
                     >
                       Mark covered
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-ghost pf-btn"
-                      disabled={busy}
-                      onClick={() => draftInsightFaq(topic)}
-                    >
-                      Draft a suggested answer
                     </button>
                   </div>
                   {openInsight === topic.topic_key ? (
