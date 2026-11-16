@@ -2,6 +2,7 @@
 
 | File | Use |
 | --- | --- |
+| [`capstone-poster.md`](capstone-poster.md) | **CFC 16:9 interactive poster** — open `/poster` (1920×1080, zero scroll) |
 | [`supervisor_vision_proposal.pptx`](supervisor_vision_proposal.pptx) | **Use this** for the supervisor meeting |
 | [`supervisor_technical_briefing.pptx`](supervisor_technical_briefing.pptx) | Same deck (compat filename) |
 
