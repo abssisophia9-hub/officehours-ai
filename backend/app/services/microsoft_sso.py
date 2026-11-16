@@ -44,11 +44,25 @@ def microsoft_enabled() -> bool:
 
 
 def frontend_url() -> str:
-    return _env("OFFICEHOURS_FRONTEND_URL") or "http://127.0.0.1:5180"
+    configured = _env("OFFICEHOURS_FRONTEND_URL")
+    if configured:
+        return configured.rstrip("/")
+    # Same-origin SPA under OFFICEHOURS_ROOT_PATH when the API serves the build.
+    from app.root_path import root_path
+
+    prefix = root_path()
+    if prefix and _env("OFFICEHOURS_SERVE_FRONTEND").lower() in {"1", "true", "yes", "on"}:
+        return f"http://127.0.0.1:8000{prefix}"
+    return "http://127.0.0.1:5180"
 
 
 def redirect_uri() -> str:
-    return _env("OFFICEHOURS_MS_REDIRECT_URI") or "http://127.0.0.1:8000/auth/microsoft/callback"
+    configured = _env("OFFICEHOURS_MS_REDIRECT_URI")
+    if configured:
+        return configured
+    from app.root_path import root_path
+
+    return f"http://127.0.0.1:8000{root_path()}/auth/microsoft/callback"
 
 
 def allowed_domain() -> str:

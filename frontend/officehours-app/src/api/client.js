@@ -1,4 +1,11 @@
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+// Local FYP default: separate Vite (:5180) → API (:8000).
+// CDN same-origin: build with VITE_API_BASE=/officehours-ai (and VITE_ROOT_PATH).
+const ROOT_PATH = (import.meta.env.VITE_ROOT_PATH || "").trim().replace(/\/$/, "");
+const API_BASE = (
+  import.meta.env.VITE_API_BASE !== undefined && import.meta.env.VITE_API_BASE !== ""
+    ? String(import.meta.env.VITE_API_BASE)
+    : ROOT_PATH || "http://127.0.0.1:8000"
+).replace(/\/$/, "");
 
 const GENERIC_REQUEST_ERROR = "Something went wrong. Please try again.";
 const GENERIC_UPLOAD_ERROR = "Upload failed. Please try again.";

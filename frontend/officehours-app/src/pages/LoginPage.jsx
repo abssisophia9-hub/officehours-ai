@@ -158,9 +158,9 @@ export default function LoginPage() {
           {demo ? (
             <p className="mt-4 text-center text-sm font-medium text-aui-deep/60">
               Coming from your LMS?{" "}
-              <a href="/canvas-demo" className="font-semibold text-aui-forest underline">
+              <Link to="/canvas-demo" className="font-semibold text-aui-forest underline">
                 Open from Canvas (one-click demo)
-              </a>
+              </Link>
             </p>
           ) : (
             <p className="mt-4 text-center text-sm font-medium text-aui-deep/60">
