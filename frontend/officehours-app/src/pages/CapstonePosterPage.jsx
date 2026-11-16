@@ -1,361 +1,246 @@
 import { useEffect, useMemo, useState } from "react";
 import "./capstone-poster.css";
 
+const BASE = import.meta.env.BASE_URL || "/";
+
+/** Verified from package.json + requirements.txt */
 const STACK = [
   "React",
   "Vite",
+  "Tailwind CSS v4",
   "FastAPI",
   "SQLAlchemy",
-  "SQLite/PostgreSQL",
-  "MiniLM",
+  "SQLite / PostgreSQL",
+  "sentence-transformers",
+  "MiniLM-L6-v2",
   "scikit-learn",
-  "Gemini",
-  "Canvas LTI/API",
-  "YouTube Data API",
+  "PyJWT",
+  "Canvas LTI 1.3",
+  "Gemini (optional)",
 ];
 
-const ARCH_NODES = [
-  {
-    id: "canvas",
-    label: "Canvas LMS Sync",
-    sub: "Materials · Grades · LTI 1.3",
-    x: 28,
-    y: 18,
-    w: 168,
-    h: 58,
-    accent: "canvas",
-  },
-  {
-    id: "client",
-    label: "Multi-Role Client",
-    sub: "Student · TA · Professor",
-    x: 230,
-    y: 18,
-    w: 168,
-    h: 58,
-    accent: "ink",
-  },
-  {
-    id: "api",
-    label: "FastAPI Orchestrator",
-    sub: "CallerContext · routers",
-    x: 432,
-    y: 18,
-    w: 176,
-    h: 58,
-    accent: "emerald",
-  },
-  {
-    id: "rag",
-    label: "Professor-Gated RAG",
-    sub: "Approved chunks only",
-    x: 28,
-    y: 108,
-    w: 168,
-    h: 58,
-    accent: "emerald",
-  },
-  {
-    id: "sla",
-    label: "Escalation & SLA",
-    sub: "State machine · timers",
-    x: 214,
-    y: 108,
-    w: 168,
-    h: 58,
-    accent: "brass",
-  },
-  {
-    id: "coach",
-    label: "TA Pedagogical Coach",
-    sub: "Help Coach mid-reply",
-    x: 400,
-    y: 108,
-    w: 176,
-    h: 58,
-    accent: "brass",
-  },
-  {
-    id: "planner",
-    label: "Study Planner",
-    sub: "Grades · style · scrape",
-    x: 594,
-    y: 108,
-    w: 156,
-    h: 58,
-    accent: "canvas",
-  },
-  {
-    id: "db",
-    label: "DB & Analytics",
-    sub: "Support · Knowledge · Identity",
-    x: 300,
-    y: 198,
-    w: 190,
-    h: 52,
-    accent: "ink",
-  },
-];
-
-const NODE_DETAILS = {
-  canvas: {
-    title: "Canvas LMS Sync",
-    inputs: "LTI 1.3 launch · NRPS roster · Files API · Grades API",
-    logic:
-      "Syncs approved course materials and grade gaps into Knowledge / Pedagogy paths. Session course_id comes from secure launch context, never from the model.",
-    guardrails:
-      "Read-only roster sync · course-scoped material · demo vs live Canvas via OFFICEHOURS_DEMO",
-  },
-  client: {
-    title: "Multi-Role Client",
-    inputs: "Session cookie · active course membership · role per course",
-    logic:
-      "One React SPA (officehours-app): student pathways, TA desk with Help Coach, professor Material / Insights / Team. No business logic in the browser beyond presentation.",
-    guardrails: "Role gates on routes · Quiet ask privacy · staff ≠ student of same course",
-  },
-  api: {
-    title: "FastAPI Orchestrator",
-    inputs: "HTTPS/JSON · WebSocket /ws · CallerContext(user, course, role, course_has_ta)",
-    logic:
-      "Registers auth, knowledge, requests, live, revision, and help-room routers. Modules call each other through service interfaces—not foreign table scans.",
-    guardrails: "Rate limits · validation · course_id from session only",
-  },
-  rag: {
-    title: "Professor-Gated Study Agent (RAG)",
-    inputs: "Student question · approved KB chunks · MiniLM / lexical retrieval",
-    logic:
-      "Retrieves only professor-stamped material for the caller’s course, then optional Gemini answer-check. Misses share one refusal sentence—no invented syllabus.",
-    guardrails:
-      "0% unapproved / other-course citation in gated eval (10/10 + 10/10) · answer-check 74/75 overall",
-  },
-  sla: {
-    title: "Escalation & SLA State Machine",
-    inputs: "Ask Triage matcher · course TA roster · estimated_wait_minutes",
-    logic:
-      "Tracks open → claimed → in_progress → answered with live wait timers on the TA desk. If the course has 0 TAs, assign_professor_when_no_ta routes to the professor.",
-    guardrails: "test_no_ta_routing PASS · no inventing demo TAs on real courses",
-  },
-  coach: {
-    title: "AI TA Pedagogical Coach (Help Coach)",
-    inputs: "Open ask text · similar open asks · approved KB neighbors · ask kind",
-    logic:
-      "While the TA drafts a reply, Help Coach suggests structured teaching moves (Socratic steps, clarify vs bank_rag) without auto-dumping into the reply box.",
-    guardrails: "Insert into Reply is explicit · local coaching path · mid-session only",
-  },
-  planner: {
-    title: "Adaptive Web-Scraping Study Planner",
-    inputs: "Canvas grades · preference (visual / step-by-step / examples) · custom duration",
-    logic:
-      "Pedagogy Agent ranks weak topics, searches YouTube/web with caps, and returns a timed plan. Scores never leak back to the client payload.",
-    guardrails: "Token/search caps · link_ok checks · PEDAGOGY_GEMINI_API_KEY split · no score echo",
-  },
-  db: {
-    title: "Relational DB & Analytics",
-    inputs: "SQLAlchemy models · identity / knowledge / support schemas",
-    logic:
-      "SQLite for local FYP; PostgreSQL for campus. Professor Insights aggregates ask volume, recurring confusion topics, and overdue SLA rows.",
-    guardrails: "Module table isolation · create_all on boot · DEMO seed accounts optional",
-  },
+/** Verified from AppShell SECTION_NAV + App.jsx routes + README roles table */
+const ROLES = {
+  student: [
+    { route: "/student", label: "Study Agent", file: "StudentAgentPage.jsx" },
+    { route: "/student/ask", label: "Ask for help", file: "StudentWorkspace.jsx" },
+    { route: "/student/asks", label: "My asks", file: "StudentAsksPage.jsx" },
+    { route: "/student/revision", label: "Pedagogy Agent", file: "StudentRevisionPage.jsx" },
+    { route: "/student/room", label: "Rooms", file: "StuckRoomPage.jsx" },
+    { route: "/student/notes", label: "Classmate Notes", file: "StudentNotesPage.jsx" },
+  ],
+  ta: [
+    { route: "/ta/home", label: "Dashboard", file: "TaDashboardPage.jsx" },
+    { route: "/ta", label: "Live Queue (Help Coach)", file: "TaWorkspace.jsx" },
+    { route: "/ta/past", label: "Past asks", file: "TaPastAsksPage.jsx" },
+  ],
+  professor: [
+    { route: "/professor", label: "Material / KB gate", file: "MaterialPage.jsx" },
+    { route: "/professor/asks", label: "Your desk", file: "AsksPage.jsx" },
+    { route: "/professor/insights", label: "Insights", file: "InsightsPage.jsx" },
+    { route: "/professor/team", label: "Team", file: "TeamPage.jsx" },
+  ],
 };
 
+/** Verified main.py include_router + route prefixes */
+const ROUTERS = [
+  "/auth",
+  "/courses",
+  "/requests",
+  "/ta",
+  "/knowledge",
+  "/agent/ask",
+  "/analytics/*",
+  "/canvas",
+  "/lti",
+  "/help-room",
+  "/peer-notes",
+  "/revision",
+  "/study-conversations",
+  "/ws",
+];
+
+/** Verified backend/app/models/*.py */
+const MODELS = [
+  "Request",
+  "User / Course / CourseMembership",
+  "KnowledgeEntry",
+  "HelpRoom / PeerNotes",
+  "RevisionPlan",
+  "TaRoster",
+  "Action / Notification",
+];
+
+/**
+ * Benchmarks only from in-repo JSON artifacts / tests.
+ * Sources: reports/final_report/*, docs/eval_results/with_check_*, test_no_ta_routing.py
+ */
 const BENCHMARKS = [
   {
-    metric: "Unapproved-source refusal",
-    value: "100%",
-    note: "10/10 unapproved + 10/10 other-course",
+    id: "clf",
+    metric: "Ask Triage Analyzer CV (macro F1)",
+    value: "84.55%",
+    bar: 84.55,
+    note: "classifier_evaluation.json · n=156 · 5-fold · acc 84.62%",
   },
   {
-    metric: "Study answer-check (gated)",
+    id: "match",
+    metric: "Matcher holdout accuracy",
+    value: "87.5%",
+    bar: 87.5,
+    note: "matcher_evaluation.json · 28/32 · silver labels",
+  },
+  {
+    id: "gold",
+    metric: "Gold-label Analyzer accuracy",
+    value: "75.0%",
+    bar: 75,
+    note: "gold_label_evaluation.json · 60/80 · macro F1 0.66",
+  },
+  {
+    id: "style",
+    metric: "Learning-style CV accuracy",
+    value: "92.5%",
+    bar: 92.5,
+    note: "learning_style_evaluation.json · n=40",
+  },
+  {
+    id: "gate",
+    metric: "Study Agent unapproved_only / other_course",
+    value: "10/10 · 10/10",
+    bar: 100,
+    note: "with_check_gemini…json · cited_unapproved=0",
+  },
+  {
+    id: "check",
+    metric: "Study Agent gated suite (overall)",
     value: "74/75",
-    note: "98.7% · Gemini check suite",
+    bar: 98.7,
+    note: "answer-check · 1 injection spurious_answer",
   },
   {
-    metric: "0-TA auto-fallback routing",
-    value: "PASS",
-    note: "test_no_ta_routing",
-  },
-  {
-    metric: "Ask Triage macro F1",
-    value: "84.6%",
-    note: "5-fold CV · n=156",
-  },
-  {
+    id: "lat",
     metric: "Ask Triage latency p50",
-    value: "~30 ms",
-    note: "warm local ML · Part 4 n=10",
+    value: "62.57 ms",
+    bar: 70,
+    note: "ask_triage_latency.json · n=5 · lexical · TestClient",
   },
   {
-    metric: "Grade-gap planner E2E",
+    id: "nota",
+    metric: "0-TA → professor routing",
     value: "PASS",
-    note: "revision/plan + resource search",
+    bar: 100,
+    note: "test_no_ta_routing.py · assignee_role=professor",
   },
 ];
 
-const TOPIC_BARS = [
-  { topic: "Hash Tables", count: 18, color: "#006838" },
-  { topic: "Recursion", count: 14, color: "#008EE2" },
-  { topic: "Red-Black Trees", count: 11, color: "#C59B5F" },
-  { topic: "Exam Logistics", count: 9, color: "#2D3B45" },
-  { topic: "Project Submit", count: 7, color: "#5A8F72" },
+/** Support counts from classifier_evaluation.json — verified label distribution */
+const TRIAGE_SUPPORT = [
+  { label: "conceptual_question", n: 37 },
+  { label: "exam_logistics", n: 23 },
+  { label: "project_submission", n: 18 },
+  { label: "emotional_stress", n: 14 },
+  { label: "grading_dispute", n: 14 },
+  { label: "retake_request", n: 14 },
+  { label: "accessibility_accommodation", n: 10 },
+  { label: "office_hours_access", n: 9 },
+  { label: "uncategorized", n: 9 },
+  { label: "academic_integrity", n: 8 },
 ];
 
-const VOLUME = [
-  { d: "Mon", v: 12 },
-  { d: "Tue", v: 19 },
-  { d: "Wed", v: 15 },
-  { d: "Thu", v: 22 },
-  { d: "Fri", v: 17 },
-  { d: "Sat", v: 6 },
-  { d: "Sun", v: 8 },
+const PIPELINES = [
+  {
+    title: "Ask Triage",
+    module: "ask_triage_service.py",
+    files: "analyzer_agent · matcher_model · synthesizer_model",
+    logic:
+      "On POST /requests/: Analyzer → category/urgency/tags → Matcher → primary/alt TA + wait → Synthesizer → student_hint / teaching approach (local joblib models).",
+    gate: "Default local ML path — not a prompted chat. Legacy Claude helpers gated/optional only.",
+  },
+  {
+    title: "Study Agent",
+    module: "kb_agent_service.py · agent_policy.py",
+    files: "POST /agent/ask · knowledge approve gate",
+    logic:
+      "Retrieves professor-approved KB chunks for the caller’s course_id, then optional Gemini/Claude entailment check when demo + LLM flags allow.",
+    gate: "Only approved material; OFFICEHOURS_ALLOW_EXTERNAL_LLM=false by default.",
+  },
+  {
+    title: "Help Coach",
+    module: "help_coach_service.py",
+    files: "POST /ta/assist/ · synthesizer_model · teaching bank",
+    logic:
+      "While TA helps: similar open asks, approved KB neighbors, Socratic steps, draft/rewrite suggestions from 68-row teaching bank + KB retrieval — no LLM.",
+    gate: "Does not answer the student as course truth; Insert into Reply is explicit.",
+  },
+  {
+    title: "Pedagogy Agent + Escalation",
+    module: "revision_service.py · course_ta_service.py",
+    files: "POST /revision/plan · revision_search.py · work_status",
+    logic:
+      "Focus plan from practice scores + preference; Resources via Wikipedia/trusted search + YouTube when keyed. Escalation: work_status open→claimed→in_progress; 0 TAs → assign_professor_when_no_ta.",
+    gate: "No real grades/names in client payload; scores not echoed.",
+  },
 ];
 
-function ArchDiagram({ activeId, onSelect }) {
-  // Orthogonal pipeline: Canvas → Client → API → four cores → DB
-  const paths = [
-    "M 196 47 H 230",
-    "M 398 47 H 432",
-    "M 520 76 V 92 H 112 V 108",
-    "M 520 92 H 298 V 108",
-    "M 520 92 H 488 V 108",
-    "M 520 92 H 672 V 108",
-    "M 112 166 V 184 H 395 V 198",
-    "M 298 166 V 184 H 395",
-    "M 488 166 V 184 H 395",
-    "M 672 166 V 184 H 490",
-  ];
-
+function DiagramPanel({ mode, onZoom }) {
+  const src =
+    mode === "arch"
+      ? `${BASE}architecture-diagram.png`
+      : `${BASE}github-repo-diagram.png`;
+  const alt =
+    mode === "arch"
+      ? "OfficeHours Platform complete architecture diagram"
+      : "OfficeHours AI verified repository structure diagram";
   return (
-    <svg
-      className="cfc-arch-svg"
-      viewBox="0 0 780 270"
-      role="group"
-      aria-label="End-to-end system architecture"
-    >
-      {paths.map((d, i) => (
-        <path key={i} d={d} className="cfc-arch-edge" />
-      ))}
-      {ARCH_NODES.map((node) => {
-        const active = activeId === node.id;
-        return (
-          <g
-            key={node.id}
-            className={`cfc-arch-node cfc-arch-node--${node.accent}${active ? " is-active" : ""}`}
-            transform={`translate(${node.x} ${node.y})`}
-          >
-            <rect
-              width={node.w}
-              height={node.h}
-              rx="6"
-              ry="6"
-              role="button"
-              tabIndex={0}
-              aria-pressed={active}
-              aria-label={node.label}
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect(node.id);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  onSelect(node.id);
-                }
-              }}
-              style={{ cursor: "pointer" }}
-            />
-            <text className="cfc-arch-label" x={10} y={24} pointerEvents="none">
-              {node.label}
-            </text>
-            <text className="cfc-arch-sub" x={10} y={42} pointerEvents="none">
-              {node.sub}
-            </text>
-          </g>
-        );
-      })}
-    </svg>
+    <button type="button" className="cfc-diagram-frame" onClick={onZoom} aria-label="Click to zoom diagram">
+      <img src={src} alt={alt} className="cfc-diagram-img" />
+      <span className="cfc-zoom-chip">Click to zoom</span>
+    </button>
   );
 }
 
-function AnalyticsPanel() {
-  const maxTopic = Math.max(...TOPIC_BARS.map((t) => t.count));
-  const maxVol = Math.max(...VOLUME.map((v) => v.v));
+function ZoomModal({ mode, onClose }) {
+  const src =
+    mode === "arch"
+      ? `${BASE}architecture-diagram.png`
+      : `${BASE}github-repo-diagram.png`;
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
   return (
-    <div className="cfc-analytics">
-      <div className="cfc-analytics-head">
-        <span>Demo course · CSC 2302</span>
-        <span className="cfc-mono">mean resolve 42m · SLA open 3</span>
-      </div>
-      <div className="cfc-analytics-grid">
-        <div>
-          <div className="cfc-mini-label">Recurring confusion topics</div>
-          <ul className="cfc-bars">
-            {TOPIC_BARS.map((row) => (
-              <li key={row.topic}>
-                <span className="cfc-bar-label">{row.topic}</span>
-                <span className="cfc-bar-track">
-                  <span
-                    className="cfc-bar-fill"
-                    style={{
-                      width: `${(row.count / maxTopic) * 100}%`,
-                      background: row.color,
-                    }}
-                  />
-                </span>
-                <span className="cfc-mono cfc-bar-n">{row.count}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <div className="cfc-mini-label">Ask volume (7d)</div>
-          <div className="cfc-vol">
-            {VOLUME.map((row) => (
-              <div key={row.d} className="cfc-vol-col">
-                <div
-                  className="cfc-vol-bar"
-                  style={{ height: `${(row.v / maxVol) * 100}%` }}
-                  title={`${row.v} asks`}
-                />
-                <span>{row.d}</span>
-              </div>
-            ))}
-          </div>
-          <div className="cfc-sla-row">
-            <div>
-              <strong>99</strong>
-              <span>asks / week</span>
-            </div>
-            <div>
-              <strong>42m</strong>
-              <span>mean resolve</span>
-            </div>
-            <div>
-              <strong>3</strong>
-              <span>overdue SLA</span>
-            </div>
-          </div>
-        </div>
+    <div className="cfc-zoom" role="dialog" aria-modal="true" onClick={onClose}>
+      <div className="cfc-zoom-inner" onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="cfc-zoom-close" onClick={onClose}>
+          Close
+        </button>
+        <img src={src} alt="Zoomed diagram" />
       </div>
     </div>
   );
 }
 
 export default function CapstonePosterPage() {
-  const [active, setActive] = useState("coach");
+  const [diagramMode, setDiagramMode] = useState("arch");
+  const [zoom, setZoom] = useState(false);
   const [fit, setFit] = useState({ scale: 1, mx: 0, my: 0 });
-  const detail = NODE_DETAILS[active];
+  const maxSupport = Math.max(...TRIAGE_SUPPORT.map((t) => t.n));
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", "light");
     document.body.classList.add("cfc-poster-lock");
     const relayout = () => {
-      const sx = window.innerWidth / 1920;
-      const sy = window.innerHeight / 1080;
+      const sx = window.innerWidth / 1080;
+      const sy = window.innerHeight / 1920;
       const scale = Math.min(sx, sy);
       setFit({
         scale,
-        mx: Math.max(0, (window.innerWidth - 1920 * scale) / 2),
-        my: Math.max(0, (window.innerHeight - 1080 * scale) / 2),
+        mx: Math.max(0, (window.innerWidth - 1080 * scale) / 2),
+        my: Math.max(0, (window.innerHeight - 1920 * scale) / 2),
       });
     };
     relayout();
@@ -370,8 +255,8 @@ export default function CapstonePosterPage() {
     () => ({
       transform: `scale(${fit.scale})`,
       transformOrigin: "top left",
-      width: 1920,
-      height: 1080,
+      width: 1080,
+      height: 1920,
       marginLeft: fit.mx,
       marginTop: fit.my,
     }),
@@ -380,225 +265,254 @@ export default function CapstonePosterPage() {
 
   return (
     <div className="cfc-poster-viewport">
-      <article className="cfc-poster" style={stageStyle} aria-label="OfficeHours AI Capstone Poster">
+      <article className="cfc-poster cfc-poster--portrait" style={stageStyle}>
         <div className="cfc-lattice" aria-hidden="true" />
 
-        <header className="cfc-header">
-          <div className="cfc-brand-row">
-            <img src={`${import.meta.env.BASE_URL}aui-logo.png`} alt="AUI" className="cfc-logo" />
-            <div className="cfc-title-block">
-              <p className="cfc-kicker">Digital Engineering Capstone · CFC Showcase</p>
-              <h1>
-                OfficeHours AI: Multi-Pathway Campus Helpdesk &amp; Pedagogical Intelligence
-              </h1>
-              <p className="cfc-thesis">
-                Meeting every struggling student where they are comfortable—combining
-                faculty-gated AI, human escalation accountability, peer collaboration, and
-                adaptive study planning.
+        {/* HEADER — 11% */}
+        <header className="cfc-band cfc-band--header">
+          <div className="cfc-header-inner">
+            <img src={`${BASE}aui-logo.png`} alt="Al Akhawayn University" className="cfc-logo" />
+            <div className="cfc-header-copy min-w-0">
+              <p className="cfc-kicker">EGR 4402 Capstone Design · Al Akhawayn University</p>
+              <h1>OfficeHours AI</h1>
+              <p className="cfc-sub">
+                One login for students, TAs, and professors (role per course): Ask Triage at intake,
+                Help Coach while staffing, professor-gated Study Agent, Pedagogy Agent with web
+                Resources, and peer Rooms — FastAPI + React campus helpdesk.
               </p>
             </div>
-            <div className="cfc-meta">
-              <div>Sophia Abssi</div>
+            <div className="cfc-meta min-w-0">
+              <div className="cfc-meta-name">Sophia Abssi</div>
               <div>B.S. AI &amp; Robotization</div>
               <div>
                 Supervisor: <strong>Dr. Oumaima Hourrane</strong>
               </div>
-              <div>Al Akhawayn University</div>
+              <div>School of Science &amp; Engineering</div>
             </div>
           </div>
-          <div className="cfc-stack" aria-label="Technology stack">
-            {STACK.map((tag) => (
-              <span key={tag} className="cfc-stack-tag">
-                {tag}
+          <div className="cfc-stack">
+            {STACK.map((t) => (
+              <span key={t} className="cfc-chip">
+                {t}
               </span>
             ))}
           </div>
         </header>
 
-        <div className="cfc-columns">
-          {/* Column 1 */}
-          <section className="cfc-col cfc-col--left">
-            <div className="cfc-card">
-              <h2>
-                <span className="cfc-idx">01</span> Problem &amp; Motivation
-              </h2>
-              <div className="cfc-block">
-                <h3>Diverse student help-seeking</h3>
+        {/* S1 + S2 — 18% */}
+        <div className="cfc-row cfc-row--18">
+          <section className="cfc-card cfc-card--fill min-w-0">
+            <h2 className="cfc-bar cfc-bar--emerald">
+              <span>1</span> Problem Statement &amp; Motivation
+            </h2>
+            <div className="cfc-card-body cfc-two-col">
+              <div className="cfc-callout">
+                <h3>Student help-seeking is not one channel</h3>
                 <p>
-                  Students need different safe pathways—instant syllabus-accurate answers,
-                  low-friction human escalation, peer debugging, or structured grade recovery.
+                  Struggling students do not all seek help the same way—some feel intimidated asking
+                  publicly, some need instant syllabus-accurate answers without AI hallucination
+                  risk, some learn by collaborating with peers, and others need a structured plan
+                  tailored to how they learn.
                 </p>
               </div>
-              <div className="cfc-block">
-                <h3>Staff visibility &amp; guidance</h3>
-                <p>
-                  TAs answer repeat questions without teaching guidance; professors lack
-                  real-time insight into student struggle patterns.
-                </p>
-              </div>
-            </div>
-
-            <div className="cfc-card cfc-card--grow">
-              <h2>
-                <span className="cfc-idx">02</span> Multi-Role Functional Scope
-              </h2>
-              <div className="cfc-block">
-                <h3>Student ecosystem — 4 pathways</h3>
-                <ol className="cfc-pathways">
+              <div className="cfc-callout">
+                <h3>Staff workflow gaps this build targets</h3>
+                <ul>
                   <li>
-                    <em>01</em> Approved-Material Study Agent
+                    <strong>Accountability:</strong> asks need claim → help → reply state, not a
+                    silent inbox.
                   </li>
                   <li>
-                    <em>02</em> Direct TA/Professor escalation + live state
+                    <strong>0-TA courses:</strong> route to the professor when no TA membership
+                    exists.
                   </li>
                   <li>
-                    <em>03</em> Peer Notes &amp; Rooms Q&amp;A
+                    <strong>TA coaching:</strong> Help Coach guides teaching moves — not giving
+                    away answers.
                   </li>
                   <li>
-                    <em>04</em> Canvas grade-gap Study Planner
+                    <strong>Professor visibility:</strong> Insights / struggle analytics expose
+                    where students fall behind.
                   </li>
-                </ol>
-              </div>
-              <div className="cfc-block">
-                <h3>TA workspace</h3>
-                <p>
-                  Live SLA queue with wait timers + real-time{" "}
-                  <span className="cfc-hl-brass">AI Teaching Coach</span> (Help Coach).
-                </p>
-              </div>
-              <div className="cfc-block">
-                <h3>Professor command center</h3>
-                <p>
-                  Canvas material sync, content approval gate, and course-wide struggle
-                  analytics.
-                </p>
+                </ul>
               </div>
             </div>
           </section>
 
-          {/* Column 2 */}
-          <section className="cfc-col cfc-col--mid">
-            <div className="cfc-card">
-              <h2>
-                <span className="cfc-idx">03</span> End-to-End System Architecture
-                <span className="cfc-hint">Click a node</span>
-              </h2>
-              <ArchDiagram activeId={active} onSelect={setActive} />
-              <div className="cfc-detail" key={active}>
-                <div className="cfc-detail-title">{detail.title}</div>
-                <div className="cfc-detail-grid">
-                  <div>
-                    <span>Inputs</span>
-                    <p>{detail.inputs}</p>
+          <section className="cfc-card cfc-card--fill min-w-0">
+            <h2 className="cfc-bar cfc-bar--slate">
+              <span>2</span> Multi-Role Functional Architecture
+            </h2>
+            <div className="cfc-card-body cfc-role-grid">
+              {[
+                ["Student", ROLES.student],
+                ["TA", ROLES.ta],
+                ["Professor", ROLES.professor],
+              ].map(([title, items]) => (
+                <div key={title} className="cfc-role-col">
+                  <h3>{title}</h3>
+                  <ul>
+                    {items.map((r) => (
+                      <li key={r.route}>
+                        <span className="cfc-mono">{r.label}</span>
+                        <em>{r.file}</em>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        {/* S3 — 29% hero */}
+        <section className="cfc-card cfc-card--hero cfc-card--fill min-w-0">
+          <h2 className="cfc-bar cfc-bar--emerald">
+            <span>3</span> System Architecture &amp; Repository Structure
+            <div className="cfc-tabs" role="tablist">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={diagramMode === "arch"}
+                className={diagramMode === "arch" ? "is-on" : ""}
+                onClick={() => setDiagramMode("arch")}
+              >
+                System Architecture
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={diagramMode === "repo"}
+                className={diagramMode === "repo" ? "is-on" : ""}
+                onClick={() => setDiagramMode("repo")}
+              >
+                Repository Structure
+              </button>
+            </div>
+          </h2>
+          <div className="cfc-card-body cfc-hero-body">
+            <DiagramPanel mode={diagramMode} onZoom={() => setZoom(true)} />
+            <div className="cfc-strip-block">
+              <div className="cfc-strip">
+                <span className="cfc-strip-label">Routers</span>
+                {ROUTERS.map((r) => (
+                  <span key={r} className="cfc-chip cfc-chip--blue">
+                    {r}
+                  </span>
+                ))}
+              </div>
+              <div className="cfc-strip">
+                <span className="cfc-strip-label">Models</span>
+                {MODELS.map((m) => (
+                  <span key={m} className="cfc-chip cfc-chip--slate">
+                    {m}
+                  </span>
+                ))}
+              </div>
+              <div className="cfc-strip">
+                <span className="cfc-strip-label">Services</span>
+                <span className="cfc-chip">ask_triage_service</span>
+                <span className="cfc-chip">help_coach_service</span>
+                <span className="cfc-chip">kb_agent_service</span>
+                <span className="cfc-chip">revision_service</span>
+                <span className="cfc-chip">course_ta_service</span>
+                <span className="cfc-chip">analytics_service</span>
+                <span className="cfc-chip">lti13 / canvas_service</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* S4 — 20% */}
+        <section className="cfc-card cfc-card--fill min-w-0">
+          <h2 className="cfc-bar cfc-bar--slate">
+            <span>4</span> Core Algorithmic &amp; AI Pipelines
+          </h2>
+          <div className="cfc-card-body cfc-pipe-grid">
+            {PIPELINES.map((p) => (
+              <article key={p.title} className="cfc-pipe min-w-0">
+                <h3>{p.title}</h3>
+                <p className="cfc-mono cfc-pipe-mod">{p.module}</p>
+                <p className="cfc-pipe-files">{p.files}</p>
+                <p>
+                  <strong>Logic:</strong> {p.logic}
+                </p>
+                <p className="cfc-gate">
+                  <strong>Gate:</strong> {p.gate}
+                </p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* S5 + S6 — 19% */}
+        <div className="cfc-row cfc-row--19">
+          <section className="cfc-card cfc-card--fill min-w-0">
+            <h2 className="cfc-bar cfc-bar--emerald">
+              <span>5</span> Experimental Evaluation &amp; Benchmarks
+            </h2>
+            <div className="cfc-card-body cfc-bench">
+              {BENCHMARKS.map((b) => (
+                <div key={b.id} className="cfc-bench-row min-w-0">
+                  <div className="cfc-bench-top">
+                    <span>{b.metric}</span>
+                    <strong className="cfc-mono">{b.value}</strong>
                   </div>
-                  <div>
-                    <span>Core logic</span>
-                    <p>{detail.logic}</p>
+                  <div className="cfc-bar-track" aria-hidden="true">
+                    <div className="cfc-bar-fill" style={{ width: `${Math.min(100, b.bar)}%` }} />
                   </div>
-                  <div>
-                    <span>Guardrails</span>
-                    <p>{detail.guardrails}</p>
-                  </div>
+                  <div className="cfc-bench-note cfc-mono">{b.note}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="cfc-card cfc-card--fill min-w-0">
+            <h2 className="cfc-bar cfc-bar--slate">
+              <span>6</span> System Telemetry &amp; Live Prototype
+            </h2>
+            <div className="cfc-card-body cfc-tele">
+              <div className="cfc-tele-left min-w-0">
+                <h3>Ask Triage label support (CV set)</h3>
+                <p className="cfc-tele-src cfc-mono">classifier_evaluation.json · support counts</p>
+                <ul className="cfc-mini-bars">
+                  {TRIAGE_SUPPORT.slice(0, 7).map((t) => (
+                    <li key={t.label}>
+                      <span className="cfc-mono">{t.label.replaceAll("_", " ")}</span>
+                      <span className="cfc-bar-track">
+                        <span
+                          className="cfc-bar-fill cfc-bar-fill--blue"
+                          style={{ width: `${(t.n / maxSupport) * 100}%` }}
+                        />
+                      </span>
+                      <strong className="cfc-mono">{t.n}</strong>
+                    </li>
+                  ))}
+                </ul>
+                <div className="cfc-api-chips">
+                  <span className="cfc-chip cfc-chip--blue">/analytics/struggle-monitor</span>
+                  <span className="cfc-chip cfc-chip--blue">/analytics/lifetime-confusion</span>
+                  <span className="cfc-chip cfc-chip--brass">work_status · wait timers</span>
                 </div>
               </div>
-            </div>
-
-            <div className="cfc-card">
-              <h2>
-                <span className="cfc-idx">04</span> Core Algorithmic Modules
-              </h2>
-              <div className="cfc-modules">
-                <button
-                  type="button"
-                  className={active === "rag" ? "is-on" : ""}
-                  onClick={() => setActive("rag")}
-                >
-                  <strong>Professor-Gated Study Agent</strong>
-                  <span>Retrieval strictly faculty-approved · 0% unapproved syllabus generation</span>
-                </button>
-                <button
-                  type="button"
-                  className={active === "sla" ? "is-on" : ""}
-                  onClick={() => setActive("sla")}
-                >
-                  <strong>Escalation &amp; SLA State Machine</strong>
-                  <span>
-                    Auto-route to professor if 0 TAs ·{" "}
-                    <span className="cfc-mono">Queued → Claimed → In Progress → Answered</span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className={active === "coach" ? "is-on" : ""}
-                  onClick={() => setActive("coach")}
-                >
-                  <strong>AI TA Pedagogical Coach</strong>
-                  <span>Structured teaching approaches while the TA drafts a response</span>
-                </button>
-                <button
-                  type="button"
-                  className={active === "planner" ? "is-on" : ""}
-                  onClick={() => setActive("planner")}
-                >
-                  <strong>Adaptive Web-Scraping Study Planner</strong>
-                  <span>Grades + learning style + duration → curated timed plans</span>
-                </button>
-              </div>
-            </div>
-          </section>
-
-          {/* Column 3 */}
-          <section className="cfc-col cfc-col--right">
-            <div className="cfc-card">
-              <h2>
-                <span className="cfc-idx">05</span> Experimental Evaluation
-              </h2>
-              <table className="cfc-table">
-                <thead>
-                  <tr>
-                    <th>Benchmark</th>
-                    <th>Result</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {BENCHMARKS.map((row) => (
-                    <tr key={row.metric}>
-                      <td>
-                        <div>{row.metric}</div>
-                        <small>{row.note}</small>
-                      </td>
-                      <td className="cfc-mono cfc-result">{row.value}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="cfc-card">
-              <h2>
-                <span className="cfc-idx">06</span> Struggle &amp; SLA Analytics
-              </h2>
-              <AnalyticsPanel />
-            </div>
-
-            <div className="cfc-card cfc-qr-card">
-              <h2>
-                <span className="cfc-idx">07</span> Live Prototype &amp; Repository
-              </h2>
-              <div className="cfc-qr-row">
+              <div className="cfc-qr-panel min-w-0">
                 <img
-                  src={`${import.meta.env.BASE_URL}poster-demo-qr.png`}
-                  alt="QR code to OfficeHours AI GitHub repository"
+                  src={`${BASE}poster-demo-qr.png`}
+                  alt="QR code to GitHub repository abssisophia9-hub/officehours-ai"
                   className="cfc-qr"
                 />
-                <div>
-                  <p className="cfc-qr-lead">Scan for source + demo script</p>
-                  <p className="cfc-mono cfc-qr-url">
-                    github.com/abssisophia9-hub/officehours-ai
-                  </p>
+                <div className="cfc-qr-copy">
+                  <p className="cfc-qr-title">Repository &amp; launch</p>
+                  <p className="cfc-mono cfc-qr-url">github.com/abssisophia9-hub/officehours-ai</p>
+                  <p className="cfc-qr-cmd cfc-mono">./scripts/run_product.sh</p>
+                  <div className="cfc-qr-specs">
+                    <span className="cfc-chip cfc-chip--slate">:5180 app</span>
+                    <span className="cfc-chip cfc-chip--slate">:8000 API</span>
+                    <span className="cfc-chip cfc-chip--brass">aui-demo</span>
+                    <span className="cfc-chip cfc-chip--blue">/poster</span>
+                  </div>
                   <p className="cfc-qr-note">
-                    Local walkthrough: <span className="cfc-mono">./scripts/run_product.sh</span> →
-                    :5180 · demo password <span className="cfc-mono">aui-demo</span>
+                    Demo accounts in README · OFFICEHOURS_DEMO=true via run_product.sh
                   </p>
                 </div>
               </div>
@@ -606,14 +520,14 @@ export default function CapstonePosterPage() {
           </section>
         </div>
 
-        <footer className="cfc-footer">
-          <span>AUI × Canvas LMS × CFC architectural palette</span>
-          <span className="cfc-mono">
-            Emerald #006838 · Canvas Blue #008EE2 · Brass #C59B5F · Travertine #F9F7F3
-          </span>
-          <span>EGR 4402 Capstone Design · 16:9 interactive poster</span>
+        <footer className="cfc-band cfc-band--footer">
+          <span>Al Akhawayn University · Capstone Design EGR 4402</span>
+          <span>OfficeHours AI · Canvas-linked multi-role campus helpdesk</span>
+          <span>Supervisor: Dr. Oumaima Hourrane · Author: Sophia Abssi</span>
         </footer>
       </article>
+
+      {zoom ? <ZoomModal mode={diagramMode} onClose={() => setZoom(false)} /> : null}
     </div>
   );
 }
