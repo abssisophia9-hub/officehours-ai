@@ -1,21 +1,13 @@
-# CFC Capstone E-Poster (9:16 portrait)
+# CFC Exhibition Poster (9:16)
 
-**Route:** `/poster` (public, no login)  
-**Canvas:** fixed `1080×1920` flex column stage, scaled to viewport, zero scroll  
-**Palette:** Travertine `#F9F7F3` · AUI Emerald `#006838` · Canvas Blue `#008EE2` · Slate Ink `#2D3B45`
+**Route:** `/poster`  
+**Stage:** 1080×1920, zero scroll  
+**Direction:** Recruiter-facing “helpdesk engine” — hero claim, CSS 3D layered architecture, measured KPIs. Not a numbered academic grid.
 
 ## Local
 
-Start the product app, then open `/poster` (F11 for showcase).
+Open `/poster` after starting the product app (F11 for showcase).
 
-## Sections
+## Content accuracy
 
-1. Problem paragraph + four workflow solutions  
-2. Multi-role surfaces (Student / TA / Professor)  
-3. Native SVG modular monolith (+ Pedagogy Agent) ↔ repository structure + zoom  
-4. Four AI/ML pipeline cards  
-5. KPI tiles + accuracy chart + PASS badges  
-6. Confusion-topic bars + QR / GitHub only  
-7. References + institutional footer  
-
-Tech strip uses `react-icons/si` brand logos (no external network fetches at render time).
+Modules and metrics come from README agents/roles, FastAPI services, and `reports/final_report/*` / `docs/eval_results` — see deliverable README accuracy map.
