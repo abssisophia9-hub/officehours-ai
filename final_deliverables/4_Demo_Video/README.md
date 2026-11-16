@@ -2,12 +2,20 @@
 
 Keynote-grade live product walkthrough for OfficeHours AI.
 
+## Download (one click)
+
+**[⬇ Download capstone_demo_1080p.mp4](https://github.com/abssisophia9-hub/officehours-ai/releases/download/capstone-demo-video-v1/capstone_demo_1080p.mp4)** (~15 MB, 1920×1080)
+
+Release page (asset list): [capstone-demo-video-v1](https://github.com/abssisophia9-hub/officehours-ai/releases/tag/capstone-demo-video-v1)
+
+The MP4 is hosted as a **GitHub Release asset** (not committed into git) so download stays free/cheap and the repo stays lean. If the repo is private, open the link while signed into GitHub.
+
 ## Outputs
 
 | File | Purpose |
 | --- | --- |
 | `generate_demo.py` | Playwright recorder + FFmpeg mastering |
-| `capstone_demo_1080p.mp4` | Final mastered video (gitignored locally; also copied to Project store) |
+| `capstone_demo_1080p.mp4` | Final mastered video (gitignored; download via Release above) |
 | `audit/*.png` | Frame-audit stills (intro / landing / student / TA / professor / outro) |
 
 ## Secrets
