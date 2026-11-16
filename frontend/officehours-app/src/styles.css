@@ -182,6 +182,16 @@ body,
   min-height: 100%;
 }
 
+/* App shells: one viewport scroller (.bh-main). Stops wheel from dying on an
+   unconstrained overflow:auto + overscroll-behavior:contain main. */
+html:has(.bh-frame),
+html:has(.bh-frame) body,
+html:has(.bh-frame) #root {
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
 body {
   margin: 0;
   color: var(--theme-text);
@@ -264,7 +274,10 @@ body {
 
 .bh-frame {
   display: flex;
-  min-height: 100vh;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .bh-sidebar {
@@ -648,10 +661,12 @@ body {
 .bh-main {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   padding: 2.2rem 2.4rem 3rem;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .bh-page-title {
@@ -6593,8 +6608,8 @@ html:has(.oh-open) {
 /* Student shell: the course page fills the screen. The thread scrolls;
    the course name and question box stay put and do not cover the answer. */
 .bh-frame-student {
-  height: 100vh;
-  max-height: 100vh;
+  height: 100%;
+  max-height: 100%;
   overflow: hidden;
 }
 
@@ -6602,7 +6617,8 @@ html:has(.oh-open) {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* Student home: Study Agent fills the course page. */
@@ -7172,6 +7188,18 @@ html:has(.oh-open) {
 
 /* ---------- Professor pages ---------- */
 
+.bh-frame-professor {
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.bh-frame-professor .bh-main {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 .bh-frame-professor .bh-nav {
   overflow: visible;
   flex: 0 0 auto;
@@ -7700,6 +7728,25 @@ html:has(.oh-open) {
 
   .bh-frame-professor .bh-main {
     padding: 1rem;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .bh-frame-professor .bh-sidebar {
+    max-height: 42vh;
+  }
+}
+
+/* Zoomed laptop (≈1366×768 @125%): keep Insights from clipping the right edge. */
+@media (max-width: 1200px) {
+  .bh-frame-professor .bh-main {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .pf-radar-kpis,
+  .pf-monitor-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -8523,8 +8570,8 @@ html:has(.oh-open) {
 }
 
 .bh-frame-ta {
-  height: 100vh;
-  max-height: 100vh;
+  height: 100%;
+  max-height: 100%;
   overflow: hidden;
   background: var(--tar-canvas);
 }
@@ -8585,14 +8632,16 @@ html:has(.oh-open) {
 
 .bh-frame-ta .bh-main {
   padding: 0;
-  height: 100vh;
-  max-height: 100vh;
+  height: auto;
+  max-height: none;
   /* Dashboard / Past asks scroll here; Live Queue desk keeps panes nested. */
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: var(--tar-canvas);
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
 }
 
 .bh-frame-ta .bh-main:has(.tar-desk) {
@@ -9853,8 +9902,10 @@ html:has(.oh-open) {
 
 .pf-radar-shell {
   width: 100%;
-  max-width: 64rem;
+  max-width: min(64rem, 100%);
   margin: 0;
+  box-sizing: border-box;
+  overflow-x: clip;
 }
 
 .pf-monitor-a11y {
@@ -10026,23 +10077,37 @@ html:has(.oh-open) {
 .pf-radar-bento {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.5rem;
+  gap: 1rem;
   margin: 0 0 1rem;
   align-items: start;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 960px) {
   .pf-radar-bento {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: 1rem 1.15rem;
   }
 }
 
+.pf-radar-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .pf-radar-panel {
-  border: 1px solid var(--radar-line, #cfc6b4);
-  background: #fffdf7;
+  border: 1px solid var(--radar-line, var(--theme-border, #cfc6b4));
+  background: var(--theme-surface, #fffdf7);
   border-radius: 0.4rem;
   padding: 0.85rem 0.95rem 1rem;
   min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .pf-radar-panel-head {
@@ -10084,11 +10149,101 @@ html:has(.oh-open) {
 }
 
 .pf-radar-needs {
-  border: 1px solid var(--radar-line, #cfc6b4);
-  background: #fffdf7;
+  border: 1px solid var(--radar-line, var(--theme-border, #cfc6b4));
+  background: var(--theme-surface, #fffdf7);
   border-radius: 0.4rem;
   padding: 0.85rem 0.95rem 1rem;
-  margin: 0 0 0.5rem;
+  margin: 0;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.pf-radar-mat-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem 0.85rem;
+  margin: 0.45rem 0 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--radar-line, var(--theme-border, #cfc6b4));
+  border-left: 3px solid var(--radar-amber, #b54708);
+  background: color-mix(
+    in srgb,
+    var(--radar-amber, #b54708) 10%,
+    var(--theme-surface, #fffdf7)
+  );
+  border-radius: 0.3rem;
+}
+
+.pf-radar-mat-summary p {
+  margin: 0;
+  flex: 1 1 12rem;
+  font-size: 0.86rem;
+  font-weight: 650;
+  color: var(--radar-ink, var(--theme-text, #102e24));
+}
+
+.pf-radar-show-all {
+  margin-top: 0.65rem;
+  border: 1px solid var(--radar-line, var(--theme-border, #cfc6b4));
+  background: transparent;
+  color: var(--radar-forest, var(--theme-deep, #1b4332));
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.4rem 0.7rem;
+  border-radius: 0.3rem;
+  cursor: pointer;
+}
+
+.pf-radar-show-all:hover {
+  background: color-mix(in srgb, var(--radar-forest, #1b4332) 8%, transparent);
+}
+
+.pf-radar-ask-cats {
+  margin-top: 0.95rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--radar-line, var(--theme-border, #cfc6b4));
+}
+
+.pf-radar-ask-cats h3 {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 750;
+  color: var(--radar-ink, var(--theme-text, #102e24));
+}
+
+.pf-radar-ask-cat-list {
+  list-style: none;
+  margin: 0.45rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.pf-radar-ask-cat {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  text-align: left;
+  border: 1px dashed var(--radar-line, var(--theme-border, #cfc6b4));
+  background: transparent;
+  color: inherit;
+  padding: 0.4rem 0.55rem;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.84rem;
+}
+
+.pf-radar-ask-cat.is-on,
+.pf-radar-ask-cat:hover {
+  border-style: solid;
+  border-color: var(--radar-forest, #1b4332);
 }
 
 .pf-radar-needs-head {
@@ -10382,6 +10537,20 @@ html:has(.oh-open) {
   --radar-line: #3a3328;
   --radar-warn: #f97066;
   --radar-amber: #fdb022;
+}
+
+[data-theme="dark"] .pf-radar-mat-summary {
+  background: color-mix(in srgb, var(--radar-amber) 14%, var(--radar-beige));
+}
+
+[data-theme="dark"] .pf-radar-show-all,
+[data-theme="dark"] .pf-radar-ask-cat {
+  color: var(--radar-ink);
+}
+
+[data-theme="dark"] .pf-radar-ask-cat.is-on,
+[data-theme="dark"] .pf-radar-ask-cat:hover {
+  border-color: var(--radar-forest);
 }
 
 [data-theme="dark"] .pf-monitor-chip {

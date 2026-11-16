@@ -75,3 +75,24 @@ def test_struggle_monitor_demo_seed_on_csc_3374():
         if k.get("delta_label")
     )
     assert any("mpi" in (t["topic"] or "").lower() for t in body["topics"])
+
+
+def test_struggle_monitor_topics_are_request_categories():
+    """Bars use Request.category (Ask Triage / free-form), not syllabus chapters.
+
+    Sophia: exam_logistics / conceptual_question are ask categories. Course-like
+    slugs (hashing, heaps, mpi) share the same field — Insights UI partitions them.
+    """
+    headers, course_id = professor_auth(client, "CSC 2302")
+    body = client.get(
+        f"/analytics/struggle-monitor?course_id={course_id}&range=7d",
+        headers=headers,
+    ).json()
+    assert body["topics"]
+    for bar in body["topics"]:
+        assert "topic" in bar
+        assert isinstance(bar["topic"], str)
+        assert bar["topic"].strip()
+    # Day series uses ISO dates the UI formats as local "Nov 9".
+    for point in body["asks_per_day"]:
+        assert len(point["day"].split("-")) == 3
