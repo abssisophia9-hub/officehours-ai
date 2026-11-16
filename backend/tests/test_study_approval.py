@@ -120,6 +120,55 @@ def test_student_and_ta_cannot_approve_an_upload():
     assert missing.status_code == 404
 
 
+def test_pending_and_rejected_uploads_never_answer_students():
+    """Study Agent may quote approved chunks only — never pending or rejected."""
+    headers, course_id = _professor()
+    student_headers, _ = student_auth(client, "CSC 2302")
+    question = {
+        "question": "What do lantern buffers store for the night lab?",
+        "course_id": course_id,
+    }
+
+    pending_upload = _upload_two_pages(headers, course_id).json()
+    pending_ask = client.post(
+        "/agent/ask", headers=student_headers, json=question
+    ).json()
+    assert pending_ask["matched_count"] == 0
+    assert pending_ask["should_seek_help"] is True
+
+    client.post(
+        f"/knowledge/uploads/{pending_upload['upload_id']}/approve",
+        headers=headers,
+    )
+    approved_ask = client.post(
+        "/agent/ask", headers=student_headers, json=question
+    ).json()
+    assert approved_ask["matched_count"] >= 1
+    assert "lantern" in approved_ask["answer"].lower()
+
+    rejected_upload = _upload_two_pages(headers, course_id).json()
+    client.post(
+        f"/knowledge/uploads/{rejected_upload['upload_id']}/reject",
+        headers=headers,
+    )
+    # Still answers from the earlier approved file; rejected chunks stay out.
+    still = client.post("/agent/ask", headers=student_headers, json=question).json()
+    assert still["matched_count"] >= 1
+    listed = client.get(
+        f"/knowledge/?course_id={course_id}&status=rejected",
+        headers=headers,
+    ).json()
+    assert listed
+    assert all(row["status"] == "rejected" for row in listed)
+    rejected_ids = {row["id"] for row in listed}
+    source_ids = {
+        hit["entry"]["id"]
+        for hit in still.get("sources") or []
+        if hit.get("entry")
+    }
+    assert source_ids.isdisjoint(rejected_ids)
+
+
 def test_auto_approve_rejected_when_demo_mode_is_off(monkeypatch):
     headers, course_id = _professor()
     monkeypatch.setenv("OFFICEHOURS_DEMO", "false")
