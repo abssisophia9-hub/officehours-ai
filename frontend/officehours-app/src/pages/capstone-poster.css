@@ -1,6 +1,6 @@
-/* Exhibition poster — vertical “helpdesk engine” (1080×1920)
-   Original composition: hero claim · CSS-3D layered architecture · proof numerals
-   NOT a numbered academic grid. */
+/* MIT-style research exhibition poster — landscape 1920×1080
+   20-second pitch · dominant figure · sparse claim columns · measured results
+   NOT a product landing page; NOT a dense academic grid. */
 
 *,
 *::before,
@@ -11,246 +11,236 @@
 body.cfc-poster-lock {
   overflow: hidden !important;
   margin: 0;
-  background: #0f1a14;
+  background: #1a2420;
 }
 
-.expo-viewport {
+.mit-viewport {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: #0f1a14;
+  background: #1a2420;
 }
 
-.expo-stage {
+.mit-stage {
   --emerald: #006838;
   --canvas: #008ee2;
-  --ink: #2d3b45;
-  --brass: #c59b5f;
-  --travertine: #f9f7f3;
-  --stone: #ddd6cc;
+  --ink: #243038;
   --muted: #5a6670;
-  --deep: #0c241c;
+  --line: #c9d0c8;
+  --paper: #f7f5f0;
+  --panel: #ffffff;
 
   position: relative;
-  width: 1080px;
-  height: 1920px;
-  padding: 28px 28px 20px;
+  width: 1920px;
+  height: 1080px;
+  padding: 28px 36px 22px;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 14px;
   background:
-    radial-gradient(1200px 600px at 20% -10%, rgba(0, 142, 226, 0.12), transparent 55%),
-    radial-gradient(900px 500px at 100% 30%, rgba(0, 104, 56, 0.18), transparent 50%),
-    linear-gradient(180deg, #f4f1eb 0%, var(--travertine) 38%, #f1ede4 100%);
+    linear-gradient(180deg, #fbfaf7 0%, var(--paper) 55%, #f3f0e9 100%);
   color: var(--ink);
-  font-family: Inter, "Source Sans 3", system-ui, sans-serif;
+  font-family: "Source Sans 3", "Plus Jakarta Sans", sans-serif;
 }
 
-.expo-atmosphere {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.expo-glow {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(40px);
-  opacity: 0.55;
-  animation: expo-drift 12s ease-in-out infinite alternate;
-}
-
-.expo-glow--a {
-  width: 420px;
-  height: 420px;
-  left: -80px;
-  top: 180px;
-  background: rgba(0, 104, 56, 0.22);
-}
-
-.expo-glow--b {
-  width: 360px;
-  height: 360px;
-  right: -60px;
-  top: 520px;
-  background: rgba(0, 142, 226, 0.18);
-  animation-delay: -4s;
-}
-
-.expo-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(0, 104, 56, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 104, 56, 0.05) 1px, transparent 1px);
-  background-size: 42px 42px;
-  mask-image: linear-gradient(180deg, #000 0%, transparent 70%);
-}
-
-.expo-signal {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 420px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--canvas), var(--emerald), transparent);
-  opacity: 0.45;
-  animation: expo-scan 5.5s linear infinite;
-}
-
-@keyframes expo-drift {
-  from {
-    transform: translate3d(0, 0, 0);
-  }
-  to {
-    transform: translate3d(24px, 18px, 0);
-  }
-}
-
-@keyframes expo-scan {
-  0% {
-    transform: translateX(-30%);
-    opacity: 0.15;
-  }
-  50% {
-    opacity: 0.55;
-  }
-  100% {
-    transform: translateX(30%);
-    opacity: 0.15;
-  }
-}
-
-.expo-stage > *:not(.expo-atmosphere) {
-  position: relative;
+.mit-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 2px solid var(--emerald);
+  padding-bottom: 10px;
   z-index: 1;
+}
+
+.mit-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   min-width: 0;
 }
 
-.expo-mono {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+.mit-logo {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
-.expo-brand,
-.expo-engine-copy h2,
-.expo-detail h3,
-.expo-role h3,
-.expo-qr-title,
-.expo-section-label,
-.expo-kicker,
-.expo-people {
-  font-family: "Plus Jakarta Sans", Inter, sans-serif;
+.mit-affiliation {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink);
 }
 
-/* HERO */
-.expo-hero {
-  flex: 0 0 auto;
+.mit-event {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--emerald);
+  white-space: nowrap;
+}
+
+.mit-titleblock {
+  z-index: 1;
+  padding-top: 2px;
+}
+
+.mit-title {
+  margin: 0;
+  font-family: "Plus Jakarta Sans", "Source Sans 3", sans-serif;
+  font-size: 72px;
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: var(--emerald);
+}
+
+.mit-pitch {
+  margin: 10px 0 0;
+  max-width: 1400px;
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.mit-body {
+  display: grid;
+  grid-template-columns: 1.75fr 1fr;
+  gap: 20px;
+  min-height: 0;
+  z-index: 1;
+}
+
+.mit-figure {
+  min-width: 0;
+  display: flex;
+}
+
+.mit-figure-frame {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding-top: 4px;
+  padding: 14px 16px 12px;
+  background: var(--panel);
+  border: 1.5px solid var(--line);
+  border-radius: 4px;
+  /* research figure — not a marketing card */
+  box-shadow: none;
 }
 
-.expo-hero-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.expo-logo {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  background: #fff;
-  border: 1px solid var(--stone);
-  padding: 3px;
-}
-
-.expo-kicker {
+.mit-fig-label {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.mit-arch {
+  width: 100%;
+  height: auto;
+  flex: 1.35;
+  min-height: 360px;
+  max-height: 430px;
+}
+
+.mit-arch .mit-node-title {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  fill: var(--ink);
+}
+
+.mit-arch .mit-node-sub {
+  font-family: "Source Sans 3", sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  fill: var(--muted);
+}
+
+.mit-node {
+  transform-origin: center;
+  transition: transform 220ms ease;
+}
+
+.mit-layer-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.mit-layer-chip {
+  appearance: none;
+  margin: 0;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  font-family: "Source Sans 3", sans-serif;
+  color: var(--ink);
+  background: #f3f6f3;
+  border: 1.5px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.mit-layer-short {
+  font-size: 13px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--emerald);
 }
 
-.expo-people {
-  margin: 2px 0 0;
+.mit-layer-claim {
   font-size: 13px;
-  color: var(--muted);
-}
-
-.expo-brand {
-  margin: 6px 0 0;
-  font-size: 64px;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 0.95;
-  color: var(--emerald);
-  animation: expo-rise 700ms ease both;
-}
-
-.expo-claim {
-  margin: 0;
-  max-width: 920px;
-  font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-weight: 600;
   line-height: 1.2;
-  color: var(--ink);
-  animation: expo-rise 800ms ease 80ms both;
 }
 
-.expo-claim span {
-  display: block;
+.mit-layer-chip:hover {
+  border-color: rgba(0, 142, 226, 0.45);
+  transform: translateY(-1px);
+}
+
+.mit-layer-chip.is-active {
+  background: rgba(0, 104, 56, 0.08);
+  border-color: var(--emerald);
+}
+
+.mit-layer-chip.is-active .mit-layer-short {
   color: var(--canvas);
-  font-weight: 600;
 }
 
-.expo-thesis {
+.mit-fig-caption {
   margin: 0;
-  max-width: 980px;
+  padding: 8px 2px 0;
   font-size: 15px;
-  line-height: 1.4;
-  color: var(--muted);
-  animation: expo-rise 850ms ease 120ms both;
-}
-
-.expo-stack {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-.expo-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 9px 5px 7px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid var(--stone);
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
-  font-weight: 600;
+  line-height: 1.35;
   color: var(--ink);
-  backdrop-filter: blur(6px);
+  border-top: 1px solid var(--line);
+  animation: mit-fade 280ms ease;
 }
 
-.expo-badge svg {
-  width: 13px;
-  height: 13px;
+.mit-fig-caption strong {
+  color: var(--emerald);
+  font-weight: 700;
 }
 
-@keyframes expo-rise {
+@keyframes mit-fade {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -258,462 +248,163 @@ body.cfc-poster-lock {
   }
 }
 
-/* ENGINE */
-.expo-engine {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: 0.95fr 1.05fr;
-  gap: 16px;
-  align-items: stretch;
-}
-
-.expo-section-label {
-  margin: 0 0 6px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--canvas);
-}
-
-.expo-engine-copy {
+.mit-side {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-height: 0;
-}
-
-.expo-engine-copy h2 {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-  color: var(--ink);
-}
-
-.expo-engine-copy > p {
-  margin: 0;
-  font-size: 14px;
-  color: var(--muted);
-  line-height: 1.4;
-}
-
-.expo-detail {
-  margin-top: auto;
-  padding: 16px 16px 14px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid var(--stone);
-  border-left: 4px solid var(--emerald);
-  box-shadow: 0 18px 40px rgba(15, 40, 28, 0.08);
-  animation: expo-rise 280ms ease both;
-  min-height: 0;
-}
-
-.expo-detail--canvas {
-  border-left-color: var(--canvas);
-}
-
-.expo-detail--brass {
-  border-left-color: var(--brass);
-}
-
-.expo-detail--ink {
-  border-left-color: var(--ink);
-}
-
-.expo-detail-tag {
-  margin: 0 0 4px;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--canvas);
-}
-
-.expo-detail h3 {
-  margin: 0 0 6px;
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--emerald);
-}
-
-.expo-detail-claim {
-  margin: 0 0 8px !important;
-  font-size: 14.5px !important;
-  font-weight: 600;
-  color: var(--ink) !important;
-}
-
-.expo-detail p {
-  margin: 0;
-  font-size: 13.5px;
-  line-height: 1.4;
-  color: var(--muted);
-}
-
-/* CSS 3D scene */
-.expo-scene {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 0;
-  padding: 12px 8px 8px;
-  perspective: 1200px;
-  overflow: hidden;
-}
-
-.expo-scene-floor {
-  position: absolute;
-  width: 420px;
-  height: 180px;
-  bottom: 48px;
-  background: radial-gradient(ellipse at center, rgba(0, 104, 56, 0.18), transparent 70%);
-  filter: blur(2px);
-  transform: rotateX(70deg);
-}
-
-.expo-rig {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  min-height: 420px;
-  transform-style: preserve-3d;
-  transform: rotateX(58deg) rotateZ(-28deg);
-  animation: expo-orbit 14s ease-in-out infinite alternate;
-}
-
-@keyframes expo-orbit {
-  from {
-    transform: rotateX(56deg) rotateZ(-30deg) translateY(0);
-  }
-  to {
-    transform: rotateX(60deg) rotateZ(-24deg) translateY(-8px);
-  }
-}
-
-.expo-plane {
-  --lift: calc(var(--i) * 72px);
-  position: absolute;
-  left: 50%;
-  top: 58%;
-  width: min(78%, 380px);
-  height: 88px;
-  margin-left: -190px;
-  margin-top: calc(-44px - var(--lift));
-  z-index: calc(10 - var(--i));
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 2px;
-  padding: 12px 16px;
-  text-align: left;
-  border: 0;
-  cursor: pointer;
-  color: #fff;
-  background: linear-gradient(135deg, var(--emerald), #0a7a45);
-  box-shadow:
-    0 18px 0 rgba(0, 60, 35, 0.35),
-    0 28px 40px rgba(12, 36, 28, 0.22);
-  transform: translateZ(calc(var(--i) * 28px));
-  transition:
-    transform 280ms ease,
-    box-shadow 280ms ease,
-    filter 280ms ease;
-  animation: expo-float 4.5s ease-in-out infinite;
-  animation-delay: calc(var(--i) * -0.7s);
-}
-
-.expo-plane--canvas {
-  background: linear-gradient(135deg, #0077c2, var(--canvas));
-  box-shadow:
-    0 18px 0 rgba(0, 70, 120, 0.32),
-    0 28px 40px rgba(12, 36, 28, 0.18);
-}
-
-.expo-plane--brass {
-  background: linear-gradient(135deg, #a67b3d, var(--brass));
-  box-shadow:
-    0 18px 0 rgba(90, 60, 20, 0.28),
-    0 28px 40px rgba(12, 36, 28, 0.16);
-  color: #1f1608;
-}
-
-.expo-plane--ink {
-  background: linear-gradient(135deg, #1c2830, var(--ink));
-  box-shadow:
-    0 18px 0 rgba(20, 30, 36, 0.45),
-    0 28px 40px rgba(12, 36, 28, 0.2);
-}
-
-.expo-plane.is-active,
-.expo-plane:hover {
-  transform: translateZ(calc(var(--i) * 28px + 36px)) scale(1.04);
-  filter: brightness(1.06);
-  z-index: 5;
-}
-
-.expo-plane-tag {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  opacity: 0.85;
-}
-
-.expo-plane-title {
-  font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.expo-plane-hint {
-  font-size: 11.5px;
-  line-height: 1.25;
-  opacity: 0.9;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-@keyframes expo-float {
-  0%,
-  100% {
-    translate: 0 0;
-  }
-  50% {
-    translate: 0 -6px;
-  }
-}
-
-.expo-scene-hint {
-  margin: 10px 0 0;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
-  color: var(--muted);
-  letter-spacing: 0.04em;
-}
-
-/* PROOF */
-.expo-proof {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.expo-kpis {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-}
-
-.expo-kpi {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 14px 12px 12px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid var(--stone);
-  border-top: 3px solid var(--emerald);
+  gap: 12px;
   min-width: 0;
 }
 
-.expo-kpi:nth-child(2) {
-  border-top-color: var(--canvas);
+.mit-col {
+  padding: 0 2px 8px;
+  border-bottom: 1px solid var(--line);
 }
 
-.expo-kpi:nth-child(3) {
-  border-top-color: var(--brass);
+.mit-col:last-of-type {
+  border-bottom: none;
 }
 
-.expo-kpi:nth-child(4) {
-  border-top-color: var(--ink);
+.mit-claim-h {
+  margin: 0 0 6px;
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--ink);
 }
 
-.expo-kpi strong {
-  font-size: 34px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+.mit-col ul {
+  margin: 0;
+  padding: 0 0 0 16px;
+}
+
+.mit-col li {
+  margin: 0 0 3px;
+  font-size: 14.5px;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+.mit-results {
+  margin-top: auto;
+  padding: 12px 14px 10px;
+  background: rgba(0, 104, 56, 0.06);
+  border: 1.5px solid rgba(0, 104, 56, 0.22);
+  border-radius: 4px;
+}
+
+.mit-results-kicker {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--emerald);
+}
+
+.mit-results-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+
+.mit-result {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.mit-result strong {
+  font-size: 28px;
+  font-weight: 700;
   line-height: 1;
   color: var(--emerald);
 }
 
-.expo-kpi span {
+.mit-result span {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
+  line-height: 1.2;
   color: var(--ink);
 }
 
-.expo-kpi em {
+.mit-result em {
   font-style: normal;
   font-size: 11px;
   color: var(--muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.expo-proof-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
+.mit-mono {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
 }
 
-.expo-passes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.expo-pass {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  background: #e8f5ee;
-  border: 1px solid #b7dcc6;
-  font-size: 12.5px;
+.mit-pass {
+  margin: 10px 0 0;
+  font-size: 13px;
   font-weight: 600;
   color: var(--ink);
 }
 
-.expo-pass em {
-  font-style: normal;
-  font-family: "IBM Plex Mono", monospace;
+.mit-pass span {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 1px 6px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: 0.04em;
   color: #fff;
   background: var(--emerald);
-  padding: 2px 6px;
+  border-radius: 2px;
 }
 
-.expo-extra {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  font-size: 12.5px;
-  color: var(--muted);
-}
-
-.expo-extra strong {
-  color: var(--ink);
-  margin-right: 4px;
-}
-
-/* IMPACT */
-.expo-impact {
-  flex: 0 0 auto;
-  display: grid;
-  grid-template-columns: 1.4fr 0.8fr;
-  gap: 12px;
-  align-items: stretch;
-}
-
-.expo-roles {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.expo-role {
-  padding: 12px 12px 10px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid var(--stone);
-  min-width: 0;
-}
-
-.expo-role h3 {
-  margin: 0 0 8px;
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--emerald);
-}
-
-.expo-role ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 4px;
-}
-
-.expo-role li {
-  font-size: 13px;
-  color: var(--ink);
-  padding: 4px 0;
-  border-top: 1px solid #ebe6dc;
-}
-
-.expo-role li:first-child {
-  border-top: 0;
-  padding-top: 0;
-}
-
-.expo-qr {
+.mit-footer {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px;
-  background: var(--ink);
-  color: #eef4f7;
-  min-width: 0;
+  justify-content: space-between;
+  gap: 24px;
+  padding-top: 10px;
+  border-top: 2px solid var(--emerald);
+  z-index: 1;
 }
 
-.expo-qr-img {
-  width: 104px;
-  height: 104px;
-  background: #fff;
-  border: 2px solid #fff;
-  image-rendering: pixelated;
-  flex-shrink: 0;
+.mit-people {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.expo-qr-title {
-  margin: 0 0 4px;
+.mit-people p {
+  margin: 0;
   font-size: 16px;
-  font-weight: 800;
+  color: var(--ink);
 }
 
-.expo-qr-url {
-  margin: 0;
-  font-size: 12px;
-  color: #9fd0f0;
-  word-break: break-all;
-}
-
-.expo-footer {
-  flex: 0 0 40px;
+.mit-qr {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: var(--emerald);
-  color: #f3faf6;
-  font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  gap: 12px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .expo-rig,
-  .expo-plane,
-  .expo-glow,
-  .expo-signal,
-  .expo-brand,
-  .expo-claim,
-  .expo-thesis,
-  .expo-detail {
-    animation: none !important;
-  }
+.mit-qr-img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 3px;
+}
+
+.mit-qr-title {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.mit-qr .mit-mono {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
 }

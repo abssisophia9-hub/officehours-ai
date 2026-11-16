@@ -1,143 +1,158 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  SiReact,
-  SiVite,
-  SiTailwindcss,
-  SiFastapi,
-  SiSqlalchemy,
-  SiPostgresql,
-  SiSqlite,
-  SiHuggingface,
-  SiScikitlearn,
-  SiGooglegemini,
-  SiInstructure,
-  SiYoutube,
-} from "react-icons/si";
 import "./capstone-poster.css";
 
 const BASE = import.meta.env.BASE_URL || "/";
 
 /**
- * Exhibition redesign — recruiter-scannable “helpdesk engine”.
- * Metrics/modules verified from reports/final_report/*, docs/eval_results,
- * course_ta_service (0-TA), README agents table, AppShell roles.
+ * MIT-style research exhibition poster (landscape 1920×1080).
+ * Composition: 20-second pitch · dominant architecture figure · sparse claims · measured results.
+ * Numbers/modules only from reports/final_report/* and docs/eval_results / midreport evidence.
  */
 
-const STACK = [
-  { label: "React", Icon: SiReact, color: "#61DAFB" },
-  { label: "Vite", Icon: SiVite, color: "#646CFF" },
-  { label: "Tailwind", Icon: SiTailwindcss, color: "#06B6D4" },
-  { label: "FastAPI", Icon: SiFastapi, color: "#009688" },
-  { label: "SQLAlchemy", Icon: SiSqlalchemy, color: "#D71F00" },
-  { label: "Postgres", Icon: SiPostgresql, color: "#4169E1" },
-  { label: "SQLite", Icon: SiSqlite, color: "#003B57" },
-  { label: "MiniLM", Icon: SiHuggingface, color: "#FFD21E" },
-  { label: "sklearn", Icon: SiScikitlearn, color: "#F7931E" },
-  { label: "Gemini", Icon: SiGooglegemini, color: "#8E75B2" },
-  { label: "Canvas", Icon: SiInstructure, color: "#E72429" },
-  { label: "YouTube", Icon: SiYoutube, color: "#FF0000" },
+const NODES = [
+  {
+    id: "canvas",
+    x: 36,
+    y: 78,
+    w: 188,
+    h: 96,
+    title: "Canvas LTI",
+    sub: "Course roster · material",
+  },
+  {
+    id: "spa",
+    x: 268,
+    y: 78,
+    w: 188,
+    h: 96,
+    title: "React SPA",
+    sub: "Role per course",
+  },
+  {
+    id: "api",
+    x: 500,
+    y: 28,
+    w: 230,
+    h: 196,
+    title: "FastAPI modules",
+    sub: "Ask · Study · Coach · Pedagogy · Rooms",
+    tall: true,
+  },
+  {
+    id: "gateway",
+    x: 774,
+    y: 28,
+    w: 220,
+    h: 196,
+    title: "Model gateway",
+    sub: "MiniLM + sklearn · gated Gemini",
+    tall: true,
+  },
+  {
+    id: "db",
+    x: 1038,
+    y: 78,
+    w: 168,
+    h: 96,
+    title: "SQLAlchemy",
+    sub: "SQLite / Postgres",
+  },
 ];
 
-/** Interactive architecture planes — names match README / services */
-const PLANES = [
+const EDGES = [
+  [36 + 188, 126, 268, 126],
+  [268 + 188, 126, 500, 126],
+  [500 + 230, 126, 774, 126],
+  [774 + 220, 126, 1038, 126],
+];
+
+const LAYERS = [
   {
     id: "triage",
-    tag: "01 · Intake",
-    title: "Ask Triage",
-    claim: "Local MiniLM + scikit-learn — not a prompted chat.",
+    short: "Ask Triage",
+    claim: "Local Ask Triage routes asks without an LLM",
     detail:
-      "On ask submit: Analyzer → Matcher → Synthesizer (category, urgency, tags, TA match, teaching hint). Default path is trained local models.",
-    accent: "emerald",
+      "Analyzer → Matcher → Synthesizer on MiniLM embeddings + logistic regression (joblib). Default path is local — not a prompted chat.",
   },
   {
     id: "study",
-    tag: "02 · Gate",
-    title: "Professor-Gated Study Agent",
-    claim: "Only stamped course material reaches the student answer.",
+    short: "Study gate",
+    claim: "Only professor-stamped material may be quoted",
     detail:
-      "Retrieval over professor-approved KB for the caller’s course. Optional Gemini entailment check only when demo + LLM flags allow. Unapproved/other-course refusal measured 10/10 + 10/10.",
-    accent: "canvas",
+      "Study Agent retrieves approved KB for the caller’s course. Optional Gemini entailment check only when demo + LLM flags allow.",
   },
   {
     id: "coach",
-    tag: "03 · Desk",
-    title: "Help Coach + Live Queue",
-    claim: "Coaches the TA — does not answer as course truth.",
+    short: "Help Coach",
+    claim: "Help Coach assists the TA — never answers as truth",
     detail:
-      "Mid-session assist from teaching-bank + approved KB retrieval (no LLM). Queue tracks open → claimed → in progress; 0-TA courses auto-route to the professor.",
-    accent: "brass",
+      "Retrieval over a curated teaching bank + approved KB. Queue: open → claimed → in progress; 0-TA courses route to the professor.",
   },
   {
-    id: "pedagogy",
-    tag: "04 · Recover",
-    title: "Pedagogy Agent · Rooms · Notes",
-    claim: "Grade-gap plans + peer pathways beside staff help.",
+    id: "peer",
+    short: "Peer path",
+    claim: "Pedagogy, Rooms, and Notes recover beside staff help",
     detail:
-      "Pedagogy builds focus plans from practice scores + learning style (Resources via trusted search / YouTube when keyed). Rooms and Classmate Notes give peer collaboration without inventing syllabus.",
-    accent: "ink",
+      "Pedagogy builds focus plans from practice scores. Rooms and Classmate Notes keep peer pathways without inventing syllabus.",
   },
 ];
 
-const KPIS = [
+const RESULTS = [
   {
     value: "100%",
-    label: "Unapproved refusal",
-    note: "with_check gated · 10/10 + 10/10",
+    label: "Unapproved / other-course refusal",
+    note: "10/10 + 10/10 · with_check Gemini",
   },
   {
     value: "74/75",
-    label: "Study answer-check",
-    note: "98.7% · Gemini check suite",
+    label: "Study answer-check harness",
+    note: "98.7% · gated check suite",
   },
   {
     value: "84.6%",
-    label: "Triage macro F1",
+    label: "Ask Triage macro F1",
     note: "5-fold CV · n=156",
   },
   {
-    value: "62.6ms",
+    value: "62.6 ms",
     label: "Triage latency p50",
     note: "ask_triage_latency.json",
   },
 ];
 
-const PASSES = ["0-TA → professor routing", "Grade-gap planner E2E"];
-
-const ROLES = [
-  {
-    role: "Student",
-    lines: ["Study Agent", "Ask + My asks", "Pedagogy Agent", "Rooms · Notes"],
-  },
-  {
-    role: "TA",
-    lines: ["Live Queue", "Help Coach", "Past asks"],
-  },
-  {
-    role: "Professor",
-    lines: ["Material gate", "Insights", "Team · Desk"],
-  },
+const PROBLEM = [
+  "Office-hours load spikes; TAs need triage before the desk.",
+  "Unstamped notes must not become course truth.",
+  "Peer help and staff help both need accountability.",
 ];
 
-const EXTRA = [
-  { label: "Matcher holdout", value: "87.5%" },
-  { label: "Gold analyzer", value: "75.0%" },
-  { label: "Learning-style CV", value: "92.5%" },
+const METHOD = [
+  "Ask Triage: local MiniLM + sklearn at intake.",
+  "Professor Material gate before Study Agent answers.",
+  "Help Coach retrieval (not LLM); 0-TA → professor.",
+  "Pedagogy Agent · Rooms · Classmate Notes · Insights.",
+];
+
+const IMPACT = [
+  "Students get stamped answers or a clear refusal.",
+  "TAs open a classified queue with coaching scripts.",
+  "Professors control the KB and see struggle Insights.",
 ];
 
 export default function CapstonePosterPage() {
   const [active, setActive] = useState("study");
   const [fit, setFit] = useState({ scale: 1, mx: 0, my: 0 });
-  const plane = PLANES.find((p) => p.id === active) || PLANES[1];
+  const layer = LAYERS.find((l) => l.id === active) || LAYERS[1];
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", "light");
     document.body.classList.add("cfc-poster-lock");
     const relayout = () => {
-      const scale = Math.min(window.innerWidth / 1080, window.innerHeight / 1920);
+      const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
       setFit({
         scale,
-        mx: Math.max(0, (window.innerWidth - 1080 * scale) / 2),
-        my: Math.max(0, (window.innerHeight - 1920 * scale) / 2),
+        mx: Math.max(0, (window.innerWidth - 1920 * scale) / 2),
+        my: Math.max(0, (window.innerHeight - 1080 * scale) / 2),
       });
     };
     relayout();
@@ -152,8 +167,8 @@ export default function CapstonePosterPage() {
     () => ({
       transform: `scale(${fit.scale})`,
       transformOrigin: "top left",
-      width: 1080,
-      height: 1920,
+      width: 1920,
+      height: 1080,
       marginLeft: fit.mx,
       marginTop: fit.my,
     }),
@@ -161,145 +176,192 @@ export default function CapstonePosterPage() {
   );
 
   return (
-    <div className="expo-viewport">
-      <article className="expo-stage" style={stageStyle} aria-label="OfficeHours AI exhibition poster">
-        <div className="expo-atmosphere" aria-hidden="true">
-          <div className="expo-glow expo-glow--a" />
-          <div className="expo-glow expo-glow--b" />
-          <div className="expo-grid" />
-          <div className="expo-signal" />
-        </div>
-
-        {/* HERO — 10-second recruiter read */}
-        <header className="expo-hero">
-          <div className="expo-hero-meta">
-            <img src={`${BASE}aui-logo.png`} alt="" className="expo-logo" />
-            <div>
-              <p className="expo-kicker">AUI · EGR 4402 Capstone · CFC Exhibition</p>
-              <p className="expo-people">
-                Sophia Abssi · B.S. AI &amp; Robotization · Supervisor Dr. Oumaima Hourrane
-              </p>
-            </div>
+    <div className="mit-viewport">
+      <article className="mit-stage" style={stageStyle} aria-label="OfficeHours AI research exhibition poster">
+        <header className="mit-banner">
+          <div className="mit-banner-left">
+            <img src={`${BASE}aui-logo.png`} alt="" className="mit-logo" />
+            <p className="mit-affiliation">
+              Al Akhawayn University · School of Science &amp; Engineering · EGR 4402 Capstone
+            </p>
           </div>
-          <h1 className="expo-brand">OfficeHours AI</h1>
-          <p className="expo-claim">
-            Faculty stamp the only answers the agent may quote.
-            <span> Local triage. Human accountability. Peer Rooms.</span>
-          </p>
-          <p className="expo-thesis">
-            One login, role per course — Ask Triage at intake, Help Coach on the TA desk,
-            professor-gated Study Agent, Pedagogy Agent for grade-gap recovery, and Canvas LTI when
-            live.
-          </p>
-          <div className="expo-stack">
-            {STACK.map(({ label, Icon, color }) => (
-              <span key={label} className="expo-badge">
-                <Icon aria-hidden style={{ color }} />
-                {label}
-              </span>
-            ))}
-          </div>
+          <p className="mit-event">CFC Dean &amp; Employer Exhibition</p>
         </header>
 
-        {/* 3D ENGINE SPINE */}
-        <section className="expo-engine" aria-label="Interactive system architecture">
-          <div className="expo-engine-copy">
-            <p className="expo-section-label">Core engine</p>
-            <h2>Four layers. One modular monolith.</h2>
+        <div className="mit-titleblock">
+          <h1 className="mit-title">OfficeHours AI</h1>
+          <p className="mit-pitch">
+            Faculty stamp the only answers the agent may quote — local Ask Triage, human escalation.
+          </p>
+        </div>
+
+        <div className="mit-body">
+          <section className="mit-figure" aria-label="System architecture figure">
+            <div className="mit-figure-frame">
+              <p className="mit-fig-label">Figure 1 · Modular-monolith helpdesk path</p>
+              <svg
+                className="mit-arch"
+                viewBox="0 0 1240 270"
+                role="img"
+                aria-label="Canvas to SPA to FastAPI to model gateway to database"
+              >
+                <defs>
+                  <filter id="mitSoft" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#2d3b45" floodOpacity="0.12" />
+                  </filter>
+                  <linearGradient id="mitPlane" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ffffff" />
+                    <stop offset="100%" stopColor="#eef3ef" />
+                  </linearGradient>
+                </defs>
+
+                {/* subtle depth floor */}
+                <ellipse cx="620" cy="250" rx="540" ry="16" fill="rgba(0,104,56,0.08)" />
+
+                {EDGES.map(([x1, y1, x2, y2], i) => (
+                  <g key={i}>
+                    <line
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
+                      stroke="#008EE2"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                    />
+                    <polygon
+                      points={`${x2},${y2} ${x2 - 10},${y2 - 5} ${x2 - 10},${y2 + 5}`}
+                      fill="#008EE2"
+                    />
+                  </g>
+                ))}
+
+                {NODES.map((n) => (
+                  <g key={n.id} filter="url(#mitSoft)" className="mit-node">
+                    <rect
+                      x={n.x}
+                      y={n.y}
+                      width={n.w}
+                      height={n.h}
+                      rx="6"
+                      fill="url(#mitPlane)"
+                      stroke={n.tall ? "#006838" : "#2d3b45"}
+                      strokeWidth={n.tall ? 2.5 : 1.5}
+                    />
+                    {/* slight 3D edge */}
+                    <path
+                      d={`M${n.x + 6} ${n.y} L${n.x + 14} ${n.y - 8} L${n.x + n.w + 8} ${n.y - 8} L${n.x + n.w} ${n.y}`}
+                      fill="rgba(0,104,56,0.12)"
+                      stroke="none"
+                    />
+                    <text
+                      x={n.x + n.w / 2}
+                      y={n.y + (n.tall ? 72 : 42)}
+                      textAnchor="middle"
+                      className="mit-node-title"
+                    >
+                      {n.title}
+                    </text>
+                    <text
+                      x={n.x + n.w / 2}
+                      y={n.y + (n.tall ? 108 : 68)}
+                      textAnchor="middle"
+                      className="mit-node-sub"
+                    >
+                      {n.sub}
+                    </text>
+                  </g>
+                ))}
+              </svg>
+
+              <div className="mit-layer-row" role="tablist" aria-label="Pipeline claims">
+                {LAYERS.map((l) => (
+                  <button
+                    key={l.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active === l.id}
+                    className={`mit-layer-chip${active === l.id ? " is-active" : ""}`}
+                    onClick={() => setActive(l.id)}
+                  >
+                    <span className="mit-layer-short">{l.short}</span>
+                    <span className="mit-layer-claim">{l.claim}</span>
+                  </button>
+                ))}
+              </div>
+
+              <p className="mit-fig-caption" key={layer.id}>
+                <strong>{layer.claim}.</strong> {layer.detail}
+              </p>
+            </div>
+          </section>
+
+          <aside className="mit-side">
+            <section className="mit-col">
+              <h2 className="mit-claim-h">Office hours lack a gated path from ask to answer</h2>
+              <ul>
+                {PROBLEM.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </section>
+
+            <section className="mit-col">
+              <h2 className="mit-claim-h">Gate locally, coach the TA, keep peers accountable</h2>
+              <ul>
+                {METHOD.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </section>
+
+            <section className="mit-col">
+              <h2 className="mit-claim-h">Stamped truth for students; load relief for staff</h2>
+              <ul>
+                {IMPACT.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </section>
+
+            <section className="mit-results" aria-label="Measured results">
+              <p className="mit-results-kicker">Results · verified FYP evidence</p>
+              <div className="mit-results-grid">
+                {RESULTS.map((r) => (
+                  <div key={r.label} className="mit-result">
+                    <strong className="mit-mono">{r.value}</strong>
+                    <span>{r.label}</span>
+                    <em>{r.note}</em>
+                  </div>
+                ))}
+              </div>
+              <p className="mit-pass">
+                <span>PASS</span> 0-TA → professor routing · <span>PASS</span> grade-gap planner E2E
+              </p>
+            </section>
+          </aside>
+        </div>
+
+        <footer className="mit-footer">
+          <div className="mit-people">
             <p>
-              FastAPI backend · React SPA · SQLAlchemy (SQLite / Postgres) · Canvas LTI 1.3 · Model
-              gateway with egress guard for gated Gemini.
+              <strong>Sophia Abssi</strong> · B.S. AI &amp; Robotization
             </p>
-            <div className={`expo-detail expo-detail--${plane.accent}`} key={plane.id}>
-              <p className="expo-detail-tag">{plane.tag}</p>
-              <h3>{plane.title}</h3>
-              <p className="expo-detail-claim">{plane.claim}</p>
-              <p>{plane.detail}</p>
-            </div>
+            <p>
+              Supervisor <strong>Dr. Oumaima Hourrane</strong>
+            </p>
           </div>
-
-          <div className="expo-scene" aria-hidden={false}>
-            <div className="expo-scene-floor" />
-            <div className="expo-rig">
-              {PLANES.map((p, i) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  className={`expo-plane expo-plane--${p.accent}${active === p.id ? " is-active" : ""}`}
-                  style={{ "--i": i }}
-                  onClick={() => setActive(p.id)}
-                  aria-pressed={active === p.id}
-                >
-                  <span className="expo-plane-tag">{p.tag}</span>
-                  <span className="expo-plane-title">{p.title}</span>
-                  <span className="expo-plane-hint">{p.claim}</span>
-                </button>
-              ))}
-            </div>
-            <p className="expo-scene-hint">Tap a layer · CSS 3D hierarchy</p>
-          </div>
-        </section>
-
-        {/* PROOF */}
-        <section className="expo-proof" aria-label="Measured evidence">
-          <p className="expo-section-label">Measured evidence</p>
-          <div className="expo-kpis">
-            {KPIS.map((k) => (
-              <div key={k.label} className="expo-kpi">
-                <strong className="expo-mono">{k.value}</strong>
-                <span>{k.label}</span>
-                <em>{k.note}</em>
-              </div>
-            ))}
-          </div>
-          <div className="expo-proof-row">
-            <div className="expo-passes">
-              {PASSES.map((p) => (
-                <span key={p} className="expo-pass">
-                  <em>PASS</em> {p}
-                </span>
-              ))}
-            </div>
-            <div className="expo-extra">
-              {EXTRA.map((e) => (
-                <span key={e.label}>
-                  <strong className="expo-mono">{e.value}</strong> {e.label}
-                </span>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ROLES + QR */}
-        <section className="expo-impact">
-          <div className="expo-roles">
-            {ROLES.map((r) => (
-              <div key={r.role} className="expo-role">
-                <h3>{r.role}</h3>
-                <ul>
-                  {r.lines.map((line) => (
-                    <li key={line}>{line}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          <div className="expo-qr">
+          <div className="mit-qr">
             <img
               src={`${BASE}poster-demo-qr.png`}
               alt="QR code to GitHub repository"
-              className="expo-qr-img"
+              className="mit-qr-img"
             />
             <div>
-              <p className="expo-qr-title">Prototype</p>
-              <p className="expo-mono expo-qr-url">github.com/abssisophia9-hub/officehours-ai</p>
+              <p className="mit-qr-title">Live prototype</p>
+              <p className="mit-mono">github.com/abssisophia9-hub/officehours-ai</p>
             </div>
           </div>
-        </section>
-
-        <footer className="expo-footer">
-          Al Akhawayn University · School of Science &amp; Engineering · EGR 4402 · Casablanca
-          Finance City Showcase
         </footer>
       </article>
     </div>

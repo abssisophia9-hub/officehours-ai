@@ -64,7 +64,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/sso" element={<SsoCompletePage />} />
-      {/* CFC 16:9 capstone poster — public, no auth */}
+      {/* CFC landscape research poster (1920×1080) — public, no auth */}
       <Route path="/poster" element={<CapstonePosterPage />} />
       {/* Prototype always reachable for feedback - not behind demo race */}
       <Route path="/demo/student-vision" element={<StudentVisionPrototype />} />
