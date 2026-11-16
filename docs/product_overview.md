@@ -16,17 +16,19 @@ and student in others — the course picker switches the workspace with the role
 **Demo vs deploy:** `./scripts/run_product.sh` turns `OFFICEHOURS_DEMO=true`
 (Sara/Youssef, sample chapters, local Canvas mirror). A campus rollout sets
 `OFFICEHOURS_DEMO=false` and live Canvas — no hardcoded people or chapter lists.
+External Gemini stays **blocked** when demo is false.
 
 Primary app:
 
 - `frontend/officehours-app` (dev port **5180**)
 - Launch helper: `./scripts/run_product.sh`
 
-Legacy separate kiosk/dashboard folders remain as optional web shells only
-(not a physical kiosk / barcode / NFC path). **The unified app is what you send
-for product testing**.
+Legacy separate kiosk/dashboard folders
+(`frontend/student-kiosk/`, `professor-dashboard/`, `ta-dashboard/`) remain as
+optional archives only (not a physical kiosk / barcode / NFC path). **The
+unified app is what you send for product testing**.
 
-Full history: [`project_journey.md`](project_journey.md).
+History (earlier product language): [`project_journey.md`](project_journey.md).
 
 ## Demo accounts
 
@@ -61,19 +63,18 @@ Gold labels: [`docs/gold_label_lab.md`](gold_label_lab.md) — a TA labeling lab
 
 1. Run `./scripts/run_product.sh` (or start backend + `officehours-app`)
 2. Open **http://127.0.0.1:5180** — opening story (Student → TA → Professor), then **Sign in**
-3. Sign in as student → **Quiet ask** or **Identify me** → pick message / face-to-face / online;
-   optionally open **Rooms** (`/student/room`) and accept a classmate solution
-   that unlocked it — helpers are **named** so they appear on the leaderboard
-4. Sign in as Alice (`a.chen@aui.ma`) → TA desk filter **My desk (assigned, backup, open)**
-   — she is staff on CSC 2302, not a classmate in that section
-5. Sign in as professor (`a.benali@aui.ma`) → **TA load** panel + command center:
-   - dual-TA primary/backup counts
-   - repeated topic clusters (group review vs FAQ)
-   - **Review insights** (chapter / ask-category board for the next review session)
-   - urgent/sensitive flags
-   - **Sync Canvas materials into KB** (or paste slides)
-   - approve pending FAQ/KB drafts
-6. After two similar conceptual asks, student sees solidarity (“you're not alone”)
+3. Sign in as student → **Ask for help** (Quiet ask or Identify me) → pick message /
+   face-to-face / online; open **My asks**; try **Study Agent** on the student home;
+   open **Pedagogy Agent**; optionally open **Rooms** and **Classmate notes**; use
+   **Inbox**
+4. Sign in as Alice (`a.chen@aui.ma`) → **Dashboard** / **Live Queue** → claim →
+   **Help Coach** → write a **reply** (required before resolve) → **Past asks**
+5. Sign in as professor (`a.benali@aui.ma`) → nav **Material · Your desk · Insights · Team**:
+   - stamp course material so Study Agent may quote it
+   - Your desk for assigned / urgent asks
+   - Insights struggle radar + repeated-topic bars
+   - Team for TA load
+6. After two similar conceptual asks, student may see solidarity (“you're not alone”)
    and can **opt in to study-buddy** (never for stress/sensitive)
 
 ## How courses appear on login
@@ -86,7 +87,7 @@ source:
 | --- | --- | --- |
 | **Demo seed** (local, `OFFICEHOURS_DEMO=true`) | App startup / login | `ensure_demo_accounts()` creates AUI-style users + courses + memberships. **Off for community deploy.** |
 | **Canvas launch** (intended SaaS path) | Click **Open OfficeHours AI** inside a Canvas course | Auto-provision course + membership from Canvas role, mint session |
-| **Live Canvas materials** | Professor syncs | `CANVAS_BASE_URL` + `CANVAS_ACCESS_TOKEN`. Local AUI Canvas mirror only when `OFFICEHOURS_DEMO=true`. |
+| **Live Canvas materials** | Professor syncs | `CANVAS_BASE_URL` + `CANVAS_API_TOKEN`. Local AUI Canvas mirror only when `OFFICEHOURS_DEMO=true`. |
 
 **Community recommendation:** Canvas LTI 1.3 as primary. Not AUI portal scraping.
 Manual admin entry only as a rare support escape hatch.
@@ -118,7 +119,7 @@ know whether to reply in writing or schedule a meeting.
 
 ## Classmate notes (peer study feed)
 
-Under **Study Agent**, students get a course-scoped **Classmate notes** feed:
+Under **Classmate notes**, students get a course-scoped peer feed:
 
 1. Enter a **title** and **what the notes are about** (required before upload)
 2. Optional caption + quiet post (hide name as “Classmate”)
@@ -138,23 +139,23 @@ The nav label is **Rooms**; the API is still `/help-room/`.
 
 1. **Create a Room** wizard: title + Markdown description → Problem / Discussion /
    Article → chapter grid, plus tags and file attachments. Rooms are **named** —
-   helpers show on the leaderboard. Privacy with staff is **Quiet ask**.
+   helpers show on the classmate leaderboard (points). Privacy with staff is
+   **Quiet ask**.
 2. Card feed with type + Open/Solved badges, up/down votes, chapter field,
    hashtags, author avatar, and **Express Interest**
 3. Left rail: Rooms / Chapters / Leaderboard + chapter counts
 4. Right rail: Community Pulse (classmates, active rooms, resolution) +
    Initialize Room
-5. Profile: ROOMS score, Hilbert Weight ŵ, Node Points, stat tiles
-6. Podium leaderboard ranked by ŵ (quality over volume)
-7. Unique **“this unlocked it”** / accepted solutions still credit true help
-8. Grades, integrity, and crises → **Quiet ask**. Staff do not sit in the room.
+5. Top helpers / classmate points on the Rooms board
+6. Unique **“this unlocked it”** / accepted solutions still credit true help
+7. Grades, integrity, and crises → **Quiet ask**. Staff do not sit in the room.
 
 **Chapters** come from this course’s **Canvas modules** (live LMS). Students
 pick one; they do not type the list. A hardcoded CSC/MTH outline is **demo
 only** (`OFFICEHOURS_DEMO=true`).
 
 On a community deploy: `OFFICEHOURS_DEMO=false`, set `CANVAS_BASE_URL` +
-`CANVAS_ACCESS_TOKEN`, and let Canvas/LTI provision people and modules.
+`CANVAS_API_TOKEN`, and let Canvas/LTI provision people and modules.
 `GET /help-room/community/` `chapter_source` is `canvas`, `posted`, or `empty`.
 `GET /auth/config` reports `{ demo, canvas_mode }` so the login screen hides
 demo chips outside walkthroughs.
@@ -162,20 +163,17 @@ demo chips outside walkthroughs.
 API: `GET|POST /help-room/`, community pulse, votes, interest, files, profiles,
 ranks.
 
-## Review insights (professor chapter board)
+## Insights (professor)
 
-`GET /analytics/review-insights?course_id=` (professor auth) groups:
+`GET /analytics/review-insights?course_id=` and the Insights page group:
 
 - Quiet ask / office-hours questions by Analyzer category (sensitive excluded)
 - Rooms posts by student-labeled chapter (Canvas module)
+- Struggle radar / repeated-topic bars on the tip UI
 
-Each topic is a **question board**: counts, sample asks, full question list,
-review status (**watch / emphasize / covered**), a note for coming students /
-related chapters, and **Draft FAQ for next cohort** (`POST /knowledge/from-insight`).
-Sensitive asks stay out. This reuses the existing question corpus — it is not a
-second empty database.
-
-`GET|PATCH /analytics/review-insights` (professor auth).
+Each topic can be a **question board**: counts, sample asks, review status
+(**watch / emphasize / covered**), notes, and draft FAQ for the next cohort.
+Sensitive asks stay out.
 
 ## TA staffing loop
 
@@ -184,10 +182,15 @@ TAs own a real office-hours loop — not only curation drafts:
 1. **Claim** an ask  
 2. **Start helping** (`in_progress`)  
 3. **Help Coach** — similar open asks, approved KB neighbors, Socratic steps,
-   draft / rewrite student reply, refresh teaching script (`POST /ta/assist/`)  
-4. **Reply to student** (message mode — visible on request status immediately)  
-5. **Done helping** or **Take as primary** (backup handoff)  
-6. **Send teaching draft** to professor curation  
+   draft / rewrite student reply, refresh teaching script (`POST /ta/assist/`).
+   Suggestions are **retrieval** over the teaching bank / KB — not a trained
+   coach model and not an LLM answer to the student.  
+4. **Reply to student** (message mode — visible on request status immediately).
+   **Resolve is blocked (HTTP 422) until a non-empty `ta_reply` exists** on a
+   newly resolved ask.  
+5. **Done helping** / resolve, or **Take as primary** (backup handoff)  
+6. **Past asks** (`/ta/past`) — resolved asks with timing filters  
+7. Optional: send teaching draft to professor curation  
 
 Triage context (difficulty, learning style, tags, sensitive, matcher) plus the
 Help Coach panel show on the selected ask. Queue items include a **similar**
@@ -198,7 +201,7 @@ assist APIs require auth and TA/professor membership for the course.
 
 When many asks share a cluster / topic:
 
-1. Professor (**Repeated Topics**) or TA (**Help Coach → Propose one group meeting**)
+1. Professor (**Insights** / repeated topics) or TA (**Help Coach → Propose one group meeting**)
    sets one **title + when + where/link**
 2. `POST /actions/recommendations/` stores a `group_session` decision with
    `meeting_*` fields attached to all `request_ids` in the cluster
@@ -231,7 +234,7 @@ See [`docs/agent_performance.md`](agent_performance.md) and
 Each course has a `canvas_course_id`. Professors sync LMS content with
 `POST /knowledge/canvas/sync` (auth required, professor role):
 
-- **Live Canvas:** set `CANVAS_BASE_URL` + `CANVAS_ACCESS_TOKEN` — pulls pages
+- **Live Canvas:** set `CANVAS_BASE_URL` + `CANVAS_API_TOKEN` — pulls pages
   and text files from Canvas REST API into the course KB.
 - **Local mirror (demo only):** when `OFFICEHOURS_DEMO=true` and live Canvas
   credentials are absent, seeded Canvas-style files per course (same ingest

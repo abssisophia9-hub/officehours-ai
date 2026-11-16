@@ -3,13 +3,17 @@
 | Doc | Purpose |
 | --- | --- |
 | [`product_overview.md`](product_overview.md) | How to demo the packaged product **and** community deploy (`OFFICEHOURS_DEMO`) |
-| [`glossary.md`](glossary.md) | Ask Triage · Help Coach · **Rooms** · roles · status |
-| [`project_journey.md`](project_journey.md) | Day 1 → current product history |
+| [`glossary.md`](glossary.md) | Ask Triage · Help Coach · Study Agent · Pedagogy Agent · **Rooms** · roles · status |
+| [`DEMO.md`](DEMO.md) | Supervisor laptop demo (slice, eval, browser) |
+| [`project_journey.md`](project_journey.md) | Historical day-1 → product notes (banner: earlier version) |
+| [`revision-agent-design.md`](revision-agent-design.md) | Historical Pedagogy Agent design notes (banner: earlier version) |
 | [`session_log_opening_auth_canvas.md`](session_log_opening_auth_canvas.md) | 29–30 Aug 2026: every opening / Microsoft / Canvas LTI chit-chat |
 | [`system_architecture.md`](system_architecture.md) | Components, flow, diagrams |
 | [`ai_nlp_design.md`](ai_nlp_design.md) | Custom-trained Ask Triage + Help Coach |
-| [`training_data.md`](training_data.md) | CSV / joblib inventory |
+| [`training_data.md`](training_data.md) | CSV / joblib inventory (Help Coach: no separate joblib; reuses teaching bank) |
 | [`agent_performance.md`](agent_performance.md) | Metrics + upgrade backlog |
+| [`AGENT_POLICY.md`](AGENT_POLICY.md) | Study Agent Orchestration Layer + LLM gates |
+| [`ORCHESTRATION.md`](ORCHESTRATION.md) | Orchestrator env catalog |
 | [`repo_audit.md`](repo_audit.md) | Full-repo backlog (auth, AI by party, hosting) — 30 Aug 2026 |
 | [`ethics_privacy.md`](ethics_privacy.md) | Privacy principles |
 | [`evaluation_plan.md`](evaluation_plan.md) | Evaluation methods |
@@ -26,4 +30,9 @@
 | [`CSC_Capstone_Project_Proposal_Sophia_A_FINAL.pdf`](CSC_Capstone_Project_Proposal_Sophia_A_FINAL.pdf) | Same approved proposal (PDF) |
 | [`surveys/`](surveys/) | Optional UX templates — **not** gold labels |
 
-Diagrams: [`../diagrams/`](../diagrams/). Cloud operators: [`../AGENTS.md`](../AGENTS.md).
+Root overview: [`../README.md`](../README.md). Diagrams: [`../diagrams/`](../diagrams/).
+Cloud operators: [`../AGENTS.md`](../AGENTS.md).
+
+Measured load / quota notes also live in the Project evidence pack
+(`docs/evidence/README.md`, `docs/evidence/scaling-design.md`) — not rewritten
+in this pass.
