@@ -7,7 +7,7 @@ const NAV = [
   { id: "dashboard", label: "Dashboard", icon: "dashboard" },
   { id: "asks", label: "My asks", icon: "ask" },
   { id: "agent", label: "Study Agent", icon: "agent" },
-  { id: "revision", label: "Revision Strategist", icon: "insights" },
+  { id: "revision", label: "Pedagogy Agent", icon: "insights" },
   { id: "rooms", label: "Rooms", icon: "stuck" },
   { id: "notes", label: "Classmate Notes", icon: "notes" },
 ];
@@ -697,7 +697,7 @@ export default function StudentVisionPrototype() {
 
         {section === "revision" ? (
           <div className="fade-up">
-            <h1 className="bh-page-title">Revision Strategist</h1>
+            <h1 className="bh-page-title">Pedagogy Agent</h1>
             <p className="bh-page-subtitle">
               Canvas grades + syllabus weights → clear priority. Firm, not harsh —
               and you can correct a wrong grade.

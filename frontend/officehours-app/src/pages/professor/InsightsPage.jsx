@@ -216,8 +216,8 @@ export default function InsightsPage() {
       setCheckedLabels(report.n_labels || 0);
       setMessage(
         report.n_labels
-          ? `Checked ${report.n_labels} gold labels.`
-          : "No gold labels to check.",
+          ? `Checked ${report.n_labels} labeled answers.`
+          : "No labeled answers to check yet.",
       );
     } catch (err) {
       setError(err.message);
@@ -465,14 +465,14 @@ export default function InsightsPage() {
         ) : null}
       </section>
 
-      <section className="pf-block" aria-label="Agent quality">
+      <section className="pf-block" aria-label="Answer quality check">
         <button
           type="button"
           className="pf-quiet"
           aria-expanded={qualityOpen}
           onClick={() => setQualityOpen((open) => !open)}
         >
-          Agent quality (evaluation)
+          Answer quality check
         </button>
         {qualityOpen ? (
           <div className="pf-panel">
@@ -480,15 +480,19 @@ export default function InsightsPage() {
               {asks > 0
                 ? `Answered ${answered} of ${asks} questions.`
                 : "No student questions yet."}{" "}
-              {goldCount === 1 ? "1 gold label." : `${goldCount} gold labels.`}
+              {goldCount === 1
+                ? "1 labeled answer for checking."
+                : `${goldCount} labeled answers for checking.`}
             </p>
             {checkedLabels != null ? (
               <p className="pf-line">
-                {checkedLabels === 1 ? "Checked 1 gold label." : `Checked ${checkedLabels} gold labels.`}
+                {checkedLabels === 1
+                  ? "Checked 1 labeled answer."
+                  : `Checked ${checkedLabels} labeled answers.`}
               </p>
             ) : null}
             <button type="button" className="btn-ghost pf-btn" disabled={retrainBusy} onClick={evaluateGold}>
-              {retrainBusy ? "Checking…" : "Evaluate gold now"}
+              {retrainBusy ? "Checking…" : "Run quality check"}
             </button>
           </div>
         ) : null}

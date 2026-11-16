@@ -214,6 +214,20 @@ def test_full_community_loop_ask_ta_professor_agent():
         headers={"Authorization": f"Bearer {ta['token']}"},
     ).json()
     assert any(item["request"]["id"] == request_id for item in queue)
+    replied = client.post(
+        "/ta/reply/",
+        headers={"Authorization": f"Bearer {ta['token']}"},
+        json={
+            "request_id": request_id,
+            "reply": (
+                "Priority scheduling can starve long low-priority processes. "
+                "Aging gradually raises waiting priority so every process runs."
+            ),
+            "update_student_hint": True,
+        },
+    )
+    assert replied.status_code == 200, replied.text
+
     resolved = client.post(
         "/ta/resolve/",
         headers={"Authorization": f"Bearer {ta['token']}"},

@@ -131,6 +131,74 @@ def test_claim_in_progress_helped_and_reply():
     assert all(item["request"]["id"] != rid for item in queue)
 
 
+def test_resolve_without_reply_rejected_with_reply_ok():
+    """New resolves require ta_reply (422); resolve after /ta/reply succeeds."""
+    student = _login("s.elidrissi@aui.ma")
+    alice = _login("a.chen@aui.ma")
+    course_id = _csc2302(student)
+
+    created = client.post(
+        "/requests/",
+        headers=_auth(student),
+        json={
+            "text": "Walk me through how hash collisions are resolved with chaining.",
+            "anonymous": True,
+            "course": "CSC 2302",
+            "course_id": course_id,
+            "help_mode": "message",
+        },
+    ).json()
+    rid = created["id"]
+
+    claim = client.post(
+        "/ta/claim/",
+        headers=_auth(alice),
+        json={"request_id": rid},
+    )
+    assert claim.status_code == 200, claim.text
+
+    notes = (
+        "1. Define the slot as a list.\n"
+        "2. Trace insert under collision.\n"
+        "3. Have the student finish lookup."
+    )
+    blocked = client.post(
+        "/ta/resolve/",
+        headers=_auth(alice),
+        json={
+            "request_id": rid,
+            "teaching_notes": notes,
+            "resolution_status": "resolved",
+        },
+    )
+    assert blocked.status_code == 422, blocked.text
+    assert "reply" in (blocked.json().get("detail") or "").lower()
+
+    replied = client.post(
+        "/ta/reply/",
+        headers=_auth(alice),
+        json={
+            "request_id": rid,
+            "reply": "Each bucket holds a list — walk insert, then lookup on a collision.",
+        },
+    )
+    assert replied.status_code == 200, replied.text
+
+    resolved = client.post(
+        "/ta/resolve/",
+        headers=_auth(alice),
+        json={
+            "request_id": rid,
+            "teaching_notes": notes,
+            "student_hint": "Where does the colliding key live after insert?",
+            "resolution_status": "resolved",
+        },
+    )
+    assert resolved.status_code == 200, resolved.text
+    assert resolved.json()["knowledge_entry"]["status"] == "pending_review"
+    assert resolved.json()["knowledge_entry"]["ta_resolution"] == "resolved"
+
+
 def test_backup_takeover_and_resolve_auth():
     student = _login("s.elidrissi@aui.ma")
     alice = _login("a.chen@aui.ma")
@@ -175,6 +243,16 @@ def test_backup_takeover_and_resolve_auth():
         resolver = bob
     else:
         resolver = alice if primary == "Alice Chen" else bob
+
+    replied = client.post(
+        "/ta/reply/",
+        headers=_auth(resolver),
+        json={
+            "request_id": rid,
+            "reply": "Start from the color invariant, then check the uncle cases.",
+        },
+    )
+    assert replied.status_code == 200, replied.text
 
     resolved = client.post(
         "/ta/resolve/",

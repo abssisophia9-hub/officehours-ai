@@ -81,6 +81,20 @@ def test_ta_resolve_keeps_entry_pending_review():
         ).json()
         assert any(item["request"]["id"] == created["id"] for item in queue)
 
+        replied = client.post(
+            "/ta/reply/",
+            headers={"Authorization": f"Bearer {alice['token']}"},
+            json={
+                "request_id": created["id"],
+                "reply": (
+                    "Restate the invariant, then trace mid on a 7-element array "
+                    "before finishing the last two steps."
+                ),
+                "update_student_hint": True,
+            },
+        )
+        assert replied.status_code == 200, replied.text
+
         resolved = client.post(
             "/ta/resolve/",
             headers={"Authorization": f"Bearer {alice['token']}"},

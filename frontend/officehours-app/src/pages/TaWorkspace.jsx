@@ -429,15 +429,22 @@ export default function TaWorkspace() {
   async function resolveAsk({ withReply = false } = {}) {
     if (!req || isHelped || busy) return;
     const text = draft.trim();
-    if (withReply && text && text.length < 3) {
-      setError("Reply needs at least 3 characters, or clear the box and mark resolved.");
+    const existingReply = String(req.ta_reply || "").trim();
+    if (withReply) {
+      if (text.length < 3 && !existingReply) {
+        setError("Write a reply (at least 3 characters) before resolving.");
+        return;
+      }
+    } else if (!existingReply && text.length < 3) {
+      setError("Write a reply before resolving so the student can read it.");
       return;
     }
+    const shouldSendReply = text.length >= 3;
     setBusy(true);
     setError("");
     const fromId = req.id;
     try {
-      if (withReply && text) {
+      if (shouldSendReply) {
         const replied = await api("/ta/reply/", {
           method: "POST",
           token,
@@ -474,8 +481,8 @@ export default function TaWorkspace() {
         },
       });
       setToast(
-        withReply && text
-          ? `Resolved #${fromId} · advanced`
+        shouldSendReply
+          ? `Resolved #${fromId} · reply sent`
           : result.message || `Resolved #${fromId}`,
       );
       setDraft("");
@@ -737,11 +744,12 @@ export default function TaWorkspace() {
                     <button
                       type="button"
                       disabled={busy}
-                      onClick={() => resolveAsk({ withReply: false })}
+                      onClick={() => resolveAsk({ withReply: true })}
                       className="tar-btn-primary"
+                      title="Requires a student reply"
                     >
                       <Check size={14} />
-                      Mark Resolved &amp; Next
+                      Resolve &amp; Next
                     </button>
                     <button
                       type="button"
@@ -833,7 +841,7 @@ export default function TaWorkspace() {
                   </button>
                   <button
                     type="button"
-                    disabled={isHelped || busy}
+                    disabled={isHelped || busy || draft.trim().length < 3}
                     onClick={() => resolveAsk({ withReply: true })}
                     className="tar-btn-primary"
                   >

@@ -10,8 +10,7 @@ export default function HelpRoomFeed({ courseCode }) {
         <h2>{name}</h2>
         <p>
           Stack Overflow for this course: Problem / Discussion / Article rooms,
-          chapter fields, Express Interest, and a Hilbert-weighted classmate
-          leaderboard.
+          chapter fields, Express Interest, and a classmate leaderboard.
         </p>
         <Link to="/student/room" className="btn-primary mt-4 inline-flex px-5 py-2.5 text-sm">
           Enter {name}

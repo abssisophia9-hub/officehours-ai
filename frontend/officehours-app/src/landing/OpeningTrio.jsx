@@ -120,7 +120,7 @@ export default function OpeningTrio({ variant = "live" }) {
             </p>
             <p>
               <em>Study Rooms</em> first — peer help rated Stack Overflow-style
-              in Hilbert ŵ. The course agent is one door. The community is the
+              on the Rooms board. The course agent is one door. The community is the
               building. Scroll the chapters.
             </p>
           </div>
@@ -186,7 +186,7 @@ export default function OpeningTrio({ variant = "live" }) {
         </ul>
       </section>
 
-      <Cut n="02" label="Study Rooms · Hilbert ŵ" />
+      <Cut n="02" label="Study Rooms" />
 
       <section className="oh-open-rooms oh-block-lime" id="rooms">
         <div className="oh-open-rooms-copy">
@@ -235,7 +235,7 @@ export default function OpeningTrio({ variant = "live" }) {
             </div>
           </article>
           <aside className="oh-open-hilbert">
-            <p className="oh-open-pane-kicker">Hilbert board</p>
+            <p className="oh-open-pane-kicker">Rooms board</p>
             <ol>
               <li>
                 <span>Karim</span>

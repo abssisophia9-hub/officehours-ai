@@ -548,6 +548,15 @@ async def resolve_for_curation(
             detail="teaching_notes must be at least 3 characters.",
         )
 
+    # Students must see a written reply when an ask is newly resolved.
+    # Already-helped rows stay valid (legacy / idempotent resolve).
+    already_helped = str(getattr(request, "work_status", None) or "open") == "helped"
+    if not already_helped and not str(getattr(request, "ta_reply", None) or "").strip():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Send a reply to the student before resolving this ask.",
+        )
+
     entry = (
         db.query(KnowledgeEntry)
         .filter(KnowledgeEntry.source_request_id == request.id)

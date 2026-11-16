@@ -64,7 +64,7 @@ const WEAKNESS_LABEL = {
 
 function planModeLabel(plan) {
   if (!plan) return "";
-  if (plan.mode === "agent") return "Plan built with the revision agent";
+  if (plan.mode === "agent") return "Plan built with the Pedagogy Agent";
   return "Simple plan from your scores and preference";
 }
 
@@ -305,10 +305,10 @@ export default function StudentRevisionPage() {
   return (
     <div className="fade-up">
       <h1 className="sa-course">{courseLine}</h1>
-      <h2 className="bh-page-title">Revision Strategist</h2>
+      <h2 className="bh-page-title">Pedagogy Agent</h2>
       <p className="bh-page-subtitle">
-        A study plan from your practice scores, how you learn, and checked
-        public links — scores stay on this device.
+        A 7-day focus plan from your practice scores, how you learn, and
+        checked public links — scores stay on this device.
       </p>
 
       {toast ? (
@@ -455,24 +455,30 @@ export default function StudentRevisionPage() {
           ) : null}
 
           {slots.length ? (
-            <ol className="mt-4 space-y-2 text-sm">
-              {slots.map((slot) => (
-                <li
-                  key={`${slot.day_offset}-${slot.label}-${slot.topic}`}
-                  className="rounded-lg border border-[#d7e0d9] bg-white px-3 py-2"
-                >
-                  <strong>
-                    Day {slot.day_offset} · {slot.minutes} min · {slot.label}
-                  </strong>
-                  <span className="mt-0.5 block text-xs text-aui-deep/70">
-                    {slot.topic} — {slot.focus}
-                  </span>
-                </li>
-              ))}
-            </ol>
+            <>
+              <p className="mt-4 text-xs text-aui-deep/70">
+                This is a <strong>7-day focus plan</strong> for your weakest
+                topics — not a full semester calendar. Blocks count from today.
+              </p>
+              <ol className="mt-2 space-y-2 text-sm">
+                {slots.map((slot) => (
+                  <li
+                    key={`${slot.day_offset}-${slot.label}-${slot.topic}`}
+                    className="rounded-lg border border-[#d7e0d9] bg-white px-3 py-2"
+                  >
+                    <strong>
+                      Day {slot.day_offset} · {slot.minutes} min · {slot.label}
+                    </strong>
+                    <span className="mt-0.5 block text-xs text-aui-deep/70">
+                      {slot.topic} — {slot.focus}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </>
           ) : (
             <p className="mt-4 text-sm text-aui-deep/70">
-              Build a plan to see deadline-backed study blocks.
+              Build a plan to see a 7-day focus schedule for your weakest topics.
             </p>
           )}
 
@@ -492,7 +498,12 @@ export default function StudentRevisionPage() {
                         {item.title}
                       </a>
                     ) : (
-                      <strong>{item.title}</strong>
+                      <>
+                        <strong>{item.title}</strong>
+                        <span className="mt-0.5 block text-aui-deep/70">
+                          Course material on this device — no public link.
+                        </span>
+                      </>
                     )}
                     <span className="mt-0.5 block">
                       Source: {item.source}. {item.why}
@@ -501,7 +512,10 @@ export default function StudentRevisionPage() {
                 ))}
               </ol>
             ) : (
-              <p className="mt-2 text-aui-deep/70">No checked links yet.</p>
+              <p className="mt-2 text-aui-deep/70">
+                No checked public links yet. Course material may still appear
+                after you build a plan when the professor has approved slides.
+              </p>
             )}
           </div>
 
@@ -516,7 +530,9 @@ export default function StudentRevisionPage() {
           <div className="mt-4 rounded-lg border border-[#d7e0d9] bg-white p-3">
             <p className="text-sm font-semibold text-aui-ink">Log today&apos;s check-in</p>
             <p className="mt-1 text-xs text-aui-deep/70">
-              After a study block, log your score — stays on this device only.
+              After a study block, how ready do you feel on{" "}
+              <strong>{focus.topic}</strong>? This updates your practice score
+              on this device only — it is not sent to Canvas.
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <input

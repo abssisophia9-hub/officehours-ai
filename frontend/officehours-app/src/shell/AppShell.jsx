@@ -111,10 +111,10 @@ const SECTION_NAV = {
       items: [
         {
           id: "revision",
-          label: "Revision Strategist",
+          label: "Pedagogy Agent",
           icon: "insights",
           to: "/student/revision",
-          hint: "Today-first exam plan",
+          hint: "7-day focus plan from practice scores",
         },
       ],
     },
@@ -160,11 +160,6 @@ const SECTION_NAV = {
           label: "My Courses",
           icon: "courses",
           to: "/",
-        },
-        {
-          id: "inbox",
-          label: "Inbox",
-          icon: "requests",
         },
       ],
     },
@@ -387,26 +382,6 @@ export default function AppShell() {
         </NavLink>
       );
     }
-    if (section.id === "inbox") {
-      return (
-        <button
-          key={section.id}
-          type="button"
-          className="bh-nav-item"
-          onClick={() => {
-            const buttons = document.querySelectorAll(".bh-sidebar-footer button");
-            for (const button of buttons) {
-              if ((button.textContent || "").includes("Inbox")) {
-                button.click();
-                break;
-              }
-            }
-          }}
-        >
-          {content}
-        </button>
-      );
-    }
     return (
       <button
         key={section.id}
@@ -439,103 +414,16 @@ export default function AppShell() {
           <small>Al Akhawayn University</small>
         </div>
 
-        <nav className="bh-nav" aria-label={role === "student" ? "Student" : "Workspace"}>
-          {role === "student" ? (
-            <>
-              <NavLink
-                to="/student"
-                end
-                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
-              >
-                {ICONS.agent}
-                <span>Study Agent</span>
-              </NavLink>
-              <NavLink
-                to="/student/revision"
-                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
-              >
-                {ICONS.insights}
-                <span>Revision Strategist</span>
-              </NavLink>
-              <NavLink
-                to="/student/ask"
-                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
-              >
-                {ICONS.ask}
-                <span>Ask for help</span>
-              </NavLink>
-              <NavLink
-                to="/student/asks"
-                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
-              >
-                {ICONS.requests}
-                <span>My asks</span>
-                {replyCount > 0 ? (
-                  <span className="bh-nav-badge">{replyCount}</span>
-                ) : null}
-              </NavLink>
-              <div className="bh-nav-group">
-                <p className="bh-nav-label">Classmates</p>
-                <NavLink
-                  to="/student/room"
-                  className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
-                >
-                  {ICONS.stuck}
-                  <span>Rooms</span>
-                </NavLink>
-                <NavLink
-                  to="/student/notes"
-                  className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
-                >
-                  {ICONS.notes}
-                  <span>Classmate notes</span>
-                </NavLink>
-              </div>
-            </>
-          ) : role === "ta" ? (
-            sections.map((group) => (
-              <div key={group.group} className="bh-nav-group">
-                <p className="bh-nav-label">{group.group}</p>
-                {group.items.map((section) => renderNavItem(section))}
-              </div>
-            ))
-          ) : (
-            <>
-              <NavLink
-                to={roleHome}
-                end
-                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
-              >
-                {ICONS.dashboard}
-                <span>Dashboard</span>
-              </NavLink>
-              {grouped
-                ? sections.map((group) => (
-                    <div key={group.group} className="bh-nav-group">
-                      <p className="bh-nav-label">{group.group}</p>
-                      {group.items.map((section) => renderNavItem(section))}
-                    </div>
-                  ))
-                : flatSections.map((section) => renderNavItem(section))}
-              <div className="bh-nav-group">
-                <NavLink
-                  to="/"
-                  end
-                  className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
-                >
-                  {ICONS.courses}
-                  My Courses
-                </NavLink>
-              </div>
-            </>
-          )}
-        </nav>
-
-        <div className="bh-sidebar-footer">
+        <div className="bh-course-switcher">
           <p className="bh-nav-label">Course</p>
           {role === "student" ? (
-            <NavLink to="/" end className="bh-course-all">
-              All courses
+            <NavLink
+              to="/"
+              end
+              className={({ isActive }) => `bh-nav-item bh-course-all${isActive ? " active" : ""}`}
+            >
+              {ICONS.courses}
+              <span>All courses</span>
             </NavLink>
           ) : null}
           <select
@@ -564,7 +452,112 @@ export default function AppShell() {
               </option>
             ))}
           </select>
-          <NotificationBell />
+        </div>
+
+        <nav className="bh-nav" aria-label={role === "student" ? "Student" : "Workspace"}>
+          {role === "student" ? (
+            <>
+              <NavLink
+                to="/student"
+                end
+                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+              >
+                {ICONS.agent}
+                <span>Study Agent</span>
+              </NavLink>
+              <NavLink
+                to="/student/revision"
+                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+              >
+                {ICONS.insights}
+                <span>Pedagogy Agent</span>
+              </NavLink>
+              <NavLink
+                to="/student/ask"
+                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+              >
+                {ICONS.ask}
+                <span>Ask for help</span>
+              </NavLink>
+              <NavLink
+                to="/student/asks"
+                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+              >
+                {ICONS.requests}
+                <span>My asks</span>
+                {replyCount > 0 ? (
+                  <span className="bh-nav-badge">{replyCount}</span>
+                ) : null}
+              </NavLink>
+              <div className="bh-nav-group">
+                <p className="bh-nav-label">Collaboration</p>
+                <NavLink
+                  to="/student/room"
+                  className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+                >
+                  {ICONS.stuck}
+                  <span>Rooms</span>
+                </NavLink>
+                <NavLink
+                  to="/student/notes"
+                  className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+                >
+                  {ICONS.notes}
+                  <span>Classmate notes</span>
+                </NavLink>
+                <NotificationBell />
+              </div>
+            </>
+          ) : role === "ta" ? (
+            <>
+              {sections.map((group) => (
+                <div key={group.group} className="bh-nav-group">
+                  <p className="bh-nav-label">{group.group}</p>
+                  {group.items.map((section) => renderNavItem(section))}
+                </div>
+              ))}
+              <div className="bh-nav-group">
+                <p className="bh-nav-label">Collaboration</p>
+                <NotificationBell />
+              </div>
+            </>
+          ) : (
+            <>
+              <NavLink
+                to={roleHome}
+                end
+                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+              >
+                {ICONS.dashboard}
+                <span>Dashboard</span>
+              </NavLink>
+              {grouped
+                ? sections.map((group) => (
+                    <div key={group.group} className="bh-nav-group">
+                      <p className="bh-nav-label">{group.group}</p>
+                      {group.items.map((section) => renderNavItem(section))}
+                    </div>
+                  ))
+                : flatSections.map((section) => renderNavItem(section))}
+              <div className="bh-nav-group">
+                <NavLink
+                  to="/"
+                  end
+                  className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+                >
+                  {ICONS.courses}
+                  My Courses
+                </NavLink>
+              </div>
+              <div className="bh-nav-group">
+                <p className="bh-nav-label">Collaboration</p>
+                <NotificationBell />
+              </div>
+            </>
+          )}
+        </nav>
+
+        <div className="bh-sidebar-footer">
           <ThemeToggle className="theme-toggle-sidebar" />
           <AccountMenu onScrollToSection={scrollToSection} />
         </div>
@@ -597,26 +590,7 @@ function ProfessorFrame() {
           OfficeHours AI
           <small>Al Akhawayn University</small>
         </div>
-        <nav className="bh-nav" aria-label="Professor">
-          {PROFESSOR_NAV.map((item) => {
-            const count = item.badgeKey ? counts[item.badgeKey] : 0;
-            return (
-              <NavLink
-                key={item.id}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
-              >
-                {ICONS[item.icon]}
-                <span>{item.label}</span>
-                {count > 0 ? (
-                  <span className="bh-nav-badge">{count}</span>
-                ) : null}
-              </NavLink>
-            );
-          })}
-        </nav>
-        <div className="bh-sidebar-footer">
+        <div className="bh-course-switcher">
           <p className="bh-nav-label">Course</p>
           <select
             className="bh-course-select"
@@ -644,7 +618,31 @@ function ProfessorFrame() {
               </option>
             ))}
           </select>
-          <NotificationBell plain />
+        </div>
+        <nav className="bh-nav" aria-label="Professor">
+          {PROFESSOR_NAV.map((item) => {
+            const count = item.badgeKey ? counts[item.badgeKey] : 0;
+            return (
+              <NavLink
+                key={item.id}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) => `bh-nav-item${isActive ? " active" : ""}`}
+              >
+                {ICONS[item.icon]}
+                <span>{item.label}</span>
+                {count > 0 ? (
+                  <span className="bh-nav-badge">{count}</span>
+                ) : null}
+              </NavLink>
+            );
+          })}
+          <div className="bh-nav-group">
+            <p className="bh-nav-label">Collaboration</p>
+            <NotificationBell plain />
+          </div>
+        </nav>
+        <div className="bh-sidebar-footer">
           <ThemeToggle className="theme-toggle-sidebar" />
           <AccountMenu />
         </div>

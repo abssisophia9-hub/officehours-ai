@@ -256,7 +256,11 @@ def _rooms() -> list[dict]:
 
 
 def seed_ml_demo(db: Session) -> None:
-    """Create the fictional Machine Learning course. No-op unless demo mode is on."""
+    """Create the fictional Machine Learning course. No-op unless demo mode is on.
+
+    Sample classmate peer-notes are demo-only: never created when
+    ``OFFICEHOURS_DEMO`` is false (community / live Canvas deploy).
+    """
     if not demo_mode():
         return
     course = _ensure_course(db)
