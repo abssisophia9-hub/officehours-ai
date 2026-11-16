@@ -1,4 +1,4 @@
-"""Stuck Room — classmates share what they are stuck on; helpful marks, not likes."""
+"""Stuck Room - classmates share what they are stuck on; helpful marks, not likes."""
 
 from __future__ import annotations
 
@@ -103,7 +103,7 @@ class HelpPostFile(Base):
 
 
 class HelpInterest(Base):
-    """Express interest — offer to help on a room, not a DM thread."""
+    """Express interest - offer to help on a room, not a DM thread."""
 
     __tablename__ = "help_interests"
     __table_args__ = (UniqueConstraint("post_id", "from_user_id", name="uq_help_interest"),)
@@ -152,7 +152,7 @@ ROOM_TYPE_TO_FLAIR = {
 
 
 class HelpReachOut(Base):
-    """Identified handshake after an aha — not a chat, not staff-visible."""
+    """Identified handshake after an aha - not a chat, not staff-visible."""
 
     __tablename__ = "help_reach_outs"
     __table_args__ = (
@@ -303,7 +303,7 @@ class HelpVoteRequest(BaseModel):
 
 class HelpInterestCreate(BaseModel):
     note: str = Field(
-        default="I can help with this room — happy to compare notes.",
+        default="I can help with this room - happy to compare notes.",
         min_length=1,
         max_length=400,
     )
@@ -382,7 +382,7 @@ class HelpfulMarkOut(BaseModel):
 
 class HelpReachOutCreate(BaseModel):
     note: str = Field(
-        default="Your perspective unlocked it for me — thanks. If you're open to it, I'd like to compare notes.",
+        default="Your perspective unlocked it for me - thanks. If you're open to it, I'd like to compare notes.",
         min_length=1,
         max_length=500,
     )

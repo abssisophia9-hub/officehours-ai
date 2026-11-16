@@ -50,14 +50,14 @@ function workStageLabels(workStatus, statusPayload) {
         ? who
           ? `${who} took your ask`
           : "A TA claimed your ask"
-        : "—",
+        : "-",
     },
     {
       label: "In progress",
       done: inProgress,
       detail: inProgress
         ? statusPayload?.headline || "Help in progress"
-        : "—",
+        : "-",
     },
     {
       label: "Answered",
@@ -65,8 +65,8 @@ function workStageLabels(workStatus, statusPayload) {
       detail: answered
         ? "Reply posted"
         : work === "helped"
-          ? "Closed — check below for any note"
-          : "—",
+          ? "Closed - check below for any note"
+          : "-",
     },
   ];
 }
@@ -188,7 +188,7 @@ export default function StudentAsksPage() {
       <h1 className="sa-course">{courseLine}</h1>
       <h2 className="bh-page-title">My asks</h2>
       <p className="bh-page-subtitle">
-        Status and replies live here — no receipt-code hunting.
+        Status and replies live here - no receipt-code hunting.
       </p>
 
       {error ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}
@@ -204,7 +204,7 @@ export default function StudentAsksPage() {
             <div className="mt-4 rounded-xl border border-dashed border-[#c5d0c8] bg-[#fafcfa] px-4 py-8 text-center">
               <p className="text-sm font-semibold text-aui-ink">No asks yet</p>
               <p className="mt-1 text-xs text-aui-deep/70">
-                Ask for help — Quiet or identified.
+                Ask for help - Quiet or identified.
               </p>
               <Link to="/student/ask" className="btn-primary mt-4 inline-flex px-5 py-2.5 text-sm">
                 Ask for help
@@ -333,7 +333,7 @@ export default function StudentAsksPage() {
                 </p>
               ) : (
                 <p className="mt-4 text-xs text-aui-deep/60">
-                  No reply yet — when a TA writes one, it appears here.
+                  No reply yet - when a TA writes one, it appears here.
                 </p>
               )}
 

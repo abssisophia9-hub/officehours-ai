@@ -5,7 +5,7 @@ Answers only from professor-approved KB entries using semantic retrieval.
 Never exposes pending_review or rejected drafts to students.
 
 When the course KB has no useful match, the agent stops guessing and steers
-the student toward Quiet ask / TA / professor help — spinning on incomplete
+the student toward Quiet ask / TA / professor help - spinning on incomplete
 materials wastes time.
 """
 
@@ -24,7 +24,7 @@ from app.services.knowledge_service import search_approved_entries
 WEAK_MATCH_CONFIDENCE = 0.42
 
 NO_MATCH_ANSWER = (
-    "I don't have professor-approved course material that answers this yet — "
+    "I don't have professor-approved course material that answers this yet - "
     "guessing would waste your time.\n\n"
     "Don't keep rephrasing into this agent. Use Quiet ask (anonymous) or reach "
     "out to your TA / professor in office hours. Once they help and the "
@@ -33,7 +33,7 @@ NO_MATCH_ANSWER = (
 
 NO_MATCH_HINT = (
     "Submit a Quiet ask with the smallest example that shows where you're stuck. "
-    "Staff will help — you do not need to wait on incomplete course materials."
+    "Staff will help - you do not need to wait on incomplete course materials."
 )
 
 # Used only after a check ran and did not confirm a quote. Distinct from the
@@ -61,7 +61,7 @@ def _retrieval_answer(sources: list[KnowledgeSearchHit], approved_only: bool) ->
     best = sources[0]
     supporting = sources[1:]
     answer_parts = [
-        f"Based on professor-approved course knowledge — {_cite_entry(best.entry)}:",
+        f"Based on professor-approved course knowledge - {_cite_entry(best.entry)}:",
         best.entry.answer_draft.strip(),
     ]
     if supporting:

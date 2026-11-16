@@ -270,7 +270,7 @@ def is_sensitive_category(category: str | None) -> bool:
 
 
 def build_review_insights(db: Session, *, course_id: int) -> ReviewInsightsOut:
-    """Chapter / topic signals for review sessions — Quiet ask + Stuck Room, not a new corpus."""
+    """Chapter / topic signals for review sessions - Quiet ask + Stuck Room, not a new corpus."""
     course = db.get(Course, course_id)
     course_code = course.code if course else None
 
@@ -453,29 +453,29 @@ def upsert_review_topic_note(
 def _review_hint(label: str, office_hours_count: int, stuck_post_count: int) -> str:
     if stuck_post_count >= 2 and office_hours_count >= 2:
         return (
-            f"Both Quiet ask and Stuck Room show {label} — emphasize it in the next "
+            f"Both Quiet ask and Stuck Room show {label} - emphasize it in the next "
             "review and consider a FAQ for later cohorts / related chapters."
         )
     if stuck_post_count >= 2:
         return (
-            f"Classmates are posting stuck threads on {label} — walk through a simpler "
+            f"Classmates are posting stuck threads on {label} - walk through a simpler "
             "approach in review; a small perspective shift is often the unlock."
         )
     if office_hours_count >= 3:
         return (
-            f"{office_hours_count} office-hours asks on {label} — schedule a short "
+            f"{office_hours_count} office-hours asks on {label} - schedule a short "
             "review or draft one FAQ so the next cohort does not repeat the same gap."
         )
     if office_hours_count >= 2:
         return (
-            f"Repeated asks on {label} — tighten the explanation before the next "
+            f"Repeated asks on {label} - tighten the explanation before the next "
             "related chapter."
         )
     if stuck_post_count >= 1:
         return (
-            f"Early Stuck Room signal on {label} — watch if this grows by chapter end."
+            f"Early Stuck Room signal on {label} - watch if this grows by chapter end."
         )
-    return f"Early office-hours signal on {label} — keep watching."
+    return f"Early office-hours signal on {label} - keep watching."
 
 
 def _suggest_cluster_action(
@@ -489,21 +489,21 @@ def _suggest_cluster_action(
     if sensitive_count > 0 or hard >= max(1, count // 2):
         return (
             "one_to_one",
-            "Sensitive or high-urgency cases should stay private — avoid public group review.",
+            "Sensitive or high-urgency cases should stay private - avoid public group review.",
         )
     if count >= GROUP_REVIEW_MIN:
         return (
             "group_session",
-            f"{count} similar questions — a short shared review will help more students than separate replies.",
+            f"{count} similar questions - a short shared review will help more students than separate replies.",
         )
     if count >= FAQ_MIN:
         return (
             "faq",
-            f"{count} repeats — draft one FAQ answer for the course KB so the agent can handle the next ask.",
+            f"{count} repeats - draft one FAQ answer for the course KB so the agent can handle the next ask.",
         )
     return (
         "manual_review",
-        "Single or thin cluster — keep watching or answer individually.",
+        "Single or thin cluster - keep watching or answer individually.",
     )
 
 

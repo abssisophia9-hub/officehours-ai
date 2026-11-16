@@ -5,7 +5,7 @@ import NotificationBell from "../components/NotificationBell.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { api } from "../api/client.js";
-import { pageItems } from "../api/page.js";
+import { pageItems, pageMeta } from "../api/page.js";
 import { ProfessorProvider, useProfessorData } from "../pages/professor/ProfessorData.jsx";
 import { askHasReply, seenReplyIds, subscribeReplySeen } from "../student/replySeen.js";
 
@@ -114,7 +114,7 @@ const SECTION_NAV = {
           label: "Pedagogy Agent",
           icon: "insights",
           to: "/student/revision",
-          hint: "7-day focus plan from practice scores",
+          hint: "Short focus plan from practice scores",
         },
       ],
     },
@@ -146,7 +146,8 @@ const SECTION_NAV = {
           id: "dashboard",
           label: "Dashboard",
           icon: "dashboard",
-          to: "/",
+          to: "/ta/home",
+          hint: "Open asks and recent replies",
         },
         {
           id: "queue",
@@ -374,7 +375,8 @@ export default function AppShell() {
             } else if (section.id === "past") {
               active = location.pathname.startsWith("/ta/past");
             } else if (section.id === "dashboard") {
-              active = location.pathname === "/";
+              active =
+                location.pathname === "/ta/home" || location.pathname === "/";
             }
             return `bh-nav-item${active ? " active" : ""}`;
           }}

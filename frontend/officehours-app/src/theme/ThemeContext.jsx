@@ -59,7 +59,7 @@ export function ThemeProvider({ children }) {
       if (next === null) localStorage.removeItem(STORAGE_KEY);
       else localStorage.setItem(STORAGE_KEY, next);
     } catch {
-      // Private browsing — theme still applies for this session.
+      // Private browsing - theme still applies for this session.
     }
     applyTheme(next ?? systemTheme(), { animate: true });
   }, []);

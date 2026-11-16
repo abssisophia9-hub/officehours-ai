@@ -30,7 +30,7 @@ def lti_public_config():
         raise HTTPException(status_code=404, detail="LTI 1.3 is not configured.")
     return {
         "title": "OfficeHours",
-        "description": "AUI campus office hours — Rooms, Quiet ask, course agent.",
+        "description": "AUI campus office hours - Rooms, Quiet ask, course agent.",
         "target_link_uri": lti13.launch_url(),
         "oidc_initiation_url": lti13.launch_url().rsplit("/launch", 1)[0] + "/login",
         "redirect_uris": [lti13.launch_url()],
@@ -48,7 +48,7 @@ def lti_jwks():
 
 @router.api_route("/login", methods=["GET", "POST"])
 async def lti_login(request: Request):
-    """OIDC login initiation — Canvas hits this when a student clicks the tool."""
+    """OIDC login initiation - Canvas hits this when a student clicks the tool."""
     if not lti13.lti_enabled():
         raise HTTPException(status_code=404, detail="LTI 1.3 is not configured.")
     data = request.query_params

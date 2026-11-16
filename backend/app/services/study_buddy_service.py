@@ -72,7 +72,7 @@ def solidarity_payload_for_request(db: Session, request: Request) -> dict:
     if similar >= 1:
         message = (
             f"{similar} other student{'s' if similar != 1 else ''} asked something "
-            f"similar this week — you're not alone. Staff may offer a group review."
+            f"similar this week - you're not alone. Staff may offer a group review."
         )
     return {
         "similar_asks_this_week": similar,
@@ -105,7 +105,7 @@ def get_study_buddy_status(db: Session, request: Request) -> StudyBuddyStatusOut
             similar_asks_this_week=similar,
             solidarity_message=None,
             blocked_reason=(
-                "Private / sensitive asks stay one-to-one — no peer matching."
+                "Private / sensitive asks stay one-to-one - no peer matching."
                 if sensitive
                 else "No topic cluster yet."
             ),
@@ -123,7 +123,7 @@ def get_study_buddy_status(db: Session, request: Request) -> StudyBuddyStatusOut
     if similar >= 1:
         solidarity = (
             f"{similar} other student{'s' if similar != 1 else ''} asked something "
-            f"similar this week — you're not alone."
+            f"similar this week - you're not alone."
         )
     buddy_msg = None
     if opted is not None:

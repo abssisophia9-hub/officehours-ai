@@ -133,7 +133,7 @@ _MODULE_PREFIX = re.compile(r"^module\s+\d+\s*[—–\-:]+\s*", re.I)
 
 
 def canvas_chapter_label(module_name: str) -> str:
-    """Turn 'Module 2 — Divide & Conquer' into 'Divide & Conquer'."""
+    """Turn 'Module 2 - Divide & Conquer' into 'Divide & Conquer'."""
     text = (module_name or "").strip()
     stripped = _MODULE_PREFIX.sub("", text).strip()
     return stripped or text
@@ -150,7 +150,7 @@ def merge_course_chapters(
     """Return (label, source) where source is syllabus | canvas | both.
 
     Syllabus order is kept so the grid stays a course outline. Canvas modules
-    that match a syllabus chapter (ignoring 'Module N —' prefixes) are marked
+    that match a syllabus chapter (ignoring 'Module N  - ' prefixes) are marked
     both. Extra Canvas modules append.
     """
     merged: list[tuple[str, str]] = []

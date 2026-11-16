@@ -6,7 +6,7 @@ const CARDS = [
     to: "/demo/board",
     n: "01",
     title: "The Ask Board",
-    blurb: "One look: this is help, a queue, and a gate — not job postings. Click a slip.",
+    blurb: "One look: this is help, a queue, and a gate - not job postings. Click a slip.",
   },
   {
     to: "/demo/path",

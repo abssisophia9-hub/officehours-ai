@@ -288,7 +288,7 @@ export default function AccountMenu({ onScrollToSection }) {
           {bugDone ? (
             <>
               <p className="bh-modal-body">
-                Thanks — your report was saved for the course team. Keep teaching
+                Thanks - your report was saved for the course team. Keep teaching
                 (or studying); we&apos;ll use this to harden OfficeHours AI.
               </p>
               <div className="bh-modal-actions">

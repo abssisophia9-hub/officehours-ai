@@ -160,7 +160,7 @@ def _strategy_for(action_kind: str) -> dict[str, str]:
             "student_update": "This request needs private follow-up and will not be shown on a public board.",
         },
         "manual_review": {
-            "title_prefix": "Manual review",
+            "title_prefix": "Keep watching",
             "window": "Professor review queue",
             "format": "Professor decides next action",
             "calendar": "No calendar block until professor chooses action",
@@ -205,7 +205,7 @@ def _student_update(
         return (
             f"A shared group meeting was scheduled for your topic: {title}. "
             f"When: {when}. Where: {place}. "
-            "Bring your request code — classmates with the same stuck point are invited too."
+            "Bring your request code - classmates with the same stuck point are invited too."
         )
 
     return strategy["student_update"]

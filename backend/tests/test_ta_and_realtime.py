@@ -152,6 +152,67 @@ def test_ta_resolve_keeps_entry_pending_review():
         assert all(item["request"]["id"] != created["id"] for item in queue_after)
 
 
+def test_ta_dashboard_open_count_matches_live_queue():
+    """Open-ask count used by the TA dashboard must match the live queue."""
+    with TestClient(app) as client:
+        from app.database.session import SessionLocal
+        from app.services.demo_accounts import ensure_demo_accounts
+
+        db = SessionLocal()
+        try:
+            ensure_demo_accounts(db)
+        finally:
+            db.close()
+
+        student = client.post(
+            "/auth/login",
+            json={"email": "s.elidrissi@aui.ma", "password": "aui-demo"},
+        ).json()
+        alice = client.post(
+            "/auth/login",
+            json={"email": "a.chen@aui.ma", "password": "aui-demo"},
+        ).json()
+        course_id = next(
+            c["id"] for c in student["user"]["courses"] if c["code"] == "CSC 2302"
+        )
+        created_ids = []
+        for text in (
+            "How do red-black trees rebalance after insert?",
+            "Why does hash table load factor affect collisions?",
+        ):
+            created = client.post(
+                "/requests/",
+                headers={"Authorization": f"Bearer {student['token']}"},
+                json={
+                    "text": text,
+                    "anonymous": True,
+                    "course": "CSC 2302",
+                    "course_id": course_id,
+                },
+            )
+            assert created.status_code == 201, created.text
+            created_ids.append(created.json()["id"])
+
+        queue = client.get(
+            f"/ta/queue/?course_id={course_id}&assignment=all&include_helped=false",
+            headers={"Authorization": f"Bearer {alice['token']}"},
+        ).json()
+        open_rows = [
+            item["request"]
+            for item in (queue if isinstance(queue, list) else queue.get("items") or [])
+            if str(item["request"].get("work_status") or "") != "helped"
+        ]
+        load = client.get(
+            f"/ta/load/?course_id={course_id}",
+            headers={"Authorization": f"Bearer {alice['token']}"},
+        ).json()
+        # Dashboard prefers live queue length over load aggregates.
+        assert len(open_rows) >= 2
+        assert all(rid in {row["id"] for row in open_rows} for rid in created_ids)
+        # load.open_requests must not be lower than the live open queue we just built.
+        assert int(load.get("open_requests") or 0) >= len(created_ids)
+
+
 def test_websocket_receives_request_created_event():
     with TestClient(app) as client:
         from tests.helpers import post_student_request, student_auth

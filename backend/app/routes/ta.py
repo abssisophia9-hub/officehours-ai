@@ -1,5 +1,5 @@
 """
-TA queue routes — staffing loop, dual-TA handoff, student reply, curation.
+TA queue routes - staffing loop, dual-TA handoff, student reply, curation.
 """
 
 from __future__ import annotations
@@ -75,7 +75,7 @@ def list_ta_roster(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Campus TA roster seed — staff only (not a student-facing surface)."""
+    """Campus TA roster seed - staff only (not a student-facing surface)."""
     require_staff_anywhere(db, user)
     return [TaRosterOut.from_orm_row(row) for row in ensure_default_roster(db)]
 
@@ -86,7 +86,7 @@ def course_ta_load(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Dual-TA load for one course — TA or professor of that course."""
+    """Dual-TA load for one course - TA or professor of that course."""
     require_course_role(db, user, course_id, roles={"ta", "professor"})
     ensure_default_roster(db)
     return build_course_ta_load(db, course_id=course_id)
@@ -149,13 +149,16 @@ def list_ta_queue(
     items: list[TaQueueItem] = []
     for request in requests:
         entry = entries.get(request.id)
+        work = str(getattr(request, "work_status", None) or "open")
+        # Desk hides curated/resolved rows; Past asks passes include_helped=true
+        # and still needs those helped rows even after a knowledge draft exists.
         if entry is not None and (
             entry.status in {"approved", "rejected"}
             or getattr(entry, "ta_resolution", None)
         ):
-            continue
+            if not (include_helped and work == "helped"):
+                continue
 
-        work = str(getattr(request, "work_status", None) or "open")
         if work == "helped" and not include_helped:
             continue
 
@@ -221,7 +224,7 @@ def get_help_coach(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Help Coach for one selected ask — not computed on the full queue list."""
+    """Help Coach for one selected ask - not computed on the full queue list."""
     request = _get_request(db, request_id)
     _require_ta_for_request(db, user, request)
     entry = (
@@ -242,7 +245,7 @@ def help_coach_assist(
     user: User = Depends(get_current_user),
 ):
     """
-    Help Coach — TA co-pilot while helping.
+    Help Coach - TA co-pilot while helping.
 
     Modes: draft_reply | socratic | refresh_teaching | rewrite_reply.
     Uses local Synthesizer / approved-KB RAG (no external LLM).
@@ -423,8 +426,8 @@ async def update_work_status(
     )
     label = {
         "claimed": "Claimed",
-        "in_progress": "Marked in progress — helping now",
-        "helped": "Marked helped — student interaction done",
+        "in_progress": "Marked in progress - helping now",
+        "helped": "Marked helped - student interaction done",
         "open": "Released",
     }.get(payload.status, payload.status)
     return TaActionResponse(

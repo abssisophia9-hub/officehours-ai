@@ -5,12 +5,12 @@ const ROLE_COPY = [
     kicker: "01 · Student",
     tools: "Quiet ask · Rooms · Study Agent",
     title: "Get help without performing it.",
-    lead: "Quiet or named. A classmate, staff, or the course agent. Help or ignore — you pick the door.",
+    lead: "Quiet or named. A classmate, staff, or the course agent. Help or ignore - you pick the door.",
     body: (
       <>
         <p>
           <strong>Quiet ask</strong> goes to staff without putting your name on a
-          public board — the private path when the question is sensitive, or you
+          public board - the private path when the question is sensitive, or you
           just are not ready to be seen.
         </p>
         <p>
@@ -32,7 +32,7 @@ const ROLE_COPY = [
       <>
         <p>
           <strong>Ask Triage</strong> classifies the ask as it comes in. You claim
-          it, then <strong>Help Coach</strong> sits with you — similar opens,
+          it, then <strong>Help Coach</strong> sits with you - similar opens,
           Socratic steps, a draft you still have to own.
         </p>
         <p>
@@ -48,12 +48,12 @@ const ROLE_COPY = [
     kicker: "03 · Professor",
     tools: "Insights · KB gate",
     title: "A guide with a stamp.",
-    lead: "Review insights show where the class is stuck. Stamp what the agent may repeat — the community never waits on you.",
+    lead: "Review insights show where the class is stuck. Stamp what the agent may repeat - the community never waits on you.",
     body: (
       <>
         <p>
           Clusters and <strong>review insights</strong> show what the week
-          actually confused people — Quiet asks plus Rooms chapters, not a vanity
+          actually confused people - Quiet asks plus Rooms chapters, not a vanity
           dashboard.
         </p>
         <p>
@@ -136,7 +136,6 @@ export default function RoleFigure({
       className={`oh-fig oh-fig-${data.id} oh-fig-${size} ${active ? "is-on" : ""}`}
       onClick={onClick}
       aria-pressed={active}
-      aria-label={`${data.label}. ${data.tools}`}
     >
       <span className="oh-fig-art" aria-hidden="true">
         <span className="oh-fig-floor" />

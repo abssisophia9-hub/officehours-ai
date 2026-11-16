@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { api } from "../../api/client.js";
 import { useAuth } from "../../auth/AuthContext.jsx";
+import { plainAskText } from "../../lib/plainAskText.js";
 import { useProfessorData } from "./ProfessorData.jsx";
 
 function meetingSeed() {
@@ -64,14 +66,46 @@ export default function InsightsPage() {
   }
 
   const clusters = commandCenter?.clusters || [];
-  const clusterAskTotal = clusters.reduce(
-    (sum, cluster) => sum + Number(cluster.request_count || 0),
+  const topicBars = (() => {
+    const byTitle = new Map();
+    for (const cluster of clusters) {
+      const title = String(cluster.title || "Topic").trim() || "Topic";
+      const key = title.toLowerCase();
+      const prev = byTitle.get(key);
+      const count = Number(cluster.request_count || 0);
+      if (!prev) {
+        byTitle.set(key, {
+          key,
+          title,
+          request_count: count,
+          cluster_ids: [cluster.cluster_id],
+        });
+      } else {
+        prev.request_count += count;
+        prev.cluster_ids.push(cluster.cluster_id);
+      }
+    }
+    return [...byTitle.values()].sort(
+      (a, b) => Number(b.request_count || 0) - Number(a.request_count || 0),
+    );
+  })();
+  const clusterAskTotal = topicBars.reduce(
+    (sum, bar) => sum + Number(bar.request_count || 0),
     0,
   );
   const clusterBarMax = Math.max(
     1,
-    ...clusters.map((cluster) => Number(cluster.request_count || 0)),
+    ...topicBars.map((bar) => Number(bar.request_count || 0)),
   );
+
+  function actionLabel(action) {
+    const key = String(action || "").toLowerCase();
+    if (key === "manual_review") return "Keep watching";
+    if (key === "group_session") return "Shared review";
+    if (key === "one_to_one") return "Private follow-up";
+    if (key === "faq") return "Course FAQ";
+    return key.replaceAll("_", " ") || "Keep watching";
+  }
   const topics = reviewInsights?.topics || [];
   const visibleTopics = topics.filter((topic) => {
     if (insightFilter === "all") return true;
@@ -196,8 +230,16 @@ export default function InsightsPage() {
 
   return (
     <div className="pf-page">
-      <header className="pf-head">
-        <h1>Insights</h1>
+      <header className="pf-head pf-head-stack">
+        <div>
+          <p className="pf-kicker">Class patterns</p>
+          <h1>Insights</h1>
+          <p className="pf-line">
+            Repeated topics and share of asks - even a couple of related asks show
+            up as bars. Individual desk work stays on{" "}
+            <Link to="/professor/asks">Your desk</Link>.
+          </p>
+        </div>
       </header>
       {error ? (
         <p className="pf-error" role="alert">
@@ -222,27 +264,30 @@ export default function InsightsPage() {
         {clusters.length > 0 ? (
           <>
             <ul className="pf-bars" aria-label="Ask share by topic">
-              {[...clusters]
-                .sort(
-                  (a, b) =>
-                    Number(b.request_count || 0) - Number(a.request_count || 0),
-                )
-                .map((cluster) => {
-                  const count = Number(cluster.request_count || 0);
+              {topicBars.map((bar) => {
+                  const count = Number(bar.request_count || 0);
                   const pct =
                     clusterAskTotal > 0
                       ? Math.round((count / clusterAskTotal) * 100)
                       : 0;
-                  const width = Math.max(4, Math.round((count / clusterBarMax) * 100));
+                  // Keep a readable bar even when only 1–2 asks exist.
+                  const width = Math.max(
+                    count <= 2 ? 28 : 8,
+                    Math.round((count / clusterBarMax) * 100),
+                  );
                   return (
-                    <li key={`bar-${cluster.cluster_id}`}>
+                    <li key={`bar-${bar.key}`}>
                       <div className="pf-bars-label">
-                        <span>{cluster.title}</span>
+                        <span>{bar.title}</span>
                         <span>
                           {count} ask{count === 1 ? "" : "s"} · {pct}%
                         </span>
                       </div>
-                      <div className="pf-bars-track" aria-hidden="true">
+                      <div
+                        className="pf-bars-track"
+                        aria-hidden="true"
+                        title={`${count} of ${clusterAskTotal} asks`}
+                      >
                         <span className="pf-bars-fill" style={{ width: `${width}%` }} />
                       </div>
                     </li>
@@ -253,7 +298,7 @@ export default function InsightsPage() {
             {clusters.map((cluster) => (
               <li key={cluster.cluster_id}>
                 <p className="pf-meta">
-                  {cluster.request_count} asks · {cluster.suggested_action.replaceAll("_", " ")}
+                  {cluster.request_count} asks · {actionLabel(cluster.suggested_action)}
                 </p>
                 <h3 className="pf-topic">{cluster.title}</h3>
                 <p className="pf-line">{cluster.suggestion_reason}</p>
@@ -328,7 +373,7 @@ export default function InsightsPage() {
                 ) : null}
                 <ul className="pf-plain-list">
                   {cluster.sample_texts.map((sample) => (
-                    <li key={sample}>{sample}</li>
+                    <li key={sample}>{plainAskText(sample)}</li>
                   ))}
                 </ul>
               </li>
@@ -411,7 +456,7 @@ export default function InsightsPage() {
                         {(topic.questions || []).map((question, index) => (
                           <li key={`${question.source}-${question.request_id || question.stuck_post_id || index}`}>
                             {question.source === "stuck_room" ? "Room. " : "Ask. "}
-                            {question.text}
+                            {plainAskText(question.text)}
                           </li>
                         ))}
                       </ul>
@@ -441,7 +486,7 @@ export default function InsightsPage() {
                   ) : (
                     <ul className="pf-plain-list">
                       {(topic.sample_questions || []).map((sample) => (
-                        <li key={sample}>{sample}</li>
+                        <li key={sample}>{plainAskText(sample)}</li>
                       ))}
                     </ul>
                   )}

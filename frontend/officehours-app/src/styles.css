@@ -2528,7 +2528,7 @@ html:has(.oh-land) {
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #5d7268;
+  color: #2f453a;
 }
 
 .oh-land-nav nav {
@@ -2543,7 +2543,7 @@ html:has(.oh-land) {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   text-decoration: none;
-  color: #3d5348;
+  color: #24362e;
 }
 
 .oh-land-nav nav a.is-on,
@@ -3396,7 +3396,7 @@ html:has(.oh-open) {
   font-weight: 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--theme-text-subtle);
+  color: #2f453a;
 }
 
 .oh-open-nav nav {
@@ -3411,7 +3411,7 @@ html:has(.oh-open) {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   text-decoration: none;
-  color: var(--theme-text-subtle);
+  color: #24362e;
 }
 
 .oh-open-nav nav a.is-on,
@@ -3543,6 +3543,7 @@ html:has(.oh-open) {
 .oh-panel figcaption {
   padding: 0.75rem 0.9rem 0.9rem;
   border-top: 2px solid #1d3a2a;
+  color: #1a140c;
 }
 
 .oh-panel figcaption strong {
@@ -3552,12 +3553,13 @@ html:has(.oh-open) {
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: #1a140c;
 }
 
 .oh-panel figcaption span {
   font-size: 0.88rem;
   line-height: 1.4;
-  color: #3d5348;
+  color: #2f453a;
 }
 
 /* CSS-drawn scenes */
@@ -3754,6 +3756,7 @@ html:has(.oh-open) {
   font-size: 0.66rem;
   font-weight: 750;
   white-space: nowrap;
+  color: #1a140c;
 }
 
 .oh-bub::after {
@@ -3921,7 +3924,7 @@ html:has(.oh-open) {
   font-style: italic;
   font-weight: 650;
   font-size: 0.85rem;
-  color: #3a7355;
+  color: #2f453a;
 }
 
 .oh-open-kicker {
@@ -3930,7 +3933,7 @@ html:has(.oh-open) {
   font-weight: 750;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #6d8177;
+  color: #2f453a;
 }
 
 .oh-open-copy h1 {
@@ -4268,7 +4271,7 @@ html:has(.oh-open) {
 
 .oh-open-course-switch button small {
   display: block;
-  color: #6d8177;
+  color: #2f453a;
   font-size: 0.72rem;
 }
 
@@ -4328,11 +4331,11 @@ html:has(.oh-open) {
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #6d8177;
+  color: #2f453a;
 }
 
 .oh-open-lms .oh-open-loom-label {
-  color: #9fb4a8;
+  color: #d4cbb8;
 }
 
 .oh-open-loom-course {
@@ -4393,7 +4396,7 @@ html:has(.oh-open) {
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #6d8177;
+  color: #2f453a;
 }
 
 .oh-open-toggle {
@@ -4433,7 +4436,7 @@ html:has(.oh-open) {
 .oh-open-fine {
   margin: 0.4rem 0 0;
   font-size: 0.78rem;
-  color: #6d8177;
+  color: #2f453a;
 }
 
 .oh-open-triage {
@@ -4786,7 +4789,7 @@ html:has(.oh-open) {
 .oh-fig-tools {
   font-size: 0.72rem;
   font-weight: 650;
-  color: #3d5348;
+  color: #2f453a;
 }
 
 .oh-fig-sm .oh-fig-tools,
@@ -4813,7 +4816,7 @@ html:has(.oh-open) {
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #3d5348;
+  color: #2f453a;
 }
 
 .oh-obj-ask {
@@ -5577,6 +5580,19 @@ html:has(.oh-open) {
   color: var(--theme-text-muted) !important;
 }
 
+/* Light AA: Tailwind /70 greens sat under 4.5:1 on cream cards */
+.text-aui-deep\/70,
+.text-aui-deep\/60,
+.text-aui-deep\/55 {
+  color: #3f5248 !important;
+}
+
+[data-theme="light"] .text-aui-deep\/70,
+[data-theme="light"] .text-aui-deep\/60,
+[data-theme="light"] .text-aui-deep\/55 {
+  color: #3f5248 !important;
+}
+
 
 /* ---------- Student dashboard composition ---------- */
 
@@ -6219,8 +6235,14 @@ html:has(.oh-open) {
   color: rgba(255, 255, 255, 0.78);
 }
 
+.bh-nav-item.active .bh-nav-item-stack strong,
+.bh-nav-item.active .bh-nav-icon {
+  color: #102e24;
+}
+
 .bh-nav-item.active .bh-nav-hint {
-  color: color-mix(in srgb, var(--theme-accent-ink) 78%, transparent);
+  /* Active pill is cream — never use theme cream ink here. */
+  color: #3d5348;
 }
 
 .bh-nav-item:has(.bh-nav-item-stack) {
@@ -6610,7 +6632,8 @@ html:has(.oh-open) {
 .sa-history-group {
   margin: 0.85rem 0.45rem 0.3rem;
   font-size: 0.75rem;
-  color: var(--theme-text-subtle);
+  font-weight: 650;
+  color: var(--theme-text-muted);
 }
 
 .sa-history-item {
@@ -7655,8 +7678,11 @@ html:has(.oh-open) {
   cursor: pointer;
 }
 
-[data-theme="dark"] .bh-frame-professor .bh-avatar {
-  background: #255a40;
+[data-theme="dark"] .bh-avatar,
+[data-theme="dark"] .bh-frame-professor .bh-avatar,
+[data-theme="dark"] .bh-frame-ta .bh-avatar,
+[data-theme="dark"] .bh-frame-student .bh-avatar {
+  background: #1f5c42;
   color: #ffffff;
 }
 
@@ -8409,9 +8435,38 @@ html:has(.oh-open) {
 }
 
 .bh-frame-ta .bh-nav-item.active {
-  background: var(--tar-canvas);
-  color: var(--tar-forest);
+  background: #f8f7f4;
+  color: #143326;
   box-shadow: none;
+}
+
+.bh-frame-ta .bh-nav-item.active .bh-nav-item-stack strong,
+.bh-frame-ta .bh-nav-item.active .bh-nav-icon {
+  color: #143326;
+}
+
+.bh-frame-ta .bh-nav-item.active .bh-nav-hint {
+  color: #3d5348;
+}
+
+[data-theme="dark"] .bh-nav-item.active,
+[data-theme="dark"] .bh-frame-ta .bh-nav-item.active,
+[data-theme="dark"] .bh-frame-student .bh-nav-item.active,
+[data-theme="dark"] .bh-frame-professor .bh-nav-item.active {
+  background: #e7d7b1;
+  color: #141210;
+}
+
+[data-theme="dark"] .bh-nav-item.active .bh-nav-item-stack strong,
+[data-theme="dark"] .bh-nav-item.active .bh-nav-icon,
+[data-theme="dark"] .bh-frame-ta .bh-nav-item.active .bh-nav-item-stack strong,
+[data-theme="dark"] .bh-frame-ta .bh-nav-item.active .bh-nav-icon {
+  color: #141210;
+}
+
+[data-theme="dark"] .bh-nav-item.active .bh-nav-hint,
+[data-theme="dark"] .bh-frame-ta .bh-nav-item.active .bh-nav-hint {
+  color: #3a3328;
 }
 
 .bh-frame-ta .bh-main {
@@ -8898,5 +8953,745 @@ html:has(.oh-open) {
   .tar-queue,
   .tar-coach {
     transition: none !important;
+  }
+}
+
+/* ---------- E1 apple-design pass (shell / chrome only) ---------- */
+/* Response: press feedback on pointer-down, not only hover */
+.bh-nav-item:active,
+.btn-primary:active,
+.btn-ghost:active,
+.pf-quiet:active,
+.pf-approve:active {
+  transform: scale(0.97);
+  transition: transform 100ms ease-out, background 130ms ease, color 130ms ease;
+}
+
+.bh-nav-item.active:active {
+  transform: none;
+}
+
+/* Craft: inbox panel follows theme (Agency close already present) */
+#bh-inbox-panel {
+  background: var(--theme-surface);
+  color: var(--theme-text);
+  border-color: color-mix(in srgb, var(--theme-forest) 22%, transparent);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--theme-ink) 18%, transparent);
+  transform-origin: top left;
+  animation: bh-inbox-in 180ms ease-out;
+}
+
+#bh-inbox-panel .font-semibold {
+  color: var(--theme-title);
+}
+
+#bh-inbox-panel li.rounded-lg {
+  background: var(--theme-surface-muted);
+}
+
+@keyframes bh-inbox-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-anim,
+  html.theme-anim body,
+  html.theme-anim .bh-frame,
+  html.theme-anim .bh-main,
+  html.theme-anim .bh-card,
+  html.theme-anim .bh-sidebar,
+  html.theme-anim .bh-stat-card,
+  html.theme-anim .aui-shell,
+  html.theme-anim .glass-panel,
+  html.theme-anim .clay-panel,
+  html.theme-anim .oh-open,
+  html.theme-anim .oh-open-nav,
+  html.theme-anim .theme-toggle {
+    transition: none !important;
+  }
+
+  .bh-nav-item:active,
+  .btn-primary:active,
+  .btn-ghost:active,
+  .pf-quiet:active,
+  .pf-approve:active {
+    transform: none !important;
+  }
+
+  #bh-inbox-panel {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass-panel,
+  .glass-panel-deep,
+  .oh-land-nav {
+    backdrop-filter: none;
+    background: var(--theme-surface);
+  }
+}
+
+@media (prefers-contrast: more) {
+  .glass-panel,
+  .glass-panel-deep,
+  #bh-inbox-panel,
+  .bh-inbox-panel,
+  .bh-card {
+    border: 1px solid var(--theme-text);
+  }
+}
+
+/* ---------- Polish redo: inbox, TA desk, Past asks, professor hierarchy, apple pages ---------- */
+
+.bh-inbox-panel {
+  background: var(--theme-surface);
+  color: var(--theme-text);
+  border: 1px solid color-mix(in srgb, var(--theme-forest) 22%, transparent);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--theme-ink) 18%, transparent);
+  transform-origin: top left;
+  animation: bh-inbox-in 180ms ease-out;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.bh-inbox-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--theme-surface);
+  padding-bottom: 0.15rem;
+}
+
+.bh-inbox-header .font-semibold {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding-right: 0.35rem;
+}
+
+.bh-inbox-panel .pf-inbox-note,
+.bh-frame-professor .pf-inbox-note {
+  position: relative;
+  z-index: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--theme-text-muted);
+}
+
+.bh-inbox-close {
+  flex: 0 0 auto;
+  min-width: 2rem;
+  min-height: 2rem;
+  border-radius: 0.55rem;
+  border: 1px solid var(--theme-border);
+  background: var(--theme-surface-muted);
+  color: var(--theme-title);
+  font-size: 1.15rem;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.peer-note-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.peer-note-delete-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.bh-inbox-close:active {
+  transform: scale(0.94);
+}
+
+.bh-inbox-close:hover,
+.bh-inbox-close:focus-visible {
+  background: var(--theme-row-hover);
+}
+
+.td-dash-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+.td-dash-kicker,
+.pf-kicker {
+  margin: 0 0 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--theme-deep);
+}
+
+.td-dash-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.td-dash-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.1rem;
+}
+
+.td-dash-stat {
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-panel);
+  background: var(--theme-surface);
+  padding: 0.85rem 0.95rem;
+  transition: transform 120ms ease-out, box-shadow 160ms ease;
+}
+
+.td-dash-stat:active {
+  transform: scale(0.985);
+}
+
+.td-dash-stat-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--theme-text-muted);
+}
+
+.td-dash-stat-value {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--theme-title);
+}
+
+.td-dash-stat-value-sm {
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+}
+
+.td-dash-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.td-dash-list {
+  list-style: none;
+  margin: 0.85rem 0 0;
+  padding: 0;
+}
+
+.td-dash-list li {
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--theme-table-rule);
+}
+
+.td-dash-ask {
+  margin: 0;
+  font-weight: 650;
+  color: var(--theme-text);
+  overflow-wrap: anywhere;
+}
+
+.td-dash-meta {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: var(--theme-text-muted);
+}
+
+.td-dash-link {
+  display: inline-flex;
+  margin-top: 0.75rem;
+  font-weight: 700;
+  color: var(--theme-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ta-past-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--theme-text-muted);
+}
+
+.ta-past-card {
+  background: var(--theme-surface);
+  color: var(--theme-text);
+  border-color: var(--theme-border);
+}
+
+.ta-past-title {
+  margin: 0;
+  font-weight: 700;
+  color: var(--theme-title);
+}
+
+.ta-past-question,
+.ta-past-reply-body {
+  color: var(--theme-text);
+}
+
+.ta-past-reply {
+  border: 1px solid var(--theme-border);
+  background: var(--theme-surface-muted);
+}
+
+.ta-past-reply-label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--theme-text-muted);
+}
+
+.ta-past-meta {
+  font-size: 0.8rem;
+  color: var(--theme-text-muted);
+}
+
+.ta-past-meta dt {
+  font-weight: 700;
+  color: var(--theme-title);
+}
+
+.ta-past-meta dd {
+  margin: 0.1rem 0 0;
+  color: var(--theme-text);
+}
+
+.pf-head-stack {
+  align-items: flex-start;
+}
+
+.pf-head-stack .pf-line {
+  max-width: 40rem;
+}
+
+.pf-wait-age {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--theme-amber-fg);
+}
+
+.pf-bars-track {
+  height: 0.7rem;
+}
+
+.pf-bars-fill {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--theme-forest) 88%, #0f4a30),
+    var(--theme-forest)
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.pa-page .bh-card,
+.td-dash-panel,
+.ta-past-card,
+.pf-page .pf-block {
+  transition: transform 140ms ease-out, box-shadow 180ms ease;
+}
+
+.pa-checkin,
+.td-dash-stat,
+.bh-card,
+.pf-file-block,
+.rooms-page .rooms-card,
+.rooms-page article {
+  transform-origin: center;
+}
+
+.btn-primary:active,
+.btn-ghost:active,
+.td-dash-link:active,
+.pf-approve:active,
+.bh-inbox-close:active,
+.rooms-page button:active {
+  transform: scale(0.97);
+}
+
+@media (max-width: 900px) {
+  .td-dash-stats,
+  .td-dash-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .td-dash-stats,
+  .td-dash-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dark: landing lime / Rooms cream-on-green, Past asks, inbox */
+[data-theme="dark"] .oh-open-lime,
+[data-theme="dark"] .oh-block-lime {
+  background:
+    repeating-linear-gradient(
+      -28deg,
+      rgba(231, 215, 177, 0.04) 0 2px,
+      transparent 2px 14px
+    ),
+    #1a2420;
+  color: #f2ebe0;
+  border-top-color: #8a7348;
+}
+
+[data-theme="dark"] .oh-open-lime h2,
+[data-theme="dark"] .oh-block-lime h2 {
+  color: #faf6ef;
+}
+
+[data-theme="dark"] .oh-open-lime-quote,
+[data-theme="dark"] .oh-open-lime-note,
+[data-theme="dark"] .oh-block-lime .oh-open-rooms-copy p,
+[data-theme="dark"] .oh-block-lime .oh-open-kicker {
+  color: #d4cbb8;
+}
+
+[data-theme="dark"] .oh-open-lime-panel {
+  background: #243028;
+  color: #f2ebe0;
+}
+
+[data-theme="dark"] .oh-open-signin-on-lime {
+  background: #e7d7b1;
+  color: #1a140c;
+}
+
+/* Landing scene cards/bubbles: cream surfaces keep dark ink in dark mode. */
+[data-theme="dark"] .oh-panel,
+[data-theme="dark"] .oh-panel figcaption,
+[data-theme="dark"] .oh-panel figcaption strong,
+[data-theme="dark"] .oh-panel figcaption span,
+[data-theme="dark"] .oh-bub,
+[data-theme="dark"] .oh-bub-left,
+[data-theme="dark"] .oh-bub-right {
+  color: #1a140c;
+}
+
+[data-theme="dark"] .oh-panel figcaption span {
+  color: #2f453a;
+}
+
+[data-theme="dark"] .oh-open-brand,
+[data-theme="dark"] .oh-open-brand span,
+[data-theme="dark"] .oh-land-brand,
+[data-theme="dark"] .oh-land-brand span {
+  color: #faf6ef;
+}
+
+[data-theme="dark"] .oh-open-brand small,
+[data-theme="dark"] .oh-open-nav nav a,
+[data-theme="dark"] .oh-land-brand small,
+[data-theme="dark"] .oh-land-nav nav a {
+  color: #d4cbb8;
+}
+
+[data-theme="dark"] .oh-open-nav nav a.is-on,
+[data-theme="dark"] .oh-open-nav nav a:hover,
+[data-theme="dark"] .oh-land-nav nav a.is-on,
+[data-theme="dark"] .oh-land-nav nav a:hover {
+  color: #faf6ef;
+}
+
+[data-theme="dark"] .oh-vs {
+  color: #c6e86a;
+}
+
+[data-theme="dark"] .oh-open-trio-sec > div > p:last-child {
+  color: #d4cbb8;
+}
+
+[data-theme="dark"] .oh-fig-tools,
+[data-theme="dark"] .oh-obj-tag {
+  color: #d4cbb8;
+}
+
+[data-theme="dark"] .oh-open-lead {
+  color: #d4cbb8;
+}
+
+[data-theme="dark"] .oh-open-toggle button {
+  background: #e7d7b1;
+  color: #1a140c;
+}
+
+[data-theme="dark"] .oh-open-toggle button.is-on {
+  background: #c6e86a;
+  color: #1a140c;
+}
+
+[data-theme="dark"] .oh-open-pane,
+[data-theme="dark"] .oh-open-pane p,
+[data-theme="dark"] .oh-open-pane .oh-open-pane-kicker {
+  color: #1a140c;
+}
+
+[data-theme="dark"] .oh-open-pane .oh-open-pane-kicker,
+[data-theme="dark"] .oh-open-pane .oh-open-fine {
+  color: #2f453a;
+}
+
+/* Opening story: remap hardcoded forest/muted ink that fails on dark blocks. */
+[data-theme="dark"] .oh-open-kicker,
+[data-theme="dark"] .oh-open-fine,
+[data-theme="dark"] .oh-open-sub,
+[data-theme="dark"] .oh-open-choice-copy p,
+[data-theme="dark"] .oh-open-rooms-copy p,
+[data-theme="dark"] .oh-open-trio-sec p,
+[data-theme="dark"] .oh-open-body,
+[data-theme="dark"] .oh-open-stitch-copy p,
+[data-theme="dark"] .oh-open-desk-head p,
+[data-theme="dark"] .oh-open-close p,
+[data-theme="dark"] .oh-open-lead {
+  color: #d4cbb8;
+}
+
+[data-theme="dark"] .oh-open-copy h1,
+[data-theme="dark"] .oh-open-choice-copy h2,
+[data-theme="dark"] .oh-open-rooms-copy h2,
+[data-theme="dark"] .oh-open-trio-sec h2,
+[data-theme="dark"] .oh-open-stitch-copy h2,
+[data-theme="dark"] .oh-open-desk-head h2,
+[data-theme="dark"] .oh-open-close h2,
+[data-theme="dark"] .oh-open-drop,
+[data-theme="dark"] .oh-open-mark {
+  color: #faf6ef;
+}
+
+[data-theme="dark"] .oh-choice-grid li {
+  background: #243028;
+  border-color: #8a7348;
+  box-shadow: 6px 6px 0 #10140f;
+  color: #f2ebe0;
+}
+
+[data-theme="dark"] .oh-choice-grid li .oh-scene {
+  background: #1a2420;
+  border-bottom-color: #8a7348;
+}
+
+[data-theme="dark"] .oh-choice-grid h3 {
+  color: #faf6ef;
+}
+
+[data-theme="dark"] .oh-choice-grid p {
+  color: #d4cbb8;
+}
+
+/* Cream surfaces that stay cream in dark: force dark ink (after cream-text remap). */
+[data-theme="dark"] .oh-open-pane,
+[data-theme="dark"] .oh-open-pane p,
+[data-theme="dark"] .oh-open-pane h3,
+[data-theme="dark"] .oh-open-pane .oh-open-pane-kicker,
+[data-theme="dark"] .oh-open-pane .oh-open-fine,
+[data-theme="dark"] .oh-open-loom-out article,
+[data-theme="dark"] .oh-open-loom-out article p,
+[data-theme="dark"] .oh-open-loom-out article h3,
+[data-theme="dark"] .oh-open-loom-out .oh-open-loom-label {
+  color: #1a140c;
+}
+
+[data-theme="dark"] .oh-open-pane .oh-open-pane-kicker,
+[data-theme="dark"] .oh-open-pane .oh-open-fine,
+[data-theme="dark"] .oh-open-loom-out .oh-open-loom-label {
+  color: #2a4a38;
+}
+
+[data-theme="dark"] .oh-open-toggle button,
+[data-theme="dark"] .oh-open-course-switch button {
+  background: #e7d7b1;
+  color: #1a140c;
+}
+
+[data-theme="dark"] .oh-open-toggle button.is-on,
+[data-theme="dark"] .oh-open-course-switch button.is-on {
+  background: #c6e86a;
+  color: #1a140c;
+}
+
+[data-theme="dark"] .oh-open-course-switch button small {
+  color: #2a4a38;
+}
+
+[data-theme="dark"] .oh-open-loom-split {
+  color: #d4cbb8;
+}
+
+[data-theme="light"] .oh-open-loom-out .oh-open-loom-label {
+  color: #2a4a38;
+}
+
+/* Landing Rooms cards: keep dark ink on cream panels (do not inherit cream text). */
+[data-theme="dark"] .oh-block-lime .oh-open-thread,
+[data-theme="dark"] .oh-open-lime .oh-open-thread,
+[data-theme="dark"] .oh-block-lime .oh-open-hilbert,
+[data-theme="dark"] .oh-open-lime .oh-open-hilbert {
+  background: #243028;
+  border-color: rgba(231, 215, 177, 0.18);
+  color: #f2ebe0;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .oh-block-lime .oh-open-thread h3,
+[data-theme="dark"] .oh-open-lime .oh-open-thread h3,
+[data-theme="dark"] .oh-block-lime .oh-open-hilbert li,
+[data-theme="dark"] .oh-block-lime .oh-open-hilbert li strong,
+[data-theme="dark"] .oh-open-lime .oh-open-hilbert li strong {
+  color: #faf6ef;
+}
+
+[data-theme="dark"] .oh-block-lime .oh-open-thread p,
+[data-theme="dark"] .oh-open-lime .oh-open-thread p,
+[data-theme="dark"] .oh-block-lime .oh-open-pane-kicker,
+[data-theme="dark"] .oh-open-lime .oh-open-pane-kicker,
+[data-theme="dark"] .oh-block-lime .oh-open-fine,
+[data-theme="dark"] .oh-open-lime .oh-open-fine {
+  color: #d4cbb8;
+}
+
+[data-theme="dark"] .oh-block-lime .oh-open-vote,
+[data-theme="dark"] .oh-open-lime .oh-open-vote,
+[data-theme="dark"] .oh-block-lime .oh-open-thread-actions button,
+[data-theme="dark"] .oh-open-lime .oh-open-thread-actions button {
+  background: #e7d7b1;
+  color: #1a140c;
+}
+
+[data-theme="dark"] .oh-block-lime .oh-open-vote small,
+[data-theme="dark"] .oh-open-lime .oh-open-vote small {
+  color: #2a4a38;
+}
+
+[data-theme="dark"] .oh-block-lime .oh-open-thread-actions button.is-on,
+[data-theme="dark"] .oh-open-lime .oh-open-thread-actions button.is-on {
+  background: #c6e86a;
+  color: #1a140c;
+}
+
+/* Login labels: opacity utilities can fall below AA on dark cream. */
+[data-theme="dark"] .aui-shell .oh-land-login-hint,
+[data-theme="dark"] .aui-shell form.glass-panel label,
+[data-theme="dark"] .aui-shell .text-aui-deep\/55,
+[data-theme="dark"] .aui-shell .text-aui-deep\/60,
+[data-theme="dark"] .aui-shell .text-aui-deep\/70 {
+  color: #d4cbb8 !important;
+  opacity: 1;
+}
+
+[data-theme="dark"] .sr-banner,
+[data-theme="dark"] .sr-teaser-banner {
+  background: linear-gradient(115deg, #142018 0%, #1f3a2c 45%, #163226 100%);
+}
+
+[data-theme="dark"] .sr-avatar {
+  border-color: #1f1c18;
+  background: linear-gradient(160deg, #3d3420, #255a40);
+  color: #f2ebe0;
+}
+
+[data-theme="dark"] .sr-kicker,
+[data-theme="dark"] .sr-head-copy p {
+  color: #d4cbb8;
+}
+
+[data-theme="dark"] .sr-head-copy h1,
+[data-theme="dark"] .sr-teaser-body h2,
+[data-theme="dark"] .sr-empty h2,
+[data-theme="dark"] .sr-submit h2,
+[data-theme="dark"] .sr-post-main h2,
+[data-theme="dark"] .sr-row-main h2 {
+  color: #faf6ef;
+}
+
+[data-theme="dark"] .sr-vote {
+  background: #252219;
+  color: #f2ebe0;
+}
+
+[data-theme="dark"] .sr-vote-btn:hover:not(:disabled),
+[data-theme="dark"] .sr-vote-btn.is-on,
+[data-theme="dark"] .sr-vote-count.is-on {
+  color: #e7d7b1;
+}
+
+[data-theme="dark"] .rooms-page,
+[data-theme="dark"] .ta-past,
+[data-theme="dark"] .td-dash {
+  color: var(--theme-text);
+}
+
+[data-theme="dark"] .ta-past-reply,
+[data-theme="dark"] .ta-past-filters,
+[data-theme="dark"] .td-dash-stat,
+[data-theme="dark"] .bh-inbox-panel li.rounded-lg {
+  background: var(--theme-surface-muted);
+  border-color: var(--theme-border);
+  color: var(--theme-text);
+}
+
+[data-theme="dark"] .bh-inbox-panel {
+  background: var(--theme-surface) !important;
+  color: var(--theme-text) !important;
+}
+
+[data-theme="dark"] .text-aui-ink,
+[data-theme="dark"] .text-aui-deep {
+  color: var(--theme-text) !important;
+}
+
+[data-theme="dark"] .soft-stat {
+  background: var(--theme-surface-muted);
+  color: var(--theme-text);
+}
+
+[data-theme="dark"] .pa-checkin,
+[data-theme="dark"] .pa-page .rounded-lg.border {
+  background: var(--theme-surface) !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bh-inbox-panel,
+  .td-dash-stat,
+  .pa-page .bh-card,
+  .td-dash-panel,
+  .ta-past-card {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .btn-primary:active,
+  .btn-ghost:active,
+  .td-dash-link:active,
+  .pf-approve:active,
+  .bh-inbox-close:active,
+  .rooms-page button:active,
+  .td-dash-stat:active {
+    transform: none !important;
   }
 }

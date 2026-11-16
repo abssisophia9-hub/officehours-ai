@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { api } from "../api/client.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 export default function NotificationBell({ plain = false }) {
   const { token } = useAuth();
   const rootRef = useRef(null);
+  const triggerRef = useRef(null);
+  const panelId = useId();
   const [open, setOpen] = useState(false);
   const [inbox, setInbox] = useState({ unread: 0, items: [], smtp_configured: false });
 
@@ -25,16 +27,19 @@ export default function NotificationBell({ plain = false }) {
 
   useEffect(() => {
     if (!open) return undefined;
-    function onDocClick(event) {
+    function onDocPointer(event) {
       if (!rootRef.current?.contains(event.target)) setOpen(false);
     }
     function onKey(event) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
     }
-    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("pointerdown", onDocPointer);
     document.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("pointerdown", onDocPointer);
       document.removeEventListener("keydown", onKey);
     };
   }, [open]);
@@ -44,14 +49,28 @@ export default function NotificationBell({ plain = false }) {
     await load();
   }
 
+  function closeInbox(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    setOpen(false);
+    triggerRef.current?.focus();
+  }
+
+  function toggleInbox(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    setOpen((value) => !value);
+  }
+
   return (
     <div className="relative" ref={rootRef}>
       <button
+        ref={triggerRef}
         type="button"
         className="bh-nav-item w-full"
         aria-expanded={open}
-        aria-controls="bh-inbox-panel"
-        onClick={() => setOpen((value) => !value)}
+        aria-controls={panelId}
+        onClick={toggleInbox}
       >
         Inbox
         {inbox.unread ? (
@@ -60,23 +79,27 @@ export default function NotificationBell({ plain = false }) {
       </button>
       {open ? (
         <div
-          id="bh-inbox-panel"
+          id={panelId}
           role="dialog"
           aria-label="Inbox"
-          className={`absolute top-full left-0 z-20 mt-2 w-72 rounded-xl border border-aui-forest/20 bg-white p-3 text-xs text-aui-ink shadow-lg${plain ? " pf-inbox" : ""}`}
+          className={`bh-inbox-panel absolute top-full left-0 right-0 z-40 mt-2 w-auto min-w-0 rounded-xl border border-aui-forest/20 p-3 text-xs text-aui-ink shadow-lg${plain ? " pf-inbox" : ""}`}
+          onClick={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
         >
-          <div className="flex items-start justify-between gap-2">
+          <div className="bh-inbox-header flex items-center justify-between gap-2">
             <p className="font-semibold">Notifications</p>
             <button
               type="button"
-              className="rounded px-1.5 py-0.5 text-sm font-semibold text-aui-deep/70 hover:bg-aui-mist"
+              className="bh-inbox-close"
               aria-label="Close inbox"
-              onClick={() => setOpen(false)}
+              title="Close"
+              onClick={closeInbox}
+              onPointerDown={(event) => event.stopPropagation()}
             >
               ×
             </button>
           </div>
-          <p className={plain ? "pf-inbox-note" : "mt-1 text-[11px] text-aui-deep/60"}>
+          <p className={plain ? "pf-inbox-note" : "mt-1 text-[11px] text-aui-deep/70"}>
             {plain
               ? "Notifications for this account."
               : inbox.smtp_configured

@@ -72,7 +72,7 @@ def build_request_status(
             )
     elif ta_reply:
         payload["recommended_next_step"] = (
-            "A TA sent you a reply — read it above and follow up in office hours "
+            "A TA sent you a reply - read it above and follow up in office hours "
             "if you still need help."
         )
     else:
@@ -93,12 +93,12 @@ def build_request_status(
             )
         elif help_mode == "face_to_face":
             payload["recommended_next_step"] = (
-                "You asked for a face-to-face meeting — keep your request code and "
+                "You asked for a face-to-face meeting - keep your request code and "
                 "check campus office-hours times for your course."
             )
         elif help_mode == "online_meeting":
             payload["recommended_next_step"] = (
-                "You asked for an online meeting — a TA or the professor will share "
+                "You asked for an online meeting - a TA or the professor will share "
                 "a link once a slot is offered."
             )
 

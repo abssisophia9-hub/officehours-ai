@@ -57,7 +57,7 @@ HELP_MODE_ACTIONS = {
         "(campus location / walk-in slot)."
     ),
     "online_meeting": (
-        "Offer an online meeting (Zoom / Teams) — share a link and time window."
+        "Offer an online meeting (Zoom / Teams) - share a link and time window."
     ),
 }
 
@@ -143,15 +143,15 @@ async def create_request(
     request_data["sensitive"] = sensitive
     if sensitive:
         request_data["recommended_action"] = (
-            "Private 1:1 / admin route — do not discuss in a public group review"
+            "Private 1:1 / admin route - do not discuss in a public group review"
         )
         if help_mode == "face_to_face":
             request_data["recommended_action"] = (
-                "Private face-to-face follow-up — do not discuss in a public group review"
+                "Private face-to-face follow-up - do not discuss in a public group review"
             )
         elif help_mode == "online_meeting":
             request_data["recommended_action"] = (
-                "Private online 1:1 follow-up — do not discuss in a public group review"
+                "Private online 1:1 follow-up - do not discuss in a public group review"
             )
 
     if request_data.get("cluster_id") is None:
@@ -176,11 +176,11 @@ async def create_request(
         if db_request.sensitive:
             if help_mode == "face_to_face":
                 db_request.recommended_action = (
-                    "Private face-to-face follow-up — do not discuss in a public group review"
+                    "Private face-to-face follow-up - do not discuss in a public group review"
                 )
             else:
                 db_request.recommended_action = (
-                    "Private online 1:1 follow-up — do not discuss in a public group review"
+                    "Private online 1:1 follow-up - do not discuss in a public group review"
                 )
         else:
             db_request.recommended_action = HELP_MODE_ACTIONS[help_mode]
@@ -403,7 +403,7 @@ def get_request_status(
         )
     _require_status_access(db, user, db_request)
 
-    # Avoid loading every decision campus-wide — match this request id only.
+    # Avoid loading every decision campus-wide - match this request id only.
     marker = str(request_id)
     candidates = (
         db.query(RecommendationDecision)

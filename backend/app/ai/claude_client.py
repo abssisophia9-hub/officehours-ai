@@ -198,6 +198,12 @@ class GeminiAnswerCheckClient:
             schema = RECOVERY_JSON_SCHEMA
         else:
             schema = ANSWER_JSON_SCHEMA
+        if system == ENTAILMENT_SYSTEM:
+            tool_name = "entailment"
+        elif system == RECOVERY_SYSTEM:
+            tool_name = "recovery"
+        else:
+            tool_name = "answer_check"
         return complete_gemini(
             system,
             user,
@@ -205,6 +211,8 @@ class GeminiAnswerCheckClient:
             temperature=0,
             timeout=timeout_seconds(),
             schema=schema,
+            agent="study",
+            tool=tool_name,
         )
 
 

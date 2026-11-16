@@ -1,7 +1,7 @@
 """Seed demo AUI accounts + multi-course memberships for supervisor testing.
 
 AUI emails look like ``S.Abssi@aui.ma`` (first initial + '.' + last name).
-They do **not** encode role — student / TA / professor comes only from
+They do **not** encode role - student / TA / professor comes only from
 ``course_memberships.role``.
 
 Course codes follow the real AUI catalog style (``CSC 3374``, ``MTH 1304``):
@@ -90,7 +90,7 @@ DEMO_COURSES = {
     },
     # Labeled demo section: professor, no TA. Used to show professor routing.
     "CSC 3390": {
-        "title": "Demo seminar (no TA — professor only)",
+        "title": "Demo seminar (no TA - professor only)",
         "term": "Spring 2026",
         "canvas_course_id": "3390",
     },
@@ -163,7 +163,7 @@ DEMO_USERS = [
         ],
     },
     {
-        # Second TA on Algorithms + Databases — dual-TA sections.
+        # Second TA on Algorithms + Databases - dual-TA sections.
         "email": "p.nair@aui.ma",
         "display_name": "Priya Nair",
         "student_id": "118310",
@@ -227,7 +227,7 @@ def ensure_demo_accounts(db: Session) -> None:
     """Create or repair demo users/courses (idempotent, migrates old emails/codes).
 
     No-op unless ``OFFICEHOURS_DEMO`` is on. Production AUI deploy must not
-    invent Sara/Youssef or sample courses — Canvas/LTI provisions those.
+    invent Sara/Youssef or sample courses - Canvas/LTI provisions those.
     """
     if not demo_mode():
         return

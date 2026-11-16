@@ -7,6 +7,9 @@ Run locally with:
 Then visit http://127.0.0.1:8000/docs for the interactive API docs.
 """
 
+# Load backend/.env before any os.getenv / demo_mode reads.
+import app.env_bootstrap  # noqa: F401
+
 import asyncio
 import os
 import time

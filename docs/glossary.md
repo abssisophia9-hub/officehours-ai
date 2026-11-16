@@ -21,7 +21,7 @@ A TA is not a classmate in the section they staff.
 | **Ask Triage** | Everyone (runs at submit) | `POST /requests/` | Analyzer → Matcher → Synthesizer. Internal module: `ask_triage_service.py`; columns/API use `triage_*` (renamed from historical `oracle_*`). |
 | **Help Coach** | TA (while helping) | `POST /ta/assist/` | Similar opens, KB neighbors, Socratic steps, draft/rewrite reply, refresh teaching script. |
 | **Study Agent** | Student | `POST /agent/ask` | Answers only from **professor-approved** KB / materials. |
-| **Pedagogy Agent** | Student | `POST /revision/plan` (route `/student/revision`) | 7-day focus plan from on-device practice scores + preference; web/KB resources. Internal IDs stay `revision_*`. |
+| **Pedagogy Agent** | Student | `POST /revision/plan` (route `/student/revision`) | Student-chosen duration focus plan (1–60 days; presets 3 days / 1 week / 2 weeks / 1 month + custom) from on-device practice scores + preference; web resources. Internal IDs stay `revision_*`. |
 | **Lifetime confusion** | Professor analytics | `/analytics/lifetime-confusion` | Hotspots from approved KB topics. |
 
 ## Help modes
@@ -41,7 +41,7 @@ A TA is not a classmate in the section they staff.
 | **Shared group meeting** | TA or professor | One title + when + place on **all** linked request statuses |
 | **Material approve** | Professor | Approved **course material** feeds Study Agent (Orchestration Layer). FAQ/staff drafts may still exist in the API for TA coaching — not shown as Suggested answers in the product UI. |
 | **Rooms** (API still `/help-room/`) | Students (course-scoped) | Stack Overflow hybrid: named Problem/Discussion/Article rooms, Canvas-module chapters, Express Interest, classmate leaderboard. Staff do not sit in the room. Quiet ask is the anonymous path to staff. Demo syllabus only if `OFFICEHOURS_DEMO=true`. |
-| **Rooms board / classmate points (ŵ)** | Students (per course) | Quality-over-volume reputation on the Rooms board. ŵ is the playful point unit. |
+| **Rooms board / classmate points** | Students (per course) | Quality-over-volume reputation on the Rooms board (shown as points). |
 | **Express Interest** | Students | Offer to help on a room without it being a private chat. |
 | **Review insights** | Professor | End-of-chapter question board from Quiet asks + Rooms chapters — emphasize / cover / draft FAQ / next-cohort note. |
 

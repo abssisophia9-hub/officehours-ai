@@ -20,6 +20,19 @@ function byRecent(a, b) {
   return bTime - aTime;
 }
 
+function waitingFor(iso) {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return null;
+  const mins = Math.max(0, Math.round((Date.now() - t) / 60000));
+  if (mins < 1) return "waiting just now";
+  if (mins < 60) return `waiting ${mins} min`;
+  const h = Math.floor(mins / 60);
+  if (h < 48) return h === 1 ? "waiting 1 hour" : `waiting ${h} hours`;
+  const d = Math.floor(h / 24);
+  return d === 1 ? "waiting 1 day" : `waiting ${d} days`;
+}
+
 function materialStatusLine({ ready, error, uploads, pendingCount, partlyCount }) {
   if (!ready) return "Loading material…";
   if (error && uploads.length === 0) return "Files could not be loaded.";
@@ -267,12 +280,16 @@ export default function MaterialPage() {
 
   return (
     <div className="pf-page">
-      <header className="pf-head">
-        <h1>Material</h1>
-        <p className="pf-line">
-          Approve files so the Study Agent can use them through the Orchestration Layer.
-          Waiting uploads stay at the top until you act.
-        </p>
+      <header className="pf-head pf-head-stack">
+        <div>
+          <p className="pf-kicker">Study Agent source</p>
+          <h1>Material</h1>
+          <p className="pf-line">
+            Approve files so the Study Agent can quote them for students.
+            Waiting uploads stay at the top until you act - each row shows how long
+            it has been waiting.
+          </p>
+        </div>
         <button
           type="button"
           className="btn-primary pf-primary"
@@ -287,6 +304,7 @@ export default function MaterialPage() {
           type="file"
           tabIndex={-1}
           accept=".pdf,.docx,.txt,.md,.vtt,.srt"
+          aria-label="Upload course material file"
           onChange={(event) => {
             const chosen = Array.from(event.target.files || []);
             event.target.value = "";
@@ -566,6 +584,9 @@ function FileRow({
         </p>
         <p className="pf-cell" role="cell">
           <span className={`pf-state${waiting ? " pf-state-wait" : ""}`}>{label}</span>
+          {waiting && waitingFor(upload.uploaded_at) ? (
+            <span className="pf-wait-age">{waitingFor(upload.uploaded_at)}</span>
+          ) : null}
         </p>
         <p className="pf-cell" role="cell">
           <span className="pf-cell-label">Students see</span>
@@ -626,7 +647,7 @@ function FileRow({
           {chunks.map((entry) => (
             <li key={entry.id}>
               <p className="pf-chunk-page">
-                {entry.page_number != null ? `Page ${entry.page_number}` : "Page —"}
+                {entry.page_number != null ? `Page ${entry.page_number}` : "Page  - "}
               </p>
               <p className="pf-chunk-text">{entry.answer_draft}</p>
               {entry.status === "approved" ? (

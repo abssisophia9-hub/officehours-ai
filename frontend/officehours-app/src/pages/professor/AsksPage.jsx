@@ -10,7 +10,7 @@ function helpLabel(mode) {
 
 function personLabel(request) {
   if (request.anonymous) return "Anonymous";
-  return request.student_name || request.student_id || "—";
+  return request.student_name || request.student_id || "-";
 }
 
 export default function AsksPage() {
@@ -23,12 +23,16 @@ export default function AsksPage() {
 
   return (
     <div className="pf-page">
-      <header className="pf-head">
-        <h1>Your desk</h1>
-        <p className="pf-line">
-          Asks assigned to you and urgent items first. Repeated topics live on{" "}
-          <Link to="/professor/insights">Insights</Link>.
-        </p>
+      <header className="pf-head pf-head-stack">
+        <div>
+          <p className="pf-kicker">Teaching desk</p>
+          <h1>Your desk</h1>
+          <p className="pf-line">
+            Assigned and urgent asks first. Patterns across the class live on{" "}
+            <Link to="/professor/insights">Insights</Link>; file approvals live on{" "}
+            <Link to="/professor">Material</Link>.
+          </p>
+        </div>
       </header>
       {error ? (
         <p className="pf-error" role="alert">
@@ -106,9 +110,9 @@ export default function AsksPage() {
                       <td data-label="Question">{request.text}</td>
                       <td data-label="From">{personLabel(request)}</td>
                       <td data-label="Help">{helpLabel(request.help_mode)}</td>
-                      <td data-label="Topic">{(request.category || "—").replaceAll("_", " ")}</td>
+                      <td data-label="Topic">{(request.category || "-").replaceAll("_", " ")}</td>
                       <td data-label="Flags">
-                        {request.sensitive ? "Sensitive" : request.anonymous ? "Anonymous" : "—"}
+                        {request.sensitive ? "Sensitive" : request.anonymous ? "Anonymous" : "-"}
                       </td>
                     </tr>
                   ))}

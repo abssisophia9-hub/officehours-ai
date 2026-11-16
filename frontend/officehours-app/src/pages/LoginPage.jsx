@@ -4,7 +4,7 @@ import { API_BASE, api } from "../api/client.js";
 import { coursePath, landingCourse, useAuth } from "../auth/AuthContext.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 
-// AUI emails are Initial.Lastname@aui.ma — role comes from course membership, not email.
+// AUI emails are Initial.Lastname@aui.ma - role comes from course membership, not email.
 const DEMO_ACCOUNTS = [
   {
     email: "s.elidrissi@aui.ma",
@@ -14,7 +14,7 @@ const DEMO_ACCOUNTS = [
   {
     email: "a.chen@aui.ma",
     role: "TA (staff on 2302)",
-    note: "Assigned to CSC 2302 — a course she already took",
+    note: "Assigned to CSC 2302 - a course she already took",
   },
   {
     email: "a.benali@aui.ma",
@@ -95,7 +95,7 @@ export default function LoginPage() {
           </h1>
           <p className="mt-3 max-w-md text-base font-medium text-aui-deep/70">
             Sign in with your AUI email (Initial.Lastname@aui.ma). Role is per
-            course. A TA is staff on a course they already completed — not a
+            course. A TA is staff on a course they already completed - not a
             student in that section.
           </p>
 
@@ -217,7 +217,7 @@ export default function LoginPage() {
           </h2>
           <p className="mt-2 text-sm font-medium text-emerald-50/80">
             Courses, chapters, and classmates come from the linked Canvas
-            course — not a hardcoded catalog. Ask your professor to open
+            course - not a hardcoded catalog. Ask your professor to open
             OfficeHours from Canvas and sync modules.
           </p>
         </aside>

@@ -221,7 +221,19 @@ def test_output_token_cap_and_timeout_reach_the_provider(monkeypatch):
 
     seen = {"systems": [], "schemas": [], "users": []}
 
-    def fake_complete(system, user, *, max_tokens, temperature, timeout, schema=None):
+    def fake_complete(
+        system,
+        user,
+        *,
+        max_tokens,
+        temperature,
+        timeout,
+        schema=None,
+        agent=None,
+        tool=None,
+        **kwargs,
+    ):
+        # agent/tool are ops-log kwargs from complete_gemini; ignore for this spy.
         seen["max_tokens"] = max_tokens
         seen["temperature"] = temperature
         seen["timeout"] = timeout
