@@ -66,7 +66,12 @@ def jwks_url() -> str:
 
 
 def launch_url() -> str:
-    return _env("OFFICEHOURS_LTI_LAUNCH_URL") or "http://127.0.0.1:8000/lti/launch"
+    configured = _env("OFFICEHOURS_LTI_LAUNCH_URL")
+    if configured:
+        return configured
+    from app.root_path import root_path
+
+    return f"http://127.0.0.1:8000{root_path()}/lti/launch"
 
 
 def expected_deployment() -> str:

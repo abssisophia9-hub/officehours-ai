@@ -25,6 +25,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.database.migrate import ensure_schema
 from app.database.session import Base, engine
+from app.frontend_static import mount_frontend, should_serve_frontend
 from app.models import knowledge as _knowledge_model  # noqa: F401
 from app.models import ta_roster as _ta_roster_model  # noqa: F401
 from app.models import auth as _auth_model  # noqa: F401
@@ -35,7 +36,9 @@ from app.models import help_room as _help_room_model  # noqa: F401
 from app.models import feedback as _feedback_model  # noqa: F401
 from app.models import notification as _notification_model  # noqa: F401
 from app.models import study_conversation as _study_conversation_model  # noqa: F401
+from app.path_prefix import PathPrefixASGI
 from app.realtime.hub import set_main_loop
+from app.root_path import root_path as configured_root_path
 from app.routes.actions import router as actions_router
 from app.routes.auth import courses_router, router as auth_router
 from app.routes.canvas import router as canvas_router
@@ -61,6 +64,9 @@ from app.services.security_log import audit
 Base.metadata.create_all(bind=engine)
 ensure_schema(engine)
 
+# Public URL prefix for AUI CDN (default "" → local root paths unchanged).
+ROOT_PATH = configured_root_path()
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -79,6 +85,7 @@ app = FastAPI(
     description="Backend API for the OfficeHours AI multi-role campus product.",
     version="0.2.0",
     lifespan=lifespan,
+    root_path=ROOT_PATH,
     # Never expose OpenAPI exception internals; keep docs available for operators.
 )
 
@@ -197,11 +204,6 @@ async def security_middleware(request: Request, call_next):
     return response
 
 
-@app.get("/")
-def read_root():
-    return {"status": "ok", "service": "OfficeHours AI API"}
-
-
 # Env keys reported by /health as presence-only (never values).
 _HEALTH_ENV_KEYS = (
     "GEMINI_API_KEY",
@@ -267,3 +269,18 @@ app.include_router(notifications_router)
 app.include_router(study_conversations_router)
 app.include_router(revision_router)
 app.include_router(realtime_router)
+
+# JSON smoke root when the SPA is not mounted (local API / pytest).
+if not should_serve_frontend():
+
+    @app.get("/")
+    def read_root():
+        return {"status": "ok", "service": "OfficeHours AI API"}
+
+
+# Production / CDN: serve the Vite build from the same uvicorn process.
+mount_frontend(app)
+
+# Sub-path deploy: accept /officehours-ai/... (and /ws under that prefix).
+if ROOT_PATH:
+    app = PathPrefixASGI(app, ROOT_PATH)  # type: ignore[assignment]
