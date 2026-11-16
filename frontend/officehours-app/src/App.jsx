@@ -26,6 +26,7 @@ import VisionDemoBoard from "./pages/VisionDemoBoard.jsx";
 import VisionDemoPath from "./pages/VisionDemoPath.jsx";
 import VisionDemoTrio from "./pages/VisionDemoTrio.jsx";
 import StudentVisionPrototype from "./pages/StudentVisionPrototype.jsx";
+import CapstonePosterPage from "./pages/CapstonePosterPage.jsx";
 
 function LoadingScreen() {
   return (
@@ -63,6 +64,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/sso" element={<SsoCompletePage />} />
+      {/* CFC landscape research poster (1920×1080) — public, no auth */}
+      <Route path="/poster" element={<CapstonePosterPage />} />
       {/* Prototype always reachable for feedback - not behind demo race */}
       <Route path="/demo/student-vision" element={<StudentVisionPrototype />} />
       {showDemos ? (

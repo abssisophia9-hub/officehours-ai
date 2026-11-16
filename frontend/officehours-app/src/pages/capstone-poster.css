@@ -1,0 +1,410 @@
+/* MIT-style research exhibition poster — landscape 1920×1080
+   20-second pitch · dominant figure · sparse claim columns · measured results
+   NOT a product landing page; NOT a dense academic grid. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body.cfc-poster-lock {
+  overflow: hidden !important;
+  margin: 0;
+  background: #1a2420;
+}
+
+.mit-viewport {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #1a2420;
+}
+
+.mit-stage {
+  --emerald: #006838;
+  --canvas: #008ee2;
+  --ink: #243038;
+  --muted: #5a6670;
+  --line: #c9d0c8;
+  --paper: #f7f5f0;
+  --panel: #ffffff;
+
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  padding: 28px 36px 22px;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 14px;
+  background:
+    linear-gradient(180deg, #fbfaf7 0%, var(--paper) 55%, #f3f0e9 100%);
+  color: var(--ink);
+  font-family: "Source Sans 3", "Plus Jakarta Sans", sans-serif;
+}
+
+.mit-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 2px solid var(--emerald);
+  padding-bottom: 10px;
+  z-index: 1;
+}
+
+.mit-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.mit-logo {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.mit-affiliation {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
+.mit-event {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--emerald);
+  white-space: nowrap;
+}
+
+.mit-titleblock {
+  z-index: 1;
+  padding-top: 2px;
+}
+
+.mit-title {
+  margin: 0;
+  font-family: "Plus Jakarta Sans", "Source Sans 3", sans-serif;
+  font-size: 72px;
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: var(--emerald);
+}
+
+.mit-pitch {
+  margin: 10px 0 0;
+  max-width: 1400px;
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.mit-body {
+  display: grid;
+  grid-template-columns: 1.75fr 1fr;
+  gap: 20px;
+  min-height: 0;
+  z-index: 1;
+}
+
+.mit-figure {
+  min-width: 0;
+  display: flex;
+}
+
+.mit-figure-frame {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 12px;
+  background: var(--panel);
+  border: 1.5px solid var(--line);
+  border-radius: 4px;
+  /* research figure — not a marketing card */
+  box-shadow: none;
+}
+
+.mit-fig-label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.mit-arch {
+  width: 100%;
+  height: auto;
+  flex: 1.35;
+  min-height: 360px;
+  max-height: 430px;
+}
+
+.mit-arch .mit-node-title {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  fill: var(--ink);
+}
+
+.mit-arch .mit-node-sub {
+  font-family: "Source Sans 3", sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  fill: var(--muted);
+}
+
+.mit-node {
+  transform-origin: center;
+  transition: transform 220ms ease;
+}
+
+.mit-layer-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.mit-layer-chip {
+  appearance: none;
+  margin: 0;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  font-family: "Source Sans 3", sans-serif;
+  color: var(--ink);
+  background: #f3f6f3;
+  border: 1.5px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.mit-layer-short {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--emerald);
+}
+
+.mit-layer-claim {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.mit-layer-chip:hover {
+  border-color: rgba(0, 142, 226, 0.45);
+  transform: translateY(-1px);
+}
+
+.mit-layer-chip.is-active {
+  background: rgba(0, 104, 56, 0.08);
+  border-color: var(--emerald);
+}
+
+.mit-layer-chip.is-active .mit-layer-short {
+  color: var(--canvas);
+}
+
+.mit-fig-caption {
+  margin: 0;
+  padding: 8px 2px 0;
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--ink);
+  border-top: 1px solid var(--line);
+  animation: mit-fade 280ms ease;
+}
+
+.mit-fig-caption strong {
+  color: var(--emerald);
+  font-weight: 700;
+}
+
+@keyframes mit-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mit-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.mit-col {
+  padding: 0 2px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.mit-col:last-of-type {
+  border-bottom: none;
+}
+
+.mit-claim-h {
+  margin: 0 0 6px;
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.mit-col ul {
+  margin: 0;
+  padding: 0 0 0 16px;
+}
+
+.mit-col li {
+  margin: 0 0 3px;
+  font-size: 14.5px;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+.mit-results {
+  margin-top: auto;
+  padding: 12px 14px 10px;
+  background: rgba(0, 104, 56, 0.06);
+  border: 1.5px solid rgba(0, 104, 56, 0.22);
+  border-radius: 4px;
+}
+
+.mit-results-kicker {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--emerald);
+}
+
+.mit-results-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+
+.mit-result {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.mit-result strong {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--emerald);
+}
+
+.mit-result span {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.mit-result em {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.mit-mono {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.mit-pass {
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.mit-pass span {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: var(--emerald);
+  border-radius: 2px;
+}
+
+.mit-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-top: 10px;
+  border-top: 2px solid var(--emerald);
+  z-index: 1;
+}
+
+.mit-people {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mit-people p {
+  margin: 0;
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.mit-qr {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mit-qr-img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 3px;
+}
+
+.mit-qr-title {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.mit-qr .mit-mono {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
