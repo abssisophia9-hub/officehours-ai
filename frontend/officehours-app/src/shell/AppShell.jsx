@@ -156,10 +156,11 @@ const SECTION_NAV = {
           hint: "Claim, help, reply to students",
         },
         {
-          id: "courses",
-          label: "My Courses",
-          icon: "courses",
-          to: "/",
+          id: "past",
+          label: "Past asks",
+          icon: "requests",
+          to: "/ta/past",
+          hint: "Resolved asks with replies",
         },
       ],
     },
@@ -366,14 +367,14 @@ export default function AppShell() {
           to={section.to}
           end={section.to === "/ta" || section.to === "/"}
           className={({ isActive }) => {
-            // Live Queue owns /ta. Dashboard is active on course home; My Courses stays inactive.
+            // Live Queue owns /ta. Dashboard is active on course home.
             let active = isActive;
             if (section.id === "queue") {
-              active = location.pathname.startsWith("/ta");
+              active = location.pathname === "/ta";
+            } else if (section.id === "past") {
+              active = location.pathname.startsWith("/ta/past");
             } else if (section.id === "dashboard") {
               active = location.pathname === "/";
-            } else if (section.id === "courses") {
-              active = false;
             }
             return `bh-nav-item${active ? " active" : ""}`;
           }}

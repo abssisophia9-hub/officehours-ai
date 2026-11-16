@@ -205,3 +205,47 @@ def test_student_cannot_use_help_coach_on_other_course():
         json={"request_id": created["id"], "mode": "draft_reply"},
     )
     assert denied.status_code in {403, 401}
+
+
+def test_socratic_steps_grounded_in_student_ask():
+    from app.services.help_coach_service import _socratic_steps
+
+    steps = _socratic_steps(
+        teaching_approach="1. Restate the stuck point.\n2. Try a small example.",
+        difficulty="MEDIUM",
+        category="probability",
+        learning_style="step_by_step",
+        ask_text="I am stuck on exam chapter 4 Bayes theorem for the midterm.",
+    )
+    assert steps
+    assert any("Bayes" in step or "exam chapter 4" in step for step in steps)
+
+
+def test_bank_match_requires_token_overlap_for_exam_chapter():
+    """Off-topic bank rows must not drive coaching for an exam-chapter ask."""
+    from app.ai.synthesizer_model import _bank_shares_tokens, synthesize_with_model
+
+    assert not _bank_shares_tokens(
+        "exam chapter 4 probability Bayes theorem",
+        {
+            "category": "trees",
+            "teaching_approach": "AVL rotate left then right",
+            "student_hint": "balance factor",
+        },
+    )
+    out = synthesize_with_model(
+        question_text="Exam chapter 4: how do I apply Bayes theorem to the weather example?",
+        analyzer={
+            "category": "Probability",
+            "ml_category": "probability",
+            "tags": ["exam", "chapter-4"],
+        },
+        similar_questions=[],
+        learning_style="step_by_step",
+        course="MTH 1304",
+    )
+    teaching = (out.get("teaching_approach") or "").lower()
+    assert "avl" not in teaching
+    assert "red-black" not in teaching
+    # Prefer seek-help / template fallback over a distant CSC bank hit.
+    assert "bank_rag" not in str(out.get("backend") or "")
