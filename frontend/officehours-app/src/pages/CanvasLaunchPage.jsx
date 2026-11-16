@@ -5,10 +5,10 @@ import { useAuth } from "../auth/AuthContext.jsx";
 
 const STEPS = [
   "Verifying your Canvas identity…",
-  "Connecting the course tenant…",
+  "Connecting your course…",
   "Reading course modules…",
-  "Ingesting professor slides into the knowledge base…",
-  "Spawning the course agent…",
+  "Loading professor slides for the study agent…",
+  "Preparing your course workspace…",
 ];
 
 // One launch per query string, shared across StrictMode double-mounts so the
@@ -132,12 +132,14 @@ export default function CanvasLaunchPage() {
             <p className="mt-1 text-aui-deep/70">
               {result.course_code} · signed in as {result.display_name} (
               {result.role})
-              {result.provisioned_course ? " · new course provisioned" : ""}
+              {result.provisioned_course ? " · new course added" : ""}
               {result.provisioned_user ? " · new account created" : ""}
             </p>
             <p className="mt-1 text-aui-deep/70">
-              Course agent: {result.agent_ready ? "ready" : "pending"} ·{" "}
-              {result.kb_chunks} KB chunk(s)
+              Study agent: {result.agent_ready ? "ready" : "still preparing"}
+              {result.kb_chunks
+                ? ` · ${result.kb_chunks} slide section${result.kb_chunks === 1 ? "" : "s"} loaded`
+                : ""}
               {result.sync ? ` · ${result.sync.files_seen} Canvas file(s)` : ""}
             </p>
           </div>

@@ -7,7 +7,6 @@ import {
   ChevronRight,
   Clock,
   Code2,
-  Image as ImageIcon,
   Italic,
   PanelLeft,
   PanelRight,
@@ -154,7 +153,6 @@ export default function TaWorkspace() {
   const [coachOpen, setCoachOpen] = useState(true);
   const [localThread, setLocalThread] = useState({});
   const composerRef = useRef(null);
-  const fileRef = useRef(null);
   const threadRef = useRef(null);
 
   const loadQueue = useCallback(async () => {
@@ -804,26 +802,6 @@ export default function TaWorkspace() {
                   >
                     <span className="px-0.5 font-mono text-[10px] font-semibold">{"{ }"}</span>
                   </ToolBtn>
-                  <ToolBtn title="Attach image" onClick={() => fileRef.current?.click()}>
-                    <ImageIcon size={14} />
-                  </ToolBtn>
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      if (file) {
-                        setDraft(
-                          (current) =>
-                            `${current}${current && !current.endsWith("\n") ? "\n" : ""}![${file.name}](attachment)`,
-                        );
-                        setToast(`Attached ${file.name} (UI stub — no upload endpoint)`);
-                      }
-                      event.target.value = "";
-                    }}
-                  />
                   <span className="ml-auto font-mono text-[11px] text-[var(--tar-mute)]">
                     ⌘/Ctrl+Enter · Send &amp; Resolve
                   </span>

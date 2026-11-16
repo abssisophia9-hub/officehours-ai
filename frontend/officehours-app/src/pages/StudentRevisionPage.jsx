@@ -56,6 +56,18 @@ function weaknessFromScore(score) {
   return "low";
 }
 
+const WEAKNESS_LABEL = {
+  high: "needs work",
+  med: "getting there",
+  low: "on track",
+};
+
+function planModeLabel(plan) {
+  if (!plan) return "";
+  if (plan.mode === "agent") return "Plan built with the revision agent";
+  return "Simple plan from your scores and preference";
+}
+
 function loadRevision(courseId, courseCode) {
   try {
     const raw = localStorage.getItem(storageKey(courseId));
@@ -250,7 +262,7 @@ export default function StudentRevisionPage() {
       });
       setPlan(result);
       savePlan(activeCourse.id, result);
-      flash(result.mode_label || "Plan ready");
+      flash(planModeLabel(result) || "Plan ready");
     } catch (err) {
       setError(err.message || "Could not build plan.");
     } finally {
@@ -295,7 +307,7 @@ export default function StudentRevisionPage() {
       <h1 className="sa-course">{courseLine}</h1>
       <h2 className="bh-page-title">Revision Strategist</h2>
       <p className="bh-page-subtitle">
-        Weak-topic plan from synthetic grades, your preference, and checked
+        A study plan from your practice scores, how you learn, and checked
         public links — scores stay on this device.
       </p>
 
@@ -312,10 +324,9 @@ export default function StudentRevisionPage() {
       ) : null}
 
       <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-        Grades are seeded locally (not live Canvas). Edits stay on this device
-        under key{" "}
-        <code className="font-mono">officehours_revision_{activeCourse.id}</code>
-        . The API receives weakness levels only — never numeric scores.
+        Practice scores on this device (not from Canvas). Edits stay here.
+        When you build a plan, only priority levels are sent — never your
+        numeric scores.
       </p>
 
       <div className="grid gap-5 lg:grid-cols-2">
@@ -334,8 +345,8 @@ export default function StudentRevisionPage() {
                   <div>
                     <p className="font-semibold text-aui-ink">{row.topic}</p>
                     <p className="text-xs text-aui-deep/70">
-                      {row.source} · {row.weight}% of exam · weakness{" "}
-                      {weaknessFromScore(row.score)}
+                      {row.source} · {row.weight}% of exam ·{" "}
+                      {WEAKNESS_LABEL[weaknessFromScore(row.score)]}
                     </p>
                   </div>
                   <span
@@ -387,7 +398,8 @@ export default function StudentRevisionPage() {
             ))}
           </ul>
           <p className="soft-stat mt-4 text-sm">
-            Priority: <strong>{focus.topic}</strong> — weight × gap to 85% is largest.
+            Priority: <strong>{focus.topic}</strong> — highest exam weight among
+            topics below 85%.
           </p>
         </section>
 
@@ -438,10 +450,7 @@ export default function StudentRevisionPage() {
 
           {plan ? (
             <p className="mt-3 text-sm font-medium text-aui-ink">
-              {plan.mode_label ||
-                (plan.mode === "agent"
-                  ? "Planning mode: agent"
-                  : "Planning mode: rule-based fallback")}
+              {planModeLabel(plan)}
             </p>
           ) : null}
 
