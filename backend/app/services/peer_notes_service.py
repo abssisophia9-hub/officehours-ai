@@ -54,6 +54,7 @@ def create_peer_note(
     filename: str,
     content_type: str | None,
     data: bytes,
+    stored_filename: str | None = None,
 ) -> PeerNote:
     title_clean = (title or "").strip()
     about_clean = (about or "").strip()
@@ -82,9 +83,19 @@ def create_peer_note(
     )
 
     folder = ensure_storage_dir(course_id)
-    stored = f"{uuid.uuid4().hex}_{safe_filename(filename)}"
+    # Demo seed may pass a stable name so reboots do not accumulate UUID files.
+    if stored_filename:
+        stored = Path(stored_filename).name
+        if not stored or stored in {".", ".."} or "/" in stored_filename or "\\" in stored_filename:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid stored_filename.",
+            )
+    else:
+        stored = f"{uuid.uuid4().hex}_{safe_filename(filename)}"
     dest = folder / stored
-    dest.write_bytes(data)
+    if not dest.is_file() or dest.read_bytes() != data:
+        dest.write_bytes(data)
 
     guessed = content_type or mimetypes.guess_type(filename)[0]
     note = PeerNote(

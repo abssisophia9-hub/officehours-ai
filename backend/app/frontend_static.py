@@ -8,6 +8,9 @@ Controlled by ``OFFICEHOURS_SERVE_FRONTEND``:
 
 Local Windows FYP keeps the Vite dev server on :5180; leave this off
 (or unset with no dist) so ``GET /`` stays the JSON smoke response.
+
+Serving uses a single catch-all route (no ``StaticFiles`` mount) so assets
+work under ``OFFICEHOURS_ROOT_PATH`` and path traversal cannot escape ``dist``.
 """
 
 from __future__ import annotations
@@ -15,10 +18,10 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
+from urllib.parse import unquote
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 
 
 def frontend_dist_dir() -> Path:
@@ -42,24 +45,41 @@ def should_serve_frontend() -> bool:
     return dist.is_dir() and (dist / "index.html").is_file()
 
 
+def _safe_dist_file(dist: Path, spa_path: str) -> Path | None:
+    """Return a real file under ``dist`` or None (SPA / missing / traversal)."""
+    if not spa_path:
+        return None
+    # Decode %2e%2e etc. before joining; reject NUL.
+    decoded = unquote(spa_path)
+    if "\x00" in decoded:
+        return None
+    dist_root = dist.resolve()
+    candidate = (dist_root / decoded).resolve()
+    try:
+        if not candidate.is_relative_to(dist_root):
+            return None
+    except (OSError, ValueError):
+        return None
+    if candidate.is_file():
+        return candidate
+    return None
+
+
 def mount_frontend(app: FastAPI) -> bool:
-    """Mount asset files + SPA fallback. Returns True when mounted."""
+    """Mount SPA catch-all (assets + index). Returns True when mounted."""
     if not should_serve_frontend():
         return False
 
     dist = frontend_dist_dir()
-    assets = dist / "assets"
-    if assets.is_dir():
-        app.mount("/assets", StaticFiles(directory=str(assets)), name="spa-assets")
-
     index = dist / "index.html"
 
     @app.get("/{spa_path:path}", include_in_schema=False)
     async def spa_fallback(spa_path: str):
-        # Prefer real files under dist (favicon, robots, …) before SPA shell.
-        candidate = dist / spa_path
-        if spa_path and candidate.is_file():
-            return FileResponse(candidate)
+        # Prefer real files under dist (assets, favicon, …) before SPA shell.
+        # Never serve paths that resolve outside dist (../ or %2e%2e).
+        safe = _safe_dist_file(dist, spa_path)
+        if safe is not None:
+            return FileResponse(safe)
         return FileResponse(index)
 
     return True
