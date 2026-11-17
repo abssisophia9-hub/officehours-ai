@@ -123,6 +123,25 @@ def test_seed_creates_people_notes_and_rooms_once():
         assert all(note.about.startswith("Demo.") for note in notes)
         authors = {note.author_user_id for note in notes}
         assert len(authors) == 3
+        assert {note.stored_filename for note in notes} == {
+            "demo__classmate_parametric_sketch.md",
+            "demo__classmate_gaussian_mean.md",
+            "demo__classmate_outlier_scratch.md",
+        }
+
+        from app.services.peer_notes_service import STORAGE_ROOT
+
+        demo_files = sorted(
+            path.name
+            for path in (STORAGE_ROOT / str(course.id)).glob("demo__*")
+            if path.is_file()
+        )
+        assert demo_files == [
+            "demo__classmate_gaussian_mean.md",
+            "demo__classmate_outlier_scratch.md",
+            "demo__classmate_parametric_sketch.md",
+        ]
+        file_count = len(demo_files)
 
         posts = db.query(HelpPost).filter(HelpPost.course_id == course.id).all()
         assert len(posts) == 8
@@ -149,6 +168,7 @@ def test_seed_creates_people_notes_and_rooms_once():
         post_count = len(posts)
         note_count = len(notes)
         material_count = len(materials)
+        course_id = course.id
     finally:
         db.close()
 
@@ -161,6 +181,19 @@ def test_seed_creates_people_notes_and_rooms_once():
         assert (
             db.query(KnowledgeEntry).filter(KnowledgeEntry.course_id == course.id).count()
             == material_count
+        )
+        from app.services.peer_notes_service import STORAGE_ROOT
+
+        assert (
+            len(
+                [
+                    path
+                    for path in (STORAGE_ROOT / str(course_id)).glob("demo__*")
+                    if path.is_file()
+                ]
+            )
+            == file_count
+            == 3
         )
     finally:
         db.close()

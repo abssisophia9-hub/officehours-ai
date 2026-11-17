@@ -152,7 +152,8 @@ def analyze_with_classifier(
             backend="rules",
         )
 
-    # Default: fine-tuned small classifier, with rules fallback if model missing.
+    # Default: fine-tuned small classifier, with rules fallback if model or
+    # SentenceTransformer embedder cannot load (offline HF, corrupt cache, …).
     try:
         load_classifier()
         prediction = classify_ml(combined)
@@ -163,7 +164,7 @@ def analyze_with_classifier(
             course=course,
             backend="ml_classifier",
         )
-    except FileNotFoundError:
+    except (FileNotFoundError, OSError, RuntimeError):
         from app.ai.classifier import classify_rules
 
         prediction = classify_rules(combined)
@@ -175,8 +176,8 @@ def analyze_with_classifier(
             backend="rules_fallback",
         )
         payload["rationale"] = (
-            "ML Analyzer model missing; fell back to rules. "
-            "Train with `python scripts/train_classifier.py`."
+            "ML Analyzer unavailable (model or embedder); fell back to rules. "
+            "Train with `python scripts/train_classifier.py` or unpack MiniLM."
         )
         return payload
 

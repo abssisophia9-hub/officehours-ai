@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.models.auth import Course, CourseMembership, User
@@ -393,9 +394,18 @@ def _ensure_materials(db: Session, course: Course) -> None:
 
 def _ensure_classmate_notes(db: Session, course: Course, users: dict[str, User]) -> None:
     for spec in _CLASSMATE_NOTES:
+        # Stable on-disk name so demo seed is idempotent across boots.
+        stored = f"demo__{spec['filename']}"
         already = (
             db.query(PeerNote)
-            .filter(PeerNote.course_id == course.id, PeerNote.title == spec["title"])
+            .filter(
+                PeerNote.course_id == course.id,
+                or_(
+                    PeerNote.title == spec["title"],
+                    PeerNote.original_filename == spec["filename"],
+                    PeerNote.stored_filename == stored,
+                ),
+            )
             .first()
         )
         if already is not None:
@@ -412,6 +422,7 @@ def _ensure_classmate_notes(db: Session, course: Course, users: dict[str, User])
             filename=spec["filename"],
             content_type="text/markdown",
             data=path.read_bytes(),
+            stored_filename=stored,
         )
 
 
