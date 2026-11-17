@@ -132,16 +132,25 @@ PY
 
 ## 6. Path traversal probes (must not leak files)
 
+Probe the **uvicorn** origin (bypasses nginx URI normalization) and, optionally,
+the public proxy. Replace `ORIGIN` if uvicorn is not on loopback.
+
 ```bash
+ORIGIN=http://127.0.0.1:8000/officehours-ai
 # --path-as-is keeps ../ from being normalized by curl
-curl --path-as-is -sS -o /tmp/oh-trav1.html -w '%{http_code}\n' "$BASE/../.env"
-curl --path-as-is -sS -o /tmp/oh-trav2.html -w '%{http_code}\n' "$BASE/%2e%2e/.env"
-grep -E 'spa|DOCTYPE|html|OfficeHours|root' -i /tmp/oh-trav1.html /tmp/oh-trav2.html | head
+curl --path-as-is -sS -o /tmp/oh-trav1.html -w '%{http_code}\n' "$ORIGIN/../.env"
+curl --path-as-is -sS -o /tmp/oh-trav2.html -w '%{http_code}\n' "$ORIGIN/%2e%2e/.env"
+grep -iE 'doctype|html' /tmp/oh-trav1.html /tmp/oh-trav2.html | head
 # Must NOT contain secret-like assignments from a real .env
 ! grep -E '^(DATABASE_URL|CANVAS_API_TOKEN|GEMINI_API_KEY)=' /tmp/oh-trav1.html /tmp/oh-trav2.html
+
+# Proxy (may be nginx 404 if ../ is normalized out of the location — also OK):
+curl --path-as-is -sS -o /tmp/oh-trav-proxy.html -w '%{http_code}\n' "$BASE/%2e%2e/.env"
+! grep -E '^(DATABASE_URL|CANVAS_API_TOKEN|GEMINI_API_KEY)=' /tmp/oh-trav-proxy.html
 ```
 
-**Expect:** HTTP `200` SPA HTML (or app shell), **not** raw `.env` / file contents.
+**Expect (uvicorn):** HTTP `200` SPA HTML, **not** raw `.env` / file contents.  
+**Expect (proxy):** SPA `200` **or** nginx `404` — never secret file contents.
 
 ---
 

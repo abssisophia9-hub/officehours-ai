@@ -27,16 +27,16 @@ def _build_dist(tmp_path: Path) -> tuple[Path, Path]:
     return dist, secret
 
 
-def _app(dist: Path):
-    os.environ["OFFICEHOURS_SERVE_FRONTEND"] = "true"
-    os.environ["OFFICEHOURS_FRONTEND_DIST"] = str(dist)
+def _app(dist: Path, monkeypatch):
+    monkeypatch.setenv("OFFICEHOURS_SERVE_FRONTEND", "true")
+    monkeypatch.setenv("OFFICEHOURS_FRONTEND_DIST", str(dist))
     app = FastAPI()
     assert mount_frontend(app) is True
     return PathPrefixASGI(app, PREFIX)
 
 
-def _client(dist: Path) -> TestClient:
-    return TestClient(_app(dist))
+def _client(dist: Path, monkeypatch) -> TestClient:
+    return TestClient(_app(dist, monkeypatch))
 
 
 def _asgi_get(app, path: str) -> tuple[int, bytes, dict[str, str]]:
@@ -91,9 +91,9 @@ def test_safe_dist_file_blocks_traversal(tmp_path: Path):
     assert secret.is_file()
 
 
-def test_assets_under_prefix_return_200(tmp_path: Path):
+def test_assets_under_prefix_return_200(tmp_path: Path, monkeypatch):
     dist, _ = _build_dist(tmp_path)
-    client = _client(dist)
+    client = _client(dist, monkeypatch)
 
     js = client.get(f"{PREFIX}/assets/app.js")
     assert js.status_code == 200
@@ -110,9 +110,9 @@ def test_assets_under_prefix_return_200(tmp_path: Path):
     assert bare.status_code == 404
 
 
-def test_path_traversal_returns_spa_index_never_secret(tmp_path: Path):
+def test_path_traversal_returns_spa_index_never_secret(tmp_path: Path, monkeypatch):
     dist, secret = _build_dist(tmp_path)
-    app = _app(dist)
+    app = _app(dist, monkeypatch)
     probes = [
         f"{PREFIX}/../secret.txt",
         f"{PREFIX}/%2e%2e/secret.txt",

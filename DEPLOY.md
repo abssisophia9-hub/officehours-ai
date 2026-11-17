@@ -121,8 +121,9 @@ failure via systemd/`Restart=always` or equivalent.
 Forward **without stripping** the `/officehours-ai` prefix. Enable WebSocket.
 
 ```nginx
-location /officehours-ai/ {
-    proxy_pass http://127.0.0.1:8000/officehours-ai/;
+# Prefer matching the whole prefix and forwarding the original URI unchanged.
+location ^~ /officehours-ai {
+    proxy_pass http://127.0.0.1:8000;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -131,12 +132,12 @@ location /officehours-ai/ {
     proxy_set_header Connection "upgrade";
     proxy_read_timeout 3600;
 }
-
-location = /officehours-ai/health {
-    proxy_pass http://127.0.0.1:8000/officehours-ai/health;
-    proxy_set_header Host $host;
-}
 ```
+
+Note: some nginx builds normalize `../` / `%2e%2e` **before** location
+matching, so a probe may get nginx `404` instead of the SPA shell. That is
+still safe (no file leak). The uvicorn app itself returns the SPA index for
+those probes and never serves files outside `dist/`.
 
 Health check URL: `GET https://cdn.aui.ma/officehours-ai/health`  
 WebSocket: `wss://cdn.aui.ma/officehours-ai/ws?token=…&course_id=…`
