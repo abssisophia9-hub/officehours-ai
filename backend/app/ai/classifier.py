@@ -172,7 +172,13 @@ def classify(text: str) -> dict[str, object]:
     if backend == "ml":
         from app.ai.ml_classifier import classify_ml
 
-        return classify_ml(text)
+        try:
+            return classify_ml(text)
+        except (FileNotFoundError, OSError, RuntimeError):
+            # Embedder / joblib load failures must not 500 ask submit.
+            payload = classify_rules(text)
+            payload["classifier_backend"] = "rules_embedder_fallback"
+            return payload
 
     return classify_rules(text)
 
