@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OfficeHours AI — Demo Video</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --forest: #143626;
+      --sage: #10B981;
+      --bg: #0B1220;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(1200px 600px at 20% -10%, #1A4530 0%, var(--bg) 55%);
+      color: #F8FAFC;
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      display: grid;
+      place-items: center;
+      padding: 24px 16px;
+    }
+    .wrap {
+      width: min(960px, 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .brand p {
+      margin: 0;
+      color: #94A3B8;
+      font-size: 0.95rem;
+    }
+    .player {
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+    }
+    video {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: 70vh;
+      background: #000;
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: #94A3B8;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16,185,129,0.15);
+      color: var(--sage);
+      border: 1px solid rgba(16,185,129,0.35);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+    a { color: var(--sage); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="brand">
+      <h1>OfficeHours AI — Capstone Demo</h1>
+      <p>Sophia Abssi · Supervised by Dr. Oumaima Hourrane · Al Akhawayn University · EGR 4402</p>
+    </div>
+    <div class="player">
+      <video controls playsinline preload="metadata" poster="" title="OfficeHours AI demo video">
+        <source src="capstone_demo_1080p.mp4" type="video/mp4" />
+        Your browser does not support HTML5 video.
+      </video>
+    </div>
+    <div class="meta">
+      <span class="pill">▶ Exhibition demo walkthrough</span>
+      <span><a href="capstone_demo_1080p.mp4" download>Download MP4</a></span>
+    </div>
+  </main>
+</body>
+</html>
