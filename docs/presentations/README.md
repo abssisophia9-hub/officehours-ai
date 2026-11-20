@@ -1,4 +1,23 @@
-# Supervisor proposal — Vision + live demos
+# Presentations
+
+## Capstone defense deck (fill YOUR template)
+
+`scripts/build_defense.py` opens **only** your local template and rewrites text
+in existing shapes. It never calls `Presentation()` blank and never
+`add_slide()` — your dark futuristic backgrounds/animations stay intact.
+
+```bash
+pip install python-pptx
+python scripts/build_defense.py
+```
+
+- **Input (hardcoded):** `C:\Users\pc\Downloads\Capstone_Defense_Presentation_Sophia_Abssi_min.pptx`
+- **Output (hardcoded):** `C:\Users\pc\Downloads\Capstone_Defense_MY_TEMPLATE_FILLED.pptx`
+
+Console logs every change as `[Slide X | Shape Y] -> Replaced with: "…"`.
+Raises if zero shapes were updated.
+
+## Supervisor proposal — Vision + live demos
 
 | File | Use |
 | --- | --- |
