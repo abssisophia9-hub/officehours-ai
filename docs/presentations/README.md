@@ -1,6 +1,14 @@
 # Presentations
 
+## Capstone defense deck (download)
+
+**[⬇️ Download Capstone_Defense_FINAL.pptx](Capstone_Defense_FINAL.pptx)** — 18-slide OfficeHours AI defense deck (codebase-grounded).
+
+Also on this branch:
+https://github.com/abssisophia9-hub/officehours-ai/raw/cursor/build-defense-pptx-3f21/docs/presentations/Capstone_Defense_FINAL.pptx
+
 ## Capstone defense deck (template populate)
+
 
 Populate Sophia’s local PowerPoint template with OfficeHours AI facts (clone-safe,
 animation-preserving):
