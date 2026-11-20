@@ -1,4 +1,24 @@
-# Supervisor proposal — Vision + live demos
+# Presentations
+
+## Capstone defense deck (template populate)
+
+Populate Sophia’s local PowerPoint template with OfficeHours AI facts (clone-safe,
+animation-preserving):
+
+```bash
+pip install python-pptx
+python scripts/build_defense.py
+# optional: python scripts/build_defense.py --map
+```
+
+- **Input (default):** `C:\Users\pc\Downloads\Capstone_Defense_Presentation_Sophia_Abssi_min.pptx`
+- **Output (default):** `C:\Users\pc\Downloads\Capstone_Defense_FINAL.pptx`
+- Overrides: `OFFICEHOURS_DEFENSE_INPUT`, `OFFICEHOURS_DEFENSE_OUTPUT`
+
+Never invents blank slides — extra slides deep-clone a template slide (shapes +
+`<p:timing>`). Text updates use `paragraph.runs[0].text` so fonts stay intact.
+
+## Supervisor proposal — Vision + live demos
 
 | File | Use |
 | --- | --- |
