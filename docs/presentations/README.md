@@ -1,30 +1,21 @@
 # Presentations
 
-## Capstone defense deck (download)
+## Capstone defense deck (fill YOUR template)
 
-**[⬇️ Download Capstone_Defense_FINAL.pptx](Capstone_Defense_FINAL.pptx)** — 18-slide OfficeHours AI defense deck (codebase-grounded).
-
-Also on this branch:
-https://github.com/abssisophia9-hub/officehours-ai/raw/cursor/build-defense-pptx-3f21/docs/presentations/Capstone_Defense_FINAL.pptx
-
-## Capstone defense deck (template populate)
-
-
-Populate Sophia’s local PowerPoint template with OfficeHours AI facts (clone-safe,
-animation-preserving):
+`scripts/build_defense.py` opens **only** your local template and rewrites text
+in existing shapes. It never calls `Presentation()` blank and never
+`add_slide()` — your dark futuristic backgrounds/animations stay intact.
 
 ```bash
 pip install python-pptx
 python scripts/build_defense.py
-# optional: python scripts/build_defense.py --map
 ```
 
-- **Input (default):** `C:\Users\pc\Downloads\Capstone_Defense_Presentation_Sophia_Abssi_min.pptx`
-- **Output (default):** `C:\Users\pc\Downloads\Capstone_Defense_FINAL.pptx`
-- Overrides: `OFFICEHOURS_DEFENSE_INPUT`, `OFFICEHOURS_DEFENSE_OUTPUT`
+- **Input (hardcoded):** `C:\Users\pc\Downloads\Capstone_Defense_Presentation_Sophia_Abssi_min.pptx`
+- **Output (hardcoded):** `C:\Users\pc\Downloads\Capstone_Defense_MY_TEMPLATE_FILLED.pptx`
 
-Never invents blank slides — extra slides deep-clone a template slide (shapes +
-`<p:timing>`). Text updates use `paragraph.runs[0].text` so fonts stay intact.
+Console logs every change as `[Slide X | Shape Y] -> Replaced with: "…"`.
+Raises if zero shapes were updated.
 
 ## Supervisor proposal — Vision + live demos
 
