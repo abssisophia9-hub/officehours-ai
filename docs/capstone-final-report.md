@@ -2,11 +2,123 @@
 
 <!-- Heading levels follow the template: "1 Section" = Times New Roman 14, "1.1 Subsection" = TNR 13, "1.1.1 Subsection" = TNR 12, body = TNR 12. -->
 
+## TITLE PAGE
+
+Al Akhawayn University in Ifrane
+
+School of Science and Engineering
+
+Inspire, Impact & Transform
+
+OfficeHours AI
+
+Capstone Final Report
+
+Student: Sophia Abssi
+
+Supervised by: Dr. Oumaima Hourrane
+
+Fall 2026
+
+## COPYRIGHT
+
+Student conduct and copyright
+
+The supervisor and the student (the Capstoner) agree that:
+
+- Permission has been obtained for any third party content (eg Data, illustrations, photographs, charts or maps).
+- The results described in this report have not previously been published
+
+Student’s name: Sophia Abssi
+
+Supervisor’s name: Dr. Oumaima Hourrane
+
+## STUDENT STATEMENT
+
+Student Statement
+
+This report was prepared as the software-development capstone in the School of Science and Engineering at Al Akhawayn University, under the supervision of Dr. Oumaima Hourrane.
+
+Student’s name: Sophia Abssi
+
+Approved by the Supervisor: Dr. Oumaima Hourrane
+
 ## ACKNOWLEDGEMENTS
 
 This report was prepared as the software-development capstone in the School of Science and Engineering at Al Akhawayn University, under the supervision of Dr. Oumaima Hourrane.
 
 [Add the personal thanks you want to keep, such as classmates, staff, family, or a course. Replace this paragraph.]
+
+## CONTENT
+
+The field below is filled in the Word file by a native table-of-contents field. The list that follows is the same contents, written out so the page can be read before that field is updated.
+
+TITLE PAGE
+COPYRIGHT
+STUDENT STATEMENT
+ACKNOWLEDGEMENTS
+LIST OF FIGURES
+LIST OF TABLES
+ABSTRACT (ENGLISH)
+RESUME (FRENCH)
+1 Introduction
+    1.1 Motivation
+    1.2 System scope
+    1.3 Terminology
+    1.4 Objectives
+    1.5 Contributions
+    1.6 Report organization
+2 Problem Statement
+    2.1 Problem
+    2.2 Why retrieval alone is not enough
+    2.3 Operating constraints
+    2.4 Approach and research questions
+3 Functional and Non-Functional Requirements
+    3.1 Stakeholders and constraints
+    3.2 Functional requirements
+    3.3 Non-functional requirements
+4 Related Work
+    4.1 Retrieval-augmented generation and embeddings
+    4.2 Attribution and corrective retrieval
+    4.3 Prompt injection
+    4.4 Language models in teaching support
+    4.5 Positioning
+5 System Design
+    5.1 Software development lifecycle
+    5.2 System architecture
+    5.3 Database design
+    5.4 Technology stack and frameworks
+6 AI Use, Evaluation and Evidence
+    6.1 AI tools and purpose
+    6.2 AI-assisted development activities
+    6.3 AI output evaluation
+    6.4 Critical reflection and limitations
+    6.5 Supporting AI evidence
+7 Implementation
+    7.1 Authentication and course isolation
+    7.2 Routers and the ask schemas
+    7.3 Retrieval and embeddings
+    7.4 Study Agent gates
+    7.5 Pedagogy Agent
+    7.6 React pages
+8 Testing
+    8.1 What the suite is
+    8.2 Assertions that lock the gates
+    8.3 Harness outputs, CI, and gaps
+9 Discussion and Analysis
+    9.1 What the 50-of-75 and 74-of-75 counts actually trade
+    9.2 IJ13
+    9.3 Tail latency
+    9.4 Course isolation without foreign keys
+    9.5 The entailment loop has no saved file
+10 Conclusion
+11 Future Work
+REFERENCES
+APPENDIX A : CODE
+    A.1 `require_course_member`
+    A.2 Budgets and the attempt cap in `agent_policy.py`
+    A.3 `run_study_agent`
+    A.4 `verify_course_answer`
 
 ## LIST OF FIGURES
 
@@ -16,33 +128,23 @@ Figure 2. Entity-relationship diagram for the identity, Study Agent, and ask tab
 
 Figure 3. Correct outcomes on the 75-question file across the five configurations in Table 1.
 
+Figure 4. Quote-check-only latency of the 42 calls in the saved Gemini run, against the 3-second median target.
+
+Figure 5. Commit counts from `git shortlog -sn` on the 362-commit tree in Section 6.1.
+
 ## LIST OF TABLES
 
 Table 1: Correct outcomes per question category (75 synthetic questions, `all-MiniLM-L6-v2`, cutoff 0.42)
 
 Table 2: Functional requirements
 
-Table 3: Study Agent requirements
+Table 3: Non-functional and Study Agent requirements
 
-Table 4: Non-functional requirements
+Table 4: The Study Agent against related designs
 
-Table 5: The Study Agent against related designs
+Table 5: Stack, version, and where it is used
 
-Table 6: Proposal decision and what the current tree contains
-
-Table 7: Columns of `knowledge_entries`
-
-Table 8: Tables created from `backend/app/models`
-
-Table 9: Stack, version, and where it is used
-
-Table 10: Pull requests 101–107 as recorded in `docs/prompt_log.md`
-
-Table 11: Added lines on `HEAD`, by author
-
-Table 12: Evidence register for Section 6
-
-Table 13: Objectives and what the code and the files show
+Table 6: Objectives and what the code and the files show
 
 ## ABSTRACT (ENGLISH)
 
@@ -178,7 +280,7 @@ The build constraints are unchanged from the proposal: one Python and FastAPI se
 
 ### 3.2 Functional requirements
 
-Table 2 lists the seven functional requirements carried forward from the proposal. Table 3 lists the Study Agent rules added once retrieval alone was shown to be insufficient (Section 2.2). One proposal requirement is not met, and one Study Agent rule has been restated because the code changed after the interim report.
+Table 2 lists the seven functional requirements carried forward from the proposal. Table 3 lists the Study Agent rules added once retrieval alone was shown to be insufficient (Section 2.2), and the non-functional targets. One proposal requirement is not met, and one Study Agent rule has been restated because the code changed after the interim report.
 
 **Table 2: Functional requirements**
 
@@ -194,7 +296,8 @@ Table 2 lists the seven functional requirements carried forward from the proposa
 
 FR1 is implemented by `CourseMembership.role` and `require_course_role`, not by a global role column on `User`. FR2 groups chunks by `upload_id` (`uuid.uuid4().hex` assigned once in `ingest_course_material`); `approve_upload` and `reject_upload` stamp every row of that upload and call `invalidate_chunks`. FR5's citation line is built by `_approved_source_line`. The quote itself is deleted before the response is built (`del quote` in `_checked_answer`), so the student sees the answer and the page, not the copied passage.
 
-**Table 3: Study Agent requirements**
+
+**Table 3: Non-functional and Study Agent requirements**
 
 | ID | Requirement | Acceptance criterion | Where checked | Status |
 |---|---|---|---|---|
@@ -204,6 +307,11 @@ FR1 is implemented by `CourseMembership.role` and `require_course_role`, not by 
 | SA4 | A bad model result fails closed. | Invalid JSON, a quote that is not a substring of the cited chunk, an unknown chunk id, or an answer longer than 600 characters returns the refusal text. The retrieval draft is not returned. | `test_invalid_json_fails_closed_without_a_retry`; `test_quote_missing_from_the_cited_chunk_is_rejected`; `test_answer_length_cap_fails_closed_once` | Met. The refusal string is `CHECK_MISS_ANSWER`. The length cap is `max_answer_chars()`, default 600. |
 | SA5 | Budgets and a circuit breaker bound calls and tokens. | The fifth call in a minute for one user is refused. Three failures open the breaker for five minutes. Daily counters reset on the UTC date change. | `test_user_minute_day_and_course_caps`; `test_global_call_and_token_caps_and_the_utc_day_roll`; `test_breaker_opens_skips_cache_and_closes_again` | Met. Defaults are 4 per user per minute, 30 per user per day, 150 per course per day, 200 calls and 200,000 tokens per day globally, and a breaker of 3 failures for 5 minutes. |
 | SA6 | A limit or an open breaker returns the busy text. | The response is `BUSY_ANSWER`. No retrieval draft is returned, and a question over the length cap does not run search. | `test_question_length_is_busy_and_does_not_search`; `test_input_token_cap_is_busy_without_a_call` | Met. The length cap is `max_question_chars()`, default 2,000. |
+| Citations | Citations | Each in-document question is answered with the expected file and page. | Checked run, category `in_document` (n = 20) | Met: 20 of 20. Retrieval with both filters and no check was 17 of 20, the other 3 being `wrong_source`. |
+| Isolation | Isolation | No answer cites an unapproved page or another course's page. | Same run, the 20 hidden-page questions (`unapproved_only` and `other_course_only`) | Met: 0 of 20, against 16 of 20 with both filters off (Table 1). |
+| Latency | Latency | The median checker call takes at most 3 seconds. | `usage` block of the same run, 42 calls | Met for the median: 857.98 ms. Not met for the worst call: 5,413.82 ms. The checker returns one JSON object. It does not stream. These times do not include `judge_entailment` or `choose_recovery`. |
+| Privacy | Privacy | The staff view of a Quiet ask shows no name, and a Study Agent call stores no user id. | `test_anonymous_strips_identity`; `KbAskEvent` in `backend/app/models/agent_metrics.py` | Met on the schema. `record_kb_ask_event` writes `course_id`, the question truncated to 4,000 characters, `hit`, `should_seek_help`, `confidence`, `matched_count` and `created_at`. `user_id` is a rate-limit key inside `run_study_agent` and is not a column of `kb_ask_events`. The evaluation corpus is synthetic. |
+| Cost | Cost | A UTC day stays within 200 calls and 200,000 tokens, and the evaluation stays within both. | `global_calls_per_day`, `global_tokens_per_day`; the same run | Met for the run: 42 calls and 21,586 tokens (19,740 input and 1,846 output). The counters live in the process (`_BUDGET` in `agent_policy.py`) and reset on restart, so they are not a campus-wide quota. |
 
 SA2 and SA5 are separate switches. SA2 decides whether a model may be called at all. SA5 decides whether this particular call is still inside the budget. A guard failure under SA2 (`flag_off`, `demo_off`, `provider_off`, `ack_off`) returns the retrieval draft, because no check was attempted. A budget failure under SA5 returns the busy text, because the check was requested and could not be completed. Neither path returns an unchecked draft after a check has run, which is the fail-closed rule in Section 1.3.
 
@@ -211,17 +319,12 @@ Help Coach is outside Table 3 because it is a staff tool, not the Study Agent. `
 
 ### 3.3 Non-functional requirements
 
-Table 4 states the measurable targets. The citation, isolation, latency and cost rows use the saved Gemini run (`with_check_gemini_gemini-3.5-flash-lite_20261025T010745Z.json`), which predates the entailment gate and the recovery loop. Those rows therefore describe the quote-check configuration, not a question that reformulates or widens.
+Table 3 states the measurable targets. The citation, isolation, latency and cost rows use the saved Gemini run (`with_check_gemini_gemini-3.5-flash-lite_20261025T010745Z.json`), which predates the entailment gate and the recovery loop. Those rows therefore describe the quote-check configuration, not a question that reformulates or widens.
 
-**Table 4: Non-functional requirements**
 
-| Requirement | Acceptance criterion | Where checked | Result |
-|---|---|---|---|
-| Citations | Each in-document question is answered with the expected file and page. | Checked run, category `in_document` (n = 20) | Met: 20 of 20. Retrieval with both filters and no check was 17 of 20, the other 3 being `wrong_source`. |
-| Isolation | No answer cites an unapproved page or another course's page. | Same run, the 20 hidden-page questions (`unapproved_only` and `other_course_only`) | Met: 0 of 20, against 16 of 20 with both filters off (Table 1). |
-| Latency | The median checker call takes at most 3 seconds. | `usage` block of the same run, 42 calls | Met for the median: 857.98 ms. Not met for the worst call: 5,413.82 ms. The checker returns one JSON object. It does not stream. These times do not include `judge_entailment` or `choose_recovery`. |
-| Privacy | The staff view of a Quiet ask shows no name, and a Study Agent call stores no user id. | `test_anonymous_strips_identity`; `KbAskEvent` in `backend/app/models/agent_metrics.py` | Met on the schema. `record_kb_ask_event` writes `course_id`, the question truncated to 4,000 characters, `hit`, `should_seek_help`, `confidence`, `matched_count` and `created_at`. `user_id` is a rate-limit key inside `run_study_agent` and is not a column of `kb_ask_events`. The evaluation corpus is synthetic. |
-| Cost | A UTC day stays within 200 calls and 200,000 tokens, and the evaluation stays within both. | `global_calls_per_day`, `global_tokens_per_day`; the same run | Met for the run: 42 calls and 21,586 tokens (19,740 input and 1,846 output). The counters live in the process (`_BUDGET` in `agent_policy.py`) and reset on restart, so they are not a campus-wide quota. |
+![Quote-check-only latency of the 42 calls in the saved Gemini run](figures/figure4_latency_distribution.png)
+
+**Figure 4.** Quote-check-only latency for the 42 calls with `called` true in `docs/eval_results/with_check_gemini_gemini-3.5-flash-lite_20261025T010745Z.json`. The bars are the median (857.98 ms), the 95th percentile (4,578.54 ms, the linear percentile of those 42 values; the file's usage block does not store a percentile), and the maximum (5,413.82 ms). The dashed line is the 3,000 ms median target in Table 3. These times do not include `judge_entailment` or `choose_recovery`.
 
 ## 4 Related Work
 
@@ -253,9 +356,9 @@ These systems establish that a course can put a model in front of students if a 
 
 ### 4.5 Positioning
 
-Table 5 compares the Study Agent with the designs above on the decisions that Section 2.2 showed to matter: who chooses the source, what happens when the evidence is weak, who chooses the next retrieval, and what checks the output. The published rows summarise the cited papers. They are not scores on a shared benchmark.
+Table 4 compares the Study Agent with the designs above on the decisions that Section 2.2 showed to matter: who chooses the source, what happens when the evidence is weak, who chooses the next retrieval, and what checks the output. The published rows summarise the cited papers. They are not scores on a shared benchmark.
 
-**Table 5: The Study Agent against related designs**
+**Table 4: The Study Agent against related designs**
 
 | Design | Knowledge source | Who controls the source | On weak evidence | Who chooses the next retrieval | Output check |
 |---|---|---|---|---|---|
@@ -277,19 +380,16 @@ The dates below are the dates on the merge commits, not diary dates.
 
 1. **Problem definition and a first deployable.** The first commit is `1efa92a` on 27 June 2026. The same day adds the FastAPI request service and a Vite, React, and Tailwind student client. The requirements carried out of this phase are FR1–FR7 in Section 3.2. FR6 was not implemented later.
 2. **Investigation.** Existing course inboxes store messages and do not filter them by a professor's approval. A general chatbot is not course-scoped. There is no corpus of real student mail from Al Akhawayn University, so later measurement uses the synthetic uploads and the 75-question file in Section 2.2.
-3. **Technical design.** One authenticated service, a professor stamp on each uploaded chunk, Ask Triage at intake, Help Coach during staffing, and a Study Agent that quotes stamped chunks only. The proposal's retrieval design was tool calling, in which the model asks for a search. That design was not built (Table 6).
+3. **Technical design.** One authenticated service, a professor stamp on each uploaded chunk, Ask Triage at intake, Help Coach during staffing, and a Study Agent that quotes stamped chunks only. The proposal's retrieval design was tool calling, in which the model asks for a search. That design was not built (the list below).
 4. **Development.** The Study Agent vertical slice is pull request 101, merged as `f9a3855` on 10 October 2026, with the evaluation harness (pull request 102, `554f9ac`) and the retrieval ablation (pull request 103, `e55affa`) the same day. The answer check is pull request 112, merged as `029227e` on 18 October 2026. The Gemini provider, the switchable provider, and the budgeted pipeline are pull requests 115, 116, and 117, merged on 24 October 2026 (`038942b`, `2cd2cbf`, `21db97e`). Pull request 117's commit message describes a budget for one model call. That contract was replaced on 2 November 2026 by `90827a5`, which adds `judge_entailment` and `choose_recovery`, and was merged the next day as pull request 131 (`273fb9a`). Study conversations are pull request 121, merged as `26c1095` on 27 October 2026. The Pedagogy Agent is commit `bdeb287` on 12 November 2026 (pull request 135). An earlier note that this agent would not be restored is therefore out of date relative to the tree: `backend/app/services/revision_service.py` is present, with the caps in Section 1.2.
 5. **Validation.** The retrieval baseline file is dated 10 October 2026 and the Gemini quote-check file is dated 25 October 2026. Both predate `90827a5`. Section 8 reports the tests. The counts in Section 2.2 are laboratory counts on synthetic questions. They are not scores from a live course section.
 
-**Table 6: Proposal decision and what the current tree contains**
 
-| Proposal | Current tree | Evidence |
-|---|---|---|
-| Retrieval by tool calling: the model requests a search | `run_study_agent` retrieves, then may call `verify_course_answer`, `judge_entailment`, and `choose_recovery`. The model has no tool that queries the database. | `backend/app/ai/agent_policy.py`; pull request 117, then `90827a5` |
-| Claude as the only model | Default model is `gemini-3.5-flash-lite` (`DEFAULT_GEMINI_MODEL` in `backend/app/ai/gemini_client.py`). `AnthropicAnswerCheckClient` remains selectable with `OFFICEHOURS_LLM_PROVIDER=claude`. | `claude_client.py` |
-| PostgreSQL with pgvector | SQLite at `sqlite:///./officehours.db` unless `DATABASE_URL` is set. `psycopg2-binary` 2.9.10 is the Postgres driver. No column stores a vector. `search_approved_entries` embeds the query and every candidate row in process. | `backend/app/database/session.py`; `knowledge_service.py` |
-| Filters only | The same 75 questions, plus the quote check. The entailment gate and the recovery loop are in the code and are not in the saved 74-of-75 file. | Section 1.5 |
-| One agent plus a hand-off | Study Agent, Ask Triage, Help Coach, Rooms, peer notes, and the Pedagogy Agent | Section 1.2; pull request 135 |
+- **Retrieval by tool calling: the model requests a search.** Current tree: `run_study_agent` retrieves, then may call `verify_course_answer`, `judge_entailment`, and `choose_recovery`. The model has no tool that queries the database. Evidence: `backend/app/ai/agent_policy.py`; pull request 117, then `90827a5`
+- **Claude as the only model.** Current tree: Default model is `gemini-3.5-flash-lite` (`DEFAULT_GEMINI_MODEL` in `backend/app/ai/gemini_client.py`). `AnthropicAnswerCheckClient` remains selectable with `OFFICEHOURS_LLM_PROVIDER=claude`. Evidence: `claude_client.py`
+- **PostgreSQL with pgvector.** Current tree: SQLite at `sqlite:///./officehours.db` unless `DATABASE_URL` is set. `psycopg2-binary` 2.9.10 is the Postgres driver. No column stores a vector. `search_approved_entries` embeds the query and every candidate row in process. Evidence: `backend/app/database/session.py`; `knowledge_service.py`
+- **Filters only.** Current tree: The same 75 questions, plus the quote check. The entailment gate and the recovery loop are in the code and are not in the saved 74-of-75 file. Evidence: Section 1.5
+- **One agent plus a hand-off.** Current tree: Study Agent, Ask Triage, Help Coach, Rooms, peer notes, and the Pedagogy Agent. Evidence: Section 1.2; pull request 135
 
 ### 5.2 System architecture
 
@@ -390,76 +490,72 @@ erDiagram
 
 **Figure 2.** Entity-relationship diagram for the identity, Study Agent, and ask tables. Declared foreign keys exist only on `course_memberships` and `auth_sessions`. The remaining links are integer columns.
 
-`knowledge_entries` (`KnowledgeEntry` in `backend/app/models/knowledge.py`) has 25 columns. Table 7 lists each column, the SQLAlchemy type, and the role it plays for the Study Agent. `status` defaults to `pending_review`. `ingest_course_material` sets `entry_kind` to `course_material`, and the study search ignores rows whose `entry_kind` is null, which is how FAQ drafts stay out of `POST /agent/ask` even after a professor approves them. Ask Triage and Help Coach call `search_approved_entries` without `course_material_only`, so they still see approved FAQ rows.
+`knowledge_entries` (`KnowledgeEntry` in `backend/app/models/knowledge.py`) has 25 columns. The list below gives each column, the SQLAlchemy type, and the role it plays for the Study Agent.
 
-**Table 7: Columns of `knowledge_entries`**
+- **`id`.** Type: Integer, primary key Role: `chunk_id` sent to the checker
+- **`question_text`.** Type: Text, not null Role: Concatenated with `answer_draft` to form the embedded text
+- **`answer_draft`.** Type: Text, not null Role: Chunk body. The retrieval draft copies it. The quote must be a substring of it.
+- **`student_hint`.** Type: Text, not null Role: Copied onto the response. Not sent as a chunk field.
+- **`category`.** Type: String, nullable Role: Not used by `run_study_agent`
+- **`tags`.** Type: Text, not null, default `""` Role: JSON list. Not used by `run_study_agent`
+- **`urgency`.** Type: String, nullable Role: Not used by `run_study_agent`
+- **`difficulty`.** Type: String, nullable Role: Not used by `run_study_agent`
+- **`learning_style`.** Type: String, nullable Role: Not used by `run_study_agent`
+- **`drafter_backend`.** Type: String, nullable Role: `course_material_ingest` or `canvas_sync` for uploads
+- **`status`.** Type: String, not null, indexed, default `pending_review` Role: Gate: search keeps `approved` only
+- **`source_request_id`.** Type: Integer, nullable, indexed Role: Ask that produced an FAQ draft. No foreign key.
+- **`cluster_id`.** Type: Integer, nullable, indexed Role: Request cluster that produced an FAQ. No foreign key.
+- **`course_id`.** Type: Integer, nullable, indexed Role: Gate: must equal the caller's course. No foreign key.
+- **`material_source`.** Type: String, nullable Role: `slides`, `canvas`, or another ingest source string
+- **`entry_kind`.** Type: String, nullable, indexed Role: Gate: study search keeps `course_material` only
+- **`source_filename`.** Type: String, nullable Role: Citation file name
+- **`page_number`.** Type: Integer, nullable Role: Citation page
+- **`chunk_index`.** Type: Integer, nullable Role: Position within the upload, starting at 1
+- **`upload_id`.** Type: String, nullable, indexed Role: Groups chunks for `approve_upload` and `reject_upload`
+- **`ta_resolution`.** Type: String, nullable, indexed Role: `resolved` or `needs_professor` when a TA hands a draft to curation
+- **`professor_note`.** Type: Text, nullable Role: Free text on the row. Not sent to the model.
+- **`created_at`.** Type: DateTime(timezone=True), server default `now()` Role: Insert time
+- **`updated_at`.** Type: DateTime(timezone=True), server default `now()`, on update Role: Last write
+- **`reviewed_at`.** Type: DateTime(timezone=True), nullable Role: Set when status becomes `approved` or `rejected`
 
-| Column | Type | Role |
-|---|---|---|
-| `id` | Integer, primary key | `chunk_id` sent to the checker |
-| `question_text` | Text, not null | Concatenated with `answer_draft` to form the embedded text |
-| `answer_draft` | Text, not null | Chunk body. The retrieval draft copies it. The quote must be a substring of it. |
-| `student_hint` | Text, not null | Copied onto the response. Not sent as a chunk field. |
-| `category` | String, nullable | Not used by `run_study_agent` |
-| `tags` | Text, not null, default `""` | JSON list. Not used by `run_study_agent` |
-| `urgency` | String, nullable | Not used by `run_study_agent` |
-| `difficulty` | String, nullable | Not used by `run_study_agent` |
-| `learning_style` | String, nullable | Not used by `run_study_agent` |
-| `drafter_backend` | String, nullable | `course_material_ingest` or `canvas_sync` for uploads |
-| `status` | String, not null, indexed, default `pending_review` | Gate: search keeps `approved` only |
-| `source_request_id` | Integer, nullable, indexed | Ask that produced an FAQ draft. No foreign key. |
-| `cluster_id` | Integer, nullable, indexed | Request cluster that produced an FAQ. No foreign key. |
-| `course_id` | Integer, nullable, indexed | Gate: must equal the caller's course. No foreign key. |
-| `material_source` | String, nullable | `slides`, `canvas`, or another ingest source string |
-| `entry_kind` | String, nullable, indexed | Gate: study search keeps `course_material` only |
-| `source_filename` | String, nullable | Citation file name |
-| `page_number` | Integer, nullable | Citation page |
-| `chunk_index` | Integer, nullable | Position within the upload, starting at 1 |
-| `upload_id` | String, nullable, indexed | Groups chunks for `approve_upload` and `reject_upload` |
-| `ta_resolution` | String, nullable, indexed | `resolved` or `needs_professor` when a TA hands a draft to curation |
-| `professor_note` | Text, nullable | Free text on the row. Not sent to the model. |
-| `created_at` | DateTime(timezone=True), server default `now()` | Insert time |
-| `updated_at` | DateTime(timezone=True), server default `now()`, on update | Last write |
-| `reviewed_at` | DateTime(timezone=True), nullable | Set when status becomes `approved` or `rejected` |
+`status` defaults to `pending_review`. `ingest_course_material` sets `entry_kind` to `course_material`, and the study search ignores rows whose `entry_kind` is null, which is how FAQ drafts stay out of `POST /agent/ask` even after a professor approves them. Ask Triage and Help Coach call `search_approved_entries` without `course_material_only`, so they still see approved FAQ rows.
+
 
 `requests` (`Request` in `backend/app/models/request.py`) has 35 columns. The ones the ask path depends on are `anonymous` (Boolean, not null, default true), `student_name` and `student_id` (nullable; stripped for a Quiet ask), `course_id` (integer, no foreign key), `created_by_user_id` (integer, no foreign key; used for the student's own list and not shown as identity), `assigned_ta`, `assignee_role`, `assignee_user_id`, `estimated_wait_minutes`, `work_status` (default `open`; the staffing values are `open`, `claimed`, `in_progress`, `helped`), `help_mode` (default `message`; allowed values `message`, `face_to_face`, `online_meeting`), `ta_reply`, and `sensitive`. The triage columns (`triage_category`, `triage_difficulty`, `triage_estimated_minutes`, `triage_tags`, `triage_trace_json`) are written by `apply_triage_to_request`.
 
 `study_conversations` stores `user_id`, `course_id`, and `title`. `study_messages` stores `conversation_id`, `role`, `text`, `sources_json`, `not_found`, and `is_error`. Neither table has a foreign key. `kb_ask_events` is the telemetry table in Section 3.3: it has no `user_id` column.
 
-Table 8 is the full table list. The three foreign keys are the only ones. Unique constraints other than primary keys are named in the model.
+The list below is the full list of tables created from `backend/app/models`. The three foreign keys are the only ones. Unique constraints other than primary keys are named in the model.
 
-**Table 8: Tables created from `backend/app/models`**
 
-| Table | Class | File | Constraint beyond the primary key |
-|---|---|---|---|
-| `users` | `User` | `auth.py` | Unique `email` |
-| `courses` | `Course` | `auth.py` | None. No instruction column (FR6). |
-| `course_memberships` | `CourseMembership` | `auth.py` | Foreign keys to `courses.id` and `users.id`. Unique `uq_course_user` on `(course_id, user_id)`. |
-| `auth_sessions` | `AuthSession` | `auth.py` | Foreign key to `users.id`. Unique `token`. |
-| `knowledge_entries` | `KnowledgeEntry` | `knowledge.py` | None. `course_id` is an integer. |
-| `requests` | `Request` | `request.py` | None. `course_id` and `created_by_user_id` are integers. |
-| `kb_ask_events` | `KbAskEvent` | `agent_metrics.py` | None. No `user_id` column. |
-| `agent_gold_labels` | `AgentGoldLabel` | `agent_metrics.py` | None |
-| `study_conversations` | `StudyConversation` | `study_conversation.py` | None |
-| `study_messages` | `StudyMessage` | `study_conversation.py` | None |
-| `ta_roster` | `TaRoster` | `ta_roster.py` | Unique `name` |
-| `study_buddy_opt_ins` | `StudyBuddyOptIn` | `social.py` | Unique `uq_study_buddy_request` on `request_id` |
-| `recommendation_decisions` | `RecommendationDecision` | `action.py` | None |
-| `office_hours_windows` | `OfficeHoursWindow` | `office_hours.py` | None |
-| `notifications` | `Notification` | `notification.py` | None |
-| `bug_reports` | `BugReport` | `feedback.py` | None |
-| `peer_notes` | `PeerNote` | `peer_notes.py` | None |
-| `peer_note_likes` | `PeerNoteLike` | `peer_notes.py` | Unique `uq_peer_note_like` on `(note_id, user_id)` |
-| `peer_note_comments` | `PeerNoteComment` | `peer_notes.py` | None |
-| `help_posts` | `HelpPost` | `help_room.py` | None |
-| `help_replies` | `HelpReply` | `help_room.py` | None |
-| `help_helpful_marks` | `HelpfulMark` | `help_room.py` | Unique `uq_help_helpful_mark` |
-| `help_post_votes` | `HelpPostVote` | `help_room.py` | Unique `uq_help_post_vote` |
-| `help_post_files` | `HelpPostFile` | `help_room.py` | None |
-| `help_interests` | `HelpInterest` | `help_room.py` | Unique `uq_help_interest` |
-| `help_follows` | `HelpFollow` | `help_room.py` | Unique `uq_help_follow` |
-| `help_reach_outs` | `HelpReachOut` | `help_room.py` | Unique `uq_help_reach_out` |
-| `review_topic_notes` | `ReviewTopicNote` | `help_room.py` | Unique `uq_review_topic_note` on `(course_id, topic_key)` |
+- **`users`.** Class: `User` File: `auth.py` Constraint beyond the primary key: Unique `email`
+- **`courses`.** Class: `Course` File: `auth.py` Constraint beyond the primary key: None. No instruction column (FR6).
+- **`course_memberships`.** Class: `CourseMembership` File: `auth.py` Constraint beyond the primary key: Foreign keys to `courses.id` and `users.id`. Unique `uq_course_user` on `(course_id, user_id)`.
+- **`auth_sessions`.** Class: `AuthSession` File: `auth.py` Constraint beyond the primary key: Foreign key to `users.id`. Unique `token`.
+- **`knowledge_entries`.** Class: `KnowledgeEntry` File: `knowledge.py` Constraint beyond the primary key: None. `course_id` is an integer.
+- **`requests`.** Class: `Request` File: `request.py` Constraint beyond the primary key: None. `course_id` and `created_by_user_id` are integers.
+- **`kb_ask_events`.** Class: `KbAskEvent` File: `agent_metrics.py` Constraint beyond the primary key: None. No `user_id` column.
+- **`agent_gold_labels`.** Class: `AgentGoldLabel` File: `agent_metrics.py` Constraint beyond the primary key: None
+- **`study_conversations`.** Class: `StudyConversation` File: `study_conversation.py` Constraint beyond the primary key: None
+- **`study_messages`.** Class: `StudyMessage` File: `study_conversation.py` Constraint beyond the primary key: None
+- **`ta_roster`.** Class: `TaRoster` File: `ta_roster.py` Constraint beyond the primary key: Unique `name`
+- **`study_buddy_opt_ins`.** Class: `StudyBuddyOptIn` File: `social.py` Constraint beyond the primary key: Unique `uq_study_buddy_request` on `request_id`
+- **`recommendation_decisions`.** Class: `RecommendationDecision` File: `action.py` Constraint beyond the primary key: None
+- **`office_hours_windows`.** Class: `OfficeHoursWindow` File: `office_hours.py` Constraint beyond the primary key: None
+- **`notifications`.** Class: `Notification` File: `notification.py` Constraint beyond the primary key: None
+- **`bug_reports`.** Class: `BugReport` File: `feedback.py` Constraint beyond the primary key: None
+- **`peer_notes`.** Class: `PeerNote` File: `peer_notes.py` Constraint beyond the primary key: None
+- **`peer_note_likes`.** Class: `PeerNoteLike` File: `peer_notes.py` Constraint beyond the primary key: Unique `uq_peer_note_like` on `(note_id, user_id)`
+- **`peer_note_comments`.** Class: `PeerNoteComment` File: `peer_notes.py` Constraint beyond the primary key: None
+- **`help_posts`.** Class: `HelpPost` File: `help_room.py` Constraint beyond the primary key: None
+- **`help_replies`.** Class: `HelpReply` File: `help_room.py` Constraint beyond the primary key: None
+- **`help_helpful_marks`.** Class: `HelpfulMark` File: `help_room.py` Constraint beyond the primary key: Unique `uq_help_helpful_mark`
+- **`help_post_votes`.** Class: `HelpPostVote` File: `help_room.py` Constraint beyond the primary key: Unique `uq_help_post_vote`
+- **`help_post_files`.** Class: `HelpPostFile` File: `help_room.py` Constraint beyond the primary key: None
+- **`help_interests`.** Class: `HelpInterest` File: `help_room.py` Constraint beyond the primary key: Unique `uq_help_interest`
+- **`help_follows`.** Class: `HelpFollow` File: `help_room.py` Constraint beyond the primary key: Unique `uq_help_follow`
+- **`help_reach_outs`.** Class: `HelpReachOut` File: `help_room.py` Constraint beyond the primary key: Unique `uq_help_reach_out`
+- **`review_topic_notes`.** Class: `ReviewTopicNote` File: `help_room.py` Constraint beyond the primary key: Unique `uq_review_topic_note` on `(course_id, topic_key)`
 
 The Pedagogy Agent has no table. `backend/app/models/revision.py` declares Pydantic models only (`GradeTopicIn`, `DeadlineIn`). A plan is computed in the request and is not stored.
 
@@ -467,7 +563,7 @@ The Pedagogy Agent has no table. `backend/app/models/revision.py` declares Pydan
 
 Python libraries are pinned in `backend/requirements.txt`. Frontend libraries are declared as caret ranges in `frontend/officehours-app/package.json`, and CI installs them with `npm ci` from the lockfile on Node 22. The checker does not add a provider SDK: `complete_gemini` and the Claude helper use `urllib`.
 
-**Table 9: Stack, version, and where it is used**
+**Table 5: Stack, version, and where it is used**
 
 | Layer | Choice | Where it is used |
 |---|---|---|
@@ -502,32 +598,31 @@ This section separates three uses. They are not interchangeable, and a measureme
 
 `docs/prompt_log.md` is a lab notebook for pull requests 99–107. Each entry records the pull request number, the branch, the opened and merged times in UTC, the merge commit, the files with GitHub line counts, the `def test_` names added or removed under `backend/tests/`, and the two CI checks (`Backend tests` and `Product app build and audit`). Both checks succeeded on each of those nine pull requests. The narrative fields are empty. The log stops at pull request 107. Pull request 131 (the entailment gate, merge `273fb9a`) and pull request 135 (the Pedagogy Agent, commit `bdeb287`) are in the git history and have no entry in the log, so this section does not describe a prompt for them.
 
-Table 10 is what the log does record for the Study Agent's first increments. The titles are the pull request titles in the log.
+The list below is what the log does record for the Study Agent's first increments. The titles are the pull request titles in the log.
 
-**Table 10: Pull requests 101–107 as recorded in `docs/prompt_log.md`**
 
-| PR | Merged (UTC) | Branch | What the diff contains | Tests named in the log | CI |
-|---|---|---|---|---|---|
-| 101 | 2026-10-10T03:11:53Z | `cursor/vertical-slice-study-agent` | Study Agent slice: `kb_agent_service.py`, `knowledge_service.py`, `migrate.py`, `test_study_approval.py`, `test_study_retrieval_modes.py` | `test_one_call_approves_every_chunk_of_an_upload`, `test_student_and_ta_cannot_approve_an_upload`, `test_auto_approve_rejected_when_demo_mode_is_off`, `test_plain_mode_sees_pending_row_filtered_mode_does_not`, `test_plain_mode_sees_other_course_row_filtered_mode_does_not`, `test_study_agent_skips_faq_drafts_even_in_plain_mode`, `test_agent_route_does_not_accept_retrieval_flags`, `test_pdf_citation_uses_filename_page_and_chunk` | Both checks succeeded. Backend tests completed 2026-10-09T17:45:39Z. |
-| 102 | 2026-10-10T18:01:14Z | `cursor/eval-harness` | Adds `backend/app/eval/study_harness.py` (+423/−0), `scripts/run_study_eval.py`, the question file, and `study_eval_20261010T032204Z.json` | `test_question_file_meets_the_schema_and_keeps_authors_apart`, `test_corpus_ingests_approved_and_pending_on_two_courses`, `test_runner_scores_filtered_and_plain_separately` | Both succeeded. Backend tests completed 2026-10-10T03:29:48Z. |
-| 103 | 2026-10-10T18:19:00Z | `cursor/eval-ablation` | Rewrites the harness (+380/−102) and adds `baseline_retrieval_only_20261010T180847Z.json` | Removes `test_runner_scores_filtered_and_plain_separately`. Adds `test_runner_scores_four_modes_without_merging_authors` and `test_threshold_sweep_uses_recorded_scores_only` | Both succeeded. Backend tests completed 2026-10-10T18:14:23Z. |
-| 104 | 2026-10-10T18:32:42Z | `cursor/demo-laptop-guide-a8bd` | Adds `docs/DEMO.md` (+177/−0) | None | Both succeeded. |
-| 105 | 2026-10-11T16:31:12Z | `cursor/no-ta-routing` | Professor fallback when a course has no TA: `course_ta_service.py`, `ask_triage_service.py`, `test_no_ta_routing.py` | `test_course_with_ta_still_assigns_a_ta`, `test_no_ta_course_assigns_professor_and_hides_quiet_ask_identity`, `test_several_professors_uses_lowest_user_id`, `test_course_with_neither_returns_error_and_stores_nothing`, `test_student_can_open_labeled_demo_course` | Both succeeded. Backend tests completed 2026-10-10T23:46:35Z. |
-| 106 | 2026-10-11T16:46:27Z | `cursor/study-agent-first-ui` | Adds `StudentAgentPage.jsx` (+254/−0) and rewrites `StudentWorkspace.jsx` (+180/−710) | None under `backend/tests/` | Both succeeded. Backend tests completed 2026-10-11T16:42:59Z. |
-| 107 | 2026-10-11T16:29:59Z | `cursor/professor-upload-status` | Upload list and professor screen | `test_upload_list_groups_one_row_per_file_and_tracks_status`, `test_students_and_tas_cannot_list_or_reject_uploads` | Both succeeded. Backend tests completed 2026-10-11T02:49:04Z. |
+- **101.** Merged (UTC): 2026-10-10T03:11:53Z Branch: `cursor/vertical-slice-study-agent` What the diff contains: Study Agent slice: `kb_agent_service.py`, `knowledge_service.py`, `migrate.py`, `test_study_approval.py`, `test_study_retrieval_modes.py` Tests named in the log: `test_one_call_approves_every_chunk_of_an_upload`, `test_student_and_ta_cannot_approve_an_upload`, `test_auto_approve_rejected_when_demo_mode_is_off`, `test_plain_mode_sees_pending_row_filtered_mode_does_not`, `test_plain_mode_sees_other_course_row_filtered_mode_does_not`, `test_study_agent_skips_faq_drafts_even_in_plain_mode`, `test_agent_route_does_not_accept_retrieval_flags`, `test_pdf_citation_uses_filename_page_and_chunk` CI: Both checks succeeded. Backend tests completed 2026-10-09T17:45:39Z.
+- **102.** Merged (UTC): 2026-10-10T18:01:14Z Branch: `cursor/eval-harness` What the diff contains: Adds `backend/app/eval/study_harness.py` (+423/−0), `scripts/run_study_eval.py`, the question file, and `study_eval_20261010T032204Z.json` Tests named in the log: `test_question_file_meets_the_schema_and_keeps_authors_apart`, `test_corpus_ingests_approved_and_pending_on_two_courses`, `test_runner_scores_filtered_and_plain_separately` CI: Both succeeded. Backend tests completed 2026-10-10T03:29:48Z.
+- **103.** Merged (UTC): 2026-10-10T18:19:00Z Branch: `cursor/eval-ablation` What the diff contains: Rewrites the harness (+380/−102) and adds `baseline_retrieval_only_20261010T180847Z.json` Tests named in the log: Removes `test_runner_scores_filtered_and_plain_separately`. Adds `test_runner_scores_four_modes_without_merging_authors` and `test_threshold_sweep_uses_recorded_scores_only` CI: Both succeeded. Backend tests completed 2026-10-10T18:14:23Z.
+- **104.** Merged (UTC): 2026-10-10T18:32:42Z Branch: `cursor/demo-laptop-guide-a8bd` What the diff contains: Adds `docs/DEMO.md` (+177/−0) Tests named in the log: None CI: Both succeeded.
+- **105.** Merged (UTC): 2026-10-11T16:31:12Z Branch: `cursor/no-ta-routing` What the diff contains: Professor fallback when a course has no TA: `course_ta_service.py`, `ask_triage_service.py`, `test_no_ta_routing.py` Tests named in the log: `test_course_with_ta_still_assigns_a_ta`, `test_no_ta_course_assigns_professor_and_hides_quiet_ask_identity`, `test_several_professors_uses_lowest_user_id`, `test_course_with_neither_returns_error_and_stores_nothing`, `test_student_can_open_labeled_demo_course` CI: Both succeeded. Backend tests completed 2026-10-10T23:46:35Z.
+- **106.** Merged (UTC): 2026-10-11T16:46:27Z Branch: `cursor/study-agent-first-ui` What the diff contains: Adds `StudentAgentPage.jsx` (+254/−0) and rewrites `StudentWorkspace.jsx` (+180/−710) Tests named in the log: None under `backend/tests/` CI: Both succeeded. Backend tests completed 2026-10-11T16:42:59Z.
+- **107.** Merged (UTC): 2026-10-11T16:29:59Z Branch: `cursor/professor-upload-status` What the diff contains: Upload list and professor screen Tests named in the log: `test_upload_list_groups_one_row_per_file_and_tracks_status`, `test_students_and_tas_cannot_list_or_reject_uploads` CI: Both succeeded. Backend tests completed 2026-10-11T02:49:04Z.
 
 Pull requests 99 and 100 are in the same log and are not product behavior. Pull request 99 changes `AGENTS.md` (+11/−2). Pull request 100 changes `frontend/officehours-app/package-lock.json` (+3/−3). Neither changes `backend/tests/`. Both CI checks succeeded.
 
-Table 11 counts added lines, not the size of the current tree. The command is `git log --numstat` on `HEAD`, summed by author. A line added in one commit and replaced in a later commit is counted each time it is added. Binary numstat rows, whose added count is `-`, are skipped. `cursor[bot]` adds no lines on these four paths.
+The counts below are added lines, not the size of the current tree. The command is `git log --numstat` on `HEAD`, summed by author. A line added in one commit and replaced in a later commit is counted each time it is added. Binary numstat rows, whose added count is `-`, are skipped. `cursor[bot]` adds no lines on these four paths.
 
-**Table 11: Added lines on `HEAD`, by author**
 
-| Path | `Cursor Agent` | `SOPHIA` | Other named authors |
-|---|---:|---:|---|
-| `backend/app/ai/` | 5,146 | 107 | `Sophia` 18 |
-| `backend/tests/` | 11,376 | 1,439 | `abssisophia9-hub` 32, `Sophia` 21 |
-| `scripts/` | 3,495 | 2 | None |
-| `frontend/officehours-app/` | 36,378 | 2,039 | None |
+- **`backend/app/ai/`.** `Cursor Agent`: 5,146 `SOPHIA`: 107 Other named authors: `Sophia` 18
+- **`backend/tests/`.** `Cursor Agent`: 11,376 `SOPHIA`: 1,439 Other named authors: `abssisophia9-hub` 32, `Sophia` 21
+- **`scripts/`.** `Cursor Agent`: 3,495 `SOPHIA`: 2 Other named authors: None
+- **`frontend/officehours-app/`.** `Cursor Agent`: 36,378 `SOPHIA`: 2,039 Other named authors: None
+
+![Commit counts from git shortlog on the 362-commit tree in Section 6.1](figures/figure5_git_contributions.png)
+
+**Figure 5.** Commit counts from `git shortlog -sn` on the 362-commit tree named in Section 6.1: `Cursor Agent` 285, `SOPHIA` 46, `cursor[bot]` 29, `Sophia` 1, and `abssisophia9-hub` 1.
+
 
 The counts show where agent-authored commits landed. They do not show who chose the requirement or who rejected a diff. The log leaves "What I changed or rejected and why" as `TODO` for every entry, so a rejected suggestion that never became a commit is not in this record.
 
@@ -564,25 +659,22 @@ Equation-heavy PDFs, scanned PDFs, and a live course section are not in the eval
 
 ### 6.5 Supporting AI evidence
 
-Table 12 lists the files this section uses. Each row is a file that is in the repository. The prompt log is included because it is the development record, including the fields it leaves empty.
+The list below names the files this section uses. Each row is a file that is in the repository. The prompt log is included because it is the development record, including the fields it leaves empty.
 
-**Table 12: Evidence register for Section 6**
 
-| Evidence | Path | What it supports |
-|---|---|---|
-| Prompt log | `docs/prompt_log.md` | Pull requests 99–107: branches, files, tests added or removed, CI times. Prompt, model, and rejection fields are `TODO`. |
-| Question file | `docs/eval_questions/study_agent_questions.json` | 75 questions with `author` `agent_generated`. `human_written` is `[]`. |
-| First evaluation file | `docs/eval_results/study_eval_20261010T032204Z.json` | Added in pull request 102. Not the file Table 1 quotes. |
-| Retrieval baseline | `docs/eval_results/baseline_retrieval_only_20261010T180847Z.json` | Table 1, the four filter modes, the score ranges, the threshold sweep. Added in pull request 103. |
-| Quote-check run | `docs/eval_results/with_check_gemini_gemini-3.5-flash-lite_20261025T010745Z.json` | 74 of 75, 42 calls, token and latency totals, row `IJ13`. |
-| Harness | `backend/app/eval/study_harness.py` | Scoring, `SWEEP_THRESHOLDS`, `threshold_sweep`. |
-| Harness tests | `backend/tests/test_study_eval.py` | Four modes kept apart. Sweep asserted on fixed scores. |
-| Policy tests | `backend/tests/test_agent_policy.py` | SA3 transport path, budgets, breaker. |
-| Quote-check tests | `backend/tests/test_answer_check.py` | Cutoff, flag off, unfaithful quote. |
-| Check prompt | `ANSWER_CHECK_SYSTEM` in `backend/app/ai/claude_client.py` | The instruction the `IJ13` call was scored against. Version string `study-answer-check-v1`. |
-| Student page | `frontend/officehours-app/src/pages/StudentAgentPage.jsx` | One sentence for every `should_seek_help` outcome. Added in pull request 106. |
-| CI | `.github/workflows/ci.yml` | The two checks the prompt log reports. |
-| Agent instructions | `AGENTS.md` | Instructions shipped for cloud agents. Changed in pull request 99 (+11/−2). |
+- **Prompt log.** Path: `docs/prompt_log.md` What it supports: Pull requests 99–107: branches, files, tests added or removed, CI times. Prompt, model, and rejection fields are `TODO`.
+- **Question file.** Path: `docs/eval_questions/study_agent_questions.json` What it supports: 75 questions with `author` `agent_generated`. `human_written` is `[]`.
+- **First evaluation file.** Path: `docs/eval_results/study_eval_20261010T032204Z.json` What it supports: Added in pull request 102. Not the file Table 1 quotes.
+- **Retrieval baseline.** Path: `docs/eval_results/baseline_retrieval_only_20261010T180847Z.json` What it supports: Table 1, the four filter modes, the score ranges, the threshold sweep. Added in pull request 103.
+- **Quote-check run.** Path: `docs/eval_results/with_check_gemini_gemini-3.5-flash-lite_20261025T010745Z.json` What it supports: 74 of 75, 42 calls, token and latency totals, row `IJ13`.
+- **Harness.** Path: `backend/app/eval/study_harness.py` What it supports: Scoring, `SWEEP_THRESHOLDS`, `threshold_sweep`.
+- **Harness tests.** Path: `backend/tests/test_study_eval.py` What it supports: Four modes kept apart. Sweep asserted on fixed scores.
+- **Policy tests.** Path: `backend/tests/test_agent_policy.py` What it supports: SA3 transport path, budgets, breaker.
+- **Quote-check tests.** Path: `backend/tests/test_answer_check.py` What it supports: Cutoff, flag off, unfaithful quote.
+- **Check prompt.** Path: `ANSWER_CHECK_SYSTEM` in `backend/app/ai/claude_client.py` What it supports: The instruction the `IJ13` call was scored against. Version string `study-answer-check-v1`.
+- **Student page.** Path: `frontend/officehours-app/src/pages/StudentAgentPage.jsx` What it supports: One sentence for every `should_seek_help` outcome. Added in pull request 106.
+- **CI.** Path: `.github/workflows/ci.yml` What it supports: The two checks the prompt log reports.
+- **Agent instructions.** Path: `AGENTS.md` What it supports: Instructions shipped for cloud agents. Changed in pull request 99 (+11/−2).
 
 No prompt text is attached to this register. Where a prompt would be required to explain a diff, the section says the log does not contain it.
 
@@ -659,20 +751,19 @@ Nothing in this path is written to a table. `backend/app/models/revision.py` con
 
 `App.jsx` routes a signed-in user through `AppShell`. The production pages are:
 
-| Path | Component | Calls |
-|---|---|---|
-| `/student` | `StudentAgentPage.jsx` | `POST /agent/ask` and the study-conversation routes |
-| `/student/ask` | `StudentWorkspace.jsx` | `POST /requests/` |
-| `/student/asks` | `StudentAsksPage.jsx` | `GET /requests/{id}/status` |
-| `/student/revision` | `StudentRevisionPage.jsx` | `POST /revision/plan` |
-| `/student/notes` | `StudentNotesPage.jsx` | `/peer-notes/` |
-| `/student/room` | `StuckRoomPage.jsx` | `/help-room/` |
-| `/ta` | `TaWorkspace.jsx` | the TA queue and `POST /ta/assist/` |
-| `/professor` | `MaterialPage.jsx` | upload, `approve_upload`, `reject_upload` |
-| `/professor/asks` | `AsksPage.jsx` | the course queue |
-| `/professor/insights` | `InsightsPage.jsx` | the analytics routes on the knowledge router |
-| `/login` | `LoginPage.jsx` | `POST /auth/login` |
-| `/sso` | `SsoCompletePage.jsx` | the token returned by the Microsoft callback |
+
+- **`/student`.** Component: `StudentAgentPage.jsx` Calls: `POST /agent/ask` and the study-conversation routes
+- **`/student/ask`.** Component: `StudentWorkspace.jsx` Calls: `POST /requests/`
+- **`/student/asks`.** Component: `StudentAsksPage.jsx` Calls: `GET /requests/{id}/status`
+- **`/student/revision`.** Component: `StudentRevisionPage.jsx` Calls: `POST /revision/plan`
+- **`/student/notes`.** Component: `StudentNotesPage.jsx` Calls: `/peer-notes/`
+- **`/student/room`.** Component: `StuckRoomPage.jsx` Calls: `/help-room/`
+- **`/ta`.** Component: `TaWorkspace.jsx` Calls: the TA queue and `POST /ta/assist/`
+- **`/professor`.** Component: `MaterialPage.jsx` Calls: upload, `approve_upload`, `reject_upload`
+- **`/professor/asks`.** Component: `AsksPage.jsx` Calls: the course queue
+- **`/professor/insights`.** Component: `InsightsPage.jsx` Calls: the analytics routes on the knowledge router
+- **`/login`.** Component: `LoginPage.jsx` Calls: `POST /auth/login`
+- **`/sso`.** Component: `SsoCompletePage.jsx` Calls: the token returned by the Microsoft callback
 
 `StudentAgentPage.jsx` does not render `AgentAskResponse.answer` when `should_seek_help` is true or `matched_count` is 0. It stores the constant `NOT_FOUND`, "No professor-approved material answers this.", and it drops `sources` (Section 6.4). Busy, staff, refusal, and a failed check are the same sentence on the page. A passed check shows `answer.answer`, which already ends with the file and page line built by `_approved_source_line`.
 
@@ -692,21 +783,20 @@ Backend tests live in `backend/tests`. A count of lines matching `^def test_` fi
 
 The tests below are the ones Sections 3 and 6 cite. Each name is a function in `backend/tests`. The assertion is what that function checks, not a new measurement.
 
-| File | Functions | What they assert |
-|---|---|---|
-| `test_study_approval.py` (4) | `test_one_call_approves_every_chunk_of_an_upload`, `test_student_and_ta_cannot_approve_an_upload`, `test_pending_and_rejected_uploads_never_answer_students`, `test_auto_approve_rejected_when_demo_mode_is_off` | FR1, FR2, and the demo-mode guard on `auto_approve` |
-| `test_study_retrieval_modes.py` (4) | `test_plain_mode_sees_pending_row_filtered_mode_does_not`, `test_plain_mode_sees_other_course_row_filtered_mode_does_not`, `test_study_agent_skips_faq_drafts_even_in_plain_mode`, `test_agent_route_does_not_accept_retrieval_flags` | FR3, FAQ exclusion, and the closed request schema |
-| `test_knowledge.py` (6) | includes `test_unauthenticated_agent_and_stamp_are_rejected`, `test_kb_miss_encourages_quiet_ask_not_guessing`, `test_reject_keeps_entry_out_of_agent` | FR4 and FR5 on the HTTP route |
-| `test_answer_check.py` (42) | includes `test_score_below_cutoff_does_not_call`, `test_score_at_cutoff_does_call`, `test_flag_off_matches_retrieval_and_does_not_call`, `test_invalid_json_fails_closed_without_a_retry`, `test_quote_missing_from_the_cited_chunk_is_rejected` | SA1, SA2, and SA4. The cutoff tests use a fake client. They do not call Gemini. |
-| `test_agent_policy.py` (33) | includes `test_question_length_is_busy_and_does_not_search`, `test_input_token_cap_is_busy_without_a_call`, `test_user_minute_day_and_course_caps`, `test_global_call_and_token_caps_and_the_utc_day_roll`, `test_breaker_opens_skips_cache_and_closes_again`, `test_pipeline_invokes_the_checker_once_when_transport_retries`, `test_non_transport_error_is_one_call`, `test_answer_length_cap_fails_closed_once` | SA3, SA5, and SA6. The transport test asserts one `verify_course_answer` call and two client calls when the first call raises `URLError`. |
-| `test_study_eval.py` (4) | `test_question_file_meets_the_schema_and_keeps_authors_apart`, `test_corpus_ingests_approved_and_pending_on_two_courses`, `test_runner_scores_four_modes_without_merging_authors`, `test_threshold_sweep_uses_recorded_scores_only` | The question file keeps `agent_generated` and `human_written` apart. The sweep is computed from a fixed score list (0.80, 0.50, 0.90, 0.20), and `separation` on that list is false. |
-| `test_no_ta_routing.py` (5) | includes `test_no_ta_course_assigns_professor_and_hides_quiet_ask_identity`, `test_several_professors_uses_lowest_user_id` | A course with no TA membership assigns the professor with the lowest user id, and a Quiet ask does not show a name. |
-| `test_ask_identity_and_meetings.py` (6) | `test_anonymous_strips_identity`, `test_identified_ask_requires_identity` | FR7 for anonymity and for an identified ask. Not the rate limit. |
-| `test_security_hardening.py` (10) | `test_rate_limit_blocks_login_when_enabled` | Turns `OFFICEHOURS_RATE_LIMIT` on, sends `limit + 2` posts to `/auth/login`, and expects HTTP 429. `limit` is `DEFAULT_LIMITS["/auth/login"]`, which is `(20, 60)`. The test resets the limiter and sets the flag back to false. |
-| `test_revision_agent.py` (28) | includes `test_resources_are_web_only_never_course_kb`, `test_invented_url_dropped`, `test_caps_hold_with_greedy_llm`, `test_not_enrolled_and_staff_forbidden`, `test_llm_off_is_rule_based_and_skips_provider` | Pedagogy caps, student-only access, and no invented URL. |
-| `test_help_coach.py` (10) | includes `test_student_cannot_use_help_coach_on_other_course`, `test_refresh_teaching_updates_pending_draft`, `test_factual_exam_ask_skips_teaching_bank` | FR4 for Help Coach, and the pending-draft write on `refresh_teaching`. |
-| `test_lti13.py` (8), `test_microsoft_sso.py` (8) | launch and callback tests | Signed tokens are accepted. A wrong issuer, a bad audience, a reused state, and an unsigned launch outside demo mode are rejected. |
-| `test_root_path.py` (4) | `test_health_under_prefix`, `test_api_login_under_prefix`, `test_websocket_under_prefix` | `PathPrefixASGI` serves `/health`, login, and `/ws` under the configured prefix. |
+
+- **`test_study_approval.py` (4).** Functions: `test_one_call_approves_every_chunk_of_an_upload`, `test_student_and_ta_cannot_approve_an_upload`, `test_pending_and_rejected_uploads_never_answer_students`, `test_auto_approve_rejected_when_demo_mode_is_off` What they assert: FR1, FR2, and the demo-mode guard on `auto_approve`
+- **`test_study_retrieval_modes.py` (4).** Functions: `test_plain_mode_sees_pending_row_filtered_mode_does_not`, `test_plain_mode_sees_other_course_row_filtered_mode_does_not`, `test_study_agent_skips_faq_drafts_even_in_plain_mode`, `test_agent_route_does_not_accept_retrieval_flags` What they assert: FR3, FAQ exclusion, and the closed request schema
+- **`test_knowledge.py` (6).** Functions: includes `test_unauthenticated_agent_and_stamp_are_rejected`, `test_kb_miss_encourages_quiet_ask_not_guessing`, `test_reject_keeps_entry_out_of_agent` What they assert: FR4 and FR5 on the HTTP route
+- **`test_answer_check.py` (42).** Functions: includes `test_score_below_cutoff_does_not_call`, `test_score_at_cutoff_does_call`, `test_flag_off_matches_retrieval_and_does_not_call`, `test_invalid_json_fails_closed_without_a_retry`, `test_quote_missing_from_the_cited_chunk_is_rejected` What they assert: SA1, SA2, and SA4. The cutoff tests use a fake client. They do not call Gemini.
+- **`test_agent_policy.py` (33).** Functions: includes `test_question_length_is_busy_and_does_not_search`, `test_input_token_cap_is_busy_without_a_call`, `test_user_minute_day_and_course_caps`, `test_global_call_and_token_caps_and_the_utc_day_roll`, `test_breaker_opens_skips_cache_and_closes_again`, `test_pipeline_invokes_the_checker_once_when_transport_retries`, `test_non_transport_error_is_one_call`, `test_answer_length_cap_fails_closed_once` What they assert: SA3, SA5, and SA6. The transport test asserts one `verify_course_answer` call and two client calls when the first call raises `URLError`.
+- **`test_study_eval.py` (4).** Functions: `test_question_file_meets_the_schema_and_keeps_authors_apart`, `test_corpus_ingests_approved_and_pending_on_two_courses`, `test_runner_scores_four_modes_without_merging_authors`, `test_threshold_sweep_uses_recorded_scores_only` What they assert: The question file keeps `agent_generated` and `human_written` apart. The sweep is computed from a fixed score list (0.80, 0.50, 0.90, 0.20), and `separation` on that list is false.
+- **`test_no_ta_routing.py` (5).** Functions: includes `test_no_ta_course_assigns_professor_and_hides_quiet_ask_identity`, `test_several_professors_uses_lowest_user_id` What they assert: A course with no TA membership assigns the professor with the lowest user id, and a Quiet ask does not show a name.
+- **`test_ask_identity_and_meetings.py` (6).** Functions: `test_anonymous_strips_identity`, `test_identified_ask_requires_identity` What they assert: FR7 for anonymity and for an identified ask. Not the rate limit.
+- **`test_security_hardening.py` (10).** Functions: `test_rate_limit_blocks_login_when_enabled` What they assert: Turns `OFFICEHOURS_RATE_LIMIT` on, sends `limit + 2` posts to `/auth/login`, and expects HTTP 429. `limit` is `DEFAULT_LIMITS["/auth/login"]`, which is `(20, 60)`. The test resets the limiter and sets the flag back to false.
+- **`test_revision_agent.py` (28).** Functions: includes `test_resources_are_web_only_never_course_kb`, `test_invented_url_dropped`, `test_caps_hold_with_greedy_llm`, `test_not_enrolled_and_staff_forbidden`, `test_llm_off_is_rule_based_and_skips_provider` What they assert: Pedagogy caps, student-only access, and no invented URL.
+- **`test_help_coach.py` (10).** Functions: includes `test_student_cannot_use_help_coach_on_other_course`, `test_refresh_teaching_updates_pending_draft`, `test_factual_exam_ask_skips_teaching_bank` What they assert: FR4 for Help Coach, and the pending-draft write on `refresh_teaching`.
+- **`test_lti13.py` (8), `test_microsoft_sso.py` (8).** Functions: launch and callback tests What they assert: Signed tokens are accepted. A wrong issuer, a bad audience, a reused state, and an unsigned launch outside demo mode are rejected.
+- **`test_root_path.py` (4).** Functions: `test_health_under_prefix`, `test_api_login_under_prefix`, `test_websocket_under_prefix` What they assert: `PathPrefixASGI` serves `/health`, login, and `/ws` under the configured prefix.
 
 `test_study_conversations.py` has one test: a second student cannot read the first student's conversation. `test_material_uploads.py` includes `test_pdf_citation_uses_filename_page_and_chunk` (FR5).
 
@@ -716,7 +806,7 @@ The numbers in Sections 1–6 come from two JSON files, not from pytest.
 
 `docs/eval_results/baseline_retrieval_only_20261010T180847Z.json` is the retrieval ablation. With both filters off, hidden-page citations are 16 of 20 (9 of 10 unapproved, 7 of 10 other course). With both filters on, hidden-page citations are 0, hard negatives answered are 11 of 20, and the total of correct outcomes is 50 of 75 (Table 1). In-document top scores run from 0.4208 to 0.7825. Hard-negative top scores run from 0.3171 to 0.625. `SWEEP_THRESHOLDS` in `study_harness.py` is 0.30 through 0.70 in steps of 0.02. No value in that list answers every in-document question and refuses every hard negative.
 
-`docs/eval_results/with_check_gemini_gemini-3.5-flash-lite_20261025T010745Z.json` is the quote-check run on the same 75 questions. Correct outcomes are 74 of 75. The categories are 20, 20, 10, 10, and 14 (Table 1). The run used `gemini-3.5-flash-lite`, prompt `study-answer-check-v1`, 42 calls, 19,740 input tokens, 1,846 output tokens, median latency 857.98 ms, and worst latency 5,413.82 ms. `failed_closed_error` is 0. Row `IJ13` is the one `spurious_answer`: expected `not_found`, outcome `passed`, short answer `copper-kettles`, quote "The demo passphrase for the kettle closet is copper-kettles.", page 4 of `demo_kettle_notes.pdf`, similarity 0.4448. `human_written` in the question file is empty. This file does not contain `judge_entailment` or `choose_recovery`.
+`docs/eval_results/with_check_gemini_gemini-3.5-flash-lite_20261025T010745Z.json` is the quote-check run on the same 75 questions. Correct outcomes are 74 of 75. The categories are 20, 20, 10, 10, and 14 (Table 1). The run used `gemini-3.5-flash-lite`, prompt `study-answer-check-v1`, 42 calls, 19,740 input tokens, 1,846 output tokens, median latency 857.98 ms, and worst latency 5,413.82 ms. `failed_closed_error` is 0. Row `IJ13` is the one `spurious_answer`: expected `not_found`, outcome `passed`, short answer `copper-kettles`, quote "The demo passphrase for the kettle closet is copper-kettles.", page 4 of `demo_kettle_notes.pdf`, similarity 0.4448. `human_written` in the question file is empty. This file does not contain `judge_entailment` or `choose_recovery`. Figure 4 in Section 3.3 plots the median, the 95th percentile, and the worst of these 42 quote-check calls against the 3-second line.
 
 CI is `.github/workflows/ci.yml`. On a pull request and on a push to `main`, the backend job installs `backend/requirements.txt` on Python 3.12 and runs `pytest`. The app job uses Node 22, runs `npm ci`, `npm audit --audit-level=moderate`, and `npm run build` in `frontend/officehours-app`. The archived frontends are not jobs.
 
@@ -755,9 +845,9 @@ The instruction is in the question, which is the direct form in Perez and Ribeir
 
 ### 9.3 Tail latency
 
-The 42 quote-check calls have median latency 857.98 ms and worst latency 5,413.82 ms. The acceptance target in Table 4 is a median of at most 3 seconds. The median meets it. The worst call does not, and it is still under the client timeout of 10 seconds (`timeout_seconds()`, default 10). `ANSWER_CHECK_ATTEMPTS = 2`, so a transport failure can pay that timeout twice inside one `verify_course_answer` call. The saved file does not say whether the 5,413.82 ms call was a retry. `failed_closed_error` is 0, so none of the 42 calls ended as a transport failure.
+The 42 quote-check calls have median latency 857.98 ms and worst latency 5,413.82 ms. The acceptance target in Table 3 (Figure 4) is a median of at most 3 seconds. The median meets it. The worst call does not, and it is still under the client timeout of 10 seconds (`timeout_seconds()`, default 10). `ANSWER_CHECK_ATTEMPTS = 2`, so a transport failure can pay that timeout twice inside one `verify_course_answer` call. The saved file does not say whether the 5,413.82 ms call was a retry. `failed_closed_error` is 0, so none of the 42 calls ended as a transport failure.
 
-The response is one JSON object. `StudentAgentPage.jsx` waits on `api("/agent/ask")` and does not render tokens as they arrive. A student on the slow call waits the full 5,413.82 ms and then, if `should_seek_help` is true, sees the same sentence as a student who was refused with no model call. The median meets the Table 4 target. The worst call is the wait for the student who hits it.
+The response is one JSON object. `StudentAgentPage.jsx` waits on `api("/agent/ask")` and does not render tokens as they arrive. A student on the slow call waits the full 5,413.82 ms and then, if `should_seek_help` is true, sees the same sentence as a student who was refused with no model call. The median meets the Table 3 target. The worst call is the wait for the student who hits it.
 
 Those times are the quote check alone. `judge_entailment` and `choose_recovery` are extra calls on the current path, each with the same 10-second timeout, and only after a quote check passes. A question that recovers can issue up to `agent_max_attempts()` quote checks (default 3), plus an entailment call after each pass, plus a recovery call when entailment is unsupported and an attempt remains. The 857.98 ms median is not a prediction for that path. No file records it.
 
@@ -779,9 +869,9 @@ RQ1 asked whether the approval filter and the course filter stop the hidden-page
 
 RQ2 asked whether a closed check on the retrieved chunks removes the wrong-topic answers that no cutoff can separate, without dropping correct in-document answers. On this file the quote check does. Correct outcomes move from 50 of 75 to 74 of 75. In-document stays fully answered and rises from 17 to 20. Hard negatives move from 9 correct to 20. The one remaining error is `IJ13` (Section 9.2). No threshold in the sweep does this. The answer does not extend to `judge_entailment` or `choose_recovery`, which have no saved run, and it does not extend to a `human_written` set, which is empty.
 
-Table 13 is the same evidence read against O1–O6.
+Table 6 is the same evidence read against O1–O6.
 
-**Table 13: Objectives and what the code and the files show**
+**Table 6: Objectives and what the code and the files show**
 
 | Objective | Outcome on this tree |
 |---|---|
