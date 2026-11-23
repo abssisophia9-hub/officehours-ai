@@ -132,7 +132,7 @@ Figure 4. Quote-check-only latency of the 42 calls in the saved Gemini run, agai
 
 Figure 5. Commit counts from `git shortlog -sn` on the 362-commit tree in Section 6.1.
 
-Figure 6. Added lines on HEAD, Cursor Agent against manual aliases.
+Figure 6. Cumulative added lines over time, Cursor Agent and manual commits.
 
 ## LIST OF TABLES
 
@@ -613,11 +613,11 @@ The list below is what the log does record for the Study Agent's first increment
 
 Pull requests 99 and 100 are in the same log and are not product behavior. Pull request 99 changes `AGENTS.md` (+11/−2). Pull request 100 changes `frontend/officehours-app/package-lock.json` (+3/−3). Neither changes `backend/tests/`. Both CI checks succeeded.
 
-Figure 6 shows added lines, not the size of the current tree. The command is `git log --numstat` on `HEAD`, summed by author. A line added in one commit and replaced in a later commit is counted each time it is added. Binary numstat rows, whose added count is `-`, are skipped. Manual merges `SOPHIA`, `Sophia`, and `abssisophia9-hub`. `cursor[bot]` adds no lines on these four paths and is omitted.
+Figure 6 shows cumulative added lines on the four paths, not the size of the current tree. The command is `git log --numstat` on `HEAD`, summed by author in commit order. A line added in one commit and replaced in a later commit is counted each time it is added. Binary numstat rows, whose added count is `-`, are skipped. Manual merges `SOPHIA`, `Sophia`, and `abssisophia9-hub`. `cursor[bot]` adds no lines on these four paths and is omitted.
 
-![Added lines on HEAD: Cursor Agent vs. Manual](figures/figure6_added_lines.png)
+![Cumulative added lines for Cursor Agent and manual commits](figures/figure6_collaboration_timeline.png)
 
-**Figure 6.** Added lines on `HEAD` for four paths. Manual merges `SOPHIA`, `Sophia`, and `abssisophia9-hub`. `cursor[bot]` adds no lines on these paths and is omitted.
+**Figure 6.** Cumulative added lines on `backend/app/ai/`, `backend/tests/`, `scripts/`, and `frontend/officehours-app/`. Manual merges `SOPHIA`, `Sophia`, and `abssisophia9-hub`. `cursor[bot]` adds no lines on these paths and is omitted. The endpoints are 56,395 lines and 3,658 lines.
 
 ![Commit counts from git shortlog on the 362-commit tree in Section 6.1](figures/figure5_git_contributions.png)
 
