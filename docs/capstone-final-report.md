@@ -132,6 +132,8 @@ Figure 4. Quote-check-only latency of the 42 calls in the saved Gemini run, agai
 
 Figure 5. Commit counts from `git shortlog -sn` on the 362-commit tree in Section 6.1.
 
+Figure 6. Added lines on HEAD, Cursor Agent against manual aliases.
+
 ## LIST OF TABLES
 
 Table 1: Correct outcomes per question category (75 synthetic questions, `all-MiniLM-L6-v2`, cutoff 0.42)
@@ -611,13 +613,11 @@ The list below is what the log does record for the Study Agent's first increment
 
 Pull requests 99 and 100 are in the same log and are not product behavior. Pull request 99 changes `AGENTS.md` (+11/−2). Pull request 100 changes `frontend/officehours-app/package-lock.json` (+3/−3). Neither changes `backend/tests/`. Both CI checks succeeded.
 
-The counts below are added lines, not the size of the current tree. The command is `git log --numstat` on `HEAD`, summed by author. A line added in one commit and replaced in a later commit is counted each time it is added. Binary numstat rows, whose added count is `-`, are skipped. `cursor[bot]` adds no lines on these four paths.
+Figure 6 shows added lines, not the size of the current tree. The command is `git log --numstat` on `HEAD`, summed by author. A line added in one commit and replaced in a later commit is counted each time it is added. Binary numstat rows, whose added count is `-`, are skipped. Manual merges `SOPHIA`, `Sophia`, and `abssisophia9-hub`. `cursor[bot]` adds no lines on these four paths and is omitted.
 
+![Added lines on HEAD: Cursor Agent vs. Manual](figures/figure6_added_lines.png)
 
-- **`backend/app/ai/`.** `Cursor Agent`: 5,146 `SOPHIA`: 107 Other named authors: `Sophia` 18
-- **`backend/tests/`.** `Cursor Agent`: 11,376 `SOPHIA`: 1,439 Other named authors: `abssisophia9-hub` 32, `Sophia` 21
-- **`scripts/`.** `Cursor Agent`: 3,495 `SOPHIA`: 2 Other named authors: None
-- **`frontend/officehours-app/`.** `Cursor Agent`: 36,378 `SOPHIA`: 2,039 Other named authors: None
+**Figure 6.** Added lines on `HEAD` for four paths. Manual merges `SOPHIA`, `Sophia`, and `abssisophia9-hub`. `cursor[bot]` adds no lines on these paths and is omitted.
 
 ![Commit counts from git shortlog on the 362-commit tree in Section 6.1](figures/figure5_git_contributions.png)
 
