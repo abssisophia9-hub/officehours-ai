@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OfficeHours AI — Showcase Poster</title>
+<style>
+  @page { size: 2048px 1404px; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    width: 2048px;
+    height: 1404px;
+    overflow: hidden;
+    background: #e6dcc8;
+    color: #1b2430;
+    font-family: Inter, "Liberation Sans", sans-serif;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page {
+    width: 2048px;
+    height: 1404px;
+    display: grid;
+    grid-template-rows: 118px 1168px 52px 66px;
+    background: #e6dcc8;
+  }
+  header {
+    background: #1c3a5e;
+    color: #fff;
+    display: grid;
+    grid-template-columns: 1fr 168px 250px;
+    align-items: center;
+    padding: 0 28px 0 36px;
+    gap: 18px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    white-space: nowrap;
+  }
+  header .sub {
+    margin-top: 4px;
+    font-size: 20px;
+    font-weight: 500;
+    color: #d5e2f0;
+    white-space: nowrap;
+  }
+  header .by {
+    margin-top: 2px;
+    font-size: 14px;
+    color: #b7c9dc;
+    white-space: nowrap;
+  }
+  .mark {
+    width: 92px;
+    height: 92px;
+    border-radius: 16px;
+    background: #1f7a45;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    justify-self: end;
+  }
+  .mark b { font-size: 20px; letter-spacing: -0.03em; }
+  .mark span { font-size: 11px; margin-top: 3px; opacity: 0.9; }
+  .scan {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+  .scan p {
+    margin: 0;
+    width: 92px;
+    font-size: 15px;
+    line-height: 1.15;
+    color: #e7eef6;
+    text-align: right;
+  }
+  .qr {
+    width: 92px;
+    height: 92px;
+    background: #fff;
+    border-radius: 8px;
+    padding: 6px;
+  }
+  .qr svg { width: 100%; height: 100%; display: block; }
+  .board {
+    display: grid;
+    grid-template-columns: 540px 948px 500px;
+    gap: 16px;
+    padding: 14px 18px 8px;
+    min-height: 0;
+  }
+  .col { display: grid; gap: 14px; min-height: 0; }
+  .left { grid-template-rows: 420px 260px 438px; }
+  .mid { grid-template-rows: 540px 320px 258px; }
+  .right { grid-template-rows: 680px 452px; }
+  .card {
+    background: #f4f6fa;
+    border-radius: 18px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    box-shadow: 0 1px 0 rgba(28, 58, 94, 0.06);
+  }
+  .hd {
+    background: #1c3a5e;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 46px;
+    padding: 0 14px;
+    flex: none;
+  }
+  .num {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.14);
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .hd h2 { margin: 0; font-size: 20px; font-weight: 650; letter-spacing: -0.02em; }
+  .bd { padding: 12px 14px 12px; min-height: 0; flex: 1; }
+  .lead { margin: 0 0 10px; font-size: 14.5px; line-height: 1.35; color: #243140; }
+  .persona { display: grid; gap: 8px; }
+  .prow {
+    display: grid;
+    grid-template-columns: 42px 1fr auto;
+    gap: 8px;
+    align-items: center;
+  }
+  .avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: #e5f3ea; color: #1b7a45;
+    display: grid; place-items: center; font-size: 18px;
+  }
+  .prow small { display: block; color: #6b7785; font-size: 10px; letter-spacing: 0.08em; font-weight: 700; }
+  .prow b { display: block; font-size: 15px; line-height: 1.15; }
+  .prow em { display: block; font-style: normal; color: #4c5966; font-size: 12.5px; }
+  .pill {
+    background: #e7f6ee; color: #14663a;
+    border-radius: 999px; padding: 5px 10px;
+    font-size: 12px; font-weight: 650; white-space: nowrap;
+  }
+  .footnote { margin: 8px 0 0; text-align: center; color: #7b8794; font-size: 12px; }
+  ol.obj { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  ol.obj li { display: grid; grid-template-columns: 26px 1fr; gap: 8px; align-items: start; font-size: 14.5px; line-height: 1.3; }
+  ol.obj i {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #1b7a45; color: #fff; font-style: normal;
+    display: grid; place-items: center; font-size: 13px; font-weight: 700;
+  }
+  .hub { position: relative; height: 250px; }
+  .hub .core {
+    position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%);
+    width: 132px; height: 132px; border-radius: 50%;
+    background: #14663a; color: #fff;
+    display: grid; place-items: center; text-align: center;
+    font-weight: 700; font-size: 16px; line-height: 1.15;
+    z-index: 2;
+  }
+  .sat {
+    position: absolute; width: 150px; text-align: center; font-size: 12.5px; line-height: 1.2; color: #243140;
+  }
+  .sat b { display: block; font-size: 13.5px; }
+  .sat span { color: #546170; }
+  .sat .ico {
+    width: 36px; height: 36px; margin: 0 auto 4px; border-radius: 50%;
+    background: #e5f3ea; color: #1b7a45; display: grid; place-items: center; font-size: 16px;
+  }
+  .node {
+    position: absolute; background: #fff; border: 1.5px solid #c9d4c9;
+    border-radius: 12px; padding: 6px 8px; text-align: center; width: 118px;
+    font-size: 12.5px; line-height: 1.15; z-index: 2;
+  }
+  .node b { display: block; }
+  .node span { color: #546170; font-size: 11px; }
+  .hub svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .cap { margin: 8px 0 0; font-size: 12.5px; line-height: 1.3; color: #3c4a58; text-align: center; }
+  .legend { display: flex; gap: 14px; justify-content: flex-end; font-size: 11px; color: #3c4a58; margin-bottom: 6px; }
+  .legend i { display: inline-block; width: 18px; height: 3px; margin-right: 4px; vertical-align: middle; border-radius: 2px; }
+  .arch {
+    height: 348px; position: relative;
+    background: transparent;
+  }
+  .arch svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+  .proc {
+    position: absolute; border: 1.5px solid #c5d0dc; border-radius: 16px;
+    background: #f4f7fb; z-index: 0;
+  }
+  .proc-label {
+    position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+    background: #1c3a5e; color: #fff; font-size: 12px; letter-spacing: 0.03em;
+    padding: 3px 10px; border-radius: 999px; white-space: nowrap; z-index: 2;
+  }
+  .abox, .out, .client {
+    position: absolute; border-radius: 10px; padding: 4px 8px;
+    display: flex; flex-direction: column; justify-content: center;
+    text-align: left; line-height: 1.15; z-index: 1;
+  }
+  .abox b, .out b, .client b { display: block; font-size: 12.5px; font-weight: 700; }
+  .abox span, .out span, .client span { display: block; font-size: 11px; font-weight: 550; line-height: 1.2; }
+  .navyb { background: #1c3a5e; color: #fff; }
+  .navyb span { color: #d5e2f0; }
+  .greenb { background: #1b7a45; color: #fff; }
+  .greenb span { color: #e5f6ec; }
+  .out {
+    background: #fff; color: #1b2430;
+    border: 1.5px dashed #9aa8a6;
+  }
+  .out span { color: #4c5966; }
+  .out.gold { background: #fff6df; border-style: solid; border-color: #e2b34d; }
+  .client {
+    background: #fff; color: #1b2430; border: 1.5px solid #1c3a5e;
+  }
+  .client b { text-align: center; }
+  .db {
+    position: absolute; border-radius: 8px;
+    background: #1c3a5e; color: #fff;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 2px 10px; z-index: 1;
+  }
+  .db b { font-size: 12.5px; }
+  .db span { font-size: 11px; color: #d5e2f0; font-weight: 550; }
+  .rules { margin: 6px 0 0; font-size: 13.5px; line-height: 1.3; color: #243140; }
+  .pipe { display: grid; grid-template-columns: 118px 1fr 250px; gap: 8px; align-items: center; padding: 7px 0; border-top: 1px solid #e1e6ee; }
+  .pipe:first-child { border-top: 0; }
+  .pipe strong { font-size: 14.5px; }
+  .flow { display: flex; gap: 4px; align-items: center; flex-wrap: nowrap; }
+  .flow em {
+    font-style: normal; background: #1b7a45; color: #fff;
+    border-radius: 7px; padding: 3px 7px; font-size: 11.5px; font-weight: 650; white-space: nowrap;
+  }
+  .flow em.soft { background: #3d9a64; }
+  .desc { margin: 2px 0 0; font-size: 11.5px; color: #4c5966; line-height: 1.25; }
+  .guard {
+    background: #fff; border: 1px solid #e3e8ef; border-radius: 10px;
+    padding: 6px 8px; font-size: 11.5px; line-height: 1.25; color: #1b7a45; font-weight: 650;
+  }
+  .stack { display: grid; gap: 7px; }
+  .srow { display: grid; grid-template-columns: 150px 1fr; gap: 8px; align-items: center; }
+  .srow b { font-size: 13px; color: #1c3a5e; }
+  .chips { display: flex; flex-wrap: nowrap; gap: 6px; }
+  .chip {
+    background: #fff; border: 1px solid #d5dce6; border-radius: 999px;
+    padding: 4px 8px; font-size: 12px; white-space: nowrap; color: #1b2430;
+  }
+  .kicker {
+    margin: 0 0 6px; font-size: 11px; letter-spacing: 0.06em; font-weight: 700; color: #5c6b7a;
+    white-space: nowrap;
+  }
+  .scores { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .score b { display: block; color: #1b7a45; font-size: 28px; letter-spacing: -0.03em; line-height: 1; border-bottom: 3px solid #1b7a45; padding-bottom: 3px; }
+  .score span { display: block; margin-top: 3px; font-size: 12px; font-weight: 700; line-height: 1.15; }
+  .score em { display: block; margin-top: 1px; font-style: normal; font-size: 8px; color: #5c6b7a; line-height: 1.15; white-space: nowrap; letter-spacing: -0.03em; }
+  .hidden { margin: 8px 0 0; font-size: 12.5px; color: #243140; white-space: nowrap; }
+  .chart-row { display: grid; grid-template-columns: 210px 1fr; gap: 8px; margin-top: 8px; align-items: center; }
+  .chart-row svg { width: 210px; height: 150px; background: #fff; border-radius: 8px; }
+  .leg { font-size: 12px; line-height: 1.35; }
+  .leg div { margin-bottom: 4px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+  .lat { display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center; margin-top: 8px; }
+  .lat .big { color: #1b7a45; font-size: 34px; font-weight: 750; letter-spacing: -0.03em; line-height: 0.9; }
+  .lat .big small { display: block; font-size: 12px; color: #5c6b7a; font-weight: 600; letter-spacing: 0; }
+  .bar { height: 14px; background: #e3e8ef; border-radius: 999px; position: relative; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: #1b7a45; border-radius: 999px; }
+  .ticks { display: flex; justify-content: space-between; font-size: 10px; color: #6b7785; margin-top: 2px; }
+  .eval { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+  .eval .big { font-size: 36px; font-weight: 750; color: #1b7a45; letter-spacing: -0.03em; line-height: 1; }
+  .eval .sub { font-size: 12px; color: #3c4a58; margin-top: 4px; white-space: nowrap; }
+  .group { margin: 8px 0 4px; display: inline-block; background: #e7f6ee; color: #14663a; border-radius: 999px; padding: 2px 8px; font-size: 10px; letter-spacing: 0.08em; font-weight: 750; }
+  .group.navy { background: #e7eef6; color: #1c3a5e; }
+  ol.road { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+  ol.road li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; font-size: 13px; line-height: 1.25; }
+  #road-2, #road-3, #road-4 { white-space: nowrap; }
+  ol.road i {
+    width: 22px; height: 22px; border-radius: 50%; color: #fff; font-style: normal;
+    display: grid; place-items: center; font-size: 12px; font-weight: 700; background: #1b7a45;
+  }
+  ol.road li.prod i { background: #1c3a5e; }
+  .refs {
+    display: grid;
+    grid-template-columns: 150px 1fr 1fr 1fr 1fr;
+    gap: 10px;
+    padding: 6px 18px 0;
+    align-items: start;
+  }
+  .refs h2 { margin: 6px 0 0; font-size: 16px; color: #1c3a5e; display: flex; gap: 8px; align-items: center; }
+  .refs p { margin: 0; font-size: 11px; line-height: 1.3; color: #3c4a58; border-left: 2px solid #b7c3b0; padding-left: 8px; }
+  footer {
+    background: #1c3a5e; color: #e7eef6;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px; font-size: 14px;
+  }
+  footer span { white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div>
+      <h1>OfficeHours AI: Bridging the Academic Help-Seeking Gap</h1>
+      <div class="sub">A Multi-Persona AI &amp; Peer Learning Ecosystem</div>
+      <div class="by">Sophia Abssi · School of Science and Engineering, Al Akhawayn University · Supervised by Dr. Oumaima Hourrane · EGR 4402 Capstone Design</div>
+    </div>
+    <div class="mark"><b>just ask</b><span>office hours</span></div>
+    <div class="scan">
+      <p>Scan for the live demo video</p>
+      <div class="qr">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 33 33" shape-rendering="crispEdges"><rect width="33" height="33" fill="#ffffff"/><g fill="#1b3a5c"><rect x="0" y="0" width="1" height="1"/><rect x="1" y="0" width="1" height="1"/><rect x="2" y="0" width="1" height="1"/><rect x="3" y="0" width="1" height="1"/><rect x="4" y="0" width="1" height="1"/><rect x="5" y="0" width="1" height="1"/><rect x="6" y="0" width="1" height="1"/><rect x="8" y="0" width="1" height="1"/><rect x="12" y="0" width="1" height="1"/><rect x="13" y="0" width="1" height="1"/><rect x="14" y="0" width="1" height="1"/><rect x="15" y="0" width="1" height="1"/><rect x="16" y="0" width="1" height="1"/><rect x="18" y="0" width="1" height="1"/><rect x="19" y="0" width="1" height="1"/><rect x="21" y="0" width="1" height="1"/><rect x="22" y="0" width="1" height="1"/><rect x="23" y="0" width="1" height="1"/><rect x="24" y="0" width="1" height="1"/><rect x="26" y="0" width="1" height="1"/><rect x="27" y="0" width="1" height="1"/><rect x="28" y="0" width="1" height="1"/><rect x="29" y="0" width="1" height="1"/><rect x="30" y="0" width="1" height="1"/><rect x="31" y="0" width="1" height="1"/><rect x="32" y="0" width="1" height="1"/><rect x="0" y="1" width="1" height="1"/><rect x="6" y="1" width="1" height="1"/><rect x="11" y="1" width="1" height="1"/><rect x="13" y="1" width="1" height="1"/><rect x="16" y="1" width="1" height="1"/><rect x="18" y="1" width="1" height="1"/><rect x="19" y="1" width="1" height="1"/><rect x="26" y="1" width="1" height="1"/><rect x="32" y="1" width="1" height="1"/><rect x="0" y="2" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="3" y="2" width="1" height="1"/><rect x="4" y="2" width="1" height="1"/><rect x="6" y="2" width="1" height="1"/><rect x="8" y="2" width="1" height="1"/><rect x="9" y="2" width="1" height="1"/><rect x="11" y="2" width="1" height="1"/><rect x="13" y="2" width="1" height="1"/><rect x="17" y="2" width="1" height="1"/><rect x="19" y="2" width="1" height="1"/><rect x="26" y="2" width="1" height="1"/><rect x="28" y="2" width="1" height="1"/><rect x="29" y="2" width="1" height="1"/><rect x="30" y="2" width="1" height="1"/><rect x="32" y="2" width="1" height="1"/><rect x="0" y="3" width="1" height="1"/><rect x="2" y="3" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="4" y="3" width="1" height="1"/><rect x="6" y="3" width="1" height="1"/><rect x="8" y="3" width="1" height="1"/><rect x="12" y="3" width="1" height="1"/><rect x="17" y="3" width="1" height="1"/><rect x="19" y="3" width="1" height="1"/><rect x="21" y="3" width="1" height="1"/><rect x="22" y="3" width="1" height="1"/><rect x="26" y="3" width="1" height="1"/><rect x="28" y="3" width="1" height="1"/><rect x="29" y="3" width="1" height="1"/><rect x="30" y="3" width="1" height="1"/><rect x="32" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="2" y="4" width="1" height="1"/><rect x="3" y="4" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="6" y="4" width="1" height="1"/><rect x="8" y="4" width="1" height="1"/><rect x="9" y="4" width="1" height="1"/><rect x="11" y="4" width="1" height="1"/><rect x="12" y="4" width="1" height="1"/><rect x="16" y="4" width="1" height="1"/><rect x="19" y="4" width="1" height="1"/><rect x="20" y="4" width="1" height="1"/><rect x="21" y="4" width="1" height="1"/><rect x="22" y="4" width="1" height="1"/><rect x="23" y="4" width="1" height="1"/><rect x="26" y="4" width="1" height="1"/><rect x="28" y="4" width="1" height="1"/><rect x="29" y="4" width="1" height="1"/><rect x="30" y="4" width="1" height="1"/><rect x="32" y="4" width="1" height="1"/><rect x="0" y="5" width="1" height="1"/><rect x="6" y="5" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="10" y="5" width="1" height="1"/><rect x="11" y="5" width="1" height="1"/><rect x="14" y="5" width="1" height="1"/><rect x="15" y="5" width="1" height="1"/><rect x="18" y="5" width="1" height="1"/><rect x="19" y="5" width="1" height="1"/><rect x="20" y="5" width="1" height="1"/><rect x="23" y="5" width="1" height="1"/><rect x="26" y="5" width="1" height="1"/><rect x="32" y="5" width="1" height="1"/><rect x="0" y="6" width="1" height="1"/><rect x="1" y="6" width="1" height="1"/><rect x="2" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="4" y="6" width="1" height="1"/><rect x="5" y="6" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/><rect x="10" y="6" width="1" height="1"/><rect x="12" y="6" width="1" height="1"/><rect x="14" y="6" width="1" height="1"/><rect x="16" y="6" width="1" height="1"/><rect x="18" y="6" width="1" height="1"/><rect x="20" y="6" width="1" height="1"/><rect x="22" y="6" width="1" height="1"/><rect x="24" y="6" width="1" height="1"/><rect x="26" y="6" width="1" height="1"/><rect x="27" y="6" width="1" height="1"/><rect x="28" y="6" width="1" height="1"/><rect x="29" y="6" width="1" height="1"/><rect x="30" y="6" width="1" height="1"/><rect x="31" y="6" width="1" height="1"/><rect x="32" y="6" width="1" height="1"/><rect x="10" y="7" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/><rect x="16" y="7" width="1" height="1"/><rect x="17" y="7" width="1" height="1"/><rect x="19" y="7" width="1" height="1"/><rect x="21" y="7" width="1" height="1"/><rect x="22" y="7" width="1" height="1"/><rect x="24" y="7" width="1" height="1"/><rect x="2" y="8" width="1" height="1"/><rect x="3" y="8" width="1" height="1"/><rect x="4" y="8" width="1" height="1"/><rect x="5" y="8" width="1" height="1"/><rect x="6" y="8" width="1" height="1"/><rect x="7" y="8" width="1" height="1"/><rect x="9" y="8" width="1" height="1"/><rect x="10" y="8" width="1" height="1"/><rect x="12" y="8" width="1" height="1"/><rect x="17" y="8" width="1" height="1"/><rect x="18" y="8" width="1" height="1"/><rect x="19" y="8" width="1" height="1"/><rect x="20" y="8" width="1" height="1"/><rect x="23" y="8" width="1" height="1"/><rect x="25" y="8" width="1" height="1"/><rect x="27" y="8" width="1" height="1"/><rect x="28" y="8" width="1" height="1"/><rect x="29" y="8" width="1" height="1"/><rect x="30" y="8" width="1" height="1"/><rect x="32" y="8" width="1" height="1"/><rect x="1" y="9" width="1" height="1"/><rect x="2" y="9" width="1" height="1"/><rect x="3" y="9" width="1" height="1"/><rect x="4" y="9" width="1" height="1"/><rect x="5" y="9" width="1" height="1"/><rect x="7" y="9" width="1" height="1"/><rect x="11" y="9" width="1" height="1"/><rect x="14" y="9" width="1" height="1"/><rect x="16" y="9" width="1" height="1"/><rect x="17" y="9" width="1" height="1"/><rect x="18" y="9" width="1" height="1"/><rect x="20" y="9" width="1" height="1"/><rect x="24" y="9" width="1" height="1"/><rect x="25" y="9" width="1" height="1"/><rect x="26" y="9" width="1" height="1"/><rect x="28" y="9" width="1" height="1"/><rect x="30" y="9" width="1" height="1"/><rect x="31" y="9" width="1" height="1"/><rect x="32" y="9" width="1" height="1"/><rect x="0" y="10" width="1" height="1"/><rect x="3" y="10" width="1" height="1"/><rect x="6" y="10" width="1" height="1"/><rect x="8" y="10" width="1" height="1"/><rect x="14" y="10" width="1" height="1"/><rect x="18" y="10" width="1" height="1"/><rect x="20" y="10" width="1" height="1"/><rect x="21" y="10" width="1" height="1"/><rect x="23" y="10" width="1" height="1"/><rect x="24" y="10" width="1" height="1"/><rect x="25" y="10" width="1" height="1"/><rect x="27" y="10" width="1" height="1"/><rect x="30" y="10" width="1" height="1"/><rect x="0" y="11" width="1" height="1"/><rect x="2" y="11" width="1" height="1"/><rect x="4" y="11" width="1" height="1"/><rect x="5" y="11" width="1" height="1"/><rect x="8" y="11" width="1" height="1"/><rect x="9" y="11" width="1" height="1"/><rect x="11" y="11" width="1" height="1"/><rect x="12" y="11" width="1" height="1"/><rect x="15" y="11" width="1" height="1"/><rect x="16" y="11" width="1" height="1"/><rect x="17" y="11" width="1" height="1"/><rect x="18" y="11" width="1" height="1"/><rect x="19" y="11" width="1" height="1"/><rect x="22" y="11" width="1" height="1"/><rect x="23" y="11" width="1" height="1"/><rect x="24" y="11" width="1" height="1"/><rect x="25" y="11" width="1" height="1"/><rect x="28" y="11" width="1" height="1"/><rect x="31" y="11" width="1" height="1"/><rect x="32" y="11" width="1" height="1"/><rect x="1" y="12" width="1" height="1"/><rect x="3" y="12" width="1" height="1"/><rect x="6" y="12" width="1" height="1"/><rect x="7" y="12" width="1" height="1"/><rect x="10" y="12" width="1" height="1"/><rect x="11" y="12" width="1" height="1"/><rect x="14" y="12" width="1" height="1"/><rect x="16" y="12" width="1" height="1"/><rect x="19" y="12" width="1" height="1"/><rect x="22" y="12" width="1" height="1"/><rect x="23" y="12" width="1" height="1"/><rect x="25" y="12" width="1" height="1"/><rect x="26" y="12" width="1" height="1"/><rect x="27" y="12" width="1" height="1"/><rect x="28" y="12" width="1" height="1"/><rect x="29" y="12" width="1" height="1"/><rect x="31" y="12" width="1" height="1"/><rect x="32" y="12" width="1" height="1"/><rect x="0" y="13" width="1" height="1"/><rect x="1" y="13" width="1" height="1"/><rect x="2" y="13" width="1" height="1"/><rect x="8" y="13" width="1" height="1"/><rect x="13" y="13" width="1" height="1"/><rect x="15" y="13" width="1" height="1"/><rect x="19" y="13" width="1" height="1"/><rect x="20" y="13" width="1" height="1"/><rect x="21" y="13" width="1" height="1"/><rect x="22" y="13" width="1" height="1"/><rect x="25" y="13" width="1" height="1"/><rect x="27" y="13" width="1" height="1"/><rect x="28" y="13" width="1" height="1"/><rect x="29" y="13" width="1" height="1"/><rect x="30" y="13" width="1" height="1"/><rect x="32" y="13" width="1" height="1"/><rect x="1" y="14" width="1" height="1"/><rect x="3" y="14" width="1" height="1"/><rect x="6" y="14" width="1" height="1"/><rect x="7" y="14" width="1" height="1"/><rect x="9" y="14" width="1" height="1"/><rect x="11" y="14" width="1" height="1"/><rect x="13" y="14" width="1" height="1"/><rect x="14" y="14" width="1" height="1"/><rect x="16" y="14" width="1" height="1"/><rect x="18" y="14" width="1" height="1"/><rect x="19" y="14" width="1" height="1"/><rect x="20" y="14" width="1" height="1"/><rect x="23" y="14" width="1" height="1"/><rect x="25" y="14" width="1" height="1"/><rect x="26" y="14" width="1" height="1"/><rect x="27" y="14" width="1" height="1"/><rect x="29" y="14" width="1" height="1"/><rect x="31" y="14" width="1" height="1"/><rect x="32" y="14" width="1" height="1"/><rect x="1" y="15" width="1" height="1"/><rect x="2" y="15" width="1" height="1"/><rect x="4" y="15" width="1" height="1"/><rect x="5" y="15" width="1" height="1"/><rect x="7" y="15" width="1" height="1"/><rect x="8" y="15" width="1" height="1"/><rect x="10" y="15" width="1" height="1"/><rect x="11" y="15" width="1" height="1"/><rect x="13" y="15" width="1" height="1"/><rect x="18" y="15" width="1" height="1"/><rect x="19" y="15" width="1" height="1"/><rect x="20" y="15" width="1" height="1"/><rect x="21" y="15" width="1" height="1"/><rect x="22" y="15" width="1" height="1"/><rect x="23" y="15" width="1" height="1"/><rect x="24" y="15" width="1" height="1"/><rect x="26" y="15" width="1" height="1"/><rect x="29" y="15" width="1" height="1"/><rect x="0" y="16" width="1" height="1"/><rect x="1" y="16" width="1" height="1"/><rect x="3" y="16" width="1" height="1"/><rect x="5" y="16" width="1" height="1"/><rect x="6" y="16" width="1" height="1"/><rect x="9" y="16" width="1" height="1"/><rect x="13" y="16" width="1" height="1"/><rect x="15" y="16" width="1" height="1"/><rect x="17" y="16" width="1" height="1"/><rect x="20" y="16" width="1" height="1"/><rect x="22" y="16" width="1" height="1"/><rect x="24" y="16" width="1" height="1"/><rect x="25" y="16" width="1" height="1"/><rect x="26" y="16" width="1" height="1"/><rect x="27" y="16" width="1" height="1"/><rect x="29" y="16" width="1" height="1"/><rect x="31" y="16" width="1" height="1"/><rect x="0" y="17" width="1" height="1"/><rect x="1" y="17" width="1" height="1"/><rect x="2" y="17" width="1" height="1"/><rect x="5" y="17" width="1" height="1"/><rect x="8" y="17" width="1" height="1"/><rect x="14" y="17" width="1" height="1"/><rect x="16" y="17" width="1" height="1"/><rect x="17" y="17" width="1" height="1"/><rect x="18" y="17" width="1" height="1"/><rect x="19" y="17" width="1" height="1"/><rect x="21" y="17" width="1" height="1"/><rect x="24" y="17" width="1" height="1"/><rect x="30" y="17" width="1" height="1"/><rect x="32" y="17" width="1" height="1"/><rect x="2" y="18" width="1" height="1"/><rect x="4" y="18" width="1" height="1"/><rect x="5" y="18" width="1" height="1"/><rect x="6" y="18" width="1" height="1"/><rect x="10" y="18" width="1" height="1"/><rect x="12" y="18" width="1" height="1"/><rect x="14" y="18" width="1" height="1"/><rect x="17" y="18" width="1" height="1"/><rect x="19" y="18" width="1" height="1"/><rect x="21" y="18" width="1" height="1"/><rect x="22" y="18" width="1" height="1"/><rect x="26" y="18" width="1" height="1"/><rect x="28" y="18" width="1" height="1"/><rect x="30" y="18" width="1" height="1"/><rect x="0" y="19" width="1" height="1"/><rect x="2" y="19" width="1" height="1"/><rect x="9" y="19" width="1" height="1"/><rect x="14" y="19" width="1" height="1"/><rect x="15" y="19" width="1" height="1"/><rect x="16" y="19" width="1" height="1"/><rect x="17" y="19" width="1" height="1"/><rect x="19" y="19" width="1" height="1"/><rect x="20" y="19" width="1" height="1"/><rect x="24" y="19" width="1" height="1"/><rect x="25" y="19" width="1" height="1"/><rect x="28" y="19" width="1" height="1"/><rect x="29" y="19" width="1" height="1"/><rect x="0" y="20" width="1" height="1"/><rect x="3" y="20" width="1" height="1"/><rect x="5" y="20" width="1" height="1"/><rect x="6" y="20" width="1" height="1"/><rect x="9" y="20" width="1" height="1"/><rect x="10" y="20" width="1" height="1"/><rect x="13" y="20" width="1" height="1"/><rect x="15" y="20" width="1" height="1"/><rect x="17" y="20" width="1" height="1"/><rect x="18" y="20" width="1" height="1"/><rect x="19" y="20" width="1" height="1"/><rect x="22" y="20" width="1" height="1"/><rect x="26" y="20" width="1" height="1"/><rect x="27" y="20" width="1" height="1"/><rect x="29" y="20" width="1" height="1"/><rect x="30" y="20" width="1" height="1"/><rect x="0" y="21" width="1" height="1"/><rect x="1" y="21" width="1" height="1"/><rect x="2" y="21" width="1" height="1"/><rect x="4" y="21" width="1" height="1"/><rect x="7" y="21" width="1" height="1"/><rect x="9" y="21" width="1" height="1"/><rect x="11" y="21" width="1" height="1"/><rect x="15" y="21" width="1" height="1"/><rect x="17" y="21" width="1" height="1"/><rect x="19" y="21" width="1" height="1"/><rect x="21" y="21" width="1" height="1"/><rect x="23" y="21" width="1" height="1"/><rect x="26" y="21" width="1" height="1"/><rect x="27" y="21" width="1" height="1"/><rect x="31" y="21" width="1" height="1"/><rect x="1" y="22" width="1" height="1"/><rect x="2" y="22" width="1" height="1"/><rect x="3" y="22" width="1" height="1"/><rect x="4" y="22" width="1" height="1"/><rect x="6" y="22" width="1" height="1"/><rect x="12" y="22" width="1" height="1"/><rect x="13" y="22" width="1" height="1"/><rect x="14" y="22" width="1" height="1"/><rect x="16" y="22" width="1" height="1"/><rect x="19" y="22" width="1" height="1"/><rect x="23" y="22" width="1" height="1"/><rect x="24" y="22" width="1" height="1"/><rect x="26" y="22" width="1" height="1"/><rect x="27" y="22" width="1" height="1"/><rect x="28" y="22" width="1" height="1"/><rect x="30" y="22" width="1" height="1"/><rect x="31" y="22" width="1" height="1"/><rect x="32" y="22" width="1" height="1"/><rect x="0" y="23" width="1" height="1"/><rect x="4" y="23" width="1" height="1"/><rect x="7" y="23" width="1" height="1"/><rect x="8" y="23" width="1" height="1"/><rect x="9" y="23" width="1" height="1"/><rect x="12" y="23" width="1" height="1"/><rect x="13" y="23" width="1" height="1"/><rect x="16" y="23" width="1" height="1"/><rect x="17" y="23" width="1" height="1"/><rect x="21" y="23" width="1" height="1"/><rect x="25" y="23" width="1" height="1"/><rect x="26" y="23" width="1" height="1"/><rect x="27" y="23" width="1" height="1"/><rect x="29" y="23" width="1" height="1"/><rect x="32" y="23" width="1" height="1"/><rect x="6" y="24" width="1" height="1"/><rect x="10" y="24" width="1" height="1"/><rect x="11" y="24" width="1" height="1"/><rect x="12" y="24" width="1" height="1"/><rect x="14" y="24" width="1" height="1"/><rect x="15" y="24" width="1" height="1"/><rect x="16" y="24" width="1" height="1"/><rect x="18" y="24" width="1" height="1"/><rect x="20" y="24" width="1" height="1"/><rect x="24" y="24" width="1" height="1"/><rect x="25" y="24" width="1" height="1"/><rect x="26" y="24" width="1" height="1"/><rect x="27" y="24" width="1" height="1"/><rect x="28" y="24" width="1" height="1"/><rect x="29" y="24" width="1" height="1"/><rect x="32" y="24" width="1" height="1"/><rect x="10" y="25" width="1" height="1"/><rect x="12" y="25" width="1" height="1"/><rect x="14" y="25" width="1" height="1"/><rect x="15" y="25" width="1" height="1"/><rect x="16" y="25" width="1" height="1"/><rect x="19" y="25" width="1" height="1"/><rect x="20" y="25" width="1" height="1"/><rect x="22" y="25" width="1" height="1"/><rect x="23" y="25" width="1" height="1"/><rect x="24" y="25" width="1" height="1"/><rect x="28" y="25" width="1" height="1"/><rect x="29" y="25" width="1" height="1"/><rect x="32" y="25" width="1" height="1"/><rect x="0" y="26" width="1" height="1"/><rect x="1" y="26" width="1" height="1"/><rect x="2" y="26" width="1" height="1"/><rect x="3" y="26" width="1" height="1"/><rect x="4" y="26" width="1" height="1"/><rect x="5" y="26" width="1" height="1"/><rect x="6" y="26" width="1" height="1"/><rect x="8" y="26" width="1" height="1"/><rect x="9" y="26" width="1" height="1"/><rect x="11" y="26" width="1" height="1"/><rect x="13" y="26" width="1" height="1"/><rect x="14" y="26" width="1" height="1"/><rect x="15" y="26" width="1" height="1"/><rect x="17" y="26" width="1" height="1"/><rect x="18" y="26" width="1" height="1"/><rect x="21" y="26" width="1" height="1"/><rect x="23" y="26" width="1" height="1"/><rect x="24" y="26" width="1" height="1"/><rect x="26" y="26" width="1" height="1"/><rect x="28" y="26" width="1" height="1"/><rect x="30" y="26" width="1" height="1"/><rect x="32" y="26" width="1" height="1"/><rect x="0" y="27" width="1" height="1"/><rect x="6" y="27" width="1" height="1"/><rect x="8" y="27" width="1" height="1"/><rect x="9" y="27" width="1" height="1"/><rect x="12" y="27" width="1" height="1"/><rect x="14" y="27" width="1" height="1"/><rect x="16" y="27" width="1" height="1"/><rect x="17" y="27" width="1" height="1"/><rect x="18" y="27" width="1" height="1"/><rect x="19" y="27" width="1" height="1"/><rect x="20" y="27" width="1" height="1"/><rect x="24" y="27" width="1" height="1"/><rect x="28" y="27" width="1" height="1"/><rect x="30" y="27" width="1" height="1"/><rect x="32" y="27" width="1" height="1"/><rect x="0" y="28" width="1" height="1"/><rect x="2" y="28" width="1" height="1"/><rect x="3" y="28" width="1" height="1"/><rect x="4" y="28" width="1" height="1"/><rect x="6" y="28" width="1" height="1"/><rect x="8" y="28" width="1" height="1"/><rect x="10" y="28" width="1" height="1"/><rect x="11" y="28" width="1" height="1"/><rect x="12" y="28" width="1" height="1"/><rect x="14" y="28" width="1" height="1"/><rect x="16" y="28" width="1" height="1"/><rect x="18" y="28" width="1" height="1"/><rect x="19" y="28" width="1" height="1"/><rect x="20" y="28" width="1" height="1"/><rect x="22" y="28" width="1" height="1"/><rect x="23" y="28" width="1" height="1"/><rect x="24" y="28" width="1" height="1"/><rect x="25" y="28" width="1" height="1"/><rect x="26" y="28" width="1" height="1"/><rect x="27" y="28" width="1" height="1"/><rect x="28" y="28" width="1" height="1"/><rect x="29" y="28" width="1" height="1"/><rect x="31" y="28" width="1" height="1"/><rect x="0" y="29" width="1" height="1"/><rect x="2" y="29" width="1" height="1"/><rect x="3" y="29" width="1" height="1"/><rect x="4" y="29" width="1" height="1"/><rect x="6" y="29" width="1" height="1"/><rect x="8" y="29" width="1" height="1"/><rect x="9" y="29" width="1" height="1"/><rect x="11" y="29" width="1" height="1"/><rect x="12" y="29" width="1" height="1"/><rect x="13" y="29" width="1" height="1"/><rect x="14" y="29" width="1" height="1"/><rect x="15" y="29" width="1" height="1"/><rect x="17" y="29" width="1" height="1"/><rect x="19" y="29" width="1" height="1"/><rect x="20" y="29" width="1" height="1"/><rect x="27" y="29" width="1" height="1"/><rect x="28" y="29" width="1" height="1"/><rect x="29" y="29" width="1" height="1"/><rect x="30" y="29" width="1" height="1"/><rect x="31" y="29" width="1" height="1"/><rect x="0" y="30" width="1" height="1"/><rect x="2" y="30" width="1" height="1"/><rect x="3" y="30" width="1" height="1"/><rect x="4" y="30" width="1" height="1"/><rect x="6" y="30" width="1" height="1"/><rect x="8" y="30" width="1" height="1"/><rect x="9" y="30" width="1" height="1"/><rect x="10" y="30" width="1" height="1"/><rect x="11" y="30" width="1" height="1"/><rect x="13" y="30" width="1" height="1"/><rect x="14" y="30" width="1" height="1"/><rect x="15" y="30" width="1" height="1"/><rect x="17" y="30" width="1" height="1"/><rect x="18" y="30" width="1" height="1"/><rect x="19" y="30" width="1" height="1"/><rect x="21" y="30" width="1" height="1"/><rect x="23" y="30" width="1" height="1"/><rect x="25" y="30" width="1" height="1"/><rect x="26" y="30" width="1" height="1"/><rect x="27" y="30" width="1" height="1"/><rect x="31" y="30" width="1" height="1"/><rect x="0" y="31" width="1" height="1"/><rect x="6" y="31" width="1" height="1"/><rect x="9" y="31" width="1" height="1"/><rect x="10" y="31" width="1" height="1"/><rect x="13" y="31" width="1" height="1"/><rect x="14" y="31" width="1" height="1"/><rect x="18" y="31" width="1" height="1"/><rect x="19" y="31" width="1" height="1"/><rect x="20" y="31" width="1" height="1"/><rect x="22" y="31" width="1" height="1"/><rect x="27" y="31" width="1" height="1"/><rect x="29" y="31" width="1" height="1"/><rect x="32" y="31" width="1" height="1"/><rect x="0" y="32" width="1" height="1"/><rect x="1" y="32" width="1" height="1"/><rect x="2" y="32" width="1" height="1"/><rect x="3" y="32" width="1" height="1"/><rect x="4" y="32" width="1" height="1"/><rect x="5" y="32" width="1" height="1"/><rect x="6" y="32" width="1" height="1"/><rect x="9" y="32" width="1" height="1"/><rect x="12" y="32" width="1" height="1"/><rect x="13" y="32" width="1" height="1"/><rect x="16" y="32" width="1" height="1"/><rect x="17" y="32" width="1" height="1"/><rect x="20" y="32" width="1" height="1"/><rect x="21" y="32" width="1" height="1"/><rect x="23" y="32" width="1" height="1"/><rect x="25" y="32" width="1" height="1"/><rect x="28" y="32" width="1" height="1"/><rect x="29" y="32" width="1" height="1"/></g></svg>
+      </div>
+    </div>
+  </header>
+
+  <div class="board">
+    <div class="col left">
+      <section class="card">
+        <div class="hd"><span class="num">01</span><h2>Problem Statement</h2></div>
+        <div class="bd">
+          <p class="lead">Struggling students rarely seek help the same way. Fear of judgment, slow email threads, and unverified AI hallucinations leave students isolated until exam week, while faculty lack visibility into where students get stuck.</p>
+          <div class="persona">
+            <div class="prow">
+              <div class="avatar">👤</div>
+              <div><small>PERSONA 01</small><b>Fear of judgment</b><em>Stays silent rather than ask in public</em></div>
+              <span class="pill">→ Quiet ask</span>
+            </div>
+            <div class="prow">
+              <div class="avatar">💬</div>
+              <div><small>PERSONA 02</small><b>Slow email threads</b><em>Waits on replies that arrive too late</em></div>
+              <span class="pill">→ Live queue + wait ETA</span>
+            </div>
+            <div class="prow">
+              <div class="avatar">?</div>
+              <div><small>PERSONA 03</small><b>Unverified AI answers</b><em>Trusts answers no one has checked</em></div>
+              <span class="pill">→ Study Agent</span>
+            </div>
+          </div>
+          <p class="footnote">silent struggle until exam week</p>
+        </div>
+      </section>
+      <section class="card">
+        <div class="hd"><span class="num">02</span><h2>Core Objectives</h2></div>
+        <div class="bd">
+          <ol class="obj">
+            <li><i>1</i><div>Answer only from professor-approved material of the student’s own course, with citations, or refuse.</div></li>
+            <li><i>2</i><div>Hand every refusal to a human through Quiet ask, with an estimated wait.</div></li>
+            <li><i>3</i><div>Measure the guardrails and bound model use; TAs get drafts, never auto-published.</div></li>
+          </ol>
+        </div>
+      </section>
+      <section class="card">
+        <div class="hd"><span class="num">03</span><h2>Core Features</h2></div>
+        <div class="bd">
+          <div class="hub">
+            <svg class="wires" viewBox="0 0 512 250" aria-hidden="true">
+              <path d="M150 48 C200 48, 210 90, 256 110" fill="none" stroke="#1b7a45" stroke-width="2"/>
+              <path d="M362 48 C310 48, 300 90, 256 110" fill="none" stroke="#1b7a45" stroke-width="2"/>
+              <path d="M120 130 H190" fill="none" stroke="#1b7a45" stroke-width="2" marker-end="url(#a)"/>
+              <path d="M392 130 H322" fill="none" stroke="#1b7a45" stroke-width="2"/>
+              <path d="M150 200 C200 200, 210 160, 256 145" fill="none" stroke="#1b7a45" stroke-width="2"/>
+              <path d="M362 200 C310 200, 300 160, 256 145" fill="none" stroke="#1b7a45" stroke-width="2"/>
+            </svg>
+            <div class="sat" style="left:18px;top:8px"><div class="ico">🔒</div><b>Quiet ask</b><span>routed to a human</span></div>
+            <div class="sat" style="right:10px;top:8px"><div class="ico">🛡</div><b>Study Agent</b><span>approved material only</span></div>
+            <div class="node" style="left:8px;top:108px"><b>TA</b><span>live queue<br>Help Coach</span></div>
+            <div class="core">OfficeHours<br>AI</div>
+            <div class="node" style="right:8px;top:108px"><b>Professor</b><span>approves material<br>sees insights</span></div>
+            <div class="sat" style="left:18px;top:176px"><div class="ico">💬</div><b>Rooms + notes</b><span>peers help each other</span></div>
+            <div class="sat" style="right:10px;top:176px"><div class="ico">⚑</div><b>Pedagogy plan</b><span>fits how you learn</span></div>
+          </div>
+          <p class="cap">Five help paths; every refusal goes to a human via a tracked queue, and the professor decides what the Study Agent may use.</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="col mid">
+      <section class="card">
+        <div class="hd"><span class="num">04</span><h2>System Architecture</h2></div>
+        <div class="bd">
+          <div class="legend">
+            <span><i style="background:#1c3a5e"></i>request + reply</span>
+            <span><i style="background:#e2b34d"></i>model call</span>
+            <span><i style="background:#1b7a45"></i>internal</span>
+            <span><i style="background:#7d9a98"></i>external</span>
+          </div>
+          <div class="arch">
+            <svg class="wires" viewBox="0 0 920 348" aria-hidden="true">
+              <defs>
+                <marker id="arrN" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                  <path d="M0 0 L8 4 L0 8 Z" fill="#1c3a5e"/>
+                </marker>
+                <marker id="arrG" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                  <path d="M0 0 L8 4 L0 8 Z" fill="#1b7a45"/>
+                </marker>
+                <marker id="arrY" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                  <path d="M0 0 L8 4 L0 8 Z" fill="#c4922a"/>
+                </marker>
+                <marker id="arrE" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                  <path d="M0 0 L8 4 L0 8 Z" fill="#7d9a98"/>
+                </marker>
+              </defs>
+              <line x1="108" y1="58" x2="136" y2="58" stroke="#1c3a5e" stroke-width="2" marker-end="url(#arrN)"/>
+              <line x1="346" y1="118" x2="708" y2="108" stroke="#7d9a98" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrE)"/>
+              <line x1="346" y1="170" x2="392" y2="170" stroke="#1b7a45" stroke-width="2" marker-end="url(#arrG)"/>
+              <line x1="346" y1="224" x2="392" y2="224" stroke="#1b7a45" stroke-width="2" marker-end="url(#arrG)"/>
+              <line x1="346" y1="278" x2="392" y2="278" stroke="#1b7a45" stroke-width="2" marker-end="url(#arrG)"/>
+              <line x1="594" y1="224" x2="708" y2="220" stroke="#c4922a" stroke-width="2" marker-end="url(#arrY)"/>
+              <line x1="594" y1="278" x2="708" y2="278" stroke="#7d9a98" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrE)"/>
+              <text x="352" y="164" font-size="10" fill="#1b7a45" font-family="Inter, sans-serif">invoke</text>
+              <text x="352" y="218" font-size="10" fill="#1b7a45" font-family="Inter, sans-serif">invoke</text>
+              <text x="352" y="272" font-size="10" fill="#1b7a45" font-family="Inter, sans-serif">invoke</text>
+              <text x="620" y="214" font-size="10" fill="#a07a20" font-family="Inter, sans-serif">verify</text>
+              <text x="624" y="272" font-size="10" fill="#5c6b7a" font-family="Inter, sans-serif">query</text>
+            </svg>
+            <div class="proc" style="left:128px;top:10px;width:476px;height:328px">
+              <div class="proc-label">ONE FASTAPI PROCESS</div>
+            </div>
+            <div class="client" style="left:4px;top:22px;width:104px;height:72px"><b>Client</b><span>Browser · React</span><span>Quiet ask · study</span></div>
+            <div class="abox navyb" style="left:140px;top:28px;width:206px;height:60px"><b>HTTP middleware</b><span>CORS and rate limit</span><span>Audited requests</span></div>
+            <div class="abox greenb" style="left:392px;top:28px;width:200px;height:60px"><b>Realtime</b><span>Live connection hub</span><span>Stays inside the app</span></div>
+            <div class="abox navyb" style="left:140px;top:96px;width:206px;height:44px"><b>Identity and courses</b><span>Sign-in and Canvas</span></div>
+            <div class="abox navyb" style="left:140px;top:146px;width:206px;height:48px"><b>Ask, staffing, peer help</b><span>Queue, hours, and rooms</span></div>
+            <div class="abox greenb" style="left:392px;top:146px;width:200px;height:48px"><b>Ask Triage and Help Coach</b><span>Local models only</span></div>
+            <div class="abox navyb" style="left:140px;top:200px;width:206px;height:48px"><b>Knowledge and study</b><span>Approved course material</span></div>
+            <div class="abox greenb" style="left:392px;top:200px;width:200px;height:48px"><b>Study Agent</b><span>Quote check and entailment</span></div>
+            <div class="abox navyb" style="left:140px;top:254px;width:206px;height:48px"><b>Study planning</b><span>A plan from weak topics</span></div>
+            <div class="abox greenb" style="left:392px;top:254px;width:200px;height:48px"><b>Pedagogy Agent</b><span>Checked links only</span></div>
+            <div class="db" style="left:140px;top:308px;width:452px;height:24px"><b>Database · SQLite or PostgreSQL</b></div>
+            <div class="out" style="left:708px;top:82px;width:200px;height:52px"><b>Canvas · Entra ID</b><span>LTI launch · Microsoft login</span></div>
+            <div class="out gold" style="left:708px;top:194px;width:200px;height:52px"><b>Gemini</b><span>Question + approved chunks</span></div>
+            <div class="out" style="left:708px;top:254px;width:200px;height:48px"><b>Web search</b><span>YouTube · Wikipedia</span></div>
+          </div>
+          <p class="rules" id="rules">Ask Triage and Help Coach run on local models and never send student text outside the app. Study Agent sends only the student's question and approved course chunks to Gemini (no student IDs or grades).</p>
+        </div>
+      </section>
+      <section class="card">
+        <div class="hd"><span class="num">05</span><h2>AI Pipelines and Guardrails</h2></div>
+        <div class="bd">
+          <div class="pipe">
+            <strong>Ask Triage</strong>
+            <div><div class="flow"><em>Analyze</em><em class="soft">Match</em><em>Synthesize</em></div><p class="desc">Local scikit-learn + MiniLM. An 80-row teaching bank; no TA means the professor.</p></div>
+            <div class="guard">Never sends student text outside the app</div>
+          </div>
+          <div class="pipe">
+            <strong>Study Agent</strong>
+            <div><div class="flow"><em>Filter</em><em class="soft">Cutoff 0.42</em><em>Quote check</em></div><p class="desc">Approved, same-course material only; refuses below 0.42; exact quote, then entailment (max 3 attempts).</p></div>
+            <div class="guard">Never answers from unapproved or other-course material</div>
+          </div>
+          <div class="pipe">
+            <strong>Help Coach</strong>
+            <div><div class="flow"><em>Retrieve</em><em class="soft">Suggest</em></div><p class="desc">Drafts from approved material onto a teaching reply; no external model call.</p></div>
+            <div class="guard">Never publishes; it only drafts for the TA</div>
+          </div>
+          <div class="pipe">
+            <strong>Pedagogy Agent</strong>
+            <div><div class="flow"><em>Search</em><em class="soft">Rank</em><em>Verify</em></div><p class="desc">YouTube and Wikipedia; at most 3 rounds, 3 model calls, 6 searches, 5 checked links.</p></div>
+            <div class="guard">Never shows an invented or unchecked link</div>
+          </div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="hd"><span class="num">06</span><h2>Tech Stack</h2></div>
+        <div class="bd">
+          <div class="stack">
+            <div class="srow"><b>Frontend</b><div class="chips"><span class="chip">React</span><span class="chip">Vite</span><span class="chip">JavaScript SPA</span></div></div>
+            <div class="srow"><b>Backend</b><div class="chips"><span class="chip">Python 3.12</span><span class="chip">FastAPI</span><span class="chip">uvicorn</span><span class="chip">SQLAlchemy</span><span class="chip">WebSockets</span></div></div>
+            <div class="srow"><b>AI and ML</b><div class="chips"><span class="chip">MiniLM (sentence-transformers)</span><span class="chip">scikit-learn</span><span class="chip">Gemini (gated)</span><span class="chip">YouTube Data API</span></div></div>
+            <div class="srow"><b>Data and integrations</b><div class="chips"><span class="chip">SQLite</span><span class="chip">PostgreSQL</span><span class="chip">Canvas LTI 1.3 + REST</span><span class="chip">Microsoft Entra ID</span></div></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col right">
+      <section class="card">
+        <div class="hd"><span class="num">07</span><h2>System Validation</h2></div>
+        <div class="bd">
+          <p class="kicker">STUDY AGENT · 75 SYNTHETIC QUESTIONS · QUOTE CHECK</p>
+          <div class="scores" id="scores">
+            <div class="score"><b>74/75</b><span>correct overall</span><em>baseline 50/75 → final 74/75</em></div>
+            <div class="score"><b>10/10</b><span>unapproved</span><em>baseline 7/10 → final 10/10</em></div>
+            <div class="score"><b>10/10</b><span>other course</span><em>baseline 5/10 → final 10/10</em></div>
+            <div class="score"><b>14/15</b><span>injection</span><em>baseline 12/15 → final 14/15</em></div>
+          </div>
+          <p class="hidden">0/20 hidden-page citations with both filters on (16/20 without)</p>
+          <p class="kicker" style="margin-top:10px">ASK TRIAGE · GENERALIZATION TO HELD-OUT ASKS</p>
+          <div class="chart-row">
+            <svg viewBox="0 0 210 150" role="img" aria-label="Held-out accuracy against in-sample accuracy">
+              <line x1="32" y1="12" x2="32" y2="124" stroke="#c5ced8"/>
+              <line x1="32" y1="124" x2="198" y2="124" stroke="#c5ced8"/>
+              <line x1="32" y1="124" x2="190" y2="18" stroke="#9aa6b2" stroke-dasharray="3 3"/>
+              <text x="8" y="16" font-size="9" fill="#5c6b7a">90</text>
+              <text x="8" y="70" font-size="9" fill="#5c6b7a">80</text>
+              <text x="8" y="124" font-size="9" fill="#5c6b7a">70</text>
+              <text x="40" y="140" font-size="9" fill="#5c6b7a">70</text>
+              <text x="100" y="140" font-size="9" fill="#5c6b7a">80</text>
+              <text x="168" y="140" font-size="9" fill="#5c6b7a">90</text>
+              <text x="150" y="28" font-size="9" fill="#5c6b7a">y = x</text>
+              <circle cx="177" cy="75" r="5" fill="#1c3a5e"/>
+              <circle cx="153" cy="96" r="5" fill="#1b7a45"/>
+            </svg>
+            <div class="leg">
+              <div><span class="dot" style="background:#1c3a5e"></span><b>TA matching (Matcher)</b><br>87.5% → 78.75% · +8.75 pt gap</div>
+              <div><span class="dot" style="background:#1b7a45"></span><b>Classification (Analyzer)</b><br>84.62% → 75% · +9.62 pt gap</div>
+              <div style="color:#6b7785">Dashed line: no generalization gap.<br>Matcher: 32-item test vs 80 held-out.<br>Analyzer: 5-fold CV vs 80 held-out.</div>
+            </div>
+          </div>
+          <p class="kicker" style="margin-top:8px">QUOTE-CHECK LATENCY · 42 MODEL CALLS</p>
+          <div class="lat">
+            <div class="big">858<small>ms median call</small></div>
+            <div>
+              <div class="bar"><i style="width:28%"></i></div>
+              <div class="ticks"><span>0</span><span>3 s median target</span><span>worst call 5.4 s</span></div>
+            </div>
+          </div>
+          <p class="kicker" style="margin-top:8px" id="eval-kicker">PILOT EVALUATION · N = 7 · SCALE 1 TO 5</p>
+          <div class="eval">
+            <div>
+              <div class="big">4.57</div>
+              <div class="bar" style="margin-top:4px"><i style="width:91%"></i></div>
+              <div class="sub">composite mean · median 5.0</div>
+            </div>
+            <div>
+              <div class="big">4.71</div>
+              <div class="bar" style="margin-top:4px"><i style="width:94%"></i></div>
+              <div class="sub" id="agree">workflow value · 7/7 pilot participants agree</div>
+            </div>
+          </div>
+          <p class="hidden" id="sample">Sample N = 7 (6 students, 1 TA). Lowest item: citation trust 4.43/5.</p>
+        </div>
+      </section>
+      <section class="card">
+        <div class="hd"><span class="num">08</span><h2>Future Roadmap</h2></div>
+        <div class="bd">
+          <div class="group">EVIDENCE AND TESTING</div>
+          <ol class="road" id="road-evidence">
+            <li><i>1</i><div>Re-run the benchmark on the full pipeline (entailment and recovery).</div></li>
+            <li><i>2</i><div id="road-2">Live classroom pilot in an active AUI course next semester</div></li>
+            <li><i>3</i><div id="road-3">Expanded multi-course evaluation with larger student &amp; TA cohorts</div></li>
+          </ol>
+          <div class="group navy">PRODUCT</div>
+          <ol class="road" id="road-product">
+            <li class="prod"><i>4</i><div id="road-4">Multi-language support (French &amp; Arabic) and broader LMS integration</div></li>
+            <li class="prod"><i>5</i><div>Show which gate fired: distinct refusal text.</div></li>
+            <li class="prod"><i>6</i><div>Google Calendar sync for office hours (asked for by two testers).</div></li>
+          </ol>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="refs">
+    <h2><span class="num">09</span> References</h2>
+    <p>Lewis et al. (2020). Retrieval-augmented generation for knowledge-intensive NLP tasks. NeurIPS 33.</p>
+    <p>Asai et al. (2024). Self-RAG: learning to retrieve, generate, and critique through self-reflection. ICLR.</p>
+    <p>Greshake et al. (2023). Not what you’ve signed up for: indirect prompt injection in LLM-integrated applications. AISec.</p>
+    <p>Kingdom of Morocco (2009). Law 09-08 on the protection of personal data. Synthetic-data boundary.</p>
+  </div>
+  <footer>
+    <span>Casablanca Finance City Showcase · EGR 4402 Capstone Design · Al Akhawayn University · School of Science &amp; Engineering</span>
+    <span>github.com/abssisophia9-hub/officehours-ai</span>
+  </footer>
+</div>
+</body>
+</html>
